@@ -131,7 +131,7 @@ class User(UserMixin):
         try:
             logging.info(f'Checking session with session_id: {session_id}')
             query = "SELECT * FROM sessions WHERE session_id = %s"
-            rows = cassandra_session.execute(query, (uuid.UUID(session_id),))
+            rows = cassandra_session.execute(query, (uuid.UUID(session_id),))  # Ensure session_id is converted to UUID
 
             for row in rows:
                 if row.expire_at > datetime.utcnow():

@@ -90,6 +90,7 @@ const ProfilePage = () => {
     };
 
     fetchUserData();
+    
   }, [isLoggedIn, navigate]);
 
   const handleEditToggle = () => {

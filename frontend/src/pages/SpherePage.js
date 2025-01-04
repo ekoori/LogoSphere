@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/TrustTrail.css';
 import '../styles/Marketplace.css';
 import '../styles/SpherePage.css';
 
 import TrustTrail from '../components/TrustTrail';
 import Marketplace from '../components/Marketplace';
-import NewServiceForm from '../components/NewServiceForm'; // Assuming this component is available
+import SphereCard from '../components/SphereCard';
+import api from '../api';
+import { useLogin } from '../App';
 
 function SpherePage() {
+    const { isLoggedIn } = useLogin();
     const [activeTab, setActiveTab] = useState('trusttrail');
     const [isFormVisible, setIsFormVisible] = useState(false);
+    const [spheres, setSpheres] = useState([]);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            navigate('/login', { replace: true });
+        }
+    }, [isLoggedIn, navigate]);
 
     const toggleTab = (tab) => {
         setActiveTab(tab);
@@ -18,6 +30,32 @@ function SpherePage() {
     const toggleFormVisibility = () => {
         setIsFormVisible(!isFormVisible);
     };
+
+    const fetchSpheres = useCallback(async () => {
+        try {
+            const response = await api.get('/api/spheres', {
+                withCredentials: true,
+            });
+
+            if (response.data) {
+                const fetchedSpheres = response.data.map((sphere) => ({
+                    ...sphere,
+                    id: sphere.sphere_id,
+                    unions: sphere.unions ? sphere.unions.slice(0, 5) : [],
+                    participants: sphere.participants ? sphere.participants.slice(0, 5) : [],
+                    projects: sphere.projects ? sphere.projects.slice(0, 5) : [],
+                    values: sphere.values ? sphere.values.slice(0, 5) : [],
+                }));
+                setSpheres(fetchedSpheres);
+            }
+        } catch (error) {
+            console.error('Error fetching spheres:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchSpheres();
+    }, [fetchSpheres]);
 
     const sphere = {
         title: 'AI Development Sphere',
@@ -195,6 +233,12 @@ function SpherePage() {
 
                 {activeTab === 'trusttrail' && <TrustTrail items={transactions} />}
                 {activeTab === 'offers-requests' && <Marketplace services={services} newServiceVisible={isFormVisible} />}
+                
+                <div className="sphere-list">
+                    {spheres.map((sphere) => (
+                        <SphereCard key={sphere.id} {...sphere} onJoin={(id) => console.log(`Joining sphere ${id}`)} />
+                    ))}
+                </div>
             </main>
         </div>
     );

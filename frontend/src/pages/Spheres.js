@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Spheres.css';
 import NewSphereForm from '../components/NewSphereForm';
@@ -8,7 +8,6 @@ import api from '../api';
 const Spheres = () => {
   const [spheres, setSpheres] = useState([]);
   const navigate = useNavigate();
-
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const toggleFormVisibility = () => {
@@ -43,7 +42,7 @@ const Spheres = () => {
     }
   ];
 
-  const fetchSpheres = async () => {
+  const fetchSpheres = useCallback(async () => {
     try {
       const response = await api.get('/api/spheres', {
         withCredentials: true,
@@ -63,11 +62,11 @@ const Spheres = () => {
     } catch (error) {
       console.error('Error fetching spheres:', error);
     }
-  };
+  }, [dummySpheres]);
 
   useEffect(() => {
     fetchSpheres();
-  }, []);
+  }, [fetchSpheres]);
 
   return (
     <div className="container">

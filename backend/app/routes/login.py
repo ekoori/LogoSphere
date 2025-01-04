@@ -135,17 +135,20 @@ def check_session():
 
     try:
         session_id = request.cookies.get('session_id')
-        logger.info(f'Checking session for session_id: {session_id}')
+        logger.info(f'Checking session for session_id: {str(session_id)}')
 
         if not session_id:
             logger.info(f'No valid session_id found in cookies')
             response = jsonify({'status': 'inactive', 'user_id': None})
             return response, 200
 
+        # Convert session_id to string before querying
+        session_id_str = str(session_id)
+
         # Query session directly
         result = current_app.session_interface.cassandra_session.execute(
             "SELECT user_id, user_email FROM sessions WHERE session_id = %s",
-            [uuid.UUID(session_id)]
+            [uuid.UUID(session_id_str)]
         ).one()
 
         if result:

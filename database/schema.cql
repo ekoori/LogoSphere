@@ -1,3 +1,4 @@
+
 CREATE KEYSPACE trustsphere WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
 
 CREATE TABLE trustsphere.audit_log (
@@ -9,6 +10,7 @@ CREATE TABLE trustsphere.audit_log (
     transaction_id uuid,
     user_id uuid
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -20,6 +22,7 @@ CREATE TABLE trustsphere.audit_log (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -33,6 +36,7 @@ CREATE TABLE trustsphere.comment_likes (
     PRIMARY KEY (transaction_id, comment_type)
 ) WITH CLUSTERING ORDER BY (comment_type ASC)
     AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -44,6 +48,7 @@ CREATE TABLE trustsphere.comment_likes (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -55,6 +60,7 @@ CREATE TABLE trustsphere.invitation (
     code text,
     inviter_id text
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -66,6 +72,7 @@ CREATE TABLE trustsphere.invitation (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -79,6 +86,7 @@ CREATE TABLE trustsphere.likes (
     PRIMARY KEY ((transaction_id, comment_type), user_id)
 ) WITH CLUSTERING ORDER BY (user_id ASC)
     AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -90,6 +98,7 @@ CREATE TABLE trustsphere.likes (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -100,6 +109,7 @@ CREATE TABLE trustsphere.marketplace (
     services text PRIMARY KEY,
     active_transactions text
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -111,6 +121,7 @@ CREATE TABLE trustsphere.marketplace (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -124,6 +135,7 @@ CREATE TABLE trustsphere.projects (
     owner text,
     service_requests text
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -135,6 +147,7 @@ CREATE TABLE trustsphere.projects (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -150,6 +163,7 @@ CREATE TABLE trustsphere.sessions (
     user_id uuid,
     data map<text, text>
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -161,6 +175,44 @@ CREATE TABLE trustsphere.sessions (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+CREATE TABLE trustsphere.spheres (
+    sphere_id uuid PRIMARY KEY,
+    admin1 uuid,
+    admin2 uuid,
+    admin3 uuid,
+    admin4 uuid,
+    admin5 uuid,
+    created_at timestamp,
+    description text,
+    image blob,
+    location text,
+    name text,
+    value_graph text,
+    participants list<uuid>,
+    projects list<text>,
+    unions list<text>,
+    values list<text>
+) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -194,6 +246,7 @@ CREATE TABLE trustsphere.trusttrail (
     PRIMARY KEY (user_id, transaction_id)
 ) WITH CLUSTERING ORDER BY (transaction_id DESC)
     AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -205,6 +258,7 @@ CREATE TABLE trustsphere.trusttrail (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -224,6 +278,7 @@ CREATE MATERIALIZED VIEW trustsphere.vw_trusttrail_summary AS
     PRIMARY KEY ((user_id, transaction_id), transaction_status)
  WITH CLUSTERING ORDER BY (transaction_status ASC)
     AND additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -234,6 +289,7 @@ CREATE MATERIALIZED VIEW trustsphere.vw_trusttrail_summary AS
     AND crc_check_chance = 1.0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -245,6 +301,7 @@ CREATE TABLE trustsphere.user_credentials (
     email text,
     password text
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -256,6 +313,7 @@ CREATE TABLE trustsphere.user_credentials (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -272,6 +330,7 @@ CREATE TABLE trustsphere.users (
     surname text,
     valuegraph_id uuid
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -283,6 +342,7 @@ CREATE TABLE trustsphere.users (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
@@ -293,6 +353,7 @@ CREATE TABLE trustsphere.voting (
     choices text PRIMARY KEY,
     votes text
 ) WITH additional_write_policy = '99p'
+    AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
     AND cdc = false
@@ -304,41 +365,7 @@ CREATE TABLE trustsphere.voting (
     AND default_time_to_live = 0
     AND extensions = {}
     AND gc_grace_seconds = 864000
-    AND max_index_interval = 2048
-    AND memtable_flush_period_in_ms = 0
-    AND min_index_interval = 128
-    AND read_repair = 'BLOCKING'
-    AND speculative_retry = '99p';
-
-CREATE TABLE trustsphere.spheres (
-    sphere_id uuid PRIMARY KEY,
-    name text,
-    description text,
-    value_graph text,
-    location text,
-    image blob,
-    admin1 uuid,
-    admin2 uuid,
-    admin3 uuid,
-    admin4 uuid,
-    admin5 uuid,
-    participants list<uuid>,
-    unions list<text>,
-    projects list<text>,
-    values list<text>,
-    created_at timestamp
-) WITH additional_write_policy = '99p'
-    AND bloom_filter_fp_chance = 0.01
-    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
-    AND cdc = false
-    AND comment = ''
-    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
-    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
-    AND memtable = 'default'
-    AND crc_check_chance = 1.0
-    AND default_time_to_live = 0
-    AND extensions = {}
-    AND gc_grace_seconds = 864000
+    AND incremental_backups = true
     AND max_index_interval = 2048
     AND memtable_flush_period_in_ms = 0
     AND min_index_interval = 128
