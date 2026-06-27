@@ -25,11 +25,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import uuid
 import logging
+import os
 from datetime import datetime, timedelta
 import base64
 
 # Set up Cassandra session
-cluster = Cluster(['172.236.62.11'])
+# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
+CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
+cluster = Cluster(CASSANDRA_HOSTS)
 cassandra_session = cluster.connect('trustsphere')
 
 class User(UserMixin):
@@ -60,14 +63,34 @@ class User(UserMixin):
 
     @classmethod
     def register(cls, data):
-        name = data['name']
-        email = data['email']
-        password = generate_password_hash(data['password'])
+        # Validate required fields up front so missing data is a clean failure
+        # rather than an unhandled KeyError -> 500.
+        if not data:
+            logging.error('Registration failed: no data provided')
+            return None
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        if not name or not email or not password:
+            logging.error('Registration failed: missing name, email or password')
+            return None
+
+        # Reject duplicate emails — otherwise two accounts share an email and
+        # login becomes ambiguous.
+        existing = cassandra_session.execute(
+            "SELECT user_id FROM user_credentials WHERE email = %s",
+            (email,)
+        ).one()
+        if existing:
+            logging.error(f'Registration failed: email already registered: {email}')
+            return None
+
+        password_hash = generate_password_hash(password)
         user_id = uuid.uuid4()
         logging.info(f'Registering user with user_id: {user_id}')
 
         query = "INSERT INTO user_credentials (user_id, email, password) VALUES (%s, %s, %s)"
-        cassandra_session.execute(query, (user_id, email, password))
+        cassandra_session.execute(query, (user_id, email, password_hash))
 
         # Store profile data in users table
         query = "INSERT INTO users (user_id, email, name) VALUES (%s, %s, %s)"
@@ -82,8 +105,8 @@ class User(UserMixin):
         logging.info(f'Attempting login for email: {email}')
 
         try:
-            # Fetch user credentials
-            query = "SELECT * FROM user_credentials WHERE email = %s ALLOW FILTERING"
+            # Fetch user credentials (email is backed by a secondary index)
+            query = "SELECT * FROM user_credentials WHERE email = %s"
             rows = cassandra_session.execute(query, (email,))
 
             for row in rows:
@@ -118,12 +141,16 @@ class User(UserMixin):
 
     @classmethod
     def get_existing_session(cls, user_id):
-        query = "SELECT session_id FROM sessions WHERE user_id = %s AND expire_at > %s ALLOW FILTERING"
-        rows = cassandra_session.execute(query, (user_id, datetime.utcnow()))
+        # user_id is backed by a secondary index; filter expiry in Python so we
+        # avoid a non-key range predicate (which would force ALLOW FILTERING).
+        query = "SELECT session_id, expire_at FROM sessions WHERE user_id = %s"
+        rows = cassandra_session.execute(query, (user_id,))
 
+        now = datetime.utcnow()
         for row in rows:
-            return row.session_id
-        
+            if row.expire_at and row.expire_at > now:
+                return row.session_id
+
         return None
 
     @classmethod

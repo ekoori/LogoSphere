@@ -1,160 +1,72 @@
-import React, { useState } from 'react';
+// ProjectPage — shows a single Project, loaded by ?id= (or ?name=).
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import '../styles/ProjectPage.css';
-import SphereBanner from '../components/SphereBanner';
-import TrustTrail from '../components/TrustTrail';
-import Marketplace from '../components/Marketplace';
+import api from '../api';
 
-const ProjectPage = () => {
-  const [project, setProject] = useState({
-    title: 'Project Title',
-    description: 'Detailed description of the project goes here. This should provide an overview of the project objectives, timeline, and other relevant information.',
-    ownerUnion: 'AI Australia Sphere',
-    leaders: ['John Doe', 'Jane Smith'],
-    bannerImage: 'static/A_banner_image_for_a_tech_union_in_a_solar_punk_en.png',
-  });
+function ProjectPage() {
+    const [params] = useSearchParams();
+    const id = params.get('id');
+    const name = params.get('name');
+    const [project, setProject] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const [previewUrl, setPreviewUrl] = useState(project.bannerImage);
-  const [activeTab, setActiveTab] = useState('trusttrail');
-  const [isFormVisible, setIsFormVisible] = useState(false);
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const res = await api.get('/api/projects');
+                const list = res.data || [];
+                const found = list.find((p) => (id && p.project_id === id) || (name && p.name === name));
+                if (active) setProject(found || null);
+            } catch (e) {
+                console.error('Error loading project:', e);
+            } finally {
+                if (active) setLoading(false);
+            }
+        })();
+        return () => { active = false; };
+    }, [id, name]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setProject((prevProject) => ({
-        ...prevProject,
-        bannerImage: file,
-      }));
-    }
-  };
+    if (loading) return <div className="route-loading">Loading…</div>;
+    if (!project) return <div className="container"><main><p className="empty-state">Project not found.</p></main></div>;
 
-  const toggleTab = (tab) => {
-    setActiveTab(tab);
-  };
+    const members = project.members || [];
+    const values = project.values || [];
 
-  const transactions = [
-    // Example transactions from the mockup
-    {
-      id: 'transaction-cpus',
-      type: 'request',
-      spheres: ['OpenAI Sphere'],
-      title: 'Requesting 7 H100 CPUs for OpenAI datacentre from Jansen Huang',
-      participants: ['You', 'Jansen Huang'],
-      description: 'This transaction involves requesting 7 H100 CPUs for the OpenAI datacentre. The request was initiated by Sam and is awaiting a response from Jansen Huang.',
-      project: 'OpenAI Datacentre Upgrades',
-      imageUrl: 'static/h100_cpus.webp',
-      time: '30 min ago',
-      status: 'Initiated',
-      likesCount: 0,
-      likedByCurrentUser: false,
-      originService: '🔍 Requesting 7 H100 CPUs',
-      initiatedTime: '30 min ago',
-      inProgressTime: '',
-      finishedTime: '',
-      trustifactedTime: '',
-      additionalCommentsTime: '',
-      trustifacts: [],
-      shoutouts: [],
-      canModify: true,
-      onAddTrustifact: () => console.log('Add Trustifact'),
-      onAddShoutout: () => console.log('Add Shoutout'),
-      onModifyTransaction: () => console.log('Modify Transaction')
-    },
-    {
-      id: 'transaction-server-rack',
-      type: 'request',
-      spheres: ['OpenAI Sphere'],
-      title: 'Designing and building a server rack in OpenAI datacentre with Ilya S',
-      participants: ['Ilya S', 'You'],
-      description: 'This transaction involves the design and construction of a new server rack in the OpenAI datacentre. Ilya S, the project manager for the datacentre upgrade, initiated the transaction.',
-      project: 'Project not assigned',
-      imageUrl: '',
-      time: '1h ago',
-      status: 'Requested',
-      likesCount: 0,
-      likedByCurrentUser: false,
-      originService: '🔍 Offering Tesla Roadster Ride',
-      initiatedTime: '1h ago',
-      inProgressTime: '',
-      finishedTime: '',
-      trustifactedTime: '',
-      additionalCommentsTime: '',
-      trustifacts: [],
-      shoutouts: [],
-      canModify: true,
-      onAddTrustifact: () => console.log('Add Trustifact'),
-      onAddShoutout: () => console.log('Add Shoutout'),
-      onModifyTransaction: () => console.log('Modify Transaction')
-    },
-  ];
+    return (
+        <div className="container">
+            <main>
+                <article className="detail-card">
+                    <span className="eyebrow">Project · {project.status || 'Active'}</span>
+                    <h1>{project.name}</h1>
+                    <p className="detail-meta">
+                        {project.owner_union && <>Led by <Link to={`/union?name=${encodeURIComponent(project.owner_union)}`}>{project.owner_union}</Link></>}
+                        {project.sphere_name && <> · in <Link to={`/sphere?name=${encodeURIComponent(project.sphere_name)}`}>{project.sphere_name}</Link></>}
+                    </p>
+                    <p className="detail-description">{project.description}</p>
 
-  const services = [
-    // Example services from the mockup
-    {
-      id: 'service-ai-consulting',
-      type: 'offer',
-      spheres: ['AI Development Sphere'],
-      title: 'Offering AI Consulting Services',
-      provider: 'Elon Musk',
-      description: 'Elon is offering his expertise in AI consulting to help innovative projects reach their full potential. His deep knowledge and experience in AI development can provide valuable insights and guidance for your next big project.',
-      project: 'Project not assigned',
-      imageUrl: 'static/garden_old.webp',
-      time: '2d ago',
-      status: 'Posted',
-      likesCount: 20,
-      likedByCurrentUser: false,
-      relatedTransactions: ['Requesting 7 H100 CPUs - involving Jansen Huang - Initiated 30 min ago'],
-      canModify: true
-    },
-    {
-      id: 'service-garden-fences',
-      type: 'offer',
-      spheres: ['Community Garden Sphere'],
-      title: 'Building garden fences',
-      provider: 'Sam',
-      description: 'I am offering my services to build garden fences. With extensive experience in carpentry and landscaping, I can provide sturdy and aesthetically pleasing fences for your garden.',
-      project: 'Project not assigned',
-      imageUrl: '',
-      time: '15 min ago',
-      status: 'Posted',
-      likesCount: 10,
-      likedByCurrentUser: false,
-      relatedTransactions: ['Rebuilding fence on the garden - involving Jane Doe - Initiated 15 min ago'],
-      canModify: true
-    }
-  ];
+                    {values.length > 0 && (
+                        <div className="detail-values">
+                            {values.map((v, i) => <span key={i}>#{v}</span>)}
+                        </div>
+                    )}
 
-  return (
-    <div className="container">
-      <aside>
-        <h1>{project.title}</h1>
-        <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />
-        <p className="project-description">{project.description}</p>
-        <h2>Owner Union</h2>
-        <p><a href="union.html">{project.ownerUnion}</a></p>
-        <h2>Project Leaders</h2>
-        <ul className="leaders-list">
-          {project.leaders.map((leader, index) => (
-            <li key={index}><a href="profile.html">{leader}</a></li>
-          ))}
-        </ul>
-        <button className="btn-orange" onClick={() => setIsFormVisible(true)}>Request Service</button>
-        <a href="/project-management" className="btn-orange">Manage Project</a>
-      </aside>
-      <main>
-        <div className="selector-buttons">
-          <button className={`btn-selector ${activeTab === 'trusttrail' ? 'active' : ''}`} onClick={() => toggleTab('trusttrail')}>TrustTrail</button>
-          <button className={`btn-selector ${activeTab === 'offers-requests' ? 'active' : ''}`} onClick={() => toggleTab('offers-requests')}>Offers/Requests</button>
+                    <div className="detail-grid">
+                        <section className="detail-section">
+                            <h2>Contributors ({members.length})</h2>
+                            <ul className="detail-list">
+                                {members.map((m, i) => (
+                                    <li key={i}><Link to={`/user?id=${m.id}`}>👤 {m.name}</Link></li>
+                                ))}
+                                {members.length === 0 && <li className="muted">No contributors yet.</li>}
+                            </ul>
+                        </section>
+                    </div>
+                </article>
+            </main>
         </div>
-        {activeTab === 'trusttrail' && <TrustTrail items={transactions} />}
-        {activeTab === 'offers-requests' && <Marketplace services={services} newServiceVisible={isFormVisible} />}
-      </main>
-    </div>
-  );
-};
+    );
+}
 
 export default ProjectPage;

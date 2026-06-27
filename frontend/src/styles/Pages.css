@@ -1,8 +1,8 @@
-/* src/styles/Pages.css */
+/* src/styles/Pages.css — shared static-page styling (About, Contribute, Donate) */
 
 .page-main {
-    padding: 2em;
-    max-width: 800px;
+    padding: var(--sp-6) clamp(1em, 4vw, 2em);
+    max-width: 860px;
     margin: 0 auto;
 }
 
@@ -10,44 +10,57 @@
 .contribute-concept {
     display: flex;
     align-items: flex-start;
-    background-color: white;
-    padding: 1em;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1em;
+    gap: 1.2em;
+    background: var(--surface);
+    padding: 1.4em;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.2em;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
+.about-concepts .concept:hover,
+.contribute-concept:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
 .concept-image {
-    width: 200px;
-    height: 200px;
-    margin-right: 1em;
-    border-radius: 8px;
+    width: 180px;
+    height: 180px;
+    flex: none;
+    border-radius: var(--r-md);
     object-fit: cover;
+    box-shadow: var(--shadow-sm);
 }
 
-.concept-content {
-    display: flex;
-    flex-direction: column;
-}
+.concept-content { display: flex; flex-direction: column; }
 
 .btn-join, .btn-github {
-    padding: 0.5em 1em;
-    background-color: orange;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    padding: 0.72em 1.3em;
+    background: var(--terracotta);
+    color: #fff7ef;
+    border: 1px solid transparent;
+    border-radius: var(--r-pill);
     cursor: pointer;
-    transition: background-color 0.3s;
+    font-family: var(--font-body);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
     text-decoration: none;
     display: inline-block;
     text-align: center;
 }
-
-.btn-join:hover {
-    background-color: darkorange;
+.btn-join:hover, .btn-github:hover {
+    background: var(--terracotta-deep);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.paypal-button {
-    text-align: center;
-    margin-top: 1em;
+.btn-github { background: var(--moss); color: #f7f4e8; }
+.btn-github:hover { background: var(--moss-deep); }
+
+.paypal-button { text-align: center; margin-top: 1em; }
+
+@media (max-width: 640px) {
+    .about-concepts .concept, .contribute-concept { flex-direction: column; }
+    .concept-image { width: 100%; height: 200px; }
 }

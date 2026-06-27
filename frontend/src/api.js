@@ -3,31 +3,19 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://172.236.62.11:5000',
+    // Relative by default so dev requests are same-origin and proxied to the
+    // backend via package.json "proxy" (keeps the session cookie first-party).
+    // In production set REACT_APP_API_URL to the backend's absolute URL.
+    baseURL: process.env.REACT_APP_API_URL || '',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Request interceptor
-api.interceptors.request.use(
-    config => {
-        // Get session ID from cookie
-        const cookies = document.cookie.split(';');
-        const sessionCookie = cookies.find(cookie => cookie.trim().startsWith('session_id='));
-        if (sessionCookie) {
-            const sessionId = sessionCookie.split('=')[1];
-            config.headers['session_id'] = sessionId;
-        }
-        return config;
-    },
-    error => {
-        return Promise.reject(error);
-    }
-);
-
-// Request interceptor for handling cookies
+// Request interceptor: forward the session_id cookie as a header too (the
+// backend accepts either). Note: the cookie is httpOnly, so document.cookie
+// won't actually expose it — this is a best-effort fallback.
 api.interceptors.request.use(
     config => {
         const cookies = document.cookie.split(';');
@@ -48,13 +36,10 @@ api.interceptors.response.use(
     response => response,
     error => {
         if (error.response?.status === 401) {
-            // Clear local storage
+            // Clear cached auth flag. We intentionally do NOT hard-redirect to
+            // /login here: route guards are currently disabled in App.js, and a
+            // forced redirect on any background 401 caused navigation loops.
             localStorage.removeItem('isLoggedIn');
-            
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
-            }
         }
         return Promise.reject(error);
     }

@@ -1,320 +1,190 @@
-/* TrustTrail.css */
+/* ============================================================================
+   TrustTrail — feed of transactions, trustifacts & shoutouts
+   Warm cards with a type-coded left accent bar.
+   ========================================================================== */
 
 .transaction {
-    background-color: #fff;
-    padding: .5em;
-    border-radius: 8px;
-    margin-bottom: 2em;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--surface);
+    padding: 1.1em 1.25em;
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--sage);
+    border-radius: var(--r-lg);
+    margin-bottom: 1.4em;
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+    animation: ts-rise 0.5s var(--ease) both;
 }
+.transaction:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-.transaction.offer {
-    background-color: #d9f2d9;
-}
-
-.transaction.request {
-    background-color: #f2d9d9;
-}
+.transaction.offer     { border-left-color: var(--leaf); }
+.transaction.request   { border-left-color: var(--terracotta); }
+.transaction.completed { border-left-color: var(--moss); }
 
 .transaction-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    flex-direction: row;
+    gap: 1em;
 }
-
-.transaction-header .left {
-    flex: 2;
-    display: flex;
-    flex-direction: column;
-}
-
-.transaction-header .right {
-    flex: 0 0 80px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-}
-
-.transaction-header h3, .transaction-header small {
-    margin: 0;
-}
-
-.transaction-header small a {
-    margin-right: 1em;
-    color: #2a6592;
-    text-decoration: none;
-}
-
-.transaction-header small a:hover {
-    text-decoration: underline;
-}
-
+.transaction-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
+.transaction-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
+.transaction-header h3 { margin: 0; font-size: 1.18rem; line-height: 1.2; }
+.transaction-header small { margin: 0; color: var(--ink-faint); }
+.transaction-header small a { margin-right: 1em; color: var(--terracotta-deep); font-weight: 600; }
+.transaction-header small a:hover { text-decoration: underline; }
 
 .description-container {
     margin-top: 1em;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 1em;
 }
-
 .transaction-image {
-    width: 100px;
-    height: auto;
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
     margin-right: 1em;
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
 }
-
 .image-placeholder {
-    width: 100px;
-    height: 100px;
+    width: 110px; height: 110px;
     margin-right: 1em;
-    background-color: #e0e0e0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #888;
-    font-size: 0.9em;
-    border: 1px dashed #ccc;
+    background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint);
+    font-size: 0.85em;
+    border: 1px dashed var(--border);
+    border-radius: var(--r-md);
 }
+.description { flex: 1; align-self: flex-start; margin: 0; color: var(--ink-soft); }
 
-.description {
-    flex: 1;
-    align-self: flex-start;
-    margin: 0;
-}
-
-.project-link {
-    width: 20%;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-}
-
+.project-link { width: 20%; display: flex; justify-content: flex-end; align-items: flex-start; }
 .project-link a {
     display: inline-block;
-    padding: 0.2em 0.5em;
-    border: 1px solid #2a6592;
-    color: #2a6592;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.3s, color 0.3s;
+    padding: 0.45em 0.7em;
+    border: 1px solid var(--moss);
+    color: var(--moss-deep);
+    border-radius: var(--r-pill);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
     width: 100%;
-    height: 100%;
-    align-self: flex-start;
     box-sizing: border-box;
+    transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
 }
+.project-link a:hover { background: var(--moss); color: #f7f4e8; }
+.project-link a.disabled { color: var(--ink-faint); border-color: var(--border); }
 
-.project-link a:hover {
-    background-color: #2a6592;
-    color: white;
-}
+.participants { font-style: italic; color: var(--ink-soft); }
+.participants a { color: var(--terracotta-deep); font-weight: 600; font-style: normal; }
+.participants a:hover { text-decoration: underline; }
 
-.project-link a.disabled {
-    color: gray;
-    border-color: gray;
-}
+.status { margin-top: 1.1em; }
 
-.participants {
-    font-style: italic;
-}
-
-.participants a {
-    color: #2a6592;
-    text-decoration: none;
-}
-
-.participants a:hover {
-    text-decoration: underline;
-}
-
-.status {
-    margin-top: 1em;
-}
-
-.progress {
-    display: flex;
-    gap: 0.5em;
-}
-
+/* Progress stepper */
+.progress { display: flex; gap: 0.4em; }
 .step {
     flex: 1;
     text-align: center;
-    font-size: 0.9em;
-    padding: 0.2em;
-    border-radius: 4px;
-    background-color: #e6f0f5;
+    font-size: 0.82em;
+    font-weight: 600;
+    padding: 0.45em 0.3em;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    color: var(--ink-soft);
     position: relative;
 }
-
-.step.completed {
-    background-color: #2a6592;
-    color: white;
-}
-
+.step.completed { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
 .step.in-progress {
-    background-color: orange;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    background: var(--terracotta); color: #fff7ef; border-color: var(--terracotta);
+    cursor: pointer; transition: background-color 0.25s var(--ease);
 }
+.step.in-progress:hover { background: var(--terracotta-deep); }
+.step.disabled { background: var(--paper-deep); color: var(--ink-faint); border-color: var(--border-soft); }
+.step .comment { font-size: 0.78em; margin-top: 0.2em; opacity: 0.92; }
 
-.step.in-progress:hover {
-    background-color: #e67e22;
-}
+hr { border: none; border-top: 1px solid var(--border-soft); margin: 1.1em 0; }
 
-.step.disabled {
-    background-color: gray;
-    color: white;
-}
-
-.step .comment {
-    font-size: 0.8em;
-    color: #fff;
-    margin-top: 0.2em;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid #ccc;
-}
-
+/* Nested trustifacts & shoutouts */
 .trustifact, .shoutout-card {
-    padding: .5em;
-    border-radius: 8px;
-    margin-bottom: 1em;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-   
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-direction: row;
-}
-
-.shoutout-card {
-    background-color: #d9d9f2;
-}
-
-.trustifact {
-    background-color: #d9f2d9;
-}
-
-.trustifact-header, .shoutout-header {
+    padding: 0.9em 1em;
+    border-radius: var(--r-md);
+    margin-bottom: 0.9em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--sage);
+    box-shadow: var(--shadow-sm);
     display: flex;
     justify-content: space-between;
-    align-items: center;
-}
-
-.trustifact-text, .shoutout-text {
-    margin-top: 1em;
-    font-size: 0.9em;
-}
-
-.selector-buttons {
-    display: flex;
-    gap: 0.5em;
-    margin-bottom: 1em;
-}
-
-.btn-selector {
-    flex: 1;
-    padding: 0.5em;
-    background-color: #ccc;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-selector.active {
-    background-color: #2a6592;
-    color: white;
-}
-
-.trustifact .left, .shoutout-card .left {
-    display: flex;
-    align-items: center;
-    width: 100px;
-    padding-right: 10px;
-  
-}
-
-.trustifact .left img, .shoutout-card .left img {
-    width: 100px;
-    height: auto;
-    margin-right: 1em;
-}
-
-.trustifact .right, .shoutout-card .right {
-
-    flex: 0 0 80px;
-    display: flex;
-    justify-content: flex-end;
     align-items: flex-start;
-
 }
+.shoutout-card { border-left-color: var(--honey); }
+.trustifact    { border-left-color: var(--leaf); }
+
+.trustifact-header, .shoutout-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.trustifact-header h4, .shoutout-header h4 { margin: 0; font-size: 1rem; }
+.trustifact-text, .shoutout-text { margin-top: 0.7em; font-size: 0.92em; color: var(--ink-soft); }
+
+.trustifact .left, .shoutout-card .left { display: flex; align-items: center; width: 110px; padding-right: 12px; }
+.trustifact .left img, .shoutout-card .left img { width: 100px; height: auto; border-radius: var(--r-sm); margin-right: 1em; }
+.trustifact .right, .shoutout-card .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
 
 /* Editable fields */
 .transaction-header h3.editable,
 .description-container .description.editable {
     cursor: text;
-    background-color: #f5f5f5;
-    border: 1px dashed #ccc;
-    padding: 0.2em;
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-sm);
+    padding: 0.3em 0.4em;
 }
-
 .transaction-header h3.editable:focus,
 .description-container .description.editable:focus {
     outline: none;
-    background-color: #fff;
-    border-color: #2a6592;
+    background: var(--surface);
+    border-color: var(--leaf);
+    box-shadow: var(--ring);
 }
 
-/* Add and Modify buttons */
-
+/* Save / cancel actions inside entry forms */
 #save-shoutout-btn, #cancel-shoutout-btn {
     margin-top: 0.5em;
-    padding: 0.5em;
+    padding: 0.65em;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--r-pill);
     cursor: pointer;
-    color: white;
+    color: #f7f4e8;
     width: 100%;
-    background-color: #6a1b9a;
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: background-color 0.2s var(--ease);
 }
+#save-shoutout-btn { background: var(--moss); }
+#save-shoutout-btn:hover { background: var(--moss-deep); }
+#cancel-shoutout-btn { background: var(--ink-faint); }
+#cancel-shoutout-btn:hover { background: var(--ink-soft); }
 
+#save-trustifact-btn { background: var(--leaf); color: #f7f4e8; }
+#save-trustifact-btn:hover { background: var(--moss); }
 
-
-#save-trustifact-btn  {
- /*   background-color: #6a1b9a; */
-}
-
-#save-shoutout-btn:hover {
-    background-color: #4a148c;
-}
-
-#save-trustifact-btn {
-    background-color: #2e7d32;
-}
-
-#save-trustifact-btn:hover {
-    background-color: #1b5e20;
-}
-
-/* Add this at the bottom of TrustTrail.css */
 #shoutout-entry {
     padding: 1em;
-    border-radius: 8px;
+    border-radius: var(--r-md);
     margin-bottom: 1em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
 }
-
 #shoutout-entry p {
     width: 100%;
     margin-bottom: 0.5em;
     box-sizing: border-box;
-    border: 1px solid #ccc;
-    padding: 0.5em;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0.6em;
+    border-radius: var(--r-sm);
 }
-
-#shoutout-entry .btn-purple {
-    width: 49%;
-}
+#shoutout-entry .btn-purple { width: 49%; }

@@ -1,7 +1,7 @@
 /* User.css */
 
 .user-profile {
-    background-color: #fff;
+    background-color: var(--surface);
     padding: 1em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -56,11 +56,11 @@
 }
 
 .btn-blue {
-    background-color: #2a6592;
+    background-color: var(--moss);
 }
 
 .btn-purple {
-    background-color: purple;
+    background-color: var(--moss);
 }
 
 .user-trusttrail {
@@ -86,7 +86,7 @@
 
 .sphere-list a {
     text-decoration: none;
-    color: #007bff;
+    color: var(--moss);
 }
 
 .sphere-list a:hover {
@@ -104,7 +104,7 @@
 
 .transaction-summary a {
     text-decoration: none;
-    color: #2a6592;
+    color: var(--moss);
 }
 
 .transaction-summary a:hover {

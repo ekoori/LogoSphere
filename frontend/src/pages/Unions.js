@@ -1,37 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/Unions.css';
 import NewUnionForm from '../components/NewUnionForm';
 import UnionCard from '../components/UnionCard';
+import api from '../api';
 
 const Unions = () => {
-  const [unions, setUnions] = useState([
-    {
-      id: 'union-tech',
-      name: 'Tech Union',
-      participants: ['John Doe', 'Jane Smith', 'Alice Johnson', '147 more...'],
-      description: 'A community for technology enthusiasts and professionals. This union focuses on advancing technological innovations through collaboration and networking.',
-      projects: ['Ongoing Project 1', 'Ongoing Project 2', 'Ongoing Project 3'],
-      values: ['innovation', 'technology', 'networking']
-    },
-    {
-      id: 'union-green-energy',
-      name: 'Green Energy Union',
-      participants: ['Michael Green', 'Sarah Brown', 'Linda White', '95 more...'],
-      description: 'A union dedicated to promoting and developing renewable energy solutions. Members collaborate on projects aimed at creating sustainable and efficient energy systems.',
-      projects: ['Solar Panel Initiative', 'Wind Turbine Project'],
-      values: ['sustainability', 'renewable energy', 'environment']
-    }
-  ]);
-
+  const [unions, setUnions] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
-  const toggleFormVisibility = () => {
-    setIsFormVisible(!isFormVisible);
-  };
+  const toggleFormVisibility = () => setIsFormVisible((v) => !v);
 
-  const handleCreateUnion = (newUnion) => {
-    setUnions([...unions, { ...newUnion, id: `union-${Date.now()}`, participants: [], projects: [], values: [] }]);
+  const fetchUnions = useCallback(async () => {
+    try {
+      const response = await api.get('/api/unions');
+      const fetched = (response.data || []).map((u) => ({
+        ...u,
+        id: u.union_id,
+        participants: u.members || [],
+        projects: u.projects || [],
+        values: u.values || [],
+      }));
+      setUnions(fetched);
+    } catch (error) {
+      console.error('Error fetching unions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUnions();
+  }, [fetchUnions]);
+
+  const handleCreateUnion = async () => {
     toggleFormVisibility();
+    await fetchUnions();
   };
 
   return (
@@ -50,11 +51,15 @@ const Unions = () => {
       </aside>
       <main>
         <NewUnionForm isVisible={isFormVisible} onCreateUnion={handleCreateUnion} onCancel={toggleFormVisibility} />
-        <div className="union-list">
-          {unions.map((union) => (
-            <UnionCard key={union.id} {...union} onJoin={(id) => console.log(`Joining union ${id}`)} />
-          ))}
-        </div>
+        {unions.length === 0 ? (
+          <p className="empty-state">No unions yet. Gather a few people and start one.</p>
+        ) : (
+          <div className="unions-grid">
+            {unions.map((union) => (
+              <UnionCard key={union.id} {...union} onJoin={(id) => console.log(`Joining union ${id}`)} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

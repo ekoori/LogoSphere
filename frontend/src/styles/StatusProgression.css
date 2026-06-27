@@ -1,0 +1,73 @@
+/* ============================================================================
+   StatusProgression — interlocking chevron/arrow phase flow
+   ========================================================================== */
+.status-progression {
+    display: flex;
+    align-items: stretch;
+    margin-top: 1.1em;
+    font-family: var(--font-body);
+}
+
+.status-progression .phase {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15em;
+    padding: 0.6em 0.5em 0.6em 1.4em;
+    margin-right: -12px;            /* overlap so the tip sits in the next notch */
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.1;
+    /* arrow: pointed right edge + notched left edge */
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%);
+}
+.status-progression .phase:first-child {
+    padding-left: 0.7em;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+}
+.status-progression .phase:last-child {
+    margin-right: 0;
+    padding-right: 0.7em;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%);
+}
+.status-progression .phase:only-child { clip-path: none; }
+
+.phase-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.phase-time { font-size: 0.68rem; font-weight: 600; opacity: 0.85; }
+
+/* States */
+.status-progression .phase-pending {
+    background: var(--surface-2);
+    color: var(--ink-faint);
+    box-shadow: inset 0 0 0 1px var(--border-soft);
+}
+.status-progression .phase-done {
+    background: var(--leaf);
+    color: #f4f7ec;
+}
+.status-progression .phase-active {
+    background: var(--terracotta);
+    color: #fff7ef;
+    box-shadow: 0 2px 8px rgba(194, 100, 60, 0.3);
+}
+.status-progression .phase-cancelled {
+    background: var(--danger);
+    color: #fff;
+}
+
+@media (max-width: 520px) {
+    .status-progression { flex-direction: column; }
+    .status-progression .phase,
+    .status-progression .phase:first-child,
+    .status-progression .phase:last-child {
+        clip-path: none;
+        margin: 0 0 3px 0;
+        border-radius: var(--r-sm);
+        padding: 0.5em;
+    }
+}

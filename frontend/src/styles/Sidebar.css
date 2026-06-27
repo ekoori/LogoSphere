@@ -19,10 +19,10 @@
   
 
   .sidebar nav ul li a {
-    color: #008eff;
+    color: var(--moss);
     text-decoration: none;
   }
 
   .sidebar nav ul li:hover {
-    color: #1cb3e1; 
+    color: var(--leaf); 
   }

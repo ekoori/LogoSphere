@@ -18,37 +18,15 @@ from flask import request, jsonify, session, make_response, current_app
 from flask_login import login_user, logout_user, current_user
 
 from app.models.user import User
-from app.routes.cassandra import CassandraSessionInterface, create_fresh_session
 
 logger = logging.getLogger(__name__)
 
-# Initialize the custom session interface globally if required
-cassandra_session_interface = CassandraSessionInterface(
-    cluster_nodes=['172.236.62.11'], 
-    keyspace='trustsphere', 
-    session_lifetime=timedelta(hours=24)
-)
 
 def load_user(user_id):
     """Load user by ID."""
     logger.info(f'Loading user with user_id: {user_id}')
     return User.get(user_id)
 
-
-
-# File: ./backend/app/routes/login.py
-# Description: Handles user authentication and session management
-import logging
-import uuid
-from datetime import datetime, timedelta
-from flask import request, jsonify, make_response, current_app
-from app.models.user import User
-from app.routes.cassandra import CassandraSessionInterface, create_fresh_session
-
-logger = logging.getLogger(__name__)
-
-# File: ./backend/app/routes/login.py
-# Update the login function
 
 def login():
     if request.method == 'OPTIONS':
@@ -80,13 +58,14 @@ def login():
                 'data': user.to_dict()
             }))
 
-            # Set cookie
+            # Set cookie. `secure` follows app config (SESSION_COOKIE_SECURE),
+            # which is driven by an env var so production (HTTPS) can enable it.
             response.set_cookie(
                 'session_id',
                 session_id,
                 httponly=True,
-                secure=False,  # Set to True in production with HTTPS
-                samesite='Lax',
+                secure=current_app.config.get('SESSION_COOKIE_SECURE', False),
+                samesite=current_app.config.get('SESSION_COOKIE_SAMESITE', 'Lax'),
                 path="/",
                 max_age=24 * 60 * 60,
                 domain=None  # Allow the browser to set the appropriate domain
@@ -152,7 +131,9 @@ def check_session():
         ).one()
 
         if result:
-            user = User.get(result.user_id)
+            # User.get expects a string user_id (it calls uuid.UUID() on it);
+            # result.user_id comes back from the driver as a UUID object.
+            user = User.get(str(result.user_id))
             if user:
                 response = jsonify({
                     'status': 'active',

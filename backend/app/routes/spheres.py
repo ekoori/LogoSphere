@@ -67,9 +67,15 @@ def get_spheres(user_id=None):
 
     try:
         logger.info(f"Fetching spheres for user_id: {user_id}")
-        
-        query = "SELECT * FROM spheres"
-        rows = app.session_interface.cassandra_session.execute(query)
+
+        session = app.session_interface.cassandra_session
+
+        # Build a {user_id: name} map once so participant UUIDs render as names.
+        name_by_id = {}
+        for u in session.execute("SELECT user_id, name FROM users"):
+            name_by_id[u.user_id] = u.name
+
+        rows = session.execute("SELECT * FROM spheres")
 
         spheres = []
         sphere_ids = set()
@@ -91,7 +97,17 @@ def get_spheres(user_id=None):
                 projects=row.projects,
                 values=row.values
             )
-            spheres.append(sphere.to_dict())
+            sphere_dict = sphere.to_dict()
+            # Resolve participant UUIDs to display names, and provide {id,name}
+            # pairs so the frontend can link each member to their profile.
+            sphere_dict['participant_names'] = [
+                name_by_id.get(pid, 'Member') for pid in (row.participants or [])
+            ]
+            sphere_dict['members'] = [
+                {'id': str(pid), 'name': name_by_id.get(pid, 'Member')}
+                for pid in (row.participants or [])
+            ]
+            spheres.append(sphere_dict)
 
         logger.info(f"Successfully retrieved {len(spheres)} spheres")
         response = jsonify(spheres)

@@ -1,7 +1,7 @@
 /* Project.css */
 
 .project-section {
-    background-color: #fff;
+    background-color: var(--surface);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -10,7 +10,7 @@
 .project-sidebar {
     width: 20%;
     padding: 1em;
-    background-color: #fff;
+    background-color: var(--surface);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     text-align: left;
@@ -44,13 +44,13 @@
     padding: 1em;
     border: 1px solid #ccc;
     border-radius: 4px;
-    background-color: #e6f0f5;
+    background-color: var(--surface-2);
     margin-bottom: 1em;
     transition: background-color 0.3s;
 }
 
 .transaction:hover {
-    background-color: #cce0ff;
+    background-color: var(--surface-2);
 }
 
 .transaction-header {
@@ -66,7 +66,7 @@
 
 .transaction-status-btn {
     padding: 0.2em 0.5em;
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
     border: none;
     border-radius: 4px;
@@ -90,7 +90,7 @@
 
 .transaction-participants a {
     display: inline;
-    color: #2a6592;
+    color: var(--moss);
     text-decoration: none;
 }
 
@@ -104,7 +104,7 @@
 
 .project-values span {
     display: inline-block;
-    background-color: #f1f1f1;
+    background-color: var(--surface-2);
     padding: 0.2em 0.5em;
     border-radius: 4px;
     margin-right: 0.5em;
@@ -116,7 +116,7 @@
 }
 
 .shoutout {
-    background-color: #d9d9f2;
+    background-color: rgba(217, 162, 63, 0.12);
     padding: 1em;
     border-radius: 8px;
     margin-bottom: 1em;
@@ -157,7 +157,7 @@
 }
 
 .btn-orange {
-    background-color: orange;
+    background-color: var(--terracotta);
     color: white;
     border: none;
     padding: 0.5em 1em;
@@ -167,7 +167,7 @@
 }
 
 .btn-orange:hover {
-    background-color: darkorange;
+    background-color: var(--terracotta-deep);
 }
 
 .status {
@@ -189,6 +189,6 @@
 }
 
 .status.trustifacted {
-    background-color: orange;
+    background-color: var(--terracotta);
 }
 

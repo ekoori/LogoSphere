@@ -23,11 +23,14 @@ from cassandra.cqlengine.models import Model
 from cassandra.cqlengine import connection
 from cassandra.cqlengine.management import sync_table
 import uuid
+import os
 from uuid import UUID
 
 #cluster = Cluster(['143.42.34.42'])  # provide your Cassandra host here
 #cassandra_session = cluster.connect()
-connection.setup(['172.236.62.11'],'trustsphere')
+# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
+CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
+connection.setup(CASSANDRA_HOSTS, 'trustsphere')
 
 
 class Likes(Model):

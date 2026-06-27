@@ -16,7 +16,7 @@
 
 import './styles/App.css';
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, useLocation } from 'react-router-dom';
 
 // Page Imports
 import About from './pages/About';
@@ -53,9 +53,24 @@ import api from './api';
 
 const LoginContext = createContext();
 
-function AppContent() {
-  const { isLoggedIn } = useLogin();
+// Gates a route behind authentication. While the initial session check is in
+// flight we render nothing (avoids a redirect flicker for logged-in users);
+// once resolved, unauthenticated users are sent to /login (remembering where
+// they were headed).
+function ProtectedRoute({ children }) {
+  const { isLoggedIn, authChecked } = useLogin();
+  const location = useLocation();
 
+  if (!authChecked) {
+    return <div className="route-loading">Loading…</div>;
+  }
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+  return children;
+}
+
+function AppContent() {
   return (
     <div className="app-container">
       <Header className='header'/>
@@ -68,119 +83,21 @@ function AppContent() {
         <Route path="/privacy" element={<div className='container'><Privacy/></div>}/>
         <Route path="/tos" element={<div className='container'><TOS/></div>}/>
         
-        {/* Protected Routes */}
-        <Route 
-          path="/profile" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <ProfilePage/> : <ProfilePage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/settings" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <SettingsPage/> : <SettingsPage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/projects" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <Projects/> : <Projects />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/project" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <ProjectPage/> : <ProjectPage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/project-management" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <ProjectManagement/> : <ProjectManagement />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/spheres" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <Spheres/> : <Spheres />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/sphere" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <SpherePage/> : <SpherePage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/sphere-management" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <SphereManagement/> : <SphereManagement />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/unions" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <Unions/> : <Unions />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/union" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <UnionPage/> : <UnionPage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/union-management" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <UnionManagement/> : <UnionManagement />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/marketplace" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <MarketplacePage/> : <MarketplacePage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/user" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <UserPage/> : <UserPage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
-        <Route 
-          path="/admin" 
-          element={
-            <ErrorBoundary>
-              {isLoggedIn ? <AdminPage/> : <AdminPage />} {/* Temporarily disable redirect */}
-            </ErrorBoundary>
-          }
-        />
+        {/* Protected Routes — gated by ProtectedRoute (redirects to /login) */}
+        <Route path="/profile" element={<ErrorBoundary><ProtectedRoute><ProfilePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/settings" element={<ErrorBoundary><ProtectedRoute><SettingsPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/projects" element={<ErrorBoundary><ProtectedRoute><Projects/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/project" element={<ErrorBoundary><ProtectedRoute><ProjectPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/project-management" element={<ErrorBoundary><ProtectedRoute><ProjectManagement/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/spheres" element={<ErrorBoundary><ProtectedRoute><Spheres/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/sphere" element={<ErrorBoundary><ProtectedRoute><SpherePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/sphere-management" element={<ErrorBoundary><ProtectedRoute><SphereManagement/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/unions" element={<ErrorBoundary><ProtectedRoute><Unions/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/union" element={<ErrorBoundary><ProtectedRoute><UnionPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/union-management" element={<ErrorBoundary><ProtectedRoute><UnionManagement/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/marketplace" element={<ErrorBoundary><ProtectedRoute><MarketplacePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 
           path="/contribute" 
           element={<div className='container'><Contribute/></div>}
@@ -201,6 +118,9 @@ function AppContent() {
 function LoginProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
+  // Tracks whether the initial session check has completed, so protected routes
+  // don't redirect to /login before we know the real auth state.
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -245,6 +165,8 @@ function LoginProvider({ children }) {
         setIsLoggedIn(false);
         setUserId(null);
       }
+    } finally {
+      setAuthChecked(true);
     }
   }, []);
 
@@ -255,12 +177,13 @@ function LoginProvider({ children }) {
   }, [checkSession]);
 
   return (
-    <LoginContext.Provider value={{ 
-      isLoggedIn, 
-      setIsLoggedIn, 
-      userId, 
-      setUserId, 
-      handleLogout 
+    <LoginContext.Provider value={{
+      isLoggedIn,
+      setIsLoggedIn,
+      userId,
+      setUserId,
+      authChecked,
+      handleLogout
     }}>
       {children}
     </LoginContext.Provider>

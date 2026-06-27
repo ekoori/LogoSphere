@@ -65,7 +65,7 @@ TrustTrail.propTypes = {
         type: PropTypes.string.isRequired,
         title: PropTypes.string,
         spheres: PropTypes.arrayOf(PropTypes.string).isRequired,
-        participants: PropTypes.arrayOf(PropTypes.string),
+        participants: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])),
         description: PropTypes.string,
         project: PropTypes.string,
         imageUrl: PropTypes.string,

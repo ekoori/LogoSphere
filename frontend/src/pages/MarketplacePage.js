@@ -1,92 +1,60 @@
-/*
-File : ./frontend/src/components/MarketplacePage.js
-Description: This file creates a React component for the Marketplace, where users can post and view services. 
-        It contains functionality for loading the services from the API and displaying them.
-Class: Marketplace
-Properties: 
-  [-] state: contains a list of services fetched from the API.
-Methods: 
-  [-] componentDidMount(): calls the API to fetch the list of services when the component is first mounted.
-  [-] handleServiceSubmission(): submits a new service to the API (not yet implemented).
-*/
-
-import React, { useState } from 'react';
+// MarketplacePage — the full marketplace of offers & requests, fetched live.
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/App.css';
 import '../styles/Marketplace.css';
 
 import Marketplace from '../components/Marketplace';
-
-
-
-
+import api from '../api';
+import { mapService } from '../utils/mappers';
 
 function MarketplacePage() {
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const toggleFormVisibility = () => {
-      setIsFormVisible(!isFormVisible);
-  };
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [services, setServices] = useState([]);
+    const [filter, setFilter] = useState('all');
 
-  const services = [
-      {
-          id: 'service-graphic-design',
-          type: 'offer',
-          spheres: ['Heidelberg Community Sphere', 'AI Australia Sphere'],
-          title: 'Offering Graphic Design Services',
-          provider: 'John Doe',
-          description: 'I am offering my services as a graphic designer for any community project. I specialize in creating modern and sleek designs for both web and print media.',
-          project: 'Project not assigned',
-          imageUrl: '',
-          time: '2h ago',
-          status: 'Cancelled',
-          likesCount: 15,
-          likedByCurrentUser: false,
-          relatedTransactions: [],
-          canModify: false
-      },
-      {
-          id: 'service-h100-cpus',
-          type: 'request',
-          spheres: ['OpenAI Sphere'],
-          title: 'Requesting 7 H100 CPUs for OpenAI datacentre from Jansen Huang',
-          provider: 'Jansen Huang',
-          description: 'This transaction involves requesting 7 H100 CPUs for the OpenAI datacentre.',
-          project: 'Project not assigned',
-          imageUrl: 'static/h100_cpus.webp',
-          time: '30 min ago',
-          status: 'Confirmed Request',
-          likesCount: 0,
-          likedByCurrentUser: false,
-          relatedTransactions: [],
-          canModify: false
-      }
-  ];
+    const toggleFormVisibility = () => setIsFormVisible((v) => !v);
 
-  return (
-      <div className="container">
-          <aside>
-              <button className="btn-orange" onClick={toggleFormVisibility}>
-                  {isFormVisible ? 'Hide New Service Form' : 'New Service'}
-              </button>
+    const fetchServices = useCallback(async () => {
+        try {
+            const res = await api.get('/api/marketplace');
+            setServices((res.data || []).map(mapService));
+        } catch (e) {
+            console.error('Error fetching marketplace:', e);
+        }
+    }, []);
 
-              <div className="search-box">
-                  <input type="text" placeholder="Search..." />
-              </div>
-              <div className="filters">
-                  <button>Show All</button>
-                  <button>Filter by Sphere</button>
-                  <button>Your Contacts</button>
-                  <button>My Offers/Requests</button>
-                  <button>Offers</button>
-                  <button>Requests</button>
-                  <button>Active</button>
-                  <button>Completed</button>
-              </div>
-          </aside>
-          <main>
-              <Marketplace services={services} newServiceVisible={isFormVisible} />
-          </main>
-      </div>
-  );
+    useEffect(() => {
+        fetchServices();
+    }, [fetchServices]);
+
+    const shown = services.filter((s) =>
+        filter === 'all' ? true : filter === 'offers' ? s.type === 'offer' : s.type === 'request'
+    );
+
+    return (
+        <div className="container">
+            <aside>
+                <button className="btn-orange" onClick={toggleFormVisibility}>
+                    {isFormVisible ? 'Hide New Service Form' : 'New Service'}
+                </button>
+                <div className="search-box">
+                    <input type="text" placeholder="Search..." />
+                </div>
+                <div className="filters">
+                    <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Show All</button>
+                    <button className={filter === 'offers' ? 'active' : ''} onClick={() => setFilter('offers')}>Offers</button>
+                    <button className={filter === 'requests' ? 'active' : ''} onClick={() => setFilter('requests')}>Requests</button>
+                </div>
+            </aside>
+            <main>
+                {shown.length === 0 ? (
+                    <p className="empty-state">No offers or requests yet. Share something with your community.</p>
+                ) : (
+                    <Marketplace services={shown} newServiceVisible={isFormVisible} />
+                )}
+            </main>
+        </div>
+    );
 }
 
 export default MarketplacePage;

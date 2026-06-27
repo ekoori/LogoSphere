@@ -1,106 +1,82 @@
-import React, { useState } from 'react';
+// UnionPage — shows a single Union, loaded by ?id= (or ?name=).
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import '../styles/UnionPage.css';
-import SphereBanner from '../components/SphereBanner';
+import api from '../api';
 
-const UnionPage = () => {
-  const [union, setUnion] = useState({
-    name: 'Tech Union',
-    location: 'San Francisco, USA',
-    status: 'Active',
-    lead: 'John Doe',
-    description: 'The Tech Union is focused on advancing technology and innovation through collaboration and resource sharing.',
-    governance: ['>50% majority', 'Vote on: accepting new member', 'Delegates: project management to a single PM', 'TrustiFacting'],
-    activeVoting: 'Current Voting',
-    orgchart: [
-      { role: 'Lead', name: 'John Doe' },
-      { role: 'Trustifactors', names: ['Jane Smith', 'Michael Green'] },
-      { role: 'PMs', names: ['Sarah Brown', 'Chris Johnson'] },
-    ],
-    members: ['John Doe', 'Jane Smith', '50 more...'],
-    projects: ['OpenAI Datacenter Expansion', 'Community Garden Initiative'],
-    values: ['innovation', 'technology', 'collaboration'],
-    bannerImage: 'static/A_banner_image_for_a_tech_union_in_a_solar_punk_en.png'
-  });
-  const [previewUrl, setPreviewUrl] = useState(union.bannerImage);
+function UnionPage() {
+    const [params] = useSearchParams();
+    const id = params.get('id');
+    const name = params.get('name');
+    const [union, setUnion] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setUnion((prevUnion) => ({
-        ...prevUnion,
-        bannerImage: file
-      }));
-    }
-  };
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const res = await api.get('/api/unions');
+                const list = res.data || [];
+                const found = list.find((u) => (id && u.union_id === id) || (name && u.name === name));
+                if (active) setUnion(found || null);
+            } catch (e) {
+                console.error('Error loading union:', e);
+            } finally {
+                if (active) setLoading(false);
+            }
+        })();
+        return () => { active = false; };
+    }, [id, name]);
 
-  return (
-    <div className="container">
-      <aside className="union-sidebar">
-        <h2>{union.name}</h2>
-        <p><strong>Location:</strong> {union.location}</p>
-        <p><strong>Status:</strong> <span className="status active">{union.status}</span></p>
-        <p><strong>Lead:</strong> <a href="/user">{union.lead}</a></p>
-        <a href="/union-management" className="btn-orange">Manage Union</a>
-        <p><strong>Governance:</strong></p>
-        <ul>
-          {union.governance.map((item, index) => (
-            <li key={index}>{item}</li>
-          ))}
-        </ul>
-        <p><strong>Active voting:</strong></p>
-        <a href="/voting" className="btn-orange">{union.activeVoting}</a>
-      </aside>
-      <main>
-        <div className="union-section">
-          <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />
+    if (loading) return <div className="route-loading">Loading…</div>;
+    if (!union) return <div className="container"><main><p className="empty-state">Union not found.</p></main></div>;
 
-          <div className="union-description">
-            <h3>Description</h3>
-            <p>{union.description}</p>
-          </div>
-          <div className="union-orgchart">
-            <h3>Orgchart</h3>
-            <ul className="orgchart-list">
-              {union.orgchart.map((item, index) => (
-                <li key={index}>
-                  <strong>{item.role}:</strong> {Array.isArray(item.names) ? item.names.map((name, idx) => (
-                    <span key={idx}><a href="/user">{name}</a>{idx < item.names.length - 1 ? ', ' : ''}</span>
-                  )) : <a href="/user">{item.name}</a>}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="union-members">
-            <h3>All Members</h3>
-            <ul className="member-list">
-              {union.members.map((member, index) => (
-                <li key={index}><a href={index < union.members.length - 1 ? "/user" : "/members"}>{member}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div className="union-projects">
-            <h3>Current Projects</h3>
-            <ul className="project-list">
-              {union.projects.map((project, index) => (
-                <li key={index}><a href="/project">{project}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div className="union-values">
-            <h3>Value Graph</h3>
-            {union.values.map((value, index) => (
-              <span key={index}>#{value}</span>
-            ))}
-          </div>
+    const members = union.members || [];
+    const projects = union.projects || [];
+    const values = union.values || [];
+
+    return (
+        <div className="container">
+            <main>
+                <article className="detail-card">
+                    <span className="eyebrow">Union</span>
+                    <h1>{union.name}</h1>
+                    {union.sphere_name && (
+                        <p className="detail-meta">Part of <Link to={`/sphere?name=${encodeURIComponent(union.sphere_name)}`}>{union.sphere_name}</Link></p>
+                    )}
+                    <p className="detail-description">{union.description}</p>
+
+                    {values.length > 0 && (
+                        <div className="detail-values">
+                            {values.map((v, i) => <span key={i}>#{v}</span>)}
+                        </div>
+                    )}
+
+                    <div className="detail-grid">
+                        <section className="detail-section">
+                            <h2>Members ({members.length})</h2>
+                            <ul className="detail-list">
+                                {members.map((m, i) => (
+                                    <li key={i}><Link to={`/user?id=${m.id}`}>👤 {m.name}</Link></li>
+                                ))}
+                                {members.length === 0 && <li className="muted">No members yet.</li>}
+                            </ul>
+                        </section>
+
+                        <section className="detail-section">
+                            <h2>Projects</h2>
+                            <ul className="detail-list">
+                                {projects.map((p, i) => (
+                                    <li key={i}><Link to={`/project?name=${encodeURIComponent(p)}`}>🌱 {p}</Link></li>
+                                ))}
+                                {projects.length === 0 && <li className="muted">No projects yet.</li>}
+                            </ul>
+                        </section>
+                    </div>
+                </article>
+            </main>
         </div>
-      </main>
-    </div>
-  );
-};
+    );
+}
 
 export default UnionPage;

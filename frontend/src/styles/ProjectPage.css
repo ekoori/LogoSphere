@@ -1,7 +1,7 @@
 /* ProjectManagement.css */
 
 .transaction {
-    background-color: #fff;
+    background-color: var(--surface);
     padding: 1em;
     border-radius: 8px;
     margin-bottom: 2em;
@@ -10,11 +10,11 @@
 }
 
 .transaction.offer {
-    background-color: #d9f2d9;
+    background-color: rgba(111, 138, 79, 0.12);
 }
 
 .transaction.request {
-    background-color: #f2d9d9;
+    background-color: rgba(194, 100, 60, 0.10);
 }
 
 .transaction-header {
@@ -43,7 +43,7 @@
 
 .transaction-header small a {
     margin-right: 1em;
-    color: #2a6592;
+    color: var(--moss);
     text-decoration: none;
 }
 
@@ -87,8 +87,8 @@
 .project-link a {
     display: inline-block;
     padding: 0.2em 0.5em;
-    border: 1px solid #2a6592;
-    color: #2a6592;
+    border: 1px solid var(--moss);
+    color: var(--moss);
     text-decoration: none;
     border-radius: 4px;
     transition: background-color 0.3s, color 0.3s;
@@ -99,7 +99,7 @@
 }
 
 .project-link a:hover {
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .participants a {
-    color: #2a6592;
+    color: var(--moss);
     text-decoration: none;
 }
 
@@ -136,24 +136,24 @@
     font-size: 0.9em;
     padding: 0.2em;
     border-radius: 4px;
-    background-color: #e6f0f5;
+    background-color: var(--surface-2);
     position: relative;
 }
 
 .step.completed {
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
 }
 
 .step.in-progress {
-    background-color: orange;
+    background-color: var(--terracotta);
     color: white;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
 .step.in-progress:hover {
-    background-color: #e67e22;
+    background-color: var(--terracotta-deep);
 }
 
 .step.disabled {
@@ -174,7 +174,7 @@
 aside {
     width: 25%;
     padding: 1em;
-    background-color: #f5f5f5;
+    background-color: var(--surface-2);
     border-right: 1px solid #ddd;
 }
 
@@ -198,7 +198,7 @@ aside ul li {
 }
 
 aside ul li a {
-    color: #2a6592;
+    color: var(--moss);
     text-decoration: none;
 }
 
@@ -225,7 +225,7 @@ main {
 
 .btn-orange {
     padding: 0.5em 1em;
-    background-color: orange;
+    background-color: var(--terracotta);
     color: white;
     border: none;
     border-radius: 4px;
@@ -234,7 +234,7 @@ main {
 }
 
 .btn-orange:hover {
-    background-color: darkorange;
+    background-color: var(--terracotta-deep);
 }
 
 .selector-buttons {
@@ -245,20 +245,20 @@ main {
 
 .selector-buttons button {
     padding: 0.5em 1em;
-    border: 1px solid #2a6592;
-    background-color: white;
-    color: #2a6592;
+    border: 1px solid var(--moss);
+    background-color: var(--surface);
+    color: var(--moss);
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s;
 }
 
 .selector-buttons button.selected {
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
 }
 
 .selector-buttons button:hover {
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
 }
 

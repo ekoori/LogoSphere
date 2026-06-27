@@ -29,7 +29,24 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import LikeTimestamp from './LikeTimestamp';
 import NewShoutoutForm from './NewShoutoutForm';
+import StatusProgression from './StatusProgression';
 import '../styles/TrustTrail.css';
+
+// Lifecycle phases for a trust transaction (shared chevron control).
+const TX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
+const txIndex = (status) => {
+    const i = TX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
+    return i >= 0 ? i : 0;
+};
+
+// participants may be plain names or {id, name} pairs; "You" links to own profile.
+const pName = (p) => (typeof p === 'string' ? p : p.name);
+const pHref = (p) => {
+    const name = pName(p);
+    if (name === 'You') return '/profile';
+    const id = typeof p === 'string' ? null : p.id;
+    return id ? `/user?id=${id}` : '/user';
+};
 
 function TransactionCard({
     type,
@@ -83,7 +100,7 @@ function TransactionCard({
                 <div className="left">
                     <small>
                         {spheres.map((sphere, index) => (
-                            <a href="/sphere" onClick={(e) => e.stopPropagation()} key={index}>
+                            <a href={`/sphere?name=${encodeURIComponent(sphere)}`} onClick={(e) => e.stopPropagation()} key={index}>
                                 {sphere}{index < spheres.length - 1 ? ', ' : ''}
                             </a>
                         ))}
@@ -99,7 +116,7 @@ function TransactionCard({
                     </h3>
                     <div className="participants">
                         {participants.map((participant, index) => (
-                            <span key={index}>👤 <a href="/user" onClick={(e) => e.stopPropagation()}>{participant}</a>{index < participants.length - 1 ? ', ' : ''}</span>
+                            <span key={index}>👤 <a href={pHref(participant)} onClick={(e) => e.stopPropagation()}>{pName(participant)}</a>{index < participants.length - 1 ? ', ' : ''}</span>
                         ))}
                     </div>
                     {originService && (
@@ -169,13 +186,13 @@ function TransactionCard({
                 </div>
             </div>
             <div className="status">
-                <div className="progress">
-                    <div className={`step ${status === 'Initiated' ? 'completed' : ''}`}>Initiated<br /><span className="time white">{initiatedTime}</span></div>
-                    <div className={`step ${status === 'In Progress' ? 'completed' : ''}`}>In Progress<br /><span className="time white">{inProgressTime}</span></div>
-                    <div className={`step ${status === 'Finished' ? 'completed' : ''}`}>Finished<br /><span className="time white">{finishedTime}</span></div>
-                    <div className={`step ${status === 'Trustifacted' ? 'completed' : ''}`}>Trustifacted<br /><span className="time white">{trustifactedTime}</span></div>
-                    <div className={`step ${status === 'Additional Comments Added' ? 'completed' : ''}`}>Additional Comments Added<br /><span className="time white">{additionalCommentsTime}</span></div>
-                </div>
+                <StatusProgression
+                    currentIndex={txIndex(status)}
+                    steps={TX_STEPS.map((label, i) => ({
+                        label,
+                        time: [initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime][i] || '',
+                    }))}
+                />
             </div>
             <hr />
             {trustifacts && trustifacts.length > 0 ? (
@@ -247,7 +264,7 @@ TransactionCard.propTypes = {
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     spheres: PropTypes.arrayOf(PropTypes.string).isRequired,
-    participants: PropTypes.arrayOf(PropTypes.string).isRequired,
+    participants: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
     description: PropTypes.string.isRequired,
     project: PropTypes.string,
     imageUrl: PropTypes.string,

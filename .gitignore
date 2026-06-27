@@ -44,6 +44,8 @@ npm-debug.log*
 
 # dotenv environment variable files
 .env*
+# ...but keep the committed example template
+!.env.example
 
 # Pycharm project files
 /.idea/

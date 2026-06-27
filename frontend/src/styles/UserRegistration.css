@@ -1,5 +1,5 @@
   .register-form {
-    background-color: #7a9dde; /* darker blue */
+    background-color: var(--leaf); /* darker blue */
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -22,13 +22,13 @@
   }
   
   .register-form button {
-    background-color: #6FAED9; /* darker blue */
+    background-color: var(--leaf); /* darker blue */
     color: white;
     border: none;
     cursor: pointer;
 }
   
 .register-form button:hover {
-  background-color: #569EC3; /* even darker blue on hover */
+  background-color: var(--moss); /* even darker blue on hover */
 }
   

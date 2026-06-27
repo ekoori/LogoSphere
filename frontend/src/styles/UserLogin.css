@@ -1,34 +1,53 @@
+/* ============================================================================
+   Login form — a warm, centered card.
+   ========================================================================== */
 .login-form {
-    background-color: #7a9dde; /* darker blue */
+    max-width: 420px;
+    margin: 3rem auto;
+    padding: 2.5rem 2.25rem 2.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-md);
     display: flex;
-    align-items: center;
+    align-items: stretch;
     flex-direction: column;
-    gap: 20px;
-    border-radius: 8px;
-  }
-  
-  .login-form h1 {
+    gap: 1.1rem;
+    animation: ts-rise 0.5s var(--ease) both;
+}
+
+.login-form h1,
+.login-form h2 {
     text-align: center;
-    margin-top: 100px;
-    margin-bottom: 50px;
-  }
-  
-  .login-form input[type="email"], 
-  .login-form input[type="password"], 
-  .login-form button {
-      width: 300px;
-      padding: 10px;
-      font-size: 16px;
-  }
-  
-  .login-form button {
-    background-color: #6FAED9; /* darker blue */
-    color: white;
+    margin: 0 0 0.6rem;
+    font-size: 1.9rem;
+}
+
+.login-form input[type="email"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    font-size: 1rem;
+}
+
+.login-form button {
+    width: 100%;
+    margin-top: 0.4rem;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    font-weight: 700;
+    color: #f7f4e8;
+    background: var(--moss);
     border: none;
+    border-radius: var(--r-pill);
     cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
-  
 .login-form button:hover {
-  background-color: #569EC3; /* even darker blue on hover */
+    background: var(--moss-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
-  
+.login-form button:active { transform: translateY(0); }

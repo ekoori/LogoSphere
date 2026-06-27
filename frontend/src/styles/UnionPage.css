@@ -1,7 +1,7 @@
 /* Union.css */
 
 .union-section {
-    background-color: #fff;
+    background-color: var(--surface);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -10,7 +10,7 @@
 .union-sidebar {
     width: 20%;
     padding: 1em;
-    background-color: #fff;
+    background-color: var(--surface);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     text-align: left;
@@ -68,8 +68,8 @@
 .member-list a,
 .project-list a {
     text-decoration: none;
-    color: #2a6592;
-    background-color: #e6f0f5;
+    color: var(--moss);
+    background-color: var(--surface-2);
     padding: 0.5em 1em;
     border-radius: 4px;
     display: block;
@@ -79,7 +79,7 @@
 .orgchart-list a:hover,
 .member-list a:hover,
 .project-list a:hover {
-    background-color: #cce0ff;
+    background-color: var(--surface-2);
     color: darkblue;
 }
 
@@ -89,7 +89,7 @@
 
 .union-values span {
     display: inline-block;
-    background-color: #f1f1f1;
+    background-color: var(--surface-2);
     padding: 0.2em 0.5em;
     border-radius: 4px;
     margin-right: 0.5em;
@@ -107,7 +107,7 @@
 }
 
 .btn-orange {
-    background-color: orange;
+    background-color: var(--terracotta);
     color: white;
     border: none;
     padding: 0.5em 1em;
@@ -117,6 +117,6 @@
 }
 
 .btn-orange:hover {
-    background-color: darkorange;
+    background-color: var(--terracotta-deep);
 }
 

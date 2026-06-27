@@ -3,7 +3,7 @@
 .management-sidebar {
     width: 20%;
     padding: 1em;
-    background-color: #fff;
+    background-color: var(--surface);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -43,7 +43,7 @@
 }
 
 .management-section {
-    background-color: #fff;
+    background-color: var(--surface);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -81,7 +81,7 @@
 }
 
 .management-section .btn-orange {
-    background-color: orange;
+    background-color: var(--terracotta);
     color: white;
     border: none;
     padding: 0.5em 1em;
@@ -91,7 +91,7 @@
 }
 
 .management-section .btn-orange:hover {
-    background-color: darkorange;
+    background-color: var(--terracotta-deep);
 }
 
 .management-section .btn-remove {
@@ -116,7 +116,7 @@
 }
 
 .btn-selector {
-    background-color: #f1f1f1;
+    background-color: var(--surface-2);
     border: none;
     padding: 0.5em 1em;
     cursor: pointer;
@@ -128,7 +128,7 @@
 
 .btn-selector:hover,
 .btn-selector.active {
-    background-color: #2a6592;
+    background-color: var(--moss);
     color: white;
 }
 

@@ -265,6 +265,53 @@ CREATE TABLE trustsphere.trusttrail (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
+CREATE INDEX user_credentials_email_idx ON trustsphere.user_credentials (email);
+
+CREATE INDEX sessions_user_id_idx ON trustsphere.sessions (user_id);
+
+-- Unions: groups of users, usually nested within a Sphere.
+CREATE TABLE trustsphere.unions (
+    union_id uuid PRIMARY KEY,
+    name text,
+    description text,
+    admin1 uuid,
+    sphere_id uuid,
+    sphere_name text,
+    created_at timestamp,
+    members list<uuid>,
+    member_names list<text>,
+    projects list<text>,
+    values list<text>,
+    value_graph text,
+    image blob
+);
+
+-- Marketplace offers & requests.
+CREATE TABLE trustsphere.services (
+    service_id uuid PRIMARY KEY,
+    type text,
+    title text,
+    description text,
+    provider_id uuid,
+    provider_name text,
+    sphere_id uuid,
+    sphere_name text,
+    status text,
+    created_at timestamp,
+    values list<text>
+);
+
+-- Enriched columns on the projects table (see also database/schema_demo.cql).
+ALTER TABLE trustsphere.projects ADD description text;
+ALTER TABLE trustsphere.projects ADD status text;
+ALTER TABLE trustsphere.projects ADD owner_union text;
+ALTER TABLE trustsphere.projects ADD sphere_id uuid;
+ALTER TABLE trustsphere.projects ADD sphere_name text;
+ALTER TABLE trustsphere.projects ADD created_at timestamp;
+ALTER TABLE trustsphere.projects ADD participants list<uuid>;
+ALTER TABLE trustsphere.projects ADD participant_names list<text>;
+ALTER TABLE trustsphere.projects ADD values list<text>;
+
 CREATE INDEX trusttrail_other_user_id_idx ON trustsphere.trusttrail (other_user_id);
 
 CREATE INDEX trusttrail_project_id_idx ON trustsphere.trusttrail (project_id);

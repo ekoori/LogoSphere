@@ -46,6 +46,22 @@ def get_user(user_id=None):
         return response, 500
 
 @validate_session
+def get_public_user(target_id, user_id=None):
+    """Fetch any user's public profile by id (for /user?id=... pages).
+    `target_id` is the path param; `user_id` is the authenticated session user."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        user = User.get(str(target_id))
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        return jsonify(user.to_dict()), 200
+    except Exception as e:
+        logger.error(f"Error in get_public_user: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def get_profile(user_id=None):
     if request.method == 'OPTIONS':
         response = app.make_default_options_response()

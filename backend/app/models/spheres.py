@@ -1,11 +1,14 @@
 from cassandra.cluster import Cluster
 import uuid
 import logging
+import os
 from datetime import datetime
 import base64
 
 # Set up Cassandra session
-cluster = Cluster(['172.236.62.11'])
+# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
+CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
+cluster = Cluster(CASSANDRA_HOSTS)
 cassandra_session = cluster.connect('trustsphere')
 
 class Sphere:

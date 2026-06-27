@@ -4,6 +4,7 @@ from functools import wraps
 from flask import request, jsonify, current_app
 import logging
 import uuid
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -25,19 +26,14 @@ def validate_session(f):
             return response, 401
 
         try:
-            # Query Cassandra directly for session
+            # session_id is the partition key, so look it up directly and check
+            # expiry in Python (avoids a non-key range predicate / ALLOW FILTERING).
             result = current_app.session_interface.cassandra_session.execute(
-                """
-                SELECT user_id, user_email 
-                FROM sessions 
-                WHERE session_id = %s 
-                AND expire_at > toTimestamp(now())
-                ALLOW FILTERING
-                """,
+                "SELECT user_id, user_email, expire_at FROM sessions WHERE session_id = %s",
                 [uuid.UUID(session_id)]
             ).one()
 
-            if result:
+            if result and result.expire_at and result.expire_at > datetime.utcnow():
                 # Add user_id to kwargs
                 kwargs['user_id'] = result.user_id
                 return f(*args, **kwargs)

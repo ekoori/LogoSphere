@@ -1,46 +1,51 @@
 """
 File: ./backend/app/routes/trusttrail.py
-Description: This is the Flask route file handling TrustTrail operations.
-Methods: 
-    [x] get_trusttrail() : Handles GET request for '/trusttrail' route. Fetches the trust trail for a user.
-    [x] add_transaction() : Handles POST request for '/trusttrail/add_transaction' route. Adds a transaction to the user's trust trail.
+Description: Flask route file handling TrustTrail operations. Auth is provided by
+the Cassandra-backed @validate_session decorator (consistent with the other
+routes), which injects the authenticated user_id.
+Methods:
+    [x] get_trusttrail() : GET/POST '/trusttrail' — fetch a user's trust trail.
+    [x] add_transaction() : POST '/trusttrail/add_transaction' — add a transaction.
 """
 
-from flask import request, jsonify
+import logging
+from flask import request, jsonify, current_app as app
 from app.models.trusttrail import TrustTrail
-from flask_login import login_required, current_user
+from app.middleware.session_middleware import validate_session
 
-@login_required
-def get_trusttrail():
-    if request.method == 'GET':
-        # Handle GET request for fetching the trust trail by user_id from query params
-        user_id = current_user.id
-        trust_trail = TrustTrail.get_trusttrail(user_id)
-        
-        if trust_trail:
-            return jsonify(trust_trail), 200
-        else:
-            return jsonify({"error": "TrustTrail not found"}), 404
-    elif request.method == 'POST':
-        # Handle POST request for fetching the trust trail by user_id from JSON body
-        data = request.get_json()
-        user_id = data.get('userId')
-        if user_id:
-            trust_trail = TrustTrail.get_trusttrail(user_id)
-            if trust_trail:
-                return jsonify(trust_trail), 200
-            else:
-                return jsonify({"error": "TrustTrail not found"}), 404
-        else:
-            return jsonify({'message': 'Invalid request data. Missing userId.'}), 400
-    else:
-        return jsonify({'message': 'Invalid request method.'}), 405
+logger = logging.getLogger(__name__)
 
-@login_required
-def add_transaction():
-    data = request.get_json()
-    user_id = current_user.id
-    other_user_id = data['other_user_id']
-    project_id = data['project_id']
-    TrustTrail.add_transaction(user_id, other_user_id, project_id)
-    return {'message': 'Transaction added successfully'}, 200
+
+@validate_session
+def get_trusttrail(user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+
+    # A user_id may be supplied (e.g. viewing another profile); default to self.
+    target_id = str(user_id)
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        target_id = data.get('userId') or data.get('user_id') or target_id
+
+    trust_trail = TrustTrail.get_trusttrail(target_id)
+    # get_trusttrail returns [] for an empty trail and None on error.
+    if trust_trail is None:
+        return jsonify({'error': 'TrustTrail not found'}), 404
+    return jsonify(trust_trail), 200
+
+
+@validate_session
+def add_transaction(user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        data = request.get_json() or {}
+        other_user_id = data['other_user_id']
+        project_id = data['project_id']
+        TrustTrail.add_transaction(str(user_id), other_user_id, project_id)
+        return jsonify({'message': 'Transaction added successfully'}), 200
+    except KeyError as e:
+        return jsonify({'message': f'Missing field: {e}'}), 400
+    except Exception as e:
+        logger.error(f"Error in add_transaction: {e}")
+        return jsonify({'message': 'Internal server error'}), 500

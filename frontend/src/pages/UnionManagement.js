@@ -162,7 +162,7 @@ const UnionManagement = () => {
               <h4>Current Projects</h4>
               <ul>
                 <li>
-                  <a href="project.html">AI Ethics Initiative</a>
+                  <a href="/project">AI Ethics Initiative</a>
                   <div className="form-group">
                     <label htmlFor="project-manager">Assign project manager:</label>
                     <input type="text" id="project-manager" name="project-manager" placeholder="Enter project manager" />
@@ -171,7 +171,7 @@ const UnionManagement = () => {
                   <button className="btn-remove">Remove</button>
                 </li>
                 <li>
-                  <a href="project.html">OpenAI Collaboration</a>
+                  <a href="/project">OpenAI Collaboration</a>
                   <div className="form-group">
                     <label htmlFor="project-manager">Assign project manager:</label>
                     <input type="text" id="project-manager" name="project-manager" placeholder="Enter project manager" />
@@ -195,8 +195,8 @@ const UnionManagement = () => {
             <div className="member-list">
               <h4>Current Members</h4>
               <ul>
-                <li><a href="user.html">Jane Doe</a> <button className="btn-remove">Remove</button></li>
-                <li><a href="user.html">John Smith</a> <button className="btn-remove">Remove</button></li>
+                <li><a href="/user">Jane Doe</a> <button className="btn-remove">Remove</button></li>
+                <li><a href="/user">John Smith</a> <button className="btn-remove">Remove</button></li>
                 {/* More members can be listed here */}
               </ul>
             </div>

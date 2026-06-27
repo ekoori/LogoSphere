@@ -1,19 +1,25 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Projects.css';
 
+const pName = (p) => (typeof p === 'string' ? p : p.name);
+const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
+
 const ProjectCard = ({ id, name, owner, participants, description, transactions, statusButtons, values, shoutouts, onLike }) => {
+  const navigate = useNavigate();
+  const projectHref = id ? `/project?id=${id}` : '/project';
   return (
-    <div className="project" onClick={() => window.location.href = `/project`}>
+    <div className="project" onClick={() => navigate(projectHref)}>
       <div className="project-header">
         <div className="project-left">
           <h3>{name}</h3>
           <div className="project-owner">
-            <span>🔗 <a href="/union" onClick={(e) => e.stopPropagation()}>{owner}</a></span>
+            <span>🔗 <a href={`/union?name=${encodeURIComponent(owner)}`} onClick={(e) => e.stopPropagation()}>{owner}</a></span>
           </div>
           <div className="project-participants">
             <span>👤 {participants.slice(0, 3).map((participant, index) => (
-              <a key={index} href="/user" onClick={(e) => e.stopPropagation()}>{participant}{index < 2 ? ', ' : ''}</a>
-            ))}, <a href="/project" onClick={(e) => e.stopPropagation()}>{participants.length - 3} more...</a></span>
+              <a key={index} href={pHref(participant)} onClick={(e) => e.stopPropagation()}>{pName(participant)}{index < Math.min(participants.length, 3) - 1 ? ', ' : ''}</a>
+            ))}{participants.length > 3 && <>, <a href={projectHref} onClick={(e) => e.stopPropagation()}>{participants.length - 3} more...</a></>}</span>
           </div>
         </div>
         <div className="project-right">
@@ -37,7 +43,7 @@ const ProjectCard = ({ id, name, owner, participants, description, transactions,
             </div>
           </div>
         ))}
-        {transactions.length > 3 && <a href="transactions.html" onClick={(e) => e.stopPropagation()}>{transactions.length - 3} more...</a>}
+        {transactions.length > 3 && <a href="/project" onClick={(e) => e.stopPropagation()}>{transactions.length - 3} more...</a>}
       </div>
       <div className="project-status-buttons">
         {statusButtons.map((button, index) => (
@@ -53,14 +59,14 @@ const ProjectCard = ({ id, name, owner, participants, description, transactions,
       <div className="project-shoutouts">
         {shoutouts.map((shoutout, index) => (
           <div key={index} className="shoutout">
-            <p><strong>👤 <a href="user.html" onClick={(e) => e.stopPropagation()}>{shoutout.author}</a></strong> {shoutout.text}</p>
+            <p><strong>👤 <a href="/user" onClick={(e) => e.stopPropagation()}>{shoutout.author}</a></strong> {shoutout.text}</p>
             <div className="like-timestamp">
               <button className="like-btn" onClick={(e) => e.stopPropagation()}>❤️ {shoutout.likes}</button>
               <div className="time">{shoutout.time}</div>
             </div>
           </div>
         ))}
-        <a href="shoutouts.html" onClick={(e) => e.stopPropagation()}>More shoutouts...</a>
+        <a href="/project" onClick={(e) => e.stopPropagation()}>More shoutouts...</a>
       </div>
     </div>
   );

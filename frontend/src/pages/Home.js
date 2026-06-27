@@ -1,195 +1,125 @@
-// ./frontend/src/pages/Home.js:
-// File Description: This file contains the Home component which is essentially the landing page of the application.
-// Class: 
-//    Home - Main landing page of the application showing main content on the platform, depending on the user context.
-// Properties: None
-// Methods: None
+// ./frontend/src/pages/Home.js
+// Landing feed: the logged-in user's TrustTrail and the marketplace of
+// offers/requests, both fetched live from the API.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/TrustTrail.css';
 import '../styles/Marketplace.css';
 
 import TrustTrail from '../components/TrustTrail';
 import Marketplace from '../components/Marketplace';
+import api from '../api';
+import { mapService } from '../utils/mappers';
+
+// Format an RFC-1123 / ISO datetime into a short readable date.
+function fmtDate(value) {
+    if (!value) return 'recently';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return 'recently';
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Pick a fitting illustration from the bundled static assets.
+function imageFor(text = '') {
+    const t = text.toLowerCase();
+    if (t.includes('fence') || t.includes('garden')) return '/static/garden_old.webp';
+    if (t.includes('gpu') || t.includes('h100') || t.includes('compute')) return '/static/h100_cpus.webp';
+    if (t.includes('podcast') || t.includes('workshop') || t.includes('class')) return '/static/yoga_classes.webp';
+    if (t.includes('solar') || t.includes('microgrid') || t.includes('energy')) return '/static/projects_spheres.png';
+    return null;
+}
+
+// Map a flat TrustTrail row from the API into a TransactionCard item.
+function mapTransaction(row) {
+    const completed = ['Finished', 'Completed', 'Trustifacted', 'Additional Comments Added']
+        .includes(row.transaction_status);
+
+    const trustifacts = [];
+    if (row.gratitude_comment) {
+        trustifacts.push({
+            author: row.other_user_name || 'A neighbour',
+            text: row.gratitude_comment,
+            time: fmtDate(row.gratitude_comment_timestamp),
+            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+        });
+    }
+    if (row.user_comment) {
+        trustifacts.push({
+            author: 'You',
+            text: row.user_comment,
+            time: fmtDate(row.user_comment_timestamp),
+            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+        });
+    }
+
+    const shoutouts = [];
+    if (row.other_comment) {
+        shoutouts.push({
+            author: row.other_comment_author_name || 'A neighbour',
+            text: row.other_comment,
+            time: fmtDate(row.other_comment_timestamp),
+            likesCount: 0, likedByCurrentUser: false,
+        });
+    }
+
+    return {
+        id: row.transaction_id,
+        type: completed ? 'completed' : 'offer',
+        title: row.transaction_description || 'An exchange of trust',
+        spheres: row.project_name ? [row.project_name] : [],
+        // {id, name} pairs so the other party links to their profile.
+        participants: [
+            { name: 'You', id: null },
+            ...(row.other_user_name ? [{ name: row.other_user_name, id: row.other_user_id }] : []),
+        ],
+        description: row.project_name
+            ? `An act of giving within the "${row.project_name}" project.`
+            : 'A moment of trust shared in the community.',
+        project: row.project_name || 'Unassigned',
+        imageUrl: imageFor(row.transaction_description),
+        time: fmtDate(row.project_start_timestamp),
+        status: row.transaction_status,
+        likesCount: 0,
+        likedByCurrentUser: false,
+        initiatedTime: fmtDate(row.project_start_timestamp),
+        inProgressTime: '', finishedTime: '', trustifactedTime: '', additionalCommentsTime: '',
+        trustifacts,
+        shoutouts,
+        canModify: false,
+        onAddTrustifact: () => {},
+        onAddShoutout: () => {},
+        onModifyTransaction: () => {},
+    };
+}
 
 function Home() {
     const [activeTab, setActiveTab] = useState('trusttrail');
-    const [notificationsVisible, setNotificationsVisible] = useState(false);
-
-    const toggleTab = (tab) => {
-        setActiveTab(tab);
-    };
-
-    const toggleNotifications = () => {
-        setNotificationsVisible(!notificationsVisible);
-    };
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const toggleFormVisibility = () => {
-        setIsFormVisible(!isFormVisible);
-    };
+    const [items, setItems] = useState([]);
+    const [services, setServices] = useState([]);
 
-    const items = [
-        {
-            id: 'transaction-cpus',
-            type: 'offer',
-            spheres: ['OpenAI Sphere'],
-            title: 'Requesting 7 H100 CPUs for OpenAI datacentre from Jansen Huang',
-            participants: ['You', 'Jansen Huang'],
-            description: 'This transaction involves requesting 7 H100 CPUs for the OpenAI datacentre. The request was initiated by Sam and is awaiting a response from Jansen Huang.',
-            project: 'OpenAI Datacentre Upgrades',
-            imageUrl: 'static/h100_cpus.webp',
-            time: '30 min ago',
-            status: 'Posted Offer',
-            likesCount: 0,
-            likedByCurrentUser: false,
-            originService: '🔍 Requesting 7 H100 CPUs',
-            initiatedTime: '30 min ago',
-            inProgressTime: '',
-            finishedTime: '',
-            trustifactedTime: '',
-            additionalCommentsTime: '',
-            trustifacts: [],
-            shoutouts: [],
-            canModify: true,
-            onAddTrustifact: () => console.log('Add Trustifact'),
-            onAddShoutout: () => console.log('Add Shoutout'),
-            onModifyTransaction: () => console.log('Modify Transaction')
-        },
-        {
-            id: 'transaction-server-rack',
-            type: 'request',
-            spheres: ['OpenAI Sphere'],
-            title: 'Designing and building a server rack in OpenAI datacentre with Ilya S',
-            participants: ['Ilya S', 'You'],
-            description: 'This transaction involves the design and construction of a new server rack in the OpenAI datacentre. Ilya S, the project manager for the datacentre upgrade, initiated the transaction.',
-            project: 'Project not assigned',
-            imageUrl: '',
-            time: '1h ago',
-            status: 'Requested',
-            likesCount: 0,
-            likedByCurrentUser: false,
-            originService: '🔍 Offering Tesla Roadster Ride',
-            initiatedTime: '1h ago',
-            inProgressTime: '',
-            finishedTime: '',
-            trustifactedTime: '',
-            additionalCommentsTime: '',
-            trustifacts: [],
-            shoutouts: [],
-            canModify: true,
-            onAddTrustifact: () => console.log('Add Trustifact'),
-            onAddShoutout: () => console.log('Add Shoutout'),
-            onModifyTransaction: () => console.log('Modify Transaction')
-        },
-        {
-            id: 'shoutout-2',
-            spheres: [''],
-            type: 'shoutout',
-            author: 'John Doe',
-            text: 'Working with Sam has been a fantastic experience. His expertise in project management is top-notch.',
-            time: '3h ago',
-            likesCount: 5,
-            likedByCurrentUser: true
-        },
-        {
-            id: 'transaction-garden-fences',
-            type: 'completed',
-            spheres: ['Community Garden Sphere'],
-            title: 'Rebuilding fence on the garden with Jane Doe',
-            participants: ['You', 'Jane Doe'],
-            description: 'This transaction involved the replacement of the garden fence. I designed and installed the new fence, while Jane, the project manager for the Community Garden, coordinated the efforts and managed the project timeline.',
-            project: 'Service: Offering Tesla Roadster Ride',
-            imageUrl: 'static/garden_old.webp',
-            time: '15 min ago',
-            status: 'Initiated',
-            likesCount: 10,
-            likedByCurrentUser: true,
-            originService: '🔍 Building Garden Fences',
-            initiatedTime: '7d ago',
-            inProgressTime: '5d ago',
-            finishedTime: '3d ago',
-            trustifactedTime: '2d ago',
-            additionalCommentsTime: '15 min ago',
-            trustifacts: [
-                {
-                    author: 'Jane Doe',
-                    text: 'Working with Sam on the garden fence project was a fantastic experience...',
-                    time: '1d ago',
-                    likesCount: 3,
-                    likedByCurrentUser: true,
-                    imageUrl: null
-                },
-                {
-                    author: 'You',
-                    text: 'Jane\'s project management skills were top-notch...',
-                    time: '12h ago',
-                    likesCount: 5,
-                    likedByCurrentUser: true,
-                    imageUrl: 'static/garden_new.webp'
-                }
-            ],
-            shoutouts: [
-                {
-                    author: 'Emily Johnson',
-                    text: 'The new fence looks amazing! Great job, both of you!',
-                    time: '30 min ago',
-                    likesCount: 0,
-                    likedByCurrentUser: false, 
-                    spheres:['']
-                }
-            ],
-            canModify: false,
-            onAddTrustifact: () => console.log('Add Trustifact'),
-            onAddShoutout: () => console.log('Add Shoutout'),
-            onModifyTransaction: () => console.log('Modify Transaction')
-        },
-        {
-            id: 'shoutout-1',
-            type: 'shoutout',
-            spheres: [''],
-            author: 'Emily Johnson',
-            text: 'Sam is an amazing collaborator! His insights and dedication are invaluable.',
-            time: '1h ago',
-            likesCount: 10,
-            likedByCurrentUser: true
-        },
+    const toggleTab = (tab) => setActiveTab(tab);
+    const toggleFormVisibility = () => setIsFormVisible((v) => !v);
 
-    ];
-
-    const services = [
-        {
-            id: 'service-ai-consulting',
-            type: 'offer',
-            spheres: ['AI Development Sphere'],
-            title: 'Offering AI Consulting Services',
-            provider: 'You',
-            description: 'Elon is offering his expertise in AI consulting to help innovative projects reach their full potential. His deep knowledge and experience in AI development can provide valuable insights and guidance for your next big project.',
-            project: 'Project not assigned',
-            imageUrl: 'static/garden_old.webp',
-            time: '2d ago',
-            status: 'p Posted Offer',
-            likesCount: 20,
-            likedByCurrentUser: false,
-            relatedTransactions: ['Requesting 7 H100 CPUs - involving Jansen Huang - Initiated 30 min ago'],
-            canModify: true
-        },
-        {
-            id: 'service-garden-fences',
-            type: 'request',
-            spheres: ['Community Garden Sphere'],
-            title: 'Building garden fences',
-            provider: 'You',
-            description: 'I am offering my services to build garden fences. With extensive experience in carpentry and landscaping, I can provide sturdy and aesthetically pleasing fences for your garden.',
-            project: 'Project not assigned',
-            imageUrl: '',
-            time: '15 min ago',
-            status: 'Completed',
-            likesCount: 10,
-            likedByCurrentUser: false,
-            relatedTransactions: ['Rebuilding fence on the garden - involving Jane Doe - Initiated 15 min ago'],
-            canModify: true
+    const fetchFeed = useCallback(async () => {
+        // A 401 just means "not logged in" — the feed shows its empty state then.
+        try {
+            const res = await api.get('/api/trusttrail');
+            setItems((res.data || []).map(mapTransaction));
+        } catch (e) {
+            if (e.response?.status !== 401) console.error('Error fetching trusttrail:', e);
         }
-    ];
+        try {
+            const res = await api.get('/api/marketplace');
+            setServices((res.data || []).map(mapService));
+        } catch (e) {
+            if (e.response?.status !== 401) console.error('Error fetching marketplace:', e);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchFeed();
+    }, [fetchFeed]);
 
     return (
         <div className="container">
@@ -212,8 +142,12 @@ function Home() {
                     <button className={`btn-selector ${activeTab === 'trusttrail' ? 'active' : ''}`} onClick={() => toggleTab('trusttrail')}>TrustTrail</button>
                     <button className={`btn-selector ${activeTab === 'offers-requests' ? 'active' : ''}`} onClick={() => toggleTab('offers-requests')}>Offers/Requests</button>
                 </div>
-                {activeTab === 'trusttrail' && <TrustTrail items={items} />}
-                {activeTab === 'offers-requests' && <Marketplace services={services} newServiceVisible={isFormVisible}/>}
+                {activeTab === 'trusttrail' && (
+                    items.length === 0
+                        ? <p className="empty-state">Your TrustTrail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.</p>
+                        : <TrustTrail items={items} />
+                )}
+                {activeTab === 'offers-requests' && <Marketplace services={services} newServiceVisible={isFormVisible} />}
             </main>
         </div>
     );
