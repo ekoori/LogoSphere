@@ -32,7 +32,7 @@ import ProjectPage from './pages/ProjectPage';
 import ProjectManagement from './pages/ProjectManagement';
 import UserPage from './pages/UserPage';
 import MarketplacePage from './pages/MarketplacePage';
-import TransactionPage from './pages/TransactionPage';
+import InteractionPage from './pages/InteractionPage';
 import SettingsPage from './pages/Settings';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
@@ -97,7 +97,7 @@ function AppContent() {
         <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><AlliancePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><AllianceManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/marketplace" element={<ErrorBoundary><ProtectedRoute><MarketplacePage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/transaction" element={<ErrorBoundary><ProtectedRoute><TransactionPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/interaction" element={<ErrorBoundary><ProtectedRoute><InteractionPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 

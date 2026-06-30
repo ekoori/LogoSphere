@@ -1,6 +1,6 @@
-// TransactionCard — a trust transaction in the MeaningTrail feed.
+// InteractionCard — a trust interaction in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
-// When expanded, the title is a link to the transaction detail page.
+// When expanded, the title is a link to the interaction detail page.
 // Trustifacts (verified gratitude records) and Shoutouts (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
@@ -12,9 +12,9 @@ import NewShoutoutForm from './NewShoutoutForm';
 import StatusProgression from './StatusProgression';
 import '../styles/MeaningTrail.css';
 
-const TX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
-const txIndex = (status) => {
-    const i = TX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
+const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
+const ixIndex = (status) => {
+    const i = IX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
     return i >= 0 ? i : 0;
 };
 
@@ -37,14 +37,14 @@ const sHref = (s) => {
 const TYPE_LABELS = { completed: 'Completed', offer: 'Offer', request: 'Request' };
 const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', request: 'pill-honey' };
 
-function TransactionCard({
+function InteractionCard({
     id,
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
     initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime,
     trustifacts, shoutouts,
-    onAddTrustifact, onAddShoutout, onModifyTransaction, canModify,
+    onAddTrustifact, onAddShoutout, onModifyInteraction, canModify,
 }) {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -65,7 +65,7 @@ function TransactionCard({
     const handleTitleClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (id) navigate(`/transaction?id=${id}`);
+        if (id) navigate(`/interaction?id=${id}`);
     };
 
     const handleAddTrustifact = () => {
@@ -85,8 +85,8 @@ function TransactionCard({
     };
 
     const cancelled = status === 'Cancelled';
-    const stepIdx = txIndex(status);
-    const steps = TX_STEPS.map((label, i) => ({
+    const stepIdx = ixIndex(status);
+    const steps = IX_STEPS.map((label, i) => ({
         label,
         time: [initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime][i] || '',
     }));
@@ -98,28 +98,28 @@ function TransactionCard({
 
     return (
         <div
-            className={`transaction ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
+            className={`interaction ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
             onClick={() => !isExpanded && setIsExpanded(true)}
         >
             {/* ── Summary row — always visible ────────────────────────────── */}
-            <div className="tx-summary" onClick={() => setIsExpanded(!isExpanded)}>
+            <div className="ix-summary" onClick={() => setIsExpanded(!isExpanded)}>
                 <span className={`pill ${pillClass} type-pill`}>{typeLabel}</span>
 
-                <div className="tx-title-col">
+                <div className="ix-title-col">
                     {isExpanded ? (
                         <a
-                            className="tx-title tx-title-link"
-                            href={id ? `/transaction?id=${id}` : '#'}
+                            className="ix-title ix-title-link"
+                            href={id ? `/interaction?id=${id}` : '#'}
                             onClick={handleTitleClick}
-                            title="View full transaction"
+                            title="View full interaction"
                         >
                             {title}
                         </a>
                     ) : (
-                        <span className="tx-title">{title}</span>
+                        <span className="ix-title">{title}</span>
                     )}
                     {!isExpanded && participants.length > 0 && (
-                        <span className="tx-participants-inline">
+                        <span className="ix-participants-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <a href={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</a>
@@ -130,8 +130,8 @@ function TransactionCard({
                     )}
                 </div>
 
-                <div className="tx-summary-meta" onClick={(e) => e.stopPropagation()}>
-                    {time && <span className="tx-date">{time}</span>}
+                <div className="ix-summary-meta" onClick={(e) => e.stopPropagation()}>
+                    {time && <span className="ix-date">{time}</span>}
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
@@ -141,7 +141,7 @@ function TransactionCard({
                 </div>
 
                 <button
-                    className="tx-expand-btn"
+                    className="ix-expand-btn"
                     onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                     aria-label={isExpanded ? 'Collapse' : 'Expand'}
                 >
@@ -151,9 +151,9 @@ function TransactionCard({
 
             {/* ── Expanded body ─────────────────────────────────────────── */}
             {isExpanded && (
-                <div className="tx-body" onClick={(e) => e.stopPropagation()}>
+                <div className="ix-body" onClick={(e) => e.stopPropagation()}>
                     {/* Context: participants, spheres, project */}
-                    <div className="tx-context">
+                    <div className="ix-context">
                         <div className="participants">
                             {participants.map((p, i) => (
                                 <span key={i}>
@@ -163,16 +163,16 @@ function TransactionCard({
                             ))}
                         </div>
                         {spheres.length > 0 && (
-                            <div className="tx-spheres">
+                            <div className="ix-spheres">
                                 {spheres.map((s, i) => (
-                                    <a key={i} href={sHref(s)} className="pill pill-leaf tx-sphere-pill">
+                                    <a key={i} href={sHref(s)} className="pill pill-leaf ix-sphere-pill">
                                         {sName(s)}
                                     </a>
                                 ))}
                             </div>
                         )}
                         {project && (
-                            <div className="tx-project-ref">
+                            <div className="ix-project-ref">
                                 <span className="muted">Part of</span>{' '}
                                 <a href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}>
                                     {project}
@@ -188,7 +188,7 @@ function TransactionCard({
                                 <img
                                     src={img}
                                     alt={title}
-                                    className="transaction-image"
+                                    className="interaction-image"
                                     onError={() => setImg(null)}
                                 />
                             )}
@@ -202,10 +202,10 @@ function TransactionCard({
                     </div>
 
                     {/* ── Trustifacts ───────────────────────────────────── */}
-                    <div className="tx-section">
-                        <div className="tx-section-label tx-section-trustifact">
+                    <div className="ix-section">
+                        <div className="ix-section-label ix-section-trustifact">
                             <span>✓ Trustifacts</span>
-                            <span className="tx-section-hint">verified attestations of trust</span>
+                            <span className="ix-section-hint">verified attestations of trust</span>
                         </div>
                         {hasTrustifacts ? (
                             <div className="trustifacts">
@@ -224,10 +224,10 @@ function TransactionCard({
                                 ))}
                             </div>
                         ) : (
-                            <p className="tx-empty-section">No trustifacts yet.</p>
+                            <p className="ix-empty-section">No trustifacts yet.</p>
                         )}
                         <button
-                            className="tx-add-btn tx-add-trustifact"
+                            className="ix-add-btn ix-add-trustifact"
                             onClick={(e) => { e.stopPropagation(); handleAddTrustifact(); }}
                         >
                             + Add Trustifact
@@ -235,10 +235,10 @@ function TransactionCard({
                     </div>
 
                     {/* ── Shoutouts ─────────────────────────────────────── */}
-                    <div className="tx-section">
-                        <div className="tx-section-label tx-section-shoutout">
+                    <div className="ix-section">
+                        <div className="ix-section-label ix-section-shoutout">
                             <span>📢 Shoutouts</span>
-                            <span className="tx-section-hint">public acknowledgements</span>
+                            <span className="ix-section-hint">public acknowledgements</span>
                         </div>
                         {hasShoutouts && (
                             <div className="shoutouts">
@@ -259,7 +259,7 @@ function TransactionCard({
                         )}
                         {!showShoutoutForm ? (
                             <button
-                                className="tx-add-btn tx-add-shoutout"
+                                className="ix-add-btn ix-add-shoutout"
                                 onClick={(e) => { e.stopPropagation(); setShowShoutoutForm(true); }}
                             >
                                 + Add Shoutout
@@ -277,7 +277,7 @@ function TransactionCard({
     );
 }
 
-TransactionCard.propTypes = {
+InteractionCard.propTypes = {
     id: PropTypes.string,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
@@ -300,8 +300,8 @@ TransactionCard.propTypes = {
     shoutouts: PropTypes.array,
     onAddTrustifact: PropTypes.func.isRequired,
     onAddShoutout: PropTypes.func.isRequired,
-    onModifyTransaction: PropTypes.func.isRequired,
+    onModifyInteraction: PropTypes.func.isRequired,
     canModify: PropTypes.bool.isRequired,
 };
 
-export default TransactionCard;
+export default InteractionCard;

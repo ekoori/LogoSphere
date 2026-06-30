@@ -24,7 +24,7 @@ from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
 from app.routes.profile import get_user, get_profile, update_user, get_public_user
 from app.routes.registration import register
-from app.routes.meaning_trail import get_meaning_trail, add_transaction, get_transaction, update_tx_status, add_tx_comment
+from app.routes.meaning_trail import get_meaning_trail, add_interaction, get_interaction, update_ix_status, add_ix_comment
 from app.models.user import User
 from app.routes.spheres import create_sphere, get_spheres
 from app.routes.alliances import create_alliance, get_alliances, join_alliance
@@ -124,10 +124,10 @@ app.add_url_rule('/api/users/<target_id>', view_func=get_public_user, methods=['
 app.add_url_rule('/api/updateuser', view_func=update_user, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/register', view_func=register, methods=['POST'])
 app.add_url_rule('/api/meaning_trail', view_func=get_meaning_trail, methods=['GET', 'POST', 'OPTIONS'])
-app.add_url_rule('/api/meaning_trail/add_transaction', view_func=add_transaction, methods=['POST', 'OPTIONS'])
-app.add_url_rule('/api/transaction/<transaction_id>', view_func=get_transaction, methods=['GET', 'OPTIONS'])
-app.add_url_rule('/api/transaction/<transaction_id>/status', view_func=update_tx_status, methods=['POST', 'OPTIONS'])
-app.add_url_rule('/api/transaction/<transaction_id>/comment', view_func=add_tx_comment, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/meaning_trail/add_interaction', view_func=add_interaction, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/interaction/<interaction_id>', view_func=get_interaction, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/interaction/<interaction_id>/status', view_func=update_ix_status, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/interaction/<interaction_id>/comment', view_func=add_ix_comment, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=create_sphere, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=get_spheres, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/alliances', view_func=create_alliance, methods=['POST', 'OPTIONS'])

@@ -53,7 +53,7 @@ const NewSphereForm = ({ isVisible, onCreateSphere, onCancel }) => {
   if (!isVisible) return null;
 
   return (
-    <div id="sphere-form" className="transaction">
+    <div id="sphere-form" className="interaction">
       <h3>Create a New Sphere</h3>
       <form onSubmit={handleSubmit}>
         <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />

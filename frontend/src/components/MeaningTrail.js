@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import TransactionCard from './TransactionCard';
+import InteractionCard from './InteractionCard';
 import ShoutoutCard from './ShoutoutCard';
 import '../styles/MeaningTrail.css';
 
@@ -11,7 +11,7 @@ function MeaningTrail({ items }) {
                 item.type === 'shoutout' ? (
                     <ShoutoutCard key={item.id} shoutout={item} />
                 ) : (
-                    <TransactionCard
+                    <InteractionCard
                         key={item.id}
                         id={item.id}
                         type={item.type}
@@ -35,7 +35,7 @@ function MeaningTrail({ items }) {
                         shoutouts={item.shoutouts}
                         onAddTrustifact={item.onAddTrustifact || (() => {})}
                         onAddShoutout={item.onAddShoutout || (() => {})}
-                        onModifyTransaction={item.onModifyTransaction || (() => {})}
+                        onModifyInteraction={item.onModifyInteraction || (() => {})}
                         canModify={item.canModify || false}
                     />
                 )
@@ -63,7 +63,7 @@ MeaningTrail.propTypes = {
         shoutouts: PropTypes.array,
         onAddTrustifact: PropTypes.func,
         onAddShoutout: PropTypes.func,
-        onModifyTransaction: PropTypes.func,
+        onModifyInteraction: PropTypes.func,
         canModify: PropTypes.bool,
     })).isRequired,
 };

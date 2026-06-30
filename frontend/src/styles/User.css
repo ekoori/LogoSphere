@@ -162,20 +162,20 @@
     text-decoration: underline;
 }
 
-/* Styles for the service transactions */
-.service-transactions {
+/* Styles for the service interactions */
+.service-interactions {
     margin-top: 1em;
 }
 
-.transaction-summary {
+.interaction-summary {
     margin-top: 0.5em;
 }
 
-.transaction-summary a {
+.interaction-summary a {
     text-decoration: none;
     color: var(--moss);
 }
 
-.transaction-summary a:hover {
+.interaction-summary a:hover {
     text-decoration: underline;
 }

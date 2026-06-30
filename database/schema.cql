@@ -7,7 +7,7 @@ CREATE TABLE trustsphere.audit_log (
     description text,
     executed_at timestamp,
     executed_by uuid,
-    transaction_id uuid,
+    interaction_id uuid,
     user_id uuid
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -30,10 +30,10 @@ CREATE TABLE trustsphere.audit_log (
     AND speculative_retry = '99p';
 
 CREATE TABLE trustsphere.comment_likes (
-    transaction_id uuid,
+    interaction_id uuid,
     comment_type text,
     likes counter,
-    PRIMARY KEY (transaction_id, comment_type)
+    PRIMARY KEY (interaction_id, comment_type)
 ) WITH CLUSTERING ORDER BY (comment_type ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -80,10 +80,10 @@ CREATE TABLE trustsphere.invitation (
     AND speculative_retry = '99p';
 
 CREATE TABLE trustsphere.likes (
-    transaction_id uuid,
+    interaction_id uuid,
     comment_type text,
     user_id uuid,
-    PRIMARY KEY ((transaction_id, comment_type), user_id)
+    PRIMARY KEY ((interaction_id, comment_type), user_id)
 ) WITH CLUSTERING ORDER BY (user_id ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -107,7 +107,7 @@ CREATE TABLE trustsphere.likes (
 
 CREATE TABLE trustsphere.marketplace (
     services text PRIMARY KEY,
-    active_transactions text
+    active_interactions text
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -130,7 +130,7 @@ CREATE TABLE trustsphere.marketplace (
 
 CREATE TABLE trustsphere.projects (
     project_id uuid PRIMARY KEY,
-    active_transactions text,
+    active_interactions text,
     name text,
     owner text,
     service_requests text
@@ -221,7 +221,7 @@ CREATE TABLE trustsphere.spheres (
 
 CREATE TABLE trustsphere.meaning_trail (
     user_id uuid,
-    transaction_id uuid,
+    interaction_id uuid,
     gratitude_comment text,
     gratitude_comment_id uuid,
     gratitude_comment_timestamp timestamp,
@@ -237,14 +237,14 @@ CREATE TABLE trustsphere.meaning_trail (
     project_id uuid,
     project_name text,
     project_start_timestamp timestamp,
-    transaction_description text,
-    transaction_status text,
+    interaction_description text,
+    interaction_status text,
     user_comment text,
     user_comment_id uuid,
     user_comment_timestamp timestamp,
     validation_flags text,
-    PRIMARY KEY (user_id, transaction_id)
-) WITH CLUSTERING ORDER BY (transaction_id DESC)
+    PRIMARY KEY (user_id, interaction_id)
+) WITH CLUSTERING ORDER BY (interaction_id DESC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -316,14 +316,14 @@ CREATE INDEX meaning_trail_other_user_id_idx ON trustsphere.meaning_trail (other
 
 CREATE INDEX meaning_trail_project_id_idx ON trustsphere.meaning_trail (project_id);
 
-CREATE INDEX meaning_trail_transaction_status_idx ON trustsphere.meaning_trail (transaction_status);
+CREATE INDEX meaning_trail_interaction_status_idx ON trustsphere.meaning_trail (interaction_status);
 
 CREATE MATERIALIZED VIEW trustsphere.vw_meaning_trail_summary AS
-    SELECT user_id, transaction_id, transaction_status, project_id
+    SELECT user_id, interaction_id, interaction_status, project_id
     FROM trustsphere.meaning_trail
-    WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND transaction_status IS NOT NULL AND transaction_id IS NOT NULL
-    PRIMARY KEY ((user_id, transaction_id), transaction_status)
- WITH CLUSTERING ORDER BY (transaction_status ASC)
+    WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND interaction_status IS NOT NULL AND interaction_id IS NOT NULL
+    PRIMARY KEY ((user_id, interaction_id), interaction_status)
+ WITH CLUSTERING ORDER BY (interaction_status ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01

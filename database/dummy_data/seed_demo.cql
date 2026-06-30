@@ -176,8 +176,8 @@ VALUES (cccccccc-0000-0000-0000-000000000004, 'offer',
 -- ============================================================================
 
 -- 1) Rebuilt the community garden fence with Marie Kondo (completed, trustifacted)
-INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
-  transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
+INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
+  interaction_description, interaction_status, project_id, project_name, project_start_timestamp,
   gratitude_comment, gratitude_comment_id, gratitude_comment_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000001,
@@ -190,8 +190,8 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   9c89c702-6c61-49c8-9f0c-47b8e4e84e4b, 'Marie Kondo', 30000000-0000-0000-0000-000000000001, '2026-05-04 19:00:00');
 
 -- 2) Shared 7 H100 GPUs with the Open GPU Cluster (in progress)
-INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
-  transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
+INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
+  interaction_description, interaction_status, project_id, project_name, project_start_timestamp,
   gratitude_comment, gratitude_comment_id, gratitude_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000002,
   b4dfd93d-a9e0-4bf8-8685-735dbde17ff7, 'Elon Musk',
@@ -201,8 +201,8 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   20000000-0000-0000-0000-000000000002, '2026-06-02 10:00:00');
 
 -- 3) Taught a free podcasting workshop (completed, shoutout)
-INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
-  transaction_description, transaction_status, project_name, project_start_timestamp,
+INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
+  interaction_description, interaction_status, project_name, project_start_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000003,
   ff52c318-95e0-4f1f-89cc-62551c814a83, 'Emma Watson',
@@ -211,8 +211,8 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   ff52c318-95e0-4f1f-89cc-62551c814a83, 'Emma Watson', 30000000-0000-0000-0000-000000000003, '2026-06-12 20:00:00');
 
 -- 4) Received carpentry mentorship from Steve Wozniak (completed, Joe's thanks)
-INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
-  transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
+INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
+  interaction_description, interaction_status, project_id, project_name, project_start_timestamp,
   user_comment, user_comment_id, user_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000004,
   16f033ca-2b2c-4745-a537-82999209774c, 'Steve Wozniak',
@@ -222,8 +222,8 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   40000000-0000-0000-0000-000000000004, '2026-04-25 16:00:00');
 
 -- 5) Helping start the Neighbourhood Solar Microgrid (initiated)
-INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
-  transaction_description, transaction_status, project_id, project_name, project_start_timestamp)
+INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
+  interaction_description, interaction_status, project_id, project_name, project_start_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000005,
   16f033ca-2b2c-4745-a537-82999209774c, 'Steve Wozniak',
   'Kicked off the Neighbourhood Solar Microgrid — mapping rooftops this month', 'Initiated',

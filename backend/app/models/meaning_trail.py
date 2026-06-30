@@ -1,20 +1,20 @@
 # File: ./backend/app/models/meaning_trail.py
-# Description: Model file for handling trust trails (transaction history and trust ratings received by a user)
+# Description: Model file for handling trust trails (interaction history and trust ratings received by a user)
 # Class: MeaningTrail, Likes
 # Properties: 
 #    [-] user: Refers to the user who the meaning_trail is associated with.
-#    [-] transaction_history: List of last 100 transactions done by the user.
+#    [-] interaction_history: List of last 100 interactions done by the user.
 # Methods: 
-#    [-] add_transaction(cls, user_id, other_user_id, project_id): Adds a graded entry against a transaction in a user's trust trail.
+#    [-] add_interaction(cls, user_id, other_user_id, project_id): Adds a graded entry against a interaction in a user's trust trail.
 #    [-] get_meaning_trail(cls, user_id): fetches a complete MeaningTrail of a particular user with all associated like counts and stores it into rtansaction_history.
-#    [-] add_gratitude_comment(cls, transaction_id, gratitude_comment): Adds a gratitude_comment to a transaction
+#    [-] add_gratitude_comment(cls, interaction_id, gratitude_comment): Adds a gratitude_comment to a interaction
 #    [-] add_user_comment(cls, user_comment): Adds a user_comment to a gratitude comment.
 #    [-] add_other_comment(cls, other_user_id, other_comment): Adds an other_comment
-#    [-] set_status(cls, transaction_id, status): Change status of a transaction
+#    [-] set_status(cls, interaction_id, status): Change status of a interaction
 
 # Features:
-#    [-] Users can view their history of transactions and the corresponding trust ratings received.
-#    [-] User can grade other user's transactions (trust scores, feedbacks etc.) in form of entries in their MeaningTrail.
+#    [-] Users can view their history of interactions and the corresponding trust ratings received.
+#    [-] User can grade other user's interactions (trust scores, feedbacks etc.) in form of entries in their MeaningTrail.
 #    [-] Users can receive trust/gratitude entries from other users in the form of textual comments.
 
 from cassandra.cluster import Cluster
@@ -59,11 +59,11 @@ class MeaningTrail(Model):
     __table_name__ = 'meaning_trail'
 
     user_id = columns.UUID(primary_key=True)
-    transaction_id = columns.UUID(primary_key=True, clustering_order='DESC')
+    interaction_id = columns.UUID(primary_key=True, clustering_order='DESC')
     other_user_id = columns.UUID()
     other_user_name = columns.Text()
-    transaction_description = columns.Text()
-    transaction_status = columns.Text()
+    interaction_description = columns.Text()
+    interaction_status = columns.Text()
     project_id = columns.UUID()
     project_name = columns.Text()
     project_start_timestamp = columns.DateTime()
@@ -80,25 +80,25 @@ class MeaningTrail(Model):
     other_comment_timestamp = columns.DateTime()
 
     @classmethod
-    def add_transaction(cls, user_id, other_user_id, project_id):
+    def add_interaction(cls, user_id, other_user_id, project_id):
         try:
             cls.create(
                 user_id=user_id,
                 other_user_id=other_user_id,
-                transaction_id=uuid.uuid4(),
+                interaction_id=uuid.uuid4(),
                 project_id=project_id
             )
         except Exception as e:
-            print(f"Error occurred while adding a transaction: {e}")
+            print(f"Error occurred while adding a interaction: {e}")
 
     def to_dict(self):
         return {
             'user_id': str(self.user_id),
-            'transaction_id': str(self.transaction_id),
+            'interaction_id': str(self.interaction_id),
             'other_user_id': str(self.other_user_id),
             'other_user_name': self.other_user_name,
-            'transaction_description': self.transaction_description,
-            'transaction_status': self.transaction_status,
+            'interaction_description': self.interaction_description,
+            'interaction_status': self.interaction_status,
             'project_id': str(self.project_id),
             'project_name': self.project_name,
             'project_start_timestamp': self.project_start_timestamp,
@@ -123,92 +123,92 @@ class MeaningTrail(Model):
             meaning_trail_queryset = cls.objects(user_id=user_id)
             meaning_trail = []
             # print(user_id, meaning_trail_queryset)
-            for transaction in meaning_trail_queryset:
-                transaction_dict = transaction.to_dict()  # Convert the transaction object to a dictionary
-                transaction_dict['transaction_history'] = {}
-                gratitude_comment_likes = Likes.get_likes(transaction.gratitude_comment_id, "gratitude") if transaction.gratitude_comment_id is not None else []
-                user_comment_likes = Likes.get_likes(transaction.user_comment_id, "user") if transaction.user_comment_id is not None else []
-                other_comment_likes = Likes.get_likes(transaction.other_comment_id, "other") if transaction.other_comment_id is not None else []
-                transaction_dict['transaction_history']['gratitude_comment_likes'] = gratitude_comment_likes
-                transaction_dict['transaction_history']['user_comment_likes'] = user_comment_likes
-                transaction_dict['transaction_history']['other_comment_likes'] = other_comment_likes
-                meaning_trail.append(transaction_dict)
+            for interaction in meaning_trail_queryset:
+                interaction_dict = interaction.to_dict()  # Convert the interaction object to a dictionary
+                interaction_dict['interaction_history'] = {}
+                gratitude_comment_likes = Likes.get_likes(interaction.gratitude_comment_id, "gratitude") if interaction.gratitude_comment_id is not None else []
+                user_comment_likes = Likes.get_likes(interaction.user_comment_id, "user") if interaction.user_comment_id is not None else []
+                other_comment_likes = Likes.get_likes(interaction.other_comment_id, "other") if interaction.other_comment_id is not None else []
+                interaction_dict['interaction_history']['gratitude_comment_likes'] = gratitude_comment_likes
+                interaction_dict['interaction_history']['user_comment_likes'] = user_comment_likes
+                interaction_dict['interaction_history']['other_comment_likes'] = other_comment_likes
+                meaning_trail.append(interaction_dict)
             return meaning_trail
         except Exception as e:
             print(f"Error occurred while fetching trust trail: {str(e)}")
             return None            
 
     @classmethod
-    def add_gratitude_comment(cls, transaction_id, gratitude_comment):
+    def add_gratitude_comment(cls, interaction_id, gratitude_comment):
         try:
-            transaction = cls.objects(transaction_id=transaction_id).get()
-            transaction.update(gratitude_comment=gratitude_comment)
+            interaction = cls.objects(interaction_id=interaction_id).get()
+            interaction.update(gratitude_comment=gratitude_comment)
         except Exception as e:
             print(f"Error occurred while adding a gratitude comment: {e}")
 
     @classmethod
-    def add_user_comment(cls, transaction_id, user_comment):
+    def add_user_comment(cls, interaction_id, user_comment):
         try:
-            transaction = cls.objects(transaction_id=transaction_id).get()
-            transaction.update(user_comment=user_comment)
+            interaction = cls.objects(interaction_id=interaction_id).get()
+            interaction.update(user_comment=user_comment)
         except Exception as e:
             print(f"Error occurred while adding a user comment: {e}")
 
     @classmethod
-    def add_other_comment(cls, transaction_id, other_user_id, other_comment):
+    def add_other_comment(cls, interaction_id, other_user_id, other_comment):
         try:
-            transaction = cls.objects(transaction_id=transaction_id).get()
-            transaction.update(other_comment_author_id=other_user_id, other_comment=other_comment)
+            interaction = cls.objects(interaction_id=interaction_id).get()
+            interaction.update(other_comment_author_id=other_user_id, other_comment=other_comment)
         except Exception as e:
             print(f"Error occurred while adding an other comment: {e}")
 
     @classmethod
-    def set_status(cls, transaction_id, status):
+    def set_status(cls, interaction_id, status):
         try:
-            transaction = cls.objects(transaction_id=transaction_id).get()
-            transaction.update(transaction_status=status)
+            interaction = cls.objects(interaction_id=interaction_id).get()
+            interaction.update(interaction_status=status)
         except Exception as e:
-            print(f"Error occurred while setting the transaction status: {e}")
+            print(f"Error occurred while setting the interaction status: {e}")
 
     @classmethod
-    def get_by_id(cls, transaction_id, current_user_id):
-        """Return (transaction_dict, is_initiator) or (None, None) if not a participant."""
+    def get_by_id(cls, interaction_id, current_user_id):
+        """Return (interaction_dict, is_initiator) or (None, None) if not a participant."""
         try:
-            tx_uuid = UUID(str(transaction_id))
+            tx_uuid = UUID(str(interaction_id))
             user_uuid = UUID(str(current_user_id))
 
             # Efficient path: current user is the initiator (full PK lookup)
-            rows = list(cls.objects(user_id=user_uuid, transaction_id=tx_uuid))
+            rows = list(cls.objects(user_id=user_uuid, interaction_id=tx_uuid))
             if rows:
                 return rows[0].to_dict(), True
 
             # Fallback: raw CQL to check if viewer is the other_user_id
             session = connection.get_session()
             results = session.execute(
-                "SELECT user_id, other_user_id FROM meaning_trail WHERE transaction_id = %s ALLOW FILTERING",
+                "SELECT user_id, other_user_id FROM meaning_trail WHERE interaction_id = %s ALLOW FILTERING",
                 [tx_uuid]
             )
             for raw in results:
                 if raw.other_user_id == user_uuid:
                     # Re-fetch as cqlengine object so we can call to_dict()
-                    initiator_rows = list(cls.objects(user_id=raw.user_id, transaction_id=tx_uuid))
+                    initiator_rows = list(cls.objects(user_id=raw.user_id, interaction_id=tx_uuid))
                     if initiator_rows:
                         return initiator_rows[0].to_dict(), False
             return None, None
         except Exception as e:
-            print(f"Error getting transaction by id: {e}")
+            print(f"Error getting interaction by id: {e}")
             return None, None
 
     @classmethod
-    def set_status_for(cls, initiator_user_id, transaction_id, status):
-        """Update status using the full PK (initiator_user_id + transaction_id)."""
+    def set_status_for(cls, initiator_user_id, interaction_id, status):
+        """Update status using the full PK (initiator_user_id + interaction_id)."""
         try:
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
-                transaction_id=UUID(str(transaction_id))
+                interaction_id=UUID(str(interaction_id))
             ))
             if rows:
-                rows[0].update(transaction_status=status)
+                rows[0].update(interaction_status=status)
                 return True
             return False
         except Exception as e:
@@ -216,13 +216,13 @@ class MeaningTrail(Model):
             return False
 
     @classmethod
-    def add_comment_for(cls, initiator_user_id, transaction_id, comment_type, text,
+    def add_comment_for(cls, initiator_user_id, interaction_id, comment_type, text,
                         author_id=None, author_name=None):
         """comment_type: 'gratitude' | 'user' | 'other'"""
         try:
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
-                transaction_id=UUID(str(transaction_id))
+                interaction_id=UUID(str(interaction_id))
             ))
             if not rows:
                 return False

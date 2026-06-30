@@ -44,7 +44,7 @@ function ServiceCard({
 
     return (
         <div className={`service ${type}`}>
-            <div className="transaction-header">
+            <div className="interaction-header">
                 <div className="left">
                     <small>
                         {spheres.map((sphere, index) => (
@@ -83,7 +83,7 @@ function ServiceCard({
                 <img
                     src={img}
                     alt={title}
-                    className="transaction-image"
+                    className="interaction-image"
                     onError={() => setImg('/static/gift_economy.png')}
                     onClick={(e) => e.stopPropagation()}
                 />

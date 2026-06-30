@@ -1,6 +1,6 @@
 /* ============================================================================
-   Projects — project listing cards (with nested transactions & shoutouts)
-   Nested .transaction styles are scoped under .project to avoid colliding
+   Projects — project listing cards (with nested interactions & shoutouts)
+   Nested .interaction styles are scoped under .project to avoid colliding
    with the global feed cards in MeaningTrail.css / Marketplace.css.
    ========================================================================== */
 
@@ -43,9 +43,9 @@
 .project-description-container { margin-top: 1em; }
 .project-description { margin: 0; color: var(--ink-soft); line-height: 1.62; }
 
-/* Nested transaction rows (scoped) */
-.project-transactions { margin-top: 1.1em; display: flex; flex-direction: column; gap: 0.6em; }
-.project .transaction {
+/* Nested interaction rows (scoped) */
+.project-interactions { margin-top: 1.1em; display: flex; flex-direction: column; gap: 0.6em; }
+.project .interaction {
     padding: 0.85em 1em;
     border: 1px solid var(--border-soft);
     border-left: 3px solid var(--sage);
@@ -55,11 +55,11 @@
     margin: 0;
     transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease);
 }
-.project .transaction:hover { background: var(--paper-deep); border-left-color: var(--leaf); }
-.project .transaction-header { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; }
-.project .transaction h4 { margin: 0; font-size: 1rem; }
-.project .transaction p { margin: 0.4em 0 0; color: var(--ink-soft); font-size: 0.92rem; }
-.transaction-status-btn {
+.project .interaction:hover { background: var(--paper-deep); border-left-color: var(--leaf); }
+.project .interaction-header { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; }
+.project .interaction h4 { margin: 0; font-size: 1rem; }
+.project .interaction p { margin: 0.4em 0 0; color: var(--ink-soft); font-size: 0.92rem; }
+.interaction-status-btn {
     padding: 0.3em 0.75em;
     background: var(--moss);
     color: #f7f4e8;
@@ -71,10 +71,10 @@
     white-space: nowrap;
     transition: background-color 0.25s var(--ease);
 }
-.transaction-status-btn:hover { background: var(--moss-deep); }
-.transaction-participants { font-style: italic; margin-top: 0.5em; font-size: 0.88rem; color: var(--ink-soft); }
-.transaction-participants a { color: var(--terracotta-deep); font-weight: 600; font-style: normal; }
-.transaction-participants a:hover { text-decoration: underline; }
+.interaction-status-btn:hover { background: var(--moss-deep); }
+.interaction-participants { font-style: italic; margin-top: 0.5em; font-size: 0.88rem; color: var(--ink-soft); }
+.interaction-participants a { color: var(--terracotta-deep); font-weight: 600; font-style: normal; }
+.interaction-participants a:hover { text-decoration: underline; }
 
 /* Status progression buttons */
 .project-status-buttons { margin-top: 1.1em; display: flex; gap: 0.5em; flex-wrap: wrap; }

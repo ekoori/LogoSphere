@@ -3,8 +3,8 @@
    Shares the warm card + accent-bar language with MeaningTrail.css.
    ========================================================================== */
 
-/* Transaction & service cards share one look */
-.transaction,
+/* Interaction & service cards share one look */
+.interaction,
 .service,
 .service-card {
     background: var(--surface);
@@ -18,31 +18,31 @@
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
     animation: ts-rise 0.5s var(--ease) both;
 }
-.transaction:hover,
+.interaction:hover,
 .service:hover,
 .service-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-.transaction.offer,   .service.offer,   .service-card.offer   { border-left-color: var(--leaf); }
-.transaction.request, .service.request, .service-card.request { border-left-color: var(--terracotta); }
-.transaction.completed { border-left-color: var(--moss); }
+.interaction.offer,   .service.offer,   .service-card.offer   { border-left-color: var(--leaf); }
+.interaction.request, .service.request, .service-card.request { border-left-color: var(--terracotta); }
+.interaction.completed { border-left-color: var(--moss); }
 
 /* Header rows (shared) */
-.transaction-header,
-.service .transaction-header,
-.service-card .transaction-header {
+.interaction-header,
+.service .interaction-header,
+.service-card .interaction-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 1em;
 }
-.transaction-header .left,
-.service .transaction-header .left,
-.service-card .transaction-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
-.transaction-header .right,
-.service .transaction-header .right,
-.service-card .transaction-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
-.transaction-header h3 { margin: 0; font-size: 1.18rem; }
-.transaction-header small { margin: 0; color: var(--ink-faint); }
+.interaction-header .left,
+.service .interaction-header .left,
+.service-card .interaction-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
+.interaction-header .right,
+.service .interaction-header .right,
+.service-card .interaction-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
+.interaction-header h3 { margin: 0; font-size: 1.18rem; }
+.interaction-header small { margin: 0; color: var(--ink-faint); }
 
 .like-timestamp { display: flex; flex-direction: column; align-items: center; text-align: center; }
 
@@ -55,9 +55,9 @@
     align-items: flex-start;
     gap: 1em;
 }
-.transaction-image,
-.service .transaction-image,
-.service-card .transaction-image {
+.interaction-image,
+.service .interaction-image,
+.service-card .interaction-image {
     width: 110px; height: 110px;
     object-fit: cover;
     margin-right: 1em;
@@ -96,10 +96,10 @@
 .service-project-name { color: var(--moss-deep); font-weight: 600; }
 
 /* Service sub-listings */
-.service .service-transactions { margin-top: 1em; }
-.service .transaction-summary { margin-top: 0.5em; }
-.service .transaction-summary a { color: var(--terracotta-deep); font-weight: 600; }
-.service .transaction-summary a:hover { text-decoration: underline; }
+.service .service-interactions { margin-top: 1em; }
+.service .interaction-summary { margin-top: 0.5em; }
+.service .interaction-summary a { color: var(--terracotta-deep); font-weight: 600; }
+.service .interaction-summary a:hover { text-decoration: underline; }
 
 /* Create service CTA at bottom of each card */
 .service-create-cta {

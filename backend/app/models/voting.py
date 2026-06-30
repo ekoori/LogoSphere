@@ -4,7 +4,7 @@
 # Properties:
 #   [-] vote_id: Unique identifier for a vote instance.
 #   [-] user_id: Identifier of the user who casts the vote.
-#   [-] target_id: ID of the target item (could be project, transaction, etc.) being voted on.
+#   [-] target_id: ID of the target item (could be project, interaction, etc.) being voted on.
 #   [-] vote_type: Type of the vote (e.g., upvote, downvote, neutral), reflecting different voting systems.
 #   [-] vote_value: The actual vote cast, variable depending on the voting system implemented (e.g., Yes, No, Neutral).
 #   [-] choices: List or enumeration of possible choices in a voting scenario.

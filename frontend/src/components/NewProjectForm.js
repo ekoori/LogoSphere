@@ -30,7 +30,7 @@ const NewProjectForm = ({ isVisible, onCreateProject, onCancel }) => {
   if (!isVisible) return null;
 
   return (
-    <div id="project-form" className="transaction">
+    <div id="project-form" className="interaction">
       <h3>Create a New Project</h3>
       <form onSubmit={handleSubmit}>
         <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />

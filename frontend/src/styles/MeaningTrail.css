@@ -1,10 +1,10 @@
 /* ============================================================================
-   MeaningTrail — collapsible transaction feed cards.
+   MeaningTrail — collapsible interaction feed cards.
    Type-coded left accent bar; Trustifacts and Shoutouts are visually distinct.
    ========================================================================== */
 
 /* ── Base card ─────────────────────────────────────────────────────────── */
-.transaction {
+.interaction {
     background: var(--surface);
     border: 1px solid var(--border-soft);
     border-left: 4px solid var(--sage);
@@ -15,16 +15,16 @@
     animation: ts-rise 0.35s var(--ease) both;
     overflow: hidden;
 }
-.transaction.collapsed { cursor: pointer; }
-.transaction.collapsed:hover { box-shadow: var(--shadow-md); }
-.transaction.expanded  { box-shadow: var(--shadow-md); }
+.interaction.collapsed { cursor: pointer; }
+.interaction.collapsed:hover { box-shadow: var(--shadow-md); }
+.interaction.expanded  { box-shadow: var(--shadow-md); }
 
-.transaction.offer     { border-left-color: var(--terracotta); }
-.transaction.request   { border-left-color: var(--honey); }
-.transaction.completed { border-left-color: var(--leaf); }
+.interaction.offer     { border-left-color: var(--terracotta); }
+.interaction.request   { border-left-color: var(--honey); }
+.interaction.completed { border-left-color: var(--leaf); }
 
 /* ── Summary row — always visible ──────────────────────────────────────── */
-.tx-summary {
+.ix-summary {
     display: flex;
     align-items: center;
     gap: 0.6em;
@@ -44,7 +44,7 @@
 }
 
 /* Title column — takes remaining space */
-.tx-title-col {
+.ix-title-col {
     flex: 1;
     min-width: 0;
     display: flex;
@@ -53,7 +53,7 @@
     overflow: hidden;
 }
 
-.tx-title {
+.ix-title {
     font-family: var(--font-display);
     font-size: 0.97rem;
     font-weight: 600;
@@ -64,18 +64,18 @@
     text-overflow: ellipsis;
     display: block;
 }
-.transaction.expanded .tx-summary .tx-title {
+.interaction.expanded .ix-summary .ix-title {
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
     font-size: 1.12rem;
 }
-.tx-title-link {
+.ix-title-link {
     text-decoration: none;
     color: var(--moss-deep);
     transition: color 0.15s var(--ease);
 }
-.tx-title-link:hover {
+.ix-title-link:hover {
     color: var(--terracotta-deep);
     text-decoration: underline;
     text-decoration-color: var(--terracotta);
@@ -83,35 +83,35 @@
 }
 
 /* Participant names shown inline when collapsed */
-.tx-participants-inline {
+.ix-participants-inline {
     font-size: 0.78rem;
     color: var(--ink-faint);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.tx-participants-inline a {
+.ix-participants-inline a {
     color: var(--terracotta-deep);
     font-weight: 600;
     text-decoration: none;
 }
-.tx-participants-inline a:hover { text-decoration: underline; }
+.ix-participants-inline a:hover { text-decoration: underline; }
 
 /* Right cluster: date + likes */
-.tx-summary-meta {
+.ix-summary-meta {
     display: flex;
     align-items: center;
     gap: 0.45em;
     flex-shrink: 0;
 }
-.tx-date {
+.ix-date {
     font-size: 0.76rem;
     color: var(--ink-faint);
     white-space: nowrap;
 }
 
 /* Chevron toggle button */
-.tx-expand-btn {
+.ix-expand-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -123,17 +123,17 @@
     line-height: 1;
     transition: color 0.15s var(--ease), background 0.15s var(--ease);
 }
-.tx-expand-btn:hover { color: var(--moss); background: var(--surface-2); }
+.ix-expand-btn:hover { color: var(--moss); background: var(--surface-2); }
 
 /* ── Expanded body ─────────────────────────────────────────────────────── */
-.tx-body {
+.ix-body {
     padding: 0 0.9em 1em;
     border-top: 1px solid var(--border-soft);
     animation: ts-rise 0.22s var(--ease) both;
 }
 
 /* Context row: participants, sphere pills, project reference */
-.tx-context {
+.ix-context {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -141,17 +141,17 @@
     padding: 0.65em 0 0.55em;
     font-size: 0.86rem;
 }
-.tx-context .participants { color: var(--ink-soft); }
-.tx-context .participants a,
-.tx-context a {
+.ix-context .participants { color: var(--ink-soft); }
+.ix-context .participants a,
+.ix-context a {
     color: var(--terracotta-deep);
     font-weight: 600;
     text-decoration: none;
 }
-.tx-context a:hover { text-decoration: underline; }
-.tx-sphere-pill { font-size: 0.73rem; }
-.tx-project-ref { font-size: 0.83rem; color: var(--ink-soft); }
-.tx-project-ref a { color: var(--moss-deep); font-weight: 600; }
+.ix-context a:hover { text-decoration: underline; }
+.ix-sphere-pill { font-size: 0.73rem; }
+.ix-project-ref { font-size: 0.83rem; color: var(--ink-soft); }
+.ix-project-ref a { color: var(--moss-deep); font-weight: 600; }
 
 /* Description + image */
 .description-container {
@@ -160,7 +160,7 @@
     gap: 1em;
     margin: 0.3em 0 0.9em;
 }
-.transaction-image {
+.interaction-image {
     width: 96px;
     height: 96px;
     object-fit: cover;
@@ -180,36 +180,36 @@
 .status { margin-bottom: 0.75em; }
 
 /* ── Section dividers (Trustifacts / Shoutouts) ────────────────────────── */
-.tx-section {
+.ix-section {
     border-top: 1px solid var(--border-soft);
     padding-top: 0.8em;
     margin-top: 0.8em;
 }
 
-.tx-section-label {
+.ix-section-label {
     display: flex;
     align-items: baseline;
     gap: 0.45em;
     margin-bottom: 0.6em;
 }
-.tx-section-label > span:first-child {
+.ix-section-label > span:first-child {
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 0.77rem;
     letter-spacing: 0.07em;
     text-transform: uppercase;
 }
-.tx-section-hint {
+.ix-section-hint {
     font-size: 0.74rem;
     color: var(--ink-faint);
     font-weight: 400;
     letter-spacing: 0;
     text-transform: none;
 }
-.tx-section-trustifact > span:first-child { color: var(--leaf); }
-.tx-section-shoutout  > span:first-child  { color: var(--honey-deep); }
+.ix-section-trustifact > span:first-child { color: var(--leaf); }
+.ix-section-shoutout  > span:first-child  { color: var(--honey-deep); }
 
-.tx-empty-section {
+.ix-empty-section {
     font-size: 0.83rem;
     color: var(--ink-faint);
     margin: 0 0 0.45em;
@@ -241,7 +241,7 @@
 .tf-content p strong { color: var(--ink); font-weight: 600; }
 
 /* ── Add buttons ────────────────────────────────────────────────────────── */
-.tx-add-btn {
+.ix-add-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.3em;
@@ -255,18 +255,18 @@
     margin-top: 0.35em;
     transition: background 0.18s var(--ease), color 0.18s var(--ease);
 }
-.tx-add-trustifact {
+.ix-add-trustifact {
     background: rgba(111, 138, 79, 0.09);
     border-color: var(--leaf);
     color: var(--moss-deep);
 }
-.tx-add-trustifact:hover { background: var(--leaf); color: #f7f4e8; }
-.tx-add-shoutout {
+.ix-add-trustifact:hover { background: var(--leaf); color: #f7f4e8; }
+.ix-add-shoutout {
     background: rgba(217, 162, 63, 0.1);
     border-color: var(--honey);
     color: var(--honey-deep);
 }
-.tx-add-shoutout:hover { background: var(--honey); color: var(--moss-deep); }
+.ix-add-shoutout:hover { background: var(--honey); color: var(--moss-deep); }
 
 /* ── Shoutout form (NewShoutoutForm) ───────────────────────────────────── */
 #save-shoutout-btn, #cancel-shoutout-btn {

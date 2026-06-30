@@ -36,11 +36,11 @@
     margin-bottom: 2em;
 }
 
-.project-transactions {
+.project-interactions {
     margin-bottom: 2em;
 }
 
-.transaction {
+.interaction {
     padding: 1em;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -49,22 +49,22 @@
     transition: background-color 0.3s;
 }
 
-.transaction:hover {
+.interaction:hover {
     background-color: var(--surface-2);
 }
 
-.transaction-header {
+.interaction-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5em;
 }
 
-.transaction h4 {
+.interaction h4 {
     margin: 0;
 }
 
-.transaction-status-btn {
+.interaction-status-btn {
     padding: 0.2em 0.5em;
     background-color: var(--moss);
     color: white;
@@ -74,27 +74,27 @@
     transition: background-color 0.3s, color 0.3s;
 }
 
-.transaction-status-btn:hover {
+.interaction-status-btn:hover {
     background-color: darkblue;
 }
 
-.transaction-participants {
+.interaction-participants {
     font-style: italic;
     margin-top: 0.5em;
 }
 
-.transaction-participants span {
+.interaction-participants span {
     display: inline;
     margin-right: 0.5em;
 }
 
-.transaction-participants a {
+.interaction-participants a {
     display: inline;
     color: var(--moss);
     text-decoration: none;
 }
 
-.transaction-participants a:hover {
+.interaction-participants a:hover {
     text-decoration: underline;
 }
 

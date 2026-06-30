@@ -1,5 +1,5 @@
 // UserPage — public profile for any user, loaded by ?id=.
-// Shows their MeaningTrail as collapsible TransactionCards and their posted
+// Shows their MeaningTrail as collapsible InteractionCards and their posted
 // marketplace offers/requests, mirroring the Home feed layout.
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,7 +12,7 @@ import '../styles/Marketplace.css';
 import MeaningTrail from '../components/MeaningTrail';
 import Marketplace from '../components/Marketplace';
 import api from '../api';
-import { mapTransaction, mapService } from '../utils/mappers';
+import { mapInteraction, mapService } from '../utils/mappers';
 
 function UserPage() {
     const [params] = useSearchParams();
@@ -34,7 +34,7 @@ function UserPage() {
         }
         try {
             const res = await api.post('/api/meaning_trail', { userId: id });
-            setTrail((res.data || []).map(mapTransaction));
+            setTrail((res.data || []).map(mapInteraction));
         } catch (e) {
             // empty trail is fine
         }

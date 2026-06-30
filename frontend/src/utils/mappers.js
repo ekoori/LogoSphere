@@ -63,10 +63,10 @@ function imageFor(text = '') {
     return null;
 }
 
-// Map a flat MeaningTrail row from the API into a TransactionCard item.
-export function mapTransaction(row) {
+// Map a flat MeaningTrail row from the API into a InteractionCard item.
+export function mapInteraction(row) {
     const completed = ['Finished', 'Completed', 'Trustifacted', 'Additional Comments Added']
-        .includes(row.transaction_status);
+        .includes(row.interaction_status);
 
     const trustifacts = [];
     if (row.gratitude_comment) {
@@ -97,9 +97,9 @@ export function mapTransaction(row) {
     }
 
     return {
-        id: row.transaction_id,
+        id: row.interaction_id,
         type: completed ? 'completed' : 'offer',
-        title: row.transaction_description || 'An exchange of trust',
+        title: row.interaction_description || 'An exchange of trust',
         // meaning_trail rows have no sphere FK — project shown separately
         spheres: [],
         participants: [
@@ -111,9 +111,9 @@ export function mapTransaction(row) {
             : 'A moment of trust shared in the community.',
         project: row.project_name || null,
         projectId: row.project_id || null,
-        imageUrl: imageFor(row.transaction_description),
+        imageUrl: imageFor(row.interaction_description),
         time: fmtDate(row.project_start_timestamp) || 'recently',
-        status: row.transaction_status || 'Initiated',
+        status: row.interaction_status || 'Initiated',
         likesCount: 0,
         likedByCurrentUser: false,
         initiatedTime: fmtDate(row.project_start_timestamp),
@@ -126,6 +126,6 @@ export function mapTransaction(row) {
         canModify: false,
         onAddTrustifact: () => {},
         onAddShoutout: () => {},
-        onModifyTransaction: () => {},
+        onModifyInteraction: () => {},
     };
 }
