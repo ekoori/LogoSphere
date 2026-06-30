@@ -2,11 +2,11 @@
 -- TrustSphere — demo seed data
 -- A small but coherent story showing what TrustSphere stands for:
 --   a gift economy (give freely, build trust), communities (Spheres),
---   collectives (Alliances), shared missions (Projects), and a TrustTrail that
+--   collectives (Alliances), shared missions (Projects), and a Meaning Trail that
 --   records moments of trust between neighbours.
 --
 -- Reuses the 20 seeded users (passwords = first name). Demo login:
---   joe.rogan@example.com / Joe   — his TrustTrail is the centrepiece.
+--   joe.rogan@example.com / Joe   — his Meaning Trail is the centrepiece.
 -- ============================================================================
 
 USE trustsphere;
@@ -170,13 +170,13 @@ VALUES (cccccccc-0000-0000-0000-000000000004, 'offer',
   ['seed sovereignty', 'generosity']);
 
 -- ============================================================================
--- Joe Rogan's TrustTrail — the heart of the demo.
+-- Joe Rogan's Meaning Trail — the heart of the demo.
 -- Each row is a moment of trust: a gift given or received, sometimes followed
 -- by a gratitude note (a Trustifact) or a public Shoutout.
 -- ============================================================================
 
 -- 1) Rebuilt the community garden fence with Marie Kondo (completed, trustifacted)
-INSERT INTO trusttrail (user_id, transaction_id, other_user_id, other_user_name,
+INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
   transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
   gratitude_comment, gratitude_comment_id, gratitude_comment_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)
@@ -190,7 +190,7 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   9c89c702-6c61-49c8-9f0c-47b8e4e84e4b, 'Marie Kondo', 30000000-0000-0000-0000-000000000001, '2026-05-04 19:00:00');
 
 -- 2) Shared 7 H100 GPUs with the Open GPU Cluster (in progress)
-INSERT INTO trusttrail (user_id, transaction_id, other_user_id, other_user_name,
+INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
   transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
   gratitude_comment, gratitude_comment_id, gratitude_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000002,
@@ -201,7 +201,7 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   20000000-0000-0000-0000-000000000002, '2026-06-02 10:00:00');
 
 -- 3) Taught a free podcasting workshop (completed, shoutout)
-INSERT INTO trusttrail (user_id, transaction_id, other_user_id, other_user_name,
+INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
   transaction_description, transaction_status, project_name, project_start_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000003,
@@ -211,7 +211,7 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   ff52c318-95e0-4f1f-89cc-62551c814a83, 'Emma Watson', 30000000-0000-0000-0000-000000000003, '2026-06-12 20:00:00');
 
 -- 4) Received carpentry mentorship from Steve Wozniak (completed, Joe's thanks)
-INSERT INTO trusttrail (user_id, transaction_id, other_user_id, other_user_name,
+INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
   transaction_description, transaction_status, project_id, project_name, project_start_timestamp,
   user_comment, user_comment_id, user_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000004,
@@ -222,7 +222,7 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   40000000-0000-0000-0000-000000000004, '2026-04-25 16:00:00');
 
 -- 5) Helping start the Neighbourhood Solar Microgrid (initiated)
-INSERT INTO trusttrail (user_id, transaction_id, other_user_id, other_user_name,
+INSERT INTO meaning_trail (user_id, transaction_id, other_user_id, other_user_name,
   transaction_description, transaction_status, project_id, project_name, project_start_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000005,
   16f033ca-2b2c-4745-a537-82999209774c, 'Steve Wozniak',

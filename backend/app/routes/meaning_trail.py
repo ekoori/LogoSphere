@@ -1,23 +1,23 @@
 """
-File: ./backend/app/routes/trusttrail.py
-Description: Flask route file handling TrustTrail operations. Auth is provided by
+File: ./backend/app/routes/meaning_trail.py
+Description: Flask route file handling MeaningTrail operations. Auth is provided by
 the Cassandra-backed @validate_session decorator (consistent with the other
 routes), which injects the authenticated user_id.
 Methods:
-    [x] get_trusttrail() : GET/POST '/trusttrail' — fetch a user's trust trail.
-    [x] add_transaction() : POST '/trusttrail/add_transaction' — add a transaction.
+    [x] get_meaning_trail() : GET/POST '/meaning_trail' — fetch a user's trust trail.
+    [x] add_transaction() : POST '/meaning_trail/add_transaction' — add a transaction.
 """
 
 import logging
 from flask import request, jsonify, current_app as app
-from app.models.trusttrail import TrustTrail
+from app.models.meaning_trail import MeaningTrail
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
 
 
 @validate_session
-def get_trusttrail(user_id=None):
+def get_meaning_trail(user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
 
@@ -27,10 +27,10 @@ def get_trusttrail(user_id=None):
         data = request.get_json() or {}
         target_id = data.get('userId') or data.get('user_id') or target_id
 
-    trust_trail = TrustTrail.get_trusttrail(target_id)
-    # get_trusttrail returns [] for an empty trail and None on error.
+    trust_trail = MeaningTrail.get_meaning_trail(target_id)
+    # get_meaning_trail returns [] for an empty trail and None on error.
     if trust_trail is None:
-        return jsonify({'error': 'TrustTrail not found'}), 404
+        return jsonify({'error': 'MeaningTrail not found'}), 404
     return jsonify(trust_trail), 200
 
 
@@ -42,7 +42,7 @@ def add_transaction(user_id=None):
         data = request.get_json() or {}
         other_user_id = data['other_user_id']
         project_id = data['project_id']
-        TrustTrail.add_transaction(str(user_id), other_user_id, project_id)
+        MeaningTrail.add_transaction(str(user_id), other_user_id, project_id)
         return jsonify({'message': 'Transaction added successfully'}), 200
     except KeyError as e:
         return jsonify({'message': f'Missing field: {e}'}), 400
@@ -56,7 +56,7 @@ def get_transaction(transaction_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        tx_dict, is_initiator = TrustTrail.get_by_id(transaction_id, user_id)
+        tx_dict, is_initiator = MeaningTrail.get_by_id(transaction_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Transaction not found or not authorized'}), 404
         return jsonify({'transaction': tx_dict, 'is_initiator': is_initiator}), 200
@@ -79,11 +79,11 @@ def update_tx_status(transaction_id, user_id=None):
         if new_status not in _VALID_STATUSES:
             return jsonify({'message': 'Invalid status'}), 400
 
-        tx_dict, _ = TrustTrail.get_by_id(transaction_id, user_id)
+        tx_dict, _ = MeaningTrail.get_by_id(transaction_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Transaction not found or not authorized'}), 404
 
-        TrustTrail.set_status_for(tx_dict['user_id'], transaction_id, new_status)
+        MeaningTrail.set_status_for(tx_dict['user_id'], transaction_id, new_status)
         return jsonify({'message': 'Status updated'}), 200
     except Exception as e:
         logger.error(f"Error in update_tx_status: {e}")
@@ -101,7 +101,7 @@ def add_tx_comment(transaction_id, user_id=None):
         if not text or comment_type not in ('gratitude', 'user', 'other'):
             return jsonify({'message': 'Invalid comment data'}), 400
 
-        tx_dict, is_initiator = TrustTrail.get_by_id(transaction_id, user_id)
+        tx_dict, is_initiator = MeaningTrail.get_by_id(transaction_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Transaction not found or not authorized'}), 404
 
@@ -118,7 +118,7 @@ def add_tx_comment(transaction_id, user_id=None):
             if u:
                 author_name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
 
-        ok = TrustTrail.add_comment_for(
+        ok = MeaningTrail.add_comment_for(
             tx_dict['user_id'], transaction_id, comment_type, text,
             author_id=str(user_id), author_name=author_name,
         )

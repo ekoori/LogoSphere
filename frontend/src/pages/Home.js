@@ -1,27 +1,27 @@
-// Home — landing feed: the logged-in user's TrustTrail and the marketplace.
+// Home — landing feed: the logged-in user's MeaningTrail and the marketplace.
 // Both fetched live from the API; 401 means "not logged in" and shows empty state.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import '../styles/TrustTrail.css';
+import '../styles/MeaningTrail.css';
 import '../styles/Marketplace.css';
 
-import TrustTrail from '../components/TrustTrail';
+import MeaningTrail from '../components/MeaningTrail';
 import Marketplace from '../components/Marketplace';
 import api from '../api';
 import { mapService, mapTransaction } from '../utils/mappers';
 
 function Home() {
-    const [activeTab, setActiveTab] = useState('trusttrail');
+    const [activeTab, setActiveTab] = useState('meaning_trail');
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [items, setItems] = useState([]);
     const [services, setServices] = useState([]);
 
     const fetchFeed = useCallback(async () => {
         try {
-            const res = await api.get('/api/trusttrail');
+            const res = await api.get('/api/meaning_trail');
             setItems((res.data || []).map(mapTransaction));
         } catch (e) {
-            if (e.response?.status !== 401) console.error('Error fetching trusttrail:', e);
+            if (e.response?.status !== 401) console.error('Error fetching meaning_trail:', e);
         }
         try {
             const res = await api.get('/api/marketplace');
@@ -42,7 +42,7 @@ function Home() {
                 <button className="btn-orange" onClick={() => setIsFormVisible((v) => !v)}>
                     {isFormVisible ? 'Hide New Service Form' : 'New Service'}
                 </button>
-                <h3>TrustTrail</h3>
+                <h3>Meaning Trail</h3>
                 <div className="filters">
                     <button>Show All</button>
                     <button>Only Active</button>
@@ -54,10 +54,10 @@ function Home() {
             <main>
                 <div className="selector-buttons">
                     <button
-                        className={`btn-selector ${activeTab === 'trusttrail' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('trusttrail')}
+                        className={`btn-selector ${activeTab === 'meaning_trail' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('meaning_trail')}
                     >
-                        TrustTrail
+                        Meaning Trail
                     </button>
                     <button
                         className={`btn-selector ${activeTab === 'offers-requests' ? 'active' : ''}`}
@@ -67,10 +67,10 @@ function Home() {
                     </button>
                 </div>
 
-                {activeTab === 'trusttrail' && (
+                {activeTab === 'meaning_trail' && (
                     items.length === 0
-                        ? <p className="empty-state">Your TrustTrail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.</p>
-                        : <TrustTrail items={items} />
+                        ? <p className="empty-state">Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.</p>
+                        : <MeaningTrail items={items} />
                 )}
                 {activeTab === 'offers-requests' && (
                     <Marketplace services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} />

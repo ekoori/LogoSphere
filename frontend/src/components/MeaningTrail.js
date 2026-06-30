@@ -2,11 +2,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TransactionCard from './TransactionCard';
 import ShoutoutCard from './ShoutoutCard';
-import '../styles/TrustTrail.css';
+import '../styles/MeaningTrail.css';
 
-function TrustTrail({ items }) {
+function MeaningTrail({ items }) {
     return (
-        <section id="trusttrail" className="user-trusttrail">
+        <section id="meaning-trail" className="user-meaning-trail">
             {items.map((item) =>
                 item.type === 'shoutout' ? (
                     <ShoutoutCard key={item.id} shoutout={item} />
@@ -44,7 +44,7 @@ function TrustTrail({ items }) {
     );
 }
 
-TrustTrail.propTypes = {
+MeaningTrail.propTypes = {
     items: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.string.isRequired,
         type: PropTypes.string.isRequired,
@@ -68,4 +68,4 @@ TrustTrail.propTypes = {
     })).isRequired,
 };
 
-export default TrustTrail;
+export default MeaningTrail;

@@ -4,7 +4,7 @@ import { useLogin } from '../App';
 import api from '../api';
 import StatusProgression from '../components/StatusProgression';
 import '../styles/Transaction.css';
-import '../styles/TrustTrail.css';
+import '../styles/MeaningTrail.css';
 
 const TX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
 
@@ -111,7 +111,7 @@ function TransactionPage() {
             {/* ── Hero ─────────────────────────────────────────────────── */}
             <div className="tx-page-hero">
                 <div className="tx-page-breadcrumb">
-                    <Link to="/profile">Trust Trail</Link>
+                    <Link to="/profile">Meaning Trail</Link>
                     <span>›</span>
                     <span>{tx.transaction_description || 'Transaction'}</span>
                 </div>

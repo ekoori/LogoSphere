@@ -1,15 +1,15 @@
 // UserPage — public profile for any user, loaded by ?id=.
-// Shows their TrustTrail as collapsible TransactionCards and their posted
+// Shows their MeaningTrail as collapsible TransactionCards and their posted
 // marketplace offers/requests, mirroring the Home feed layout.
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/User.css';
-import '../styles/TrustTrail.css';
+import '../styles/MeaningTrail.css';
 import '../styles/Marketplace.css';
 
-import TrustTrail from '../components/TrustTrail';
+import MeaningTrail from '../components/MeaningTrail';
 import Marketplace from '../components/Marketplace';
 import api from '../api';
 import { mapTransaction, mapService } from '../utils/mappers';
@@ -21,7 +21,7 @@ function UserPage() {
     const [user, setUser] = useState(null);
     const [trail, setTrail] = useState([]);
     const [services, setServices] = useState([]);
-    const [activeTab, setActiveTab] = useState('trusttrail');
+    const [activeTab, setActiveTab] = useState('meaning_trail');
     const [loading, setLoading] = useState(true);
 
     const fetchAll = useCallback(async () => {
@@ -33,7 +33,7 @@ function UserPage() {
             console.error('Error loading user:', e);
         }
         try {
-            const res = await api.post('/api/trusttrail', { userId: id });
+            const res = await api.post('/api/meaning_trail', { userId: id });
             setTrail((res.data || []).map(mapTransaction));
         } catch (e) {
             // empty trail is fine
@@ -91,10 +91,10 @@ function UserPage() {
             <main>
                 <div className="selector-buttons">
                     <button
-                        className={`btn-selector ${activeTab === 'trusttrail' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('trusttrail')}
+                        className={`btn-selector ${activeTab === 'meaning_trail' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('meaning_trail')}
                     >
-                        TrustTrail
+                        Meaning Trail
                     </button>
                     <button
                         className={`btn-selector ${activeTab === 'offerings' ? 'active' : ''}`}
@@ -104,10 +104,10 @@ function UserPage() {
                     </button>
                 </div>
 
-                {activeTab === 'trusttrail' && (
+                {activeTab === 'meaning_trail' && (
                     trail.length === 0
-                        ? <p className="empty-state">No trust trail recorded yet.</p>
-                        : <TrustTrail items={trail} />
+                        ? <p className="empty-state">No meaning trail recorded yet.</p>
+                        : <MeaningTrail items={trail} />
                 )}
 
                 {activeTab === 'offerings' && (

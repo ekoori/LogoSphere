@@ -1,4 +1,4 @@
-// TransactionCard — a trust transaction in the TrustTrail feed.
+// TransactionCard — a trust transaction in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
 // When expanded, the title is a link to the transaction detail page.
 // Trustifacts (verified gratitude records) and Shoutouts (kudos) have
@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import LikeTimestamp from './LikeTimestamp';
 import NewShoutoutForm from './NewShoutoutForm';
 import StatusProgression from './StatusProgression';
-import '../styles/TrustTrail.css';
+import '../styles/MeaningTrail.css';
 
 const TX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
 const txIndex = (status) => {

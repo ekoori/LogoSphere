@@ -62,7 +62,7 @@
     border: 3px solid var(--surface); box-shadow: var(--shadow-md);
 }
 
-/* User TrustTrail list */
+/* User MeaningTrail list */
 .trust-list li {
     background: var(--surface-2); border: 1px solid var(--border-soft);
     border-left: 3px solid var(--leaf); border-radius: var(--r-md);
@@ -428,7 +428,7 @@ aside .sphere-list a:hover, aside .active-offers a:hover, aside .active-requests
     background: var(--moss); color: #f7f4e8; transform: translateX(3px);
 }
 
-/* TrustTrail / Offers tab selector (used on Home) */
+/* MeaningTrail / Offers tab selector (used on Home) */
 .selector-buttons {
     display: flex;
     gap: 0.4em;

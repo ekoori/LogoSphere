@@ -219,7 +219,7 @@ CREATE TABLE trustsphere.spheres (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.trusttrail (
+CREATE TABLE trustsphere.meaning_trail (
     user_id uuid,
     transaction_id uuid,
     gratitude_comment text,
@@ -312,15 +312,15 @@ ALTER TABLE trustsphere.projects ADD participants list<uuid>;
 ALTER TABLE trustsphere.projects ADD participant_names list<text>;
 ALTER TABLE trustsphere.projects ADD values list<text>;
 
-CREATE INDEX trusttrail_other_user_id_idx ON trustsphere.trusttrail (other_user_id);
+CREATE INDEX meaning_trail_other_user_id_idx ON trustsphere.meaning_trail (other_user_id);
 
-CREATE INDEX trusttrail_project_id_idx ON trustsphere.trusttrail (project_id);
+CREATE INDEX meaning_trail_project_id_idx ON trustsphere.meaning_trail (project_id);
 
-CREATE INDEX trusttrail_transaction_status_idx ON trustsphere.trusttrail (transaction_status);
+CREATE INDEX meaning_trail_transaction_status_idx ON trustsphere.meaning_trail (transaction_status);
 
-CREATE MATERIALIZED VIEW trustsphere.vw_trusttrail_summary AS
+CREATE MATERIALIZED VIEW trustsphere.vw_meaning_trail_summary AS
     SELECT user_id, transaction_id, transaction_status, project_id
-    FROM trustsphere.trusttrail
+    FROM trustsphere.meaning_trail
     WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND transaction_status IS NOT NULL AND transaction_id IS NOT NULL
     PRIMARY KEY ((user_id, transaction_id), transaction_status)
  WITH CLUSTERING ORDER BY (transaction_status ASC)

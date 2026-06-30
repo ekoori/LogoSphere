@@ -63,7 +63,7 @@ function imageFor(text = '') {
     return null;
 }
 
-// Map a flat TrustTrail row from the API into a TransactionCard item.
+// Map a flat MeaningTrail row from the API into a TransactionCard item.
 export function mapTransaction(row) {
     const completed = ['Finished', 'Completed', 'Trustifacted', 'Additional Comments Added']
         .includes(row.transaction_status);
@@ -100,7 +100,7 @@ export function mapTransaction(row) {
         id: row.transaction_id,
         type: completed ? 'completed' : 'offer',
         title: row.transaction_description || 'An exchange of trust',
-        // trusttrail rows have no sphere FK — project shown separately
+        // meaning_trail rows have no sphere FK — project shown separately
         spheres: [],
         participants: [
             { name: 'You', id: null },

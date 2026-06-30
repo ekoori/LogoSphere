@@ -1,6 +1,6 @@
 /* ============================================================================
    Marketplace — service cards (offers / requests) and the new-service form.
-   Shares the warm card + accent-bar language with TrustTrail.css.
+   Shares the warm card + accent-bar language with MeaningTrail.css.
    ========================================================================== */
 
 /* Transaction & service cards share one look */
@@ -159,7 +159,7 @@
 }
 #service-form button[type="submit"]:hover { background: var(--terracotta-deep); transform: translateY(-1px); }
 
-/* Status progress (shared with TrustTrail look) */
+/* Status progress (shared with MeaningTrail look) */
 .status { margin-top: 1.1em; }
 .progress { display: flex; gap: 0.4em; margin-top: 1em; }
 .step {

@@ -1,12 +1,12 @@
-# File: ./backend/app/models/trusttrail.py
+# File: ./backend/app/models/meaning_trail.py
 # Description: Model file for handling trust trails (transaction history and trust ratings received by a user)
-# Class: TrustTrail, Likes
+# Class: MeaningTrail, Likes
 # Properties: 
-#    [-] user: Refers to the user who the trusttrail is associated with.
+#    [-] user: Refers to the user who the meaning_trail is associated with.
 #    [-] transaction_history: List of last 100 transactions done by the user.
 # Methods: 
 #    [-] add_transaction(cls, user_id, other_user_id, project_id): Adds a graded entry against a transaction in a user's trust trail.
-#    [-] get_trusttrail(cls, user_id): fetches a complete TrustTrail of a particular user with all associated like counts and stores it into rtansaction_history.
+#    [-] get_meaning_trail(cls, user_id): fetches a complete MeaningTrail of a particular user with all associated like counts and stores it into rtansaction_history.
 #    [-] add_gratitude_comment(cls, transaction_id, gratitude_comment): Adds a gratitude_comment to a transaction
 #    [-] add_user_comment(cls, user_comment): Adds a user_comment to a gratitude comment.
 #    [-] add_other_comment(cls, other_user_id, other_comment): Adds an other_comment
@@ -14,7 +14,7 @@
 
 # Features:
 #    [-] Users can view their history of transactions and the corresponding trust ratings received.
-#    [-] User can grade other user's transactions (trust scores, feedbacks etc.) in form of entries in their TrustTrail.
+#    [-] User can grade other user's transactions (trust scores, feedbacks etc.) in form of entries in their MeaningTrail.
 #    [-] Users can receive trust/gratitude entries from other users in the form of textual comments.
 
 from cassandra.cluster import Cluster
@@ -54,9 +54,9 @@ class Likes(Model):
 
 
 
-class TrustTrail(Model):
+class MeaningTrail(Model):
     __keyspace__ = 'trustsphere'
-    __table_name__ = 'trusttrail'
+    __table_name__ = 'meaning_trail'
 
     user_id = columns.UUID(primary_key=True)
     transaction_id = columns.UUID(primary_key=True, clustering_order='DESC')
@@ -117,13 +117,13 @@ class TrustTrail(Model):
 
 
     @classmethod
-    def get_trusttrail(cls, user_id):
+    def get_meaning_trail(cls, user_id):
         try:
             user_id_uuid = UUID(user_id)
-            trusttrail_queryset = cls.objects(user_id=user_id)
-            trusttrail = []
-            # print(user_id, trusttrail_queryset)
-            for transaction in trusttrail_queryset:
+            meaning_trail_queryset = cls.objects(user_id=user_id)
+            meaning_trail = []
+            # print(user_id, meaning_trail_queryset)
+            for transaction in meaning_trail_queryset:
                 transaction_dict = transaction.to_dict()  # Convert the transaction object to a dictionary
                 transaction_dict['transaction_history'] = {}
                 gratitude_comment_likes = Likes.get_likes(transaction.gratitude_comment_id, "gratitude") if transaction.gratitude_comment_id is not None else []
@@ -132,8 +132,8 @@ class TrustTrail(Model):
                 transaction_dict['transaction_history']['gratitude_comment_likes'] = gratitude_comment_likes
                 transaction_dict['transaction_history']['user_comment_likes'] = user_comment_likes
                 transaction_dict['transaction_history']['other_comment_likes'] = other_comment_likes
-                trusttrail.append(transaction_dict)
-            return trusttrail
+                meaning_trail.append(transaction_dict)
+            return meaning_trail
         except Exception as e:
             print(f"Error occurred while fetching trust trail: {str(e)}")
             return None            
@@ -185,7 +185,7 @@ class TrustTrail(Model):
             # Fallback: raw CQL to check if viewer is the other_user_id
             session = connection.get_session()
             results = session.execute(
-                "SELECT user_id, other_user_id FROM trusttrail WHERE transaction_id = %s ALLOW FILTERING",
+                "SELECT user_id, other_user_id FROM meaning_trail WHERE transaction_id = %s ALLOW FILTERING",
                 [tx_uuid]
             )
             for raw in results:
