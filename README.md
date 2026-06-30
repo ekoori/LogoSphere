@@ -1,36 +1,54 @@
 # LogoSphere
 
-> A sphere of shared meaning, reason, and value.
+> An economy that remembers *why*.
 
-## Introduction
+Every system that scales human cooperation must compress what people care about into something it can move around. Money does it with price. Platforms do it with clicks. Each translation is lossy — and what leaks away is the meaning. **LogoSphere is an attempt to keep it.**
 
-LogoSphere is a social platform designed to foster stronger connections within communities. It's built on the principles of the gift economy and liquid democracy. The goal of LogoSphere is to empower individuals and communities to share resources and make collective decisions in a transparent and engaged manner.
+## The problem: value collapses under measurement
 
-Our purpose is to redefine how we engage with the economy and democracy. LogoSphere seeks to promote an alternative to money-driven society — a culture of giving, where goods and services are offered without any explicit agreement for immediate or future reward. By incorporating liquid democracy, we aim to make decision-making more accessible and representative.
+Tell a community its worth is a number, and it will manufacture the number. This is Goodhart's trap: *when a measure becomes a target, it stops being a good measure.* Likes, daily-active-users, reputation points — thin proxies are easy to optimise precisely because they've already discarded the reasons underneath them.
 
-See **[MANIFESTO.md](MANIFESTO.md)** for the vocabulary and philosophy behind the platform.
+A meaning-centric platform inherits a sharper version of the same risk. The moment meaning can be cashed in, people optimise for *appearing* meaningful. The proxy doesn't just mislead — it crowds out the thing it was meant to stand for.
 
-## Key Focus
+## The idea: Thick Models of Value
 
-- **Trust-Based Interactions**: Encouraging interactions based on trust, respect, and mutual support.
-- **Gift Economy**: Promoting a culture of giving, where goods and services are given without any explicit agreement for immediate or future reward.
-- **Liquid Democracy**: Striving for a democratic system where power rests with the many — the contributors — not the few.
-- **Transparency**: Ensuring that all interactions and decisions are visible, fostering accountability and trust among members.
-- **Community Empowerment**: Giving communities the tools they need to organize, share resources, and make collective decisions that benefit all members.
+A **Thick Model of Value (TMV)** is a representation rich enough to survive being optimised. Where a preference records *what* you chose, and a written rule records *what's allowed*, a TMV carries the *why* — and the texture around it:
 
-## High-Level Concepts
+- **Reasons** — the "because" behind a choice, not only the choice itself
+- **Endorsement** — what you'd still choose after reflection, told apart from impulse
+- **Context & roles** — the promises, boundaries, and obligations a situation carries
+- **Trade-offs** — priorities, thresholds, and the lines you will not cross
+- **Collective goods** — trust, legitimacy, the commons no single person holds
+- **Endorsed change** — growth you would affirm, distinguished from drift and capture
 
-- **Meaning Receipt** (or **Receipt**) — an endorsed record of what happened and why it mattered: a specific interaction between parties. It is the trust-affirming artifact that captures and preserves a moment of meaning.
-- **Acknowledgement** — a lightweight appreciation, less formal than a Receipt, that can be publicly linked to a member's profile. A simple yet powerful way to recognize others and enhance reputation and visibility.
-- **Meaning Trail** — the living trace of Receipts and Acknowledgements over time. It functions as a historical ledger of a member's or alliance's interactions, providing a transparent backstory of trust.
-- **Profile** — at the centre of LogoSphere. Whether it belongs to an individual member or an alliance, it centralises basic information, a Meaning Trail, and details about offers, needs, and projects.
-- **Alliance** — a federation or partnership: a group of members who come together for a common purpose or to govern collective activity. Alliance profiles support delegated management.
-- **Sphere** — a broader community or context with shared norms and meaning, which may contain individual members, alliances, and projects bound by shared values or geography.
-- **Project** — a mission-driven collaboration. Each project is led by a mission and governed by a set of policies that can be dynamically adjusted by members with the appropriate authority.
-- **Meaning Graph** — a structured representation of the values associated with a profile, alliance, or project. It drives matching across the network and underpins the platform's statistics.
-- **Offers / Needs** — members and alliances can post what they can contribute (an **Offer**) or what they are asking for (a **Need**), enabling efficient resource matching within the community.
-- **Openings** — the place where possibilities for contribution are posted: the central hub where Offers and Needs meet.
-- **Governance & Decisions** — LogoSphere supports delegation of voting rights and decision-making power. Issues can be democratically decided, with results able to influence project direction or organizational structure.
+To be usable by humans, a thick value compresses into a **Value Card** — a small, honest artefact, readable in ten seconds, that you'd recognise as your own. Each card is **CLEAR**: **C**oncrete behaviours, **L**evers & limits, **E**ndorsement, **A**nti-signals (what drift looks like), **R**eview (revisited on a cadence).
+
+Meaning itself isn't pleasure, and it isn't status. Following Viktor Frankl, it arrives by three routes, and a healthy ledger can tell them apart:
+
+| Mode | What it captures |
+|---|---|
+| **Creative** | what you make and give |
+| **Experiential** | what you receive and encounter |
+| **Attitudinal** | the stance you take under constraint |
+
+The whole design turns on one distinction: **endorsed meaning** is what holds up under reflection; **performed meaning** is status play wearing meaning's clothes. Every mechanism in LogoSphere — receipts over points, reasons over scores, drift clauses over leaderboards — exists to keep the first from collapsing into the second.
+
+Read the full argument on the app's **About** page (`frontend/src/pages/About.js`), or see **[MANIFESTO.md](MANIFESTO.md)** for the canonical vocabulary.
+
+## How the philosophy is woven into the platform
+
+None of this is a rewrite of how people already give — it's a structure for naming it honestly.
+
+| Primitive | Carries |
+|---|---|
+| **Meaning Graph** | A profile's handful of Value Cards — what it cares about, and why — instead of a tag cloud. |
+| **Receipt** (Meaning Receipt) | A record of an exchange that names the value it expressed, what it cost, and the receiver's endorsement. |
+| **Acknowledgement** | Public thanks stays lightweight — warmth, not currency. The weight-bearing work belongs to Receipts. |
+| **Sphere & Alliance** | A community or federation declares its shared values — and a "we're drifting if…" clause to catch its own slide. |
+| **Openings** | Offers and Needs carry the values they serve; matching favours overlaps that are endorsed and evidenced. |
+| **Interaction** | The real human event between people that a Receipt or Acknowledgement attests to. |
+| **Meaning Trail** | The living trace of a profile's or alliance's Receipts and Acknowledgements over time. |
+| **Governance / Decisions** | Liquid democracy: delegated, revisable decision-making, in the open. |
 
 ## Technologies Used
 
@@ -83,7 +101,7 @@ npm start
 
 ## Contributing
 
-We welcome contributions from the community. To contribute, please fork the repository, make your changes, and submit a pull request.
+If you'd rather your contributions be remembered for what they meant than counted for what they scored, you belong here. Fork the repository, make your changes, and submit a pull request.
 
 ## License
 
