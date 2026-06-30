@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import LikeTimestamp from './LikeTimestamp';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
+import NewReceiptForm from './NewReceiptForm';
 import StatusProgression from './StatusProgression';
 import '../styles/MeaningTrail.css';
 
@@ -51,6 +52,7 @@ function ExchangeCard({
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
     const [showAcknowledgementForm, setShowAcknowledgementForm] = useState(false);
+    const [showReceiptForm, setShowReceiptForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
     // Local copies so newly submitted entries appear immediately without a refetch.
     const [localReceipts, setLocalReceipts] = useState(receipts || []);
@@ -68,13 +70,11 @@ function ExchangeCard({
         if (id) navigate(`/exchange?id=${id}`);
     };
 
-    const handleAddReceipt = () => {
-        const text = window.prompt('Enter your receipt:');
-        if (text && text.trim()) {
-            const entry = { author: 'You', text: text.trim(), time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
-            setLocalReceipts((prev) => [...prev, entry]);
-            onAddReceipt();
-        }
+    const handleAddReceipt = (receipt) => {
+        const entry = { author: 'You', text: receipt.text, time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
+        setLocalReceipts((prev) => [...prev, entry]);
+        onAddReceipt();
+        setShowReceiptForm(false);
     };
 
     const handleAddAcknowledgement = (acknowledgement) => {
@@ -226,12 +226,19 @@ function ExchangeCard({
                         ) : (
                             <p className="xc-empty-section">No receipts yet.</p>
                         )}
-                        <button
-                            className="xc-add-btn xc-add-receipt"
-                            onClick={(e) => { e.stopPropagation(); handleAddReceipt(); }}
-                        >
-                            + Add Receipt
-                        </button>
+                        {!showReceiptForm ? (
+                            <button
+                                className="xc-add-btn xc-add-receipt"
+                                onClick={(e) => { e.stopPropagation(); setShowReceiptForm(true); }}
+                            >
+                                + Add Receipt
+                            </button>
+                        ) : (
+                            <NewReceiptForm
+                                onSave={handleAddReceipt}
+                                onCancel={() => setShowReceiptForm(false)}
+                            />
+                        )}
                     </div>
 
                     {/* ── Acknowledgements ─────────────────────────────────────── */}

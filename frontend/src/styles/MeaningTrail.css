@@ -293,3 +293,29 @@
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
 }
+
+/* ── Receipt form (NewReceiptForm) ───────────────────────────────── */
+#save-receipt-btn, #cancel-receipt-btn {
+    margin-top: 0.5em;
+    padding: 0.6em;
+    border: none;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    color: #f7f4e8;
+    width: 100%;
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: background-color 0.2s var(--ease);
+}
+#save-receipt-btn   { background: var(--leaf); }
+#save-receipt-btn:hover { background: var(--moss); }
+#cancel-receipt-btn { background: var(--ink-faint); }
+#cancel-receipt-btn:hover { background: var(--ink-soft); }
+
+#receipt-entry {
+    padding: 0.9em;
+    border-radius: var(--r-md);
+    margin-top: 0.5em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}
