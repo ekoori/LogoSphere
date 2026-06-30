@@ -1,15 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import InteractionCard from './InteractionCard';
-import ShoutoutCard from './ShoutoutCard';
+import AcknowledgementCard from './AcknowledgementCard';
 import '../styles/MeaningTrail.css';
 
 function MeaningTrail({ items }) {
     return (
         <section id="meaning-trail" className="user-meaning-trail">
             {items.map((item) =>
-                item.type === 'shoutout' ? (
-                    <ShoutoutCard key={item.id} shoutout={item} />
+                item.type === 'acknowledgement' ? (
+                    <AcknowledgementCard key={item.id} acknowledgement={item} />
                 ) : (
                     <InteractionCard
                         key={item.id}
@@ -32,9 +32,9 @@ function MeaningTrail({ items }) {
                         receiptedTime={item.receiptedTime}
                         additionalCommentsTime={item.additionalCommentsTime}
                         receipts={item.receipts}
-                        shoutouts={item.shoutouts}
+                        acknowledgements={item.acknowledgements}
                         onAddReceipt={item.onAddReceipt || (() => {})}
-                        onAddShoutout={item.onAddShoutout || (() => {})}
+                        onAddAcknowledgement={item.onAddAcknowledgement || (() => {})}
                         onModifyInteraction={item.onModifyInteraction || (() => {})}
                         canModify={item.canModify || false}
                     />
@@ -60,9 +60,9 @@ MeaningTrail.propTypes = {
         likesCount: PropTypes.number.isRequired,
         likedByCurrentUser: PropTypes.bool.isRequired,
         receipts: PropTypes.array,
-        shoutouts: PropTypes.array,
+        acknowledgements: PropTypes.array,
         onAddReceipt: PropTypes.func,
-        onAddShoutout: PropTypes.func,
+        onAddAcknowledgement: PropTypes.func,
         onModifyInteraction: PropTypes.func,
         canModify: PropTypes.bool,
     })).isRequired,

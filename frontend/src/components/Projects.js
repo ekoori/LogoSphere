@@ -30,7 +30,7 @@ const Projects = () => {
           participants: p.members || [],
           values: p.values || [],
           interactions: [],
-          shoutouts: [],
+          acknowledgements: [],
           statusButtons: STATUS_STEPS.map((s) => ({ status: s, label: s })),
         }));
       setProjects(fetched);

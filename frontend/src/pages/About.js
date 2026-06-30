@@ -52,7 +52,7 @@ const MAPPING = [
         d: 'A record of exchange that names the value it expressed, what it cost, and the receiver’s endorsement.',
     },
     {
-        from: 'Shoutout',
+        from: 'Acknowledgement',
         to: 'Light signal',
         d: 'Public thanks stays lightweight — warmth, not currency. The weight-bearing work belongs to receipts.',
     },
@@ -345,7 +345,7 @@ const About = () => {
                 <div className="ab-prose">
                     <p>
                         None of this is a rewrite. TrustSphere already speaks in profiles, Receipts,
-                        shoutouts, spheres, and a gift-economy marketplace. A meaning lens simply lets each
+                        acknowledgements, spheres, and a gift-economy marketplace. A meaning lens simply lets each
                         primitive carry more of the truth it was always reaching for.
                     </p>
                 </div>

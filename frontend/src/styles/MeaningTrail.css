@@ -1,6 +1,6 @@
 /* ============================================================================
    MeaningTrail — collapsible interaction feed cards.
-   Type-coded left accent bar; Receipts and Shoutouts are visually distinct.
+   Type-coded left accent bar; Receipts and Acknowledgements are visually distinct.
    ========================================================================== */
 
 /* ── Base card ─────────────────────────────────────────────────────────── */
@@ -179,7 +179,7 @@
 /* Status progression */
 .status { margin-bottom: 0.75em; }
 
-/* ── Section dividers (Receipts / Shoutouts) ────────────────────────── */
+/* ── Section dividers (Receipts / Acknowledgements) ────────────────────────── */
 .ix-section {
     border-top: 1px solid var(--border-soft);
     padding-top: 0.8em;
@@ -207,7 +207,7 @@
     text-transform: none;
 }
 .ix-section-receipt > span:first-child { color: var(--leaf); }
-.ix-section-shoutout  > span:first-child  { color: var(--honey-deep); }
+.ix-section-acknowledgement  > span:first-child  { color: var(--honey-deep); }
 
 .ix-empty-section {
     font-size: 0.83rem;
@@ -216,8 +216,8 @@
     font-style: italic;
 }
 
-/* ── Receipt + Shoutout cards ────────────────────────────────────────── */
-.receipt, .shoutout {
+/* ── Receipt + Acknowledgement cards ────────────────────────────────────────── */
+.receipt, .acknowledgement {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -229,7 +229,7 @@
     border: 1px solid var(--border-soft);
 }
 .receipt { border-left: 3px solid var(--leaf); }
-.shoutout   { border-left: 3px solid var(--honey); }
+.acknowledgement   { border-left: 3px solid var(--honey); }
 
 .tf-content { flex: 1; }
 .tf-content p {
@@ -261,15 +261,15 @@
     color: var(--moss-deep);
 }
 .ix-add-receipt:hover { background: var(--leaf); color: #f7f4e8; }
-.ix-add-shoutout {
+.ix-add-acknowledgement {
     background: rgba(217, 162, 63, 0.1);
     border-color: var(--honey);
     color: var(--honey-deep);
 }
-.ix-add-shoutout:hover { background: var(--honey); color: var(--moss-deep); }
+.ix-add-acknowledgement:hover { background: var(--honey); color: var(--moss-deep); }
 
-/* ── Shoutout form (NewShoutoutForm) ───────────────────────────────────── */
-#save-shoutout-btn, #cancel-shoutout-btn {
+/* ── Acknowledgement form (NewAcknowledgementForm) ───────────────────────────────────── */
+#save-acknowledgement-btn, #cancel-acknowledgement-btn {
     margin-top: 0.5em;
     padding: 0.6em;
     border: none;
@@ -281,12 +281,12 @@
     font-weight: 600;
     transition: background-color 0.2s var(--ease);
 }
-#save-shoutout-btn   { background: var(--moss); }
-#save-shoutout-btn:hover { background: var(--moss-deep); }
-#cancel-shoutout-btn { background: var(--ink-faint); }
-#cancel-shoutout-btn:hover { background: var(--ink-soft); }
+#save-acknowledgement-btn   { background: var(--moss); }
+#save-acknowledgement-btn:hover { background: var(--moss-deep); }
+#cancel-acknowledgement-btn { background: var(--ink-faint); }
+#cancel-acknowledgement-btn:hover { background: var(--ink-soft); }
 
-#shoutout-entry {
+#acknowledgement-entry {
     padding: 0.9em;
     border-radius: var(--r-md);
     margin-top: 0.5em;

@@ -1,13 +1,13 @@
-// File: ./frontend/src/components/ShoutoutCard.js
+// File: ./frontend/src/components/AcknowledgementCard.js
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import LikeTimestamp from './LikeTimestamp';
 import '../styles/App.css';
 
-const ShoutoutCard = ({ shoutout }) => {
-    const [liked, setLiked] = useState(shoutout.likedByCurrentUser);
-    const [likes, setLikes] = useState(shoutout.likesCount);
+const AcknowledgementCard = ({ acknowledgement }) => {
+    const [liked, setLiked] = useState(acknowledgement.likedByCurrentUser);
+    const [likes, setLikes] = useState(acknowledgement.likesCount);
 
     const handleLike = () => {
         setLiked(!liked);
@@ -16,17 +16,17 @@ const ShoutoutCard = ({ shoutout }) => {
     };
 
     return (
-        <div className="shoutout-card">
-            <div className="shoutout-header">
+        <div className="acknowledgement-card">
+            <div className="acknowledgement-header">
                 <div className="left">
-                    <span>👤 <a href="/user">{shoutout.author}</a></span>
+                    <span>👤 <a href="/user">{acknowledgement.author}</a></span>
                 </div>
-                <p className="shoutout-text">{shoutout.text}</p>
+                <p className="acknowledgement-text">{acknowledgement.text}</p>
                 <div className="right">
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
-                        time={shoutout.time}
+                        time={acknowledgement.time}
                         onLike={(e) => {
                             e.stopPropagation();
                             handleLike();
@@ -39,8 +39,8 @@ const ShoutoutCard = ({ shoutout }) => {
     );
 };
 
-ShoutoutCard.propTypes = {
-    shoutout: PropTypes.shape({
+AcknowledgementCard.propTypes = {
+    acknowledgement: PropTypes.shape({
         author: PropTypes.string.isRequired,
         text: PropTypes.string.isRequired,
         time: PropTypes.string.isRequired,
@@ -49,4 +49,4 @@ ShoutoutCard.propTypes = {
     }).isRequired,
 };
 
-export default ShoutoutCard;
+export default AcknowledgementCard;

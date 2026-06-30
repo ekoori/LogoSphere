@@ -86,9 +86,9 @@ export function mapInteraction(row) {
         });
     }
 
-    const shoutouts = [];
+    const acknowledgements = [];
     if (row.other_comment) {
-        shoutouts.push({
+        acknowledgements.push({
             author: row.other_comment_author_name || 'A neighbour',
             text: row.other_comment,
             time: fmtDate(row.other_comment_timestamp),
@@ -122,10 +122,10 @@ export function mapInteraction(row) {
         receiptedTime: '',
         additionalCommentsTime: '',
         receipts,
-        shoutouts,
+        acknowledgements,
         canModify: false,
         onAddReceipt: () => {},
-        onAddShoutout: () => {},
+        onAddAcknowledgement: () => {},
         onModifyInteraction: () => {},
     };
 }

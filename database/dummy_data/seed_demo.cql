@@ -172,7 +172,7 @@ VALUES (cccccccc-0000-0000-0000-000000000004, 'offer',
 -- ============================================================================
 -- Joe Rogan's Meaning Trail — the heart of the demo.
 -- Each row is a moment of trust: a gift given or received, sometimes followed
--- by a gratitude note (a Receipt) or a public Shoutout.
+-- by a gratitude note (a Receipt) or a public Acknowledgement.
 -- ============================================================================
 
 -- 1) Rebuilt the community garden fence with Marie Kondo (completed, receipted)
@@ -200,7 +200,7 @@ VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-0000000000
   'Joe pledged serious compute to the commons, no strings attached. This unblocks three research teams.',
   20000000-0000-0000-0000-000000000002, '2026-06-02 10:00:00');
 
--- 3) Taught a free podcasting workshop (completed, shoutout)
+-- 3) Taught a free podcasting workshop (completed, acknowledgement)
 INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
   interaction_description, interaction_status, project_name, project_start_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)

@@ -34,7 +34,7 @@ function InteractionPage() {
 
     const [gratitudeText, setGratitudeText] = useState('');
     const [userNoteText, setUserNoteText] = useState('');
-    const [shoutoutText, setShoutoutText] = useState('');
+    const [acknowledgementText, setAcknowledgementText] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     const fetchIx = useCallback(async () => {
@@ -255,15 +255,15 @@ function InteractionPage() {
                         )}
                     </div>
 
-                    {/* ── Shoutouts ─────────────────────────────────────────── */}
+                    {/* ── Acknowledgements ─────────────────────────────────────────── */}
                     <div className="ix-page-section">
-                        <div className="ix-section-label ix-section-shoutout" style={{ marginBottom: '0.9em' }}>
-                            <span>📢 Shoutouts</span>
+                        <div className="ix-section-label ix-section-acknowledgement" style={{ marginBottom: '0.9em' }}>
+                            <span>📢 Acknowledgements</span>
                             <span className="ix-section-hint">public acknowledgements</span>
                         </div>
 
                         {ix.other_comment ? (
-                            <div className="shoutout">
+                            <div className="acknowledgement">
                                 <div className="tf-content">
                                     <p>
                                         <strong>{ix.other_comment_author_name || 'A participant'}:</strong>{' '}
@@ -277,24 +277,24 @@ function InteractionPage() {
                                 </div>
                             </div>
                         ) : (
-                            <p className="ix-empty-section">No shoutouts yet.</p>
+                            <p className="ix-empty-section">No acknowledgements yet.</p>
                         )}
 
                         {canModify && !ix.other_comment && (
                             <div className="ix-comment-area">
-                                <span className="ix-comment-label">Add a shoutout</span>
+                                <span className="ix-comment-label">Add a acknowledgement</span>
                                 <textarea
                                     className="ix-comment-input"
                                     placeholder="Celebrate this exchange publicly — let the community know!"
-                                    value={shoutoutText}
-                                    onChange={e => setShoutoutText(e.target.value)}
+                                    value={acknowledgementText}
+                                    onChange={e => setAcknowledgementText(e.target.value)}
                                 />
                                 <button
-                                    className="ix-comment-submit ix-submit-shoutout"
-                                    disabled={submitting || !shoutoutText.trim()}
-                                    onClick={() => submitComment('other', shoutoutText, setShoutoutText)}
+                                    className="ix-comment-submit ix-submit-acknowledgement"
+                                    disabled={submitting || !acknowledgementText.trim()}
+                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText)}
                                 >
-                                    + Add Shoutout
+                                    + Add Acknowledgement
                                 </button>
                             </div>
                         )}

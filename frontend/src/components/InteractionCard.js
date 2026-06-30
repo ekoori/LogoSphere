@@ -1,14 +1,14 @@
 // InteractionCard — a trust interaction in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
 // When expanded, the title is a link to the interaction detail page.
-// Receipts (verified gratitude records) and Shoutouts (kudos) have
+// Receipts (verified gratitude records) and Acknowledgements (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import LikeTimestamp from './LikeTimestamp';
-import NewShoutoutForm from './NewShoutoutForm';
+import NewAcknowledgementForm from './NewAcknowledgementForm';
 import StatusProgression from './StatusProgression';
 import '../styles/MeaningTrail.css';
 
@@ -43,18 +43,18 @@ function InteractionCard({
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
-    receipts, shoutouts,
-    onAddReceipt, onAddShoutout, onModifyInteraction, canModify,
+    receipts, acknowledgements,
+    onAddReceipt, onAddAcknowledgement, onModifyInteraction, canModify,
 }) {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
-    const [showShoutoutForm, setShowShoutoutForm] = useState(false);
+    const [showAcknowledgementForm, setShowAcknowledgementForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
     // Local copies so newly submitted entries appear immediately without a refetch.
     const [localReceipts, setLocalReceipts] = useState(receipts || []);
-    const [localShoutouts, setLocalShoutouts] = useState(shoutouts || []);
+    const [localAcknowledgements, setLocalAcknowledgements] = useState(acknowledgements || []);
 
     const handleLike = (e) => {
         e.stopPropagation();
@@ -77,11 +77,11 @@ function InteractionCard({
         }
     };
 
-    const handleAddShoutout = (shoutout) => {
-        const entry = { author: 'You', text: shoutout.text, time: 'just now', likesCount: 0, likedByCurrentUser: false };
-        setLocalShoutouts((prev) => [...prev, entry]);
-        onAddShoutout(shoutout);
-        setShowShoutoutForm(false);
+    const handleAddAcknowledgement = (acknowledgement) => {
+        const entry = { author: 'You', text: acknowledgement.text, time: 'just now', likesCount: 0, likedByCurrentUser: false };
+        setLocalAcknowledgements((prev) => [...prev, entry]);
+        onAddAcknowledgement(acknowledgement);
+        setShowAcknowledgementForm(false);
     };
 
     const cancelled = status === 'Cancelled';
@@ -92,7 +92,7 @@ function InteractionCard({
     }));
 
     const hasReceipts = localReceipts.length > 0;
-    const hasShoutouts = localShoutouts.length > 0;
+    const hasAcknowledgements = localAcknowledgements.length > 0;
     const pillClass = TYPE_PILL[type] || 'pill-clay';
     const typeLabel = TYPE_LABELS[type] || type;
 
@@ -234,16 +234,16 @@ function InteractionCard({
                         </button>
                     </div>
 
-                    {/* ── Shoutouts ─────────────────────────────────────── */}
+                    {/* ── Acknowledgements ─────────────────────────────────────── */}
                     <div className="ix-section">
-                        <div className="ix-section-label ix-section-shoutout">
-                            <span>📢 Shoutouts</span>
+                        <div className="ix-section-label ix-section-acknowledgement">
+                            <span>📢 Acknowledgements</span>
                             <span className="ix-section-hint">public acknowledgements</span>
                         </div>
-                        {hasShoutouts && (
-                            <div className="shoutouts">
-                                {localShoutouts.map((s, i) => (
-                                    <div key={i} className="shoutout">
+                        {hasAcknowledgements && (
+                            <div className="acknowledgements">
+                                {localAcknowledgements.map((s, i) => (
+                                    <div key={i} className="acknowledgement">
                                         <div className="tf-content">
                                             <p><strong>{s.author}:</strong> {s.text}</p>
                                         </div>
@@ -257,17 +257,17 @@ function InteractionCard({
                                 ))}
                             </div>
                         )}
-                        {!showShoutoutForm ? (
+                        {!showAcknowledgementForm ? (
                             <button
-                                className="ix-add-btn ix-add-shoutout"
-                                onClick={(e) => { e.stopPropagation(); setShowShoutoutForm(true); }}
+                                className="ix-add-btn ix-add-acknowledgement"
+                                onClick={(e) => { e.stopPropagation(); setShowAcknowledgementForm(true); }}
                             >
-                                + Add Shoutout
+                                + Add Acknowledgement
                             </button>
                         ) : (
-                            <NewShoutoutForm
-                                onSave={handleAddShoutout}
-                                onCancel={() => setShowShoutoutForm(false)}
+                            <NewAcknowledgementForm
+                                onSave={handleAddAcknowledgement}
+                                onCancel={() => setShowAcknowledgementForm(false)}
                             />
                         )}
                     </div>
@@ -297,9 +297,9 @@ InteractionCard.propTypes = {
     receiptedTime: PropTypes.string,
     additionalCommentsTime: PropTypes.string,
     receipts: PropTypes.array,
-    shoutouts: PropTypes.array,
+    acknowledgements: PropTypes.array,
     onAddReceipt: PropTypes.func.isRequired,
-    onAddShoutout: PropTypes.func.isRequired,
+    onAddAcknowledgement: PropTypes.func.isRequired,
     onModifyInteraction: PropTypes.func.isRequired,
     canModify: PropTypes.bool.isRequired,
 };

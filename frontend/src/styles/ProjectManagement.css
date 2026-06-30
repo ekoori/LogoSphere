@@ -111,11 +111,11 @@
     font-size: 0.9em;
 }
 
-.project-shoutouts {
+.project-acknowledgements {
     margin-top: 2em;
 }
 
-.shoutout {
+.acknowledgement {
     background-color: rgba(217, 162, 63, 0.12);
     padding: 1em;
     border-radius: 8px;
@@ -123,11 +123,11 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.shoutout p {
+.acknowledgement p {
     margin: 0;
 }
 
-.shoutout .like-timestamp {
+.acknowledgement .like-timestamp {
     display: flex;
     justify-content: space-between;
     align-items: center;

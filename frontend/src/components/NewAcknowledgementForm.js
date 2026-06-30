@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-const NewShoutoutForm = ({ onSave, onCancel }) => {
+const NewAcknowledgementForm = ({ onSave, onCancel }) => {
     const [text, setText] = useState('');
     const [error, setError] = useState(false);
 
@@ -15,9 +15,9 @@ const NewShoutoutForm = ({ onSave, onCancel }) => {
     };
 
     return (
-        <div id="shoutout-entry">
+        <div id="acknowledgement-entry">
             <textarea
-                placeholder="Write your shoutout here…"
+                placeholder="Write your acknowledgement here…"
                 value={text}
                 onChange={(e) => { setText(e.target.value); setError(false); }}
                 rows={3}
@@ -32,16 +32,16 @@ const NewShoutoutForm = ({ onSave, onCancel }) => {
             />
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.4em' }}>Please write something first.</p>}
             <div style={{ display: 'flex', gap: '0.5em' }}>
-                <button id="save-shoutout-btn" onClick={handleSubmit}>Save</button>
-                <button id="cancel-shoutout-btn" onClick={onCancel}>Cancel</button>
+                <button id="save-acknowledgement-btn" onClick={handleSubmit}>Save</button>
+                <button id="cancel-acknowledgement-btn" onClick={onCancel}>Cancel</button>
             </div>
         </div>
     );
 };
 
-NewShoutoutForm.propTypes = {
+NewAcknowledgementForm.propTypes = {
     onSave: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
 };
 
-export default NewShoutoutForm;
+export default NewAcknowledgementForm;
