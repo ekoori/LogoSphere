@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import ValueCardPicker from './ValueCardPicker';
 
 const NewReceiptForm = ({ onSave, onCancel }) => {
     const [text, setText] = useState('');
     const [error, setError] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedCards, setSelectedCards] = useState([]);
+
+    const handlePickerChange = (ids, cards) => {
+        setSelectedIds(ids);
+        setSelectedCards(cards);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -11,7 +19,7 @@ const NewReceiptForm = ({ onSave, onCancel }) => {
             setError(true);
             return;
         }
-        onSave({ text: text.trim() });
+        onSave({ text: text.trim(), cardIds: selectedIds, cards: selectedCards });
     };
 
     return (
@@ -31,7 +39,8 @@ const NewReceiptForm = ({ onSave, onCancel }) => {
                 }}
             />
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.4em' }}>Please write something first.</p>}
-            <div style={{ display: 'flex', gap: '0.5em' }}>
+            <ValueCardPicker selectedIds={selectedIds} onChange={handlePickerChange} />
+            <div style={{ display: 'flex', gap: '0.5em', marginTop: '0.6em' }}>
                 <button id="save-receipt-btn" onClick={handleSubmit}>Save</button>
                 <button id="cancel-receipt-btn" onClick={onCancel}>Cancel</button>
             </div>

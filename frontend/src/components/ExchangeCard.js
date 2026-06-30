@@ -11,7 +11,9 @@ import LikeTimestamp from './LikeTimestamp';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
 import NewReceiptForm from './NewReceiptForm';
 import StatusProgression from './StatusProgression';
+import ValueCardChip from './ValueCardChip';
 import '../styles/MeaningTrail.css';
+import '../styles/ValueCardChip.css';
 
 const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
 const xcIndex = (status) => {
@@ -71,16 +73,24 @@ function ExchangeCard({
     };
 
     const handleAddReceipt = (receipt) => {
-        const entry = { author: 'You', text: receipt.text, time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
+        const entry = {
+            author: 'You', text: receipt.text, time: 'just now',
+            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+            cards: receipt.cards || [],
+        };
         setLocalReceipts((prev) => [...prev, entry]);
-        onAddReceipt();
+        onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [] });
         setShowReceiptForm(false);
     };
 
     const handleAddAcknowledgement = (acknowledgement) => {
-        const entry = { author: 'You', text: acknowledgement.text, time: 'just now', likesCount: 0, likedByCurrentUser: false };
+        const entry = {
+            author: 'You', text: acknowledgement.text, time: 'just now',
+            likesCount: 0, likedByCurrentUser: false,
+            cards: acknowledgement.cards || [],
+        };
         setLocalAcknowledgements((prev) => [...prev, entry]);
-        onAddAcknowledgement(acknowledgement);
+        onAddAcknowledgement({ text: acknowledgement.text, cardIds: acknowledgement.cardIds || [] });
         setShowAcknowledgementForm(false);
     };
 
@@ -213,6 +223,13 @@ function ExchangeCard({
                                     <div key={i} className="receipt">
                                         <div className="tf-content">
                                             <p><strong>{tf.author}:</strong> {tf.text}</p>
+                                            {tf.cards?.length > 0 && (
+                                                <div className="comment-value-chips">
+                                                    {tf.cards.map((c, ci) => (
+                                                        <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <LikeTimestamp
                                             likedByCurrentUser={tf.likedByCurrentUser}
@@ -253,6 +270,13 @@ function ExchangeCard({
                                     <div key={i} className="acknowledgement">
                                         <div className="tf-content">
                                             <p><strong>{s.author}:</strong> {s.text}</p>
+                                            {s.cards?.length > 0 && (
+                                                <div className="comment-value-chips">
+                                                    {s.cards.map((c, ci) => (
+                                                        <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <LikeTimestamp
                                             likedByCurrentUser={s.likedByCurrentUser}

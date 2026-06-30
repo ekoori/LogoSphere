@@ -3,8 +3,10 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useLogin } from '../App';
 import api from '../api';
 import StatusProgression from '../components/StatusProgression';
+import ValueCardPicker from '../components/ValueCardPicker';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
+import '../styles/ValueCardChip.css';
 
 const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
 
@@ -36,6 +38,10 @@ function ExchangePage() {
     const [userNoteText, setUserNoteText] = useState('');
     const [acknowledgementText, setAcknowledgementText] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const [gratitudeCardIds, setGratitudeCardIds] = useState([]);
+    const [userNoteCardIds, setUserNoteCardIds] = useState([]);
+    const [ackCardIds, setAckCardIds] = useState([]);
 
     const fetchXc = useCallback(async () => {
         if (!xcId) { setFetchError('No exchange ID provided.'); setLoading(false); return; }
@@ -92,12 +98,13 @@ function ExchangePage() {
         }
     };
 
-    const submitComment = async (type, text, clearFn) => {
+    const submitComment = async (type, text, clearFn, cardIds = [], clearCardsFn = null) => {
         if (!text.trim() || submitting) return;
         setSubmitting(true);
         try {
-            await api.post(`/api/exchange/${xcId}/comment`, { type, text: text.trim() });
+            await api.post(`/api/exchange/${xcId}/comment`, { type, text: text.trim(), card_ids: cardIds });
             clearFn('');
+            if (clearCardsFn) clearCardsFn([]);
             fetchXc();
         } catch (e) {
             console.error('Failed to add comment:', e);
@@ -224,10 +231,14 @@ function ExchangePage() {
                                     value={gratitudeText}
                                     onChange={e => setGratitudeText(e.target.value)}
                                 />
+                                <ValueCardPicker
+                                    selectedIds={gratitudeCardIds}
+                                    onChange={(ids) => setGratitudeCardIds(ids)}
+                                />
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}
-                                    onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText)}
+                                    onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText, gratitudeCardIds, setGratitudeCardIds)}
                                 >
                                     + Add Receipt
                                 </button>
@@ -244,10 +255,14 @@ function ExchangePage() {
                                     value={userNoteText}
                                     onChange={e => setUserNoteText(e.target.value)}
                                 />
+                                <ValueCardPicker
+                                    selectedIds={userNoteCardIds}
+                                    onChange={(ids) => setUserNoteCardIds(ids)}
+                                />
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !userNoteText.trim()}
-                                    onClick={() => submitComment('user', userNoteText, setUserNoteText)}
+                                    onClick={() => submitComment('user', userNoteText, setUserNoteText, userNoteCardIds, setUserNoteCardIds)}
                                 >
                                     + Add Note
                                 </button>
@@ -282,17 +297,21 @@ function ExchangePage() {
 
                         {canModify && !xc.other_comment && (
                             <div className="xc-comment-area">
-                                <span className="xc-comment-label">Add a acknowledgement</span>
+                                <span className="xc-comment-label">Add an acknowledgement</span>
                                 <textarea
                                     className="xc-comment-input"
                                     placeholder="Celebrate this exchange publicly — let the community know!"
                                     value={acknowledgementText}
                                     onChange={e => setAcknowledgementText(e.target.value)}
                                 />
+                                <ValueCardPicker
+                                    selectedIds={ackCardIds}
+                                    onChange={(ids) => setAckCardIds(ids)}
+                                />
                                 <button
                                     className="xc-comment-submit xc-submit-acknowledgement"
                                     disabled={submitting || !acknowledgementText.trim()}
-                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText)}
+                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText, ackCardIds, setAckCardIds)}
                                 >
                                     + Add Acknowledgement
                                 </button>
