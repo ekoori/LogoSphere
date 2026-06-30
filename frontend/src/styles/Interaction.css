@@ -1,6 +1,6 @@
 /* ============================================================================
    Interaction detail page — full-page view for a single trust interaction.
-   Reuses MeaningTrail.css card classes for trustifacts / shoutouts.
+   Reuses MeaningTrail.css card classes for receipts / shoutouts.
    ============================================================================ */
 
 .ix-page {
@@ -303,8 +303,8 @@
 }
 .ix-comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.ix-submit-trustifact { background: var(--leaf); color: #f7f4e8; }
-.ix-submit-trustifact:not(:disabled):hover { background: var(--moss); transform: translateY(-1px); }
+.ix-submit-receipt { background: var(--leaf); color: #f7f4e8; }
+.ix-submit-receipt:not(:disabled):hover { background: var(--moss); transform: translateY(-1px); }
 
 .ix-submit-shoutout { background: var(--honey); color: var(--moss-deep); }
 .ix-submit-shoutout:not(:disabled):hover { background: var(--honey-deep); transform: translateY(-1px); }

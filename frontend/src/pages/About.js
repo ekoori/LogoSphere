@@ -47,7 +47,7 @@ const MAPPING = [
         d: 'A profile holds a handful of Value Cards instead of a tag cloud — what you care about, and why.',
     },
     {
-        from: 'TrustiFact',
+        from: 'Receipt',
         to: 'Meaning Receipt',
         d: 'A record of exchange that names the value it expressed, what it cost, and the receiver’s endorsement.',
     },
@@ -344,7 +344,7 @@ const About = () => {
                 </div>
                 <div className="ab-prose">
                     <p>
-                        None of this is a rewrite. TrustSphere already speaks in profiles, TrustiFacts,
+                        None of this is a rewrite. TrustSphere already speaks in profiles, Receipts,
                         shoutouts, spheres, and a gift-economy marketplace. A meaning lens simply lets each
                         primitive carry more of the truth it was always reaching for.
                     </p>

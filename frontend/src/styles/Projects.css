@@ -93,7 +93,7 @@
 .project-status-buttons .btn-status-initiated   { background: var(--surface-2); color: var(--ink-soft); border-color: var(--border); }
 .project-status-buttons .btn-status-in-progress { background: var(--honey); color: #3a2c0c; }
 .project-status-buttons .btn-status-completed   { background: var(--leaf); color: #f7f4e8; }
-.project-status-buttons .btn-status-trustifacted { background: var(--terracotta); color: #fff7ef; }
+.project-status-buttons .btn-status-receipted { background: var(--terracotta); color: #fff7ef; }
 
 .project-values { margin-top: 1.2em; display: flex; flex-wrap: wrap; gap: 0.45em; }
 .project-values span {

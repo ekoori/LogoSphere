@@ -48,7 +48,7 @@ function Home() {
                     <button>Only Active</button>
                     <button>Only Past</button>
                     <button>Only Shoutouts</button>
-                    <button>Only Trustifacts</button>
+                    <button>Only Receipts</button>
                 </div>
             </aside>
             <main>

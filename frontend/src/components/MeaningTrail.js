@@ -29,11 +29,11 @@ function MeaningTrail({ items }) {
                         initiatedTime={item.initiatedTime}
                         inProgressTime={item.inProgressTime}
                         finishedTime={item.finishedTime}
-                        trustifactedTime={item.trustifactedTime}
+                        receiptedTime={item.receiptedTime}
                         additionalCommentsTime={item.additionalCommentsTime}
-                        trustifacts={item.trustifacts}
+                        receipts={item.receipts}
                         shoutouts={item.shoutouts}
-                        onAddTrustifact={item.onAddTrustifact || (() => {})}
+                        onAddReceipt={item.onAddReceipt || (() => {})}
                         onAddShoutout={item.onAddShoutout || (() => {})}
                         onModifyInteraction={item.onModifyInteraction || (() => {})}
                         canModify={item.canModify || false}
@@ -59,9 +59,9 @@ MeaningTrail.propTypes = {
         status: PropTypes.string,
         likesCount: PropTypes.number.isRequired,
         likedByCurrentUser: PropTypes.bool.isRequired,
-        trustifacts: PropTypes.array,
+        receipts: PropTypes.array,
         shoutouts: PropTypes.array,
-        onAddTrustifact: PropTypes.func,
+        onAddReceipt: PropTypes.func,
         onAddShoutout: PropTypes.func,
         onModifyInteraction: PropTypes.func,
         canModify: PropTypes.bool,

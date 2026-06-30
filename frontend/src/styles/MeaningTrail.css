@@ -1,6 +1,6 @@
 /* ============================================================================
    MeaningTrail — collapsible interaction feed cards.
-   Type-coded left accent bar; Trustifacts and Shoutouts are visually distinct.
+   Type-coded left accent bar; Receipts and Shoutouts are visually distinct.
    ========================================================================== */
 
 /* ── Base card ─────────────────────────────────────────────────────────── */
@@ -179,7 +179,7 @@
 /* Status progression */
 .status { margin-bottom: 0.75em; }
 
-/* ── Section dividers (Trustifacts / Shoutouts) ────────────────────────── */
+/* ── Section dividers (Receipts / Shoutouts) ────────────────────────── */
 .ix-section {
     border-top: 1px solid var(--border-soft);
     padding-top: 0.8em;
@@ -206,7 +206,7 @@
     letter-spacing: 0;
     text-transform: none;
 }
-.ix-section-trustifact > span:first-child { color: var(--leaf); }
+.ix-section-receipt > span:first-child { color: var(--leaf); }
 .ix-section-shoutout  > span:first-child  { color: var(--honey-deep); }
 
 .ix-empty-section {
@@ -216,8 +216,8 @@
     font-style: italic;
 }
 
-/* ── Trustifact + Shoutout cards ────────────────────────────────────────── */
-.trustifact, .shoutout {
+/* ── Receipt + Shoutout cards ────────────────────────────────────────── */
+.receipt, .shoutout {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -228,7 +228,7 @@
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
 }
-.trustifact { border-left: 3px solid var(--leaf); }
+.receipt { border-left: 3px solid var(--leaf); }
 .shoutout   { border-left: 3px solid var(--honey); }
 
 .tf-content { flex: 1; }
@@ -255,12 +255,12 @@
     margin-top: 0.35em;
     transition: background 0.18s var(--ease), color 0.18s var(--ease);
 }
-.ix-add-trustifact {
+.ix-add-receipt {
     background: rgba(111, 138, 79, 0.09);
     border-color: var(--leaf);
     color: var(--moss-deep);
 }
-.ix-add-trustifact:hover { background: var(--leaf); color: #f7f4e8; }
+.ix-add-receipt:hover { background: var(--leaf); color: #f7f4e8; }
 .ix-add-shoutout {
     background: rgba(217, 162, 63, 0.1);
     border-color: var(--honey);

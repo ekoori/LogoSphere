@@ -8,7 +8,7 @@ import ProjectCard from './ProjectCard';
 import api from '../api';
 import { useLogin } from '../App';
 
-const STATUS_STEPS = ['Initiated', 'In Progress', 'Completed', 'Trustifacted'];
+const STATUS_STEPS = ['Initiated', 'In Progress', 'Completed', 'Receipted'];
 
 const Projects = () => {
   const { userId } = useLogin();

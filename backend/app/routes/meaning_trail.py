@@ -65,7 +65,7 @@ def get_interaction(interaction_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
-_VALID_STATUSES = {'Initiated', 'In Progress', 'Finished', 'Trustifacted',
+_VALID_STATUSES = {'Initiated', 'In Progress', 'Finished', 'Receipted',
                    'Additional Comments Added', 'Cancelled'}
 
 
@@ -107,7 +107,7 @@ def add_ix_comment(interaction_id, user_id=None):
 
         # Enforce who can add what
         if comment_type == 'gratitude' and is_initiator:
-            return jsonify({'message': 'Only the other participant can add a trustifact'}), 403
+            return jsonify({'message': 'Only the other participant can add a receipt'}), 403
         if comment_type == 'user' and not is_initiator:
             return jsonify({'message': 'Only the initiator can add a personal note'}), 403
 

@@ -6,7 +6,7 @@ import StatusProgression from '../components/StatusProgression';
 import '../styles/Interaction.css';
 import '../styles/MeaningTrail.css';
 
-const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
+const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
 
 const ixIdx = (status) => {
     const i = IX_STEPS.findIndex(s => s.toLowerCase() === (status || '').toLowerCase());
@@ -65,7 +65,7 @@ function InteractionPage() {
     const currentIdx = isCancelled ? ixIdx('Initiated') : ixIdx(ix.interaction_status);
     const nextStatus = !isCancelled && currentIdx < IX_STEPS.length - 1 ? IX_STEPS[currentIdx + 1] : null;
 
-    const completed = ['Finished', 'Trustifacted', 'Additional Comments Added'].includes(ix.interaction_status);
+    const completed = ['Finished', 'Receipted', 'Additional Comments Added'].includes(ix.interaction_status);
     const ixType = completed ? 'completed' : 'offer';
     const pillClass = TYPE_PILL[ixType] || 'pill-clay';
     const typeLabel = TYPE_LABEL[ixType] || ixType;
@@ -171,15 +171,15 @@ function InteractionPage() {
                         )}
                     </div>
 
-                    {/* ── Trustifacts ──────────────────────────────────────── */}
+                    {/* ── Receipts ──────────────────────────────────────── */}
                     <div className="ix-page-section">
-                        <div className="ix-section-label ix-section-trustifact" style={{ marginBottom: '0.9em' }}>
-                            <span>✓ Trustifacts</span>
+                        <div className="ix-section-label ix-section-receipt" style={{ marginBottom: '0.9em' }}>
+                            <span>✓ Receipts</span>
                             <span className="ix-section-hint">verified attestations of trust</span>
                         </div>
 
                         {ix.gratitude_comment && (
-                            <div className="trustifact">
+                            <div className="receipt">
                                 <div className="tf-content">
                                     <p>
                                         <strong>{ix.other_user_name || 'Other party'}:</strong>{' '}
@@ -195,7 +195,7 @@ function InteractionPage() {
                         )}
 
                         {ix.user_comment && (
-                            <div className="trustifact" style={{ marginTop: ix.gratitude_comment ? '0.55em' : 0 }}>
+                            <div className="receipt" style={{ marginTop: ix.gratitude_comment ? '0.55em' : 0 }}>
                                 <div className="tf-content">
                                     <p>
                                         <strong>{isInitiator ? 'You' : 'Initiator'}:</strong>{' '}
@@ -211,13 +211,13 @@ function InteractionPage() {
                         )}
 
                         {!ix.gratitude_comment && !ix.user_comment && (
-                            <p className="ix-empty-section">No trustifacts yet.</p>
+                            <p className="ix-empty-section">No receipts yet.</p>
                         )}
 
                         {/* Other party adds gratitude_comment */}
                         {isOtherUser && !ix.gratitude_comment && (
                             <div className="ix-comment-area">
-                                <span className="ix-comment-label">Your trustifact</span>
+                                <span className="ix-comment-label">Your receipt</span>
                                 <textarea
                                     className="ix-comment-input"
                                     placeholder="How did this exchange feel? What did it mean to you?"
@@ -225,11 +225,11 @@ function InteractionPage() {
                                     onChange={e => setGratitudeText(e.target.value)}
                                 />
                                 <button
-                                    className="ix-comment-submit ix-submit-trustifact"
+                                    className="ix-comment-submit ix-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}
                                     onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText)}
                                 >
-                                    + Add Trustifact
+                                    + Add Receipt
                                 </button>
                             </div>
                         )}
@@ -245,7 +245,7 @@ function InteractionPage() {
                                     onChange={e => setUserNoteText(e.target.value)}
                                 />
                                 <button
-                                    className="ix-comment-submit ix-submit-trustifact"
+                                    className="ix-comment-submit ix-submit-receipt"
                                     disabled={submitting || !userNoteText.trim()}
                                     onClick={() => submitComment('user', userNoteText, setUserNoteText)}
                                 >

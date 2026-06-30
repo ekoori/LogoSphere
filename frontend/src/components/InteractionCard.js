@@ -1,7 +1,7 @@
 // InteractionCard — a trust interaction in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
 // When expanded, the title is a link to the interaction detail page.
-// Trustifacts (verified gratitude records) and Shoutouts (kudos) have
+// Receipts (verified gratitude records) and Shoutouts (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
 import React, { useState } from 'react';
@@ -12,7 +12,7 @@ import NewShoutoutForm from './NewShoutoutForm';
 import StatusProgression from './StatusProgression';
 import '../styles/MeaningTrail.css';
 
-const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
+const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
 const ixIndex = (status) => {
     const i = IX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
     return i >= 0 ? i : 0;
@@ -42,9 +42,9 @@ function InteractionCard({
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
-    initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime,
-    trustifacts, shoutouts,
-    onAddTrustifact, onAddShoutout, onModifyInteraction, canModify,
+    initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
+    receipts, shoutouts,
+    onAddReceipt, onAddShoutout, onModifyInteraction, canModify,
 }) {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -53,7 +53,7 @@ function InteractionCard({
     const [showShoutoutForm, setShowShoutoutForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
     // Local copies so newly submitted entries appear immediately without a refetch.
-    const [localTrustifacts, setLocalTrustifacts] = useState(trustifacts || []);
+    const [localReceipts, setLocalReceipts] = useState(receipts || []);
     const [localShoutouts, setLocalShoutouts] = useState(shoutouts || []);
 
     const handleLike = (e) => {
@@ -68,12 +68,12 @@ function InteractionCard({
         if (id) navigate(`/interaction?id=${id}`);
     };
 
-    const handleAddTrustifact = () => {
-        const text = window.prompt('Enter your trustifact:');
+    const handleAddReceipt = () => {
+        const text = window.prompt('Enter your receipt:');
         if (text && text.trim()) {
             const entry = { author: 'You', text: text.trim(), time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
-            setLocalTrustifacts((prev) => [...prev, entry]);
-            onAddTrustifact();
+            setLocalReceipts((prev) => [...prev, entry]);
+            onAddReceipt();
         }
     };
 
@@ -88,10 +88,10 @@ function InteractionCard({
     const stepIdx = ixIndex(status);
     const steps = IX_STEPS.map((label, i) => ({
         label,
-        time: [initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime][i] || '',
+        time: [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime][i] || '',
     }));
 
-    const hasTrustifacts = localTrustifacts.length > 0;
+    const hasReceipts = localReceipts.length > 0;
     const hasShoutouts = localShoutouts.length > 0;
     const pillClass = TYPE_PILL[type] || 'pill-clay';
     const typeLabel = TYPE_LABELS[type] || type;
@@ -201,16 +201,16 @@ function InteractionCard({
                         <StatusProgression steps={steps} currentIndex={stepIdx} cancelled={cancelled} />
                     </div>
 
-                    {/* ── Trustifacts ───────────────────────────────────── */}
+                    {/* ── Receipts ───────────────────────────────────── */}
                     <div className="ix-section">
-                        <div className="ix-section-label ix-section-trustifact">
-                            <span>✓ Trustifacts</span>
+                        <div className="ix-section-label ix-section-receipt">
+                            <span>✓ Receipts</span>
                             <span className="ix-section-hint">verified attestations of trust</span>
                         </div>
-                        {hasTrustifacts ? (
-                            <div className="trustifacts">
-                                {localTrustifacts.map((tf, i) => (
-                                    <div key={i} className="trustifact">
+                        {hasReceipts ? (
+                            <div className="receipts">
+                                {localReceipts.map((tf, i) => (
+                                    <div key={i} className="receipt">
                                         <div className="tf-content">
                                             <p><strong>{tf.author}:</strong> {tf.text}</p>
                                         </div>
@@ -224,13 +224,13 @@ function InteractionCard({
                                 ))}
                             </div>
                         ) : (
-                            <p className="ix-empty-section">No trustifacts yet.</p>
+                            <p className="ix-empty-section">No receipts yet.</p>
                         )}
                         <button
-                            className="ix-add-btn ix-add-trustifact"
-                            onClick={(e) => { e.stopPropagation(); handleAddTrustifact(); }}
+                            className="ix-add-btn ix-add-receipt"
+                            onClick={(e) => { e.stopPropagation(); handleAddReceipt(); }}
                         >
-                            + Add Trustifact
+                            + Add Receipt
                         </button>
                     </div>
 
@@ -294,11 +294,11 @@ InteractionCard.propTypes = {
     initiatedTime: PropTypes.string,
     inProgressTime: PropTypes.string,
     finishedTime: PropTypes.string,
-    trustifactedTime: PropTypes.string,
+    receiptedTime: PropTypes.string,
     additionalCommentsTime: PropTypes.string,
-    trustifacts: PropTypes.array,
+    receipts: PropTypes.array,
     shoutouts: PropTypes.array,
-    onAddTrustifact: PropTypes.func.isRequired,
+    onAddReceipt: PropTypes.func.isRequired,
     onAddShoutout: PropTypes.func.isRequired,
     onModifyInteraction: PropTypes.func.isRequired,
     canModify: PropTypes.bool.isRequired,

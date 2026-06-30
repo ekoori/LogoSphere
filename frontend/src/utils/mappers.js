@@ -6,7 +6,7 @@ const IMAGE_BY_KEY = {
     garden: '/static/garden_old.webp',
     podcast: '/static/yoga_classes.webp',
     seeds: '/static/garden_new.webp',
-    tools: '/static/trustifacts.png',
+    tools: '/static/receipts.png',
     solar: '/static/projects_spheres.png',
 };
 
@@ -65,12 +65,12 @@ function imageFor(text = '') {
 
 // Map a flat MeaningTrail row from the API into a InteractionCard item.
 export function mapInteraction(row) {
-    const completed = ['Finished', 'Completed', 'Trustifacted', 'Additional Comments Added']
+    const completed = ['Finished', 'Completed', 'Receipted', 'Additional Comments Added']
         .includes(row.interaction_status);
 
-    const trustifacts = [];
+    const receipts = [];
     if (row.gratitude_comment) {
-        trustifacts.push({
+        receipts.push({
             author: row.other_user_name || 'A neighbour',
             text: row.gratitude_comment,
             time: fmtDate(row.gratitude_comment_timestamp),
@@ -78,7 +78,7 @@ export function mapInteraction(row) {
         });
     }
     if (row.user_comment) {
-        trustifacts.push({
+        receipts.push({
             author: 'You',
             text: row.user_comment,
             time: fmtDate(row.user_comment_timestamp),
@@ -119,12 +119,12 @@ export function mapInteraction(row) {
         initiatedTime: fmtDate(row.project_start_timestamp),
         inProgressTime: '',
         finishedTime: '',
-        trustifactedTime: '',
+        receiptedTime: '',
         additionalCommentsTime: '',
-        trustifacts,
+        receipts,
         shoutouts,
         canModify: false,
-        onAddTrustifact: () => {},
+        onAddReceipt: () => {},
         onAddShoutout: () => {},
         onModifyInteraction: () => {},
     };

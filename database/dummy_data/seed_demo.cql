@@ -172,17 +172,17 @@ VALUES (cccccccc-0000-0000-0000-000000000004, 'offer',
 -- ============================================================================
 -- Joe Rogan's Meaning Trail — the heart of the demo.
 -- Each row is a moment of trust: a gift given or received, sometimes followed
--- by a gratitude note (a Trustifact) or a public Shoutout.
+-- by a gratitude note (a Receipt) or a public Shoutout.
 -- ============================================================================
 
--- 1) Rebuilt the community garden fence with Marie Kondo (completed, trustifacted)
+-- 1) Rebuilt the community garden fence with Marie Kondo (completed, receipted)
 INSERT INTO meaning_trail (user_id, interaction_id, other_user_id, other_user_name,
   interaction_description, interaction_status, project_id, project_name, project_start_timestamp,
   gratitude_comment, gratitude_comment_id, gratitude_comment_timestamp,
   other_comment, other_comment_author_id, other_comment_author_name, other_comment_id, other_comment_timestamp)
 VALUES (fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 10000000-0000-0000-0000-000000000001,
   9c89c702-6c61-49c8-9f0c-47b8e4e84e4b, 'Marie Kondo',
-  'Rebuilt the community garden fence after the spring storm', 'Trustifacted',
+  'Rebuilt the community garden fence after the spring storm', 'Receipted',
   bbbbbbbb-0000-0000-0000-000000000001, 'Community Tool Library', '2026-05-02 09:00:00',
   'Joe showed up at dawn with his own tools and stayed until every post was solid. The garden is safe again because of him.',
   20000000-0000-0000-0000-000000000001, '2026-05-04 18:00:00',
