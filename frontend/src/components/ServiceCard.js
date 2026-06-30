@@ -26,16 +26,33 @@ const sHref = (s) => {
 function ServiceCard({
     type, title, spheres, provider, providerId, description, project,
     imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
+    currentUserId, onAccept,
 }) {
     const navigate = useNavigate();
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
     const [img, setImg] = useState(imageUrl);
+    const [accepting, setAccepting] = useState(false);
 
     const handleLike = (e) => {
         e.stopPropagation();
         setLiked((v) => !v);
         setLikes((n) => liked ? n - 1 : n + 1);
+    };
+
+    const isOwnOpening = currentUserId && providerId && currentUserId === providerId;
+    const isLocked = status === 'Accepted' && cadence !== 'perpetual';
+    const canAccept = currentUserId && !isOwnOpening && !isLocked && status !== 'Cancelled' && status !== 'Completed';
+
+    const handleAccept = async (e) => {
+        e.stopPropagation();
+        if (accepting || !onAccept) return;
+        setAccepting(true);
+        try {
+            await onAccept();
+        } finally {
+            setAccepting(false);
+        }
     };
 
     const cancelled = status === 'Cancelled';
@@ -113,6 +130,18 @@ function ServiceCard({
 
             <StatusProgression steps={steps} currentIndex={idx} cancelled={cancelled} />
 
+            {canAccept && (
+                <div className="service-accept-cta">
+                    <button
+                        className="service-accept-btn"
+                        onClick={handleAccept}
+                        disabled={accepting}
+                    >
+                        {accepting ? 'Accepting…' : (type === 'offer' ? '✓ Accept this Offer' : '✓ Fulfil this Need')}
+                    </button>
+                </div>
+            )}
+
             <div className="service-create-cta">
                 <button
                     className="service-create-btn"
@@ -140,6 +169,8 @@ ServiceCard.propTypes = {
     likedByCurrentUser: PropTypes.bool.isRequired,
     cadence: PropTypes.string,
     acceptedByName: PropTypes.string,
+    currentUserId: PropTypes.string,
+    onAccept: PropTypes.func,
 };
 
 export default ServiceCard;

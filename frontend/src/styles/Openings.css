@@ -126,6 +126,26 @@
     margin-top: 0.15em;
 }
 
+/* Accept CTA — distinct from the neutral "+ Offer or Need" link */
+.service-accept-cta {
+    margin-top: 1em;
+}
+.service-accept-btn {
+    width: 100%;
+    padding: 0.7em 1em;
+    background: var(--leaf);
+    color: #f7f4e8;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background-color 0.18s var(--ease), transform 0.15s var(--ease);
+}
+.service-accept-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
+.service-accept-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
 /* Create service CTA at bottom of each card */
 .service-create-cta {
     margin-top: 1.2em;

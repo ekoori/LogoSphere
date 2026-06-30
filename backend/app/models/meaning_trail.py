@@ -91,6 +91,27 @@ class MeaningTrail(Model):
         except Exception as e:
             print(f"Error occurred while adding a exchange: {e}")
 
+    @classmethod
+    def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description, project_name=None):
+        """Create a fully-populated Exchange row when an Opening is accepted.
+        initiator_id is the opening's provider; other_user_id is the accepter."""
+        try:
+            exchange_id = uuid.uuid4()
+            cls.create(
+                user_id=UUID(str(initiator_id)),
+                exchange_id=exchange_id,
+                other_user_id=UUID(str(other_user_id)),
+                other_user_name=other_user_name,
+                exchange_description=description,
+                exchange_status='Initiated',
+                project_name=project_name,
+                project_start_timestamp=datetime.utcnow(),
+            )
+            return exchange_id
+        except Exception as e:
+            print(f"Error creating exchange from opening: {e}")
+            return None
+
     def to_dict(self):
         return {
             'user_id': str(self.user_id),

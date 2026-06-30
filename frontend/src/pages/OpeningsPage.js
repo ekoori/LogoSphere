@@ -7,8 +7,10 @@ import '../styles/Openings.css';
 import Openings from '../components/Openings';
 import api from '../api';
 import { mapService } from '../utils/mappers';
+import { useLogin } from '../App';
 
 function OpeningsPage() {
+    const { userId } = useLogin();
     const [searchParams] = useSearchParams();
     const [isFormVisible, setIsFormVisible] = useState(searchParams.get('new') === '1');
     const [services, setServices] = useState([]);
@@ -68,7 +70,7 @@ function OpeningsPage() {
                 {shown.length === 0 ? (
                     <p className="empty-state">No offers or needs yet. Share something with your community.</p>
                 ) : (
-                    <Openings services={shown} newServiceVisible={isFormVisible} onServiceAdded={fetchServices} />
+                    <Openings services={shown} newServiceVisible={isFormVisible} onServiceAdded={fetchServices} currentUserId={userId} />
                 )}
             </main>
         </div>

@@ -29,7 +29,7 @@ from app.models.user import User
 from app.routes.spheres import create_sphere, get_spheres
 from app.routes.alliances import create_alliance, get_alliances, join_alliance
 from app.routes.projects import create_project, get_projects, join_project
-from app.routes.openings import create_service, get_services
+from app.routes.openings import create_service, get_services, accept_service
 from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card
 
 # Configure logging
@@ -138,6 +138,7 @@ app.add_url_rule('/api/projects', view_func=get_projects, methods=['GET', 'OPTIO
 app.add_url_rule('/api/projects/<project_id>/join', view_func=join_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/accept', view_func=accept_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<card_id>', view_func=delete_value_card, methods=['DELETE', 'OPTIONS'])

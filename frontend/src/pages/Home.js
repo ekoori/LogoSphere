@@ -9,8 +9,10 @@ import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
 import api from '../api';
 import { mapService, mapExchange } from '../utils/mappers';
+import { useLogin } from '../App';
 
 function Home() {
+    const { userId } = useLogin();
     const [activeTab, setActiveTab] = useState('meaning_trail');
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [items, setItems] = useState([]);
@@ -73,7 +75,7 @@ function Home() {
                         : <MeaningTrail items={items} />
                 )}
                 {activeTab === 'offers-needs' && (
-                    <Openings services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} />
+                    <Openings services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} currentUserId={userId} />
                 )}
             </main>
         </div>

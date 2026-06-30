@@ -13,8 +13,10 @@ import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
 import api from '../api';
 import { mapExchange, mapService } from '../utils/mappers';
+import { useLogin } from '../App';
 
 function UserPage() {
+    const { userId: viewerId } = useLogin();
     const [params] = useSearchParams();
     const id = params.get('id');
 
@@ -113,7 +115,7 @@ function UserPage() {
                 {activeTab === 'offerings' && (
                     services.length === 0
                         ? <p className="empty-state">{fullName} hasn't posted any offers or needs yet.</p>
-                        : <Openings services={services} newServiceVisible={false} />
+                        : <Openings services={services} newServiceVisible={false} currentUserId={viewerId} />
                 )}
             </main>
         </div>

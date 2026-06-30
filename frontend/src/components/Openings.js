@@ -1,27 +1,29 @@
 /*
 File : ./frontend/src/components/Openings.js
-Description: This file creates a React component for the Openings, where users can post and view services. 
+Description: This file creates a React component for the Openings, where users can post and view services.
         It contains functionality for loading the services from the API and displaying them.
 Class: Openings
-Properties: 
+Properties:
   [-] state: contains a list of services fetched from the API.
-Methods: 
+Methods:
   [-] componentDidMount(): calls the API to fetch the list of services when the component is first mounted.
   [-] handleServiceSubmission(): submits a new service to the API (not yet implemented).
 */
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/Openings.css';
 
 import NewServiceForm from './NewServiceForm';
 import ServiceCard from './ServiceCard';
+import api from '../api';
 
 
 
-function Openings({ services, newServiceVisible, onServiceAdded }) {
+function Openings({ services, newServiceVisible, onServiceAdded, currentUserId }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
       setIsFormVisible(newServiceVisible);
@@ -31,14 +33,17 @@ function Openings({ services, newServiceVisible, onServiceAdded }) {
       setIsFormVisible(!isFormVisible);
   };
 
-  const handleAccept = (serviceId) => {
-      console.log(`Accept service: ${serviceId}`);
-      // Logic to accept the service
-  };
-
-  const handleConfirm = (serviceId) => {
-      console.log(`Confirm service: ${serviceId}`);
-      // Logic to confirm the service
+  const handleAccept = async (serviceId) => {
+      try {
+          const res = await api.post(`/api/openings/${serviceId}/accept`);
+          if (onServiceAdded) onServiceAdded();
+          if (res.data?.exchange_id) {
+              navigate(`/exchange?id=${res.data.exchange_id}`);
+          }
+      } catch (e) {
+          console.error('Failed to accept opening:', e);
+          alert(e.response?.data?.message || 'Could not accept this opening.');
+      }
   };
 
   return (
@@ -49,8 +54,8 @@ function Openings({ services, newServiceVisible, onServiceAdded }) {
                   <ServiceCard
                       key={service.id}
                       {...service}
+                      currentUserId={currentUserId}
                       onAccept={() => handleAccept(service.id)}
-                      onConfirm={() => handleConfirm(service.id)}
                   />
               ))}
           </section>
@@ -59,4 +64,3 @@ function Openings({ services, newServiceVisible, onServiceAdded }) {
 }
 
 export default Openings;
-
