@@ -33,7 +33,7 @@ class CassandraSessionInterface(SessionInterface):
 
         # Prepare statements for better performance
         self.select_session = self.cassandra_session.prepare(
-            "SELECT session_id, user_email, user_id, data FROM sessions WHERE session_id = ?"
+            "SELECT session_id, user_email, user_id, data, expire_at FROM sessions WHERE session_id = ?"
         )
         self.insert_session = self.cassandra_session.prepare("""
             INSERT INTO sessions (
@@ -54,7 +54,8 @@ class CassandraSessionInterface(SessionInterface):
                     [session_uuid]
                 ).one()
 
-                if result and result.user_email and result.user_id:
+                if result and result.user_email and result.user_id and \
+                        (result.expire_at is None or result.expire_at > datetime.utcnow()):
                     session_data = {
                         'user_email': result.user_email,
                         'user_id': str(result.user_id),

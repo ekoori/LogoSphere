@@ -1,8 +1,8 @@
 /* ============================================================================
-   Unions — group listing cards
+   Alliances — group listing cards
    ========================================================================== */
 
-.union-card {
+.alliance-card {
     position: relative;
     background: var(--surface);
     padding: 1.5em 1.6em;
@@ -15,7 +15,7 @@
     transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s var(--ease);
     animation: ts-rise 0.5s var(--ease) both;
 }
-.union-card::before {
+.alliance-card::before {
     content: "";
     position: absolute;
     top: 0; left: 0; bottom: 0;
@@ -25,26 +25,26 @@
     transform-origin: top;
     transition: transform 0.3s var(--ease);
 }
-.union-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border); }
-.union-card:hover::before { transform: scaleY(1); }
+.alliance-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--border); }
+.alliance-card:hover::before { transform: scaleY(1); }
 
-.union-card-header {
+.alliance-card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 1em;
 }
-.union-card-left { flex: 2; display: flex; flex-direction: column; gap: 0.35em; }
-.union-card-right { flex: 0 0 auto; display: flex; justify-content: flex-end; align-items: flex-start; }
-.union-card-header h3 { margin: 0; font-size: 1.35rem; }
+.alliance-card-left { flex: 2; display: flex; flex-direction: column; gap: 0.35em; }
+.alliance-card-right { flex: 0 0 auto; display: flex; justify-content: flex-end; align-items: flex-start; }
+.alliance-card-header h3 { margin: 0; font-size: 1.35rem; }
 
-.union-card-participants { font-size: 0.92rem; color: var(--ink-soft); margin-top: 0.15em; }
-.union-card-participants span { display: inline; margin-right: 0.5em; }
-.union-card-participants a { color: var(--terracotta-deep); font-weight: 600; }
-.union-card-participants a:hover { text-decoration: underline; }
+.alliance-card-participants { font-size: 0.92rem; color: var(--ink-soft); margin-top: 0.15em; }
+.alliance-card-participants span { display: inline; margin-right: 0.5em; }
+.alliance-card-participants a { color: var(--terracotta-deep); font-weight: 600; }
+.alliance-card-participants a:hover { text-decoration: underline; }
 
-.union-card-description-container { margin-top: 1em; }
-.union-card-description {
+.alliance-card-description-container { margin-top: 1em; }
+.alliance-card-description {
     margin: 0;
     color: var(--ink-soft);
     line-height: 1.62;
@@ -54,14 +54,14 @@
     overflow: hidden;
 }
 
-.union-card-project-link {
+.alliance-card-project-link {
     margin-top: 1.1em;
     display: flex;
     gap: 0.5em;
     flex-wrap: wrap;
     align-items: center;
 }
-.union-card-project-link .btn-status {
+.alliance-card-project-link .btn-status {
     display: inline-block;
     padding: 0.38em 0.8em;
     border: 1px solid var(--border);
@@ -73,7 +73,7 @@
     cursor: pointer;
     transition: background-color 0.25s var(--ease), color 0.25s var(--ease), border-color 0.25s var(--ease);
 }
-.union-card-project-link .btn-status:hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.alliance-card-project-link .btn-status:hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
 
 .btn-orange, .btn-blue {
     border: 1px solid transparent;
@@ -92,8 +92,22 @@
 .btn-blue { background: var(--moss); }
 .btn-blue:hover { background: var(--moss-deep); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
-.union-card-values { margin-top: 1.2em; display: flex; flex-wrap: wrap; gap: 0.45em; }
-.union-card-values span {
+.uc-member-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3em 0.75em;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--leaf);
+    color: var(--leaf);
+    background: rgba(111,138,79,0.08);
+}
+
+.alliance-card-values { margin-top: 1.2em; display: flex; flex-wrap: wrap; gap: 0.45em; }
+.alliance-card-values span {
     display: inline-block;
     background: rgba(217, 162, 63, 0.16);
     color: var(--honey-deep);
@@ -104,7 +118,7 @@
     font-weight: 600;
 }
 
-#union-form {
+#alliance-form {
     background: var(--surface);
     padding: 1.5em;
     border: 1px solid var(--border-soft);
@@ -112,8 +126,8 @@
     box-shadow: var(--shadow-sm);
     margin-bottom: 2em;
 }
-#union-form.hidden { display: none; }
-#union-form h3 { margin-top: 0; }
-#union-form input[type="text"], #union-form textarea, #union-form select { width: 100%; margin-top: 0.5em; }
+#alliance-form.hidden { display: none; }
+#alliance-form h3 { margin-top: 0; }
+#alliance-form input[type="text"], #alliance-form textarea, #alliance-form select { width: 100%; margin-top: 0.5em; }
 
 .form-buttons { display: flex; justify-content: center; gap: 1em; margin-top: 1.2em; }

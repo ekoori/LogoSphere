@@ -1,6 +1,6 @@
 /* ProjectManagement.css */
 
-.transaction {
+.interaction {
     background-color: var(--surface);
     padding: 1em;
     border-radius: 8px;
@@ -9,45 +9,45 @@
     cursor: pointer;
 }
 
-.transaction.offer {
+.interaction.offer {
     background-color: rgba(111, 138, 79, 0.12);
 }
 
-.transaction.request {
+.interaction.need {
     background-color: rgba(194, 100, 60, 0.10);
 }
 
-.transaction-header {
+.interaction-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     flex-direction: row;
 }
 
-.transaction-header .left {
+.interaction-header .left {
     flex: 2;
     display: flex;
     flex-direction: column;
 }
 
-.transaction-header .right {
+.interaction-header .right {
     flex: 0 0 80px;
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
 }
 
-.transaction-header h3, .transaction-header small {
+.interaction-header h3, .interaction-header small {
     margin: 0;
 }
 
-.transaction-header small a {
+.interaction-header small a {
     margin-right: 1em;
     color: var(--moss);
     text-decoration: none;
 }
 
-.transaction-header small a:hover {
+.interaction-header small a:hover {
     text-decoration: underline;
 }
 
@@ -65,7 +65,7 @@
     align-items: flex-start;
 }
 
-.transaction-image {
+.interaction-image {
     width: 100px;
     height: auto;
     margin-right: 1em;
@@ -262,10 +262,10 @@ main {
     color: white;
 }
 
-.trusttrail {
+.meaning-trail {
     margin-bottom: 2em;
 }
 
-.offers-requests .transaction {
+.offers-needs .interaction {
     margin-bottom: 1em;
 }

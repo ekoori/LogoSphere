@@ -47,7 +47,7 @@ const UserLogin = () => {
     return (
         <div className="login-container">
             <form className="login-form" onSubmit={handleLogin}>
-                <h2>Login to TrustSphere</h2>
+                <h2>Login to LogoSphere</h2>
                 <input
                     type="email"
                     placeholder="Email"

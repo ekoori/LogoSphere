@@ -1,6 +1,6 @@
-# File: ./backend/app/models/marketplace.py
-# Description: Marketplace service model — offers and requests in the gift economy.
-# Class: Service — create() and get_all() backed by the trustsphere.services table.
+# File: ./backend/app/models/openings.py
+# Description: Openings service model — offers and requests in the gift economy.
+# Class: Service — create() and get_all() backed by the logosphere.services table.
 
 from cassandra.cluster import Cluster
 import uuid
@@ -11,7 +11,7 @@ from datetime import datetime
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 
 class Service:
@@ -66,6 +66,17 @@ class Service:
         values = data.get('values', [])
         project_name = data.get('project_name')
         image_key = data.get('image_key')
+
+        # Look up provider name from users table if not supplied by the client.
+        if not provider_name:
+            try:
+                row = cassandra_session.execute(
+                    "SELECT name, surname FROM users WHERE user_id = %s", [provider_id]
+                ).one()
+                if row:
+                    provider_name = f"{row.name or ''} {row.surname or ''}".strip()
+            except Exception as e:
+                logging.warning(f'Could not look up provider name: {e}')
 
         logging.info(f'Creating service with service_id: {service_id}')
         query = """

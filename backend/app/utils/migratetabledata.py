@@ -42,7 +42,7 @@ class TableMigrator:
 if __name__ == '__main__':
     # Set up the migrator with your Cassandra cluster and keyspace
     cluster_nodes = ['143.42.34.42']  # Replace with your actual Cassandra nodes
-    keyspace = 'trustsphere'
+    keyspace = 'logosphere'
 
     migrator = TableMigrator(cluster_nodes=cluster_nodes, keyspace=keyspace)
     migrator.migrate_users_to_user_credentials()

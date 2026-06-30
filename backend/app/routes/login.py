@@ -1,5 +1,5 @@
 # File: ./backend/app/routes/login.py
-# Description: This file manages user authentication and session management for the TrustSphere platform.
+# Description: This file manages user authentication and session management for the LogoSphere platform.
 #              It defines the routes for user login, logout, and session verification.
 # Classes: None
 # Properties: None
@@ -67,13 +67,13 @@ def login():
                 secure=current_app.config.get('SESSION_COOKIE_SECURE', False),
                 samesite=current_app.config.get('SESSION_COOKIE_SAMESITE', 'Lax'),
                 path="/",
-                max_age=24 * 60 * 60,
+                max_age=30 * 24 * 60 * 60,
                 domain=None  # Allow the browser to set the appropriate domain
             )
 
             # Save session
             now = datetime.utcnow()
-            expire_at = now + timedelta(hours=24)
+            expire_at = now + timedelta(days=30)
             
             current_app.session_interface.cassandra_session.execute(
                 """
@@ -126,11 +126,11 @@ def check_session():
 
         # Query session directly
         result = current_app.session_interface.cassandra_session.execute(
-            "SELECT user_id, user_email FROM sessions WHERE session_id = %s",
+            "SELECT user_id, user_email, expire_at FROM sessions WHERE session_id = %s",
             [uuid.UUID(session_id_str)]
         ).one()
 
-        if result:
+        if result and (result.expire_at is None or result.expire_at > datetime.utcnow()):
             # User.get expects a string user_id (it calls uuid.UUID() on it);
             # result.user_id comes back from the driver as a UUID object.
             user = User.get(str(result.user_id))

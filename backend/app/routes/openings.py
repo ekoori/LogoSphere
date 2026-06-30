@@ -1,7 +1,7 @@
 import logging
 import uuid
 from flask import request, jsonify, current_app as app
-from app.models.marketplace import Service
+from app.models.openings import Service
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)

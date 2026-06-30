@@ -1,9 +1,9 @@
 -- ============================================================================
--- Enrich marketplace services with likes, a project association, an image key,
+-- Enrich openings services with likes, a project association, an image key,
 -- and varied lifecycle statuses (so the progress control shows real states).
 -- image_key maps to a bundled static asset on the frontend.
 -- ============================================================================
-USE trustsphere;
+USE logosphere;
 
 UPDATE services SET likes=12, project_name='Skill Share', image_key='podcast', status='In Progress'
   WHERE service_id=cccccccc-0000-0000-0000-000000000001;
@@ -14,7 +14,7 @@ UPDATE services SET likes=27, project_name='Open GPU Cluster', image_key='gpu', 
 UPDATE services SET likes=15, project_name='Pollinator Corridor', image_key='seeds', status='Posted'
   WHERE service_id=cccccccc-0000-0000-0000-000000000004;
 
--- Two more so the marketplace feels alive.
+-- Two more so the openings feels alive.
 INSERT INTO services (service_id, type, title, description, provider_id, provider_name, sphere_id, sphere_name, status, created_at, values, likes, project_name, image_key)
 VALUES (cccccccc-0000-0000-0000-000000000005, 'offer',
   'Tool restoration & blade-sharpening workshop',
@@ -24,7 +24,7 @@ VALUES (cccccccc-0000-0000-0000-000000000005, 'offer',
   ['repair culture', 'skill sharing'], 9, 'Community Tool Library', 'tools');
 
 INSERT INTO services (service_id, type, title, description, provider_id, provider_name, sphere_id, sphere_name, status, created_at, values, likes, project_name, image_key)
-VALUES (cccccccc-0000-0000-0000-000000000006, 'request',
+VALUES (cccccccc-0000-0000-0000-000000000006, 'need',
   'Seeking open datasets for community climate models',
   'Our open research team needs well-labelled climate datasets to train shared forecasting models. Any contribution to the commons welcome.',
   86eb2b6c-1771-4533-9bd8-fca4f83fe61a, 'Bill Gates',

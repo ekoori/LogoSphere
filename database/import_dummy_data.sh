@@ -26,7 +26,7 @@ until cqlsh --cqlversion=3.4.7 -e "DESCRIBE KEYSPACES;" > /dev/null 2>&1; do
   for file in /dummy_data/*.csv; do
     table_name=$(basename "$file" .csv)  # Extract table name from filename
       echo "Importing $file into $table_name..."
-        cqlsh --cqlversion=3.4.7 -e "USE trustsphere; COPY $table_name FROM '$file' WITH HEADER = TRUE;"
+        cqlsh --cqlversion=3.4.7 -e "USE logosphere; COPY $table_name FROM '$file' WITH HEADER = TRUE;"
         done
 
         echo "Data import completed."

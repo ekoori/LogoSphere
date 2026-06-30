@@ -38,7 +38,7 @@ def create_sphere(user_id=None):
             data={
                 'name': data.get('name'),
                 'description': data.get('description'),
-                'value_graph': data.get('value_graph'),
+                'meaning_graph': data.get('meaning_graph'),
                 'location': data.get('location'),
                 'image': image
             },
@@ -88,12 +88,12 @@ def get_spheres(user_id=None):
                 sphere_id=row.sphere_id,
                 name=row.name,
                 description=row.description,
-                value_graph=row.value_graph,
+                meaning_graph=row.meaning_graph,
                 location=row.location,
                 image=row.image,
                 admin1=row.admin1,
                 participants=row.participants,
-                unions=row.unions,
+                alliances=row.alliances,
                 projects=row.projects,
                 values=row.values
             )

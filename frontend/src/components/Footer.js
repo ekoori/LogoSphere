@@ -20,7 +20,7 @@ const Footer = () => {
     return (
       <footer>
         <ul>
-            <li><a href="/about">About TrustSphere</a></li>
+            <li><a href="/about">About LogoSphere</a></li>
             <li><a href="/contribute">Contribute</a></li>
             <li><a href="/privacy">Privacy Policy</a></li>
             <li><a href="/tos">Terms of Service</a></li>

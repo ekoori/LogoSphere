@@ -1,0 +1,512 @@
+/* ============================================================================
+   EntityPage — shared styles for Sphere, Alliance, and Project detail pages.
+   Namespace: ep- (page/sections), evc- (entity value cards).
+   Aesthetic: living cooperative charter — Fraunces headings, moss dominant,
+   hand-stamp role badges, ruled-section dividers, punch-hole value cards.
+   ========================================================================== */
+
+/* ── Loading ──────────────────────────────────────────────────────────────── */
+.ep-loading {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 40vh;
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 1.4rem;
+}
+
+.ep-not-found {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--ink-faint);
+    font-family: var(--font-display);
+    font-style: italic;
+}
+
+/* ── Page scaffold ────────────────────────────────────────────────────────── */
+.ep-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 3vw, 2rem) 5rem;
+    animation: ts-rise 0.45s var(--ease) both;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.ep-hero {
+    position: relative;
+    padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(2rem, 3.5vw, 3rem);
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 3rem;
+    overflow: hidden;
+}
+
+.ep-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* Alliance hero — moss gradient */
+.ep-hero--alliance::before,
+.ep-page--alliance .ep-hero::before {
+    background: radial-gradient(800px 300px at 70% -20%,
+        rgba(70, 88, 58, 0.10), transparent 65%);
+}
+
+/* Project hero — leaf gradient */
+.ep-hero--project::before,
+.ep-page--project .ep-hero::before {
+    background: radial-gradient(800px 300px at 30% -20%,
+        rgba(111, 138, 79, 0.10), transparent 65%);
+}
+
+/* Sphere hero — honey gradient */
+.ep-hero--sphere::before,
+.ep-page--sphere .ep-hero::before {
+    background: radial-gradient(800px 300px at 50% -20%,
+        rgba(217, 162, 63, 0.09), transparent 65%);
+}
+
+.ep-hero-inner {
+    position: relative;
+}
+
+/* ── Meta row (eyebrow + chips) ───────────────────────────────────────────── */
+.ep-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.ep-eyebrow {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.ep-sphere-chip, .ep-location-chip {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    padding: 0.22em 0.7em;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--border-soft);
+    color: var(--moss);
+    background: rgba(70, 88, 58, 0.06);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.ep-sphere-chip:hover {
+    background: var(--moss);
+    color: #f7f4e8;
+}
+
+.ep-location-chip {
+    color: var(--ink-soft);
+}
+
+/* Status badges */
+.ep-status-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2em 0.65em;
+    border-radius: var(--r-sm);
+    border: 1px solid;
+}
+
+.status--initiated   { color: var(--honey);     border-color: var(--honey);     background: rgba(217,162,63,0.08); }
+.status--in-progress { color: var(--leaf);      border-color: var(--leaf);      background: rgba(111,138,79,0.08); }
+.status--completed   { color: var(--moss);      border-color: var(--moss);      background: rgba(70,88,58,0.08); }
+.status--paused      { color: var(--ink-faint); border-color: var(--border);    background: transparent; }
+
+/* ── Hero title & description ─────────────────────────────────────────────── */
+.ep-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 600;
+    color: var(--moss-deep);
+    line-height: 1.1;
+    margin: 0 0 0.6rem;
+    letter-spacing: -0.01em;
+}
+
+.ep-lead-alliance {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    margin: 0 0 0.7rem;
+}
+
+.ep-alliance-link {
+    color: var(--moss);
+    font-weight: 600;
+    text-decoration: none;
+}
+.ep-alliance-link:hover { text-decoration: underline; }
+
+.ep-description {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--ink);
+    max-width: 700px;
+    margin: 0 0 1.2rem;
+}
+
+.ep-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45em;
+}
+
+.ep-tag {
+    font-size: 0.72rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    color: var(--ink-faint);
+    background: rgba(155, 171, 131, 0.12);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    padding: 0.2em 0.65em;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.ep-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────────── */
+.ep-section {
+    position: relative;
+}
+
+.ep-section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--moss-deep);
+    letter-spacing: -0.01em;
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.ep-section-glyph {
+    font-size: 0.85em;
+    color: var(--leaf);
+    font-style: normal;
+}
+
+.ep-section-sub {
+    font-size: 0.78rem;
+    font-family: var(--font-body);
+    font-weight: 400;
+    color: var(--ink-faint);
+    font-style: italic;
+    margin-left: 0.4em;
+}
+
+.ep-empty {
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* ── Governance: role tiers ───────────────────────────────────────────────── */
+.ep-role-tier {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.2rem;
+    margin-bottom: 1.1rem;
+}
+
+.ep-role-label {
+    display: inline-block;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.28em 0.7em;
+    border-radius: var(--r-sm);
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 0.35rem;
+}
+
+.role--admin   { color: var(--moss-deep);   border-color: var(--moss);  background: rgba(70,88,58,0.1); }
+.role--steward { color: var(--leaf);        border-color: var(--leaf);  background: rgba(111,138,79,0.08); }
+.role--member  { color: var(--ink-soft);     border-color: var(--border-soft); background: transparent; }
+
+/* ── Member roster ────────────────────────────────────────────────────────── */
+.ep-roster {
+    display: flex;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ep-roster--single .ep-member-pill {
+    min-width: 160px;
+}
+
+.ep-member-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.35em 0.85em 0.35em 0.4em;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+    box-shadow: var(--shadow-sm);
+}
+
+.ep-member-pill:hover {
+    border-color: var(--leaf);
+    background: rgba(111,138,79,0.07);
+    transform: translateY(-1px);
+}
+
+.ep-member-pill--admin {
+    border-color: rgba(70,88,58,0.35);
+    background: rgba(70,88,58,0.04);
+}
+.ep-member-pill--admin:hover { border-color: var(--moss); }
+
+.ep-member-pill--steward {
+    border-color: rgba(111,138,79,0.35);
+}
+
+.ep-member-initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--moss);
+    color: #f7f4e8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    flex-shrink: 0;
+}
+
+.ep-member-pill--steward .ep-member-initial { background: var(--leaf); }
+.ep-member-pill--admin   .ep-member-initial { background: var(--moss-deep); }
+
+.ep-member-name {
+    font-family: var(--font-body);
+}
+
+/* ── Projects list ────────────────────────────────────────────────────────── */
+.ep-project-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.ep-project-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    margin-bottom: 0.45rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.95rem;
+    background: var(--surface);
+    transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+    box-shadow: var(--shadow-sm);
+}
+
+.ep-project-link:hover {
+    border-color: var(--leaf);
+    background: rgba(111,138,79,0.05);
+    transform: translateX(3px);
+}
+
+.ep-project-arrow {
+    color: var(--leaf);
+    font-size: 1rem;
+    transition: transform 0.15s;
+}
+
+.ep-project-link:hover .ep-project-arrow {
+    transform: translateX(3px);
+}
+
+/* ── Entity Value Cards ───────────────────────────────────────────────────── */
+.ep-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.4rem;
+}
+
+.evc-card {
+    position: relative;
+    background: var(--paper);
+    border-top: 3px solid var(--evc-accent, var(--moss));
+    border-radius: var(--r-lg);
+    padding: 1.4rem 1.4rem 1.1rem;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transform: rotate(var(--evc-rot, 0deg));
+    transform-origin: center top;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 2.4rem,
+        rgba(155, 171, 131, 0.14) 2.4rem,
+        rgba(155, 171, 131, 0.14) calc(2.4rem + 1px)
+    );
+    background-size: 100% 2.4rem;
+    background-position: 0 3.6rem;
+}
+
+.evc-card:hover, .evc-card--expanded {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.evc-punch {
+    position: absolute;
+    top: -1px;
+    left: 1.6rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1px solid var(--border-soft);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.evc-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+    padding-top: 0.1rem;
+}
+
+.evc-mode {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--evc-accent, var(--moss));
+}
+
+.evc-toggle-hint {
+    font-size: 0.65rem;
+    color: var(--ink-faint);
+}
+
+.evc-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--moss-deep);
+    line-height: 1.25;
+    margin: 0 0 1rem;
+}
+
+.evc-field {
+    margin-bottom: 0.75rem;
+}
+
+.evc-label {
+    display: block;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.25rem;
+}
+
+.evc-field p {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0;
+}
+
+.evc-field--drift .evc-label { color: var(--terracotta); }
+.evc-field--drift p  { color: var(--terracotta); font-style: italic; }
+
+.evc-field--never .evc-label { color: var(--danger, #b94040); }
+.evc-field--never p  { font-weight: 600; color: var(--ink); font-size: 0.85rem; }
+
+.evc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+}
+
+.evc-list li {
+    font-size: 0.85rem;
+    color: var(--ink);
+    padding-left: 1em;
+    position: relative;
+    line-height: 1.5;
+}
+
+.evc-list li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--evc-accent, var(--leaf));
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .ep-role-tier {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ep-role-label {
+        margin-top: 0;
+    }
+
+    .ep-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .evc-card {
+        transform: none !important;
+    }
+}

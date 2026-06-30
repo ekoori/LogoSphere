@@ -36,26 +36,26 @@
     margin-bottom: 2em;
 }
 
-.sphere-unions,
+.sphere-alliances,
 .sphere-members,
 .sphere-projects {
     margin-bottom: 2em;
 }
 
-.union-list,
+.alliance-list,
 .member-list,
 .project-list {
     list-style-type: none;
     padding: 0;
 }
 
-.union-list li,
+.alliance-list li,
 .member-list li,
 .project-list li {
     margin: 0.5em 0;
 }
 
-.union-list a,
+.alliance-list a,
 .member-list a,
 .project-list a {
     text-decoration: none;
@@ -67,7 +67,7 @@
     transition: background-color 0.3s, color 0.3s;
 }
 
-.union-list a:hover,
+.alliance-list a:hover,
 .member-list a:hover,
 .project-list a:hover {
     background-color: var(--surface-2);

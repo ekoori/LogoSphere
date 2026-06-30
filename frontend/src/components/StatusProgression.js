@@ -1,6 +1,6 @@
 // Unified phase-progression control: an arrow/chevron flow showing where a
-// transaction or service is in its lifecycle. Used by ServiceCard and
-// TransactionCard so the whole app shows status the same way.
+// interaction or service is in its lifecycle. Used by ServiceCard and
+// InteractionCard so the whole app shows status the same way.
 import React from 'react';
 import '../styles/StatusProgression.css';
 

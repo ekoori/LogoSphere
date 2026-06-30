@@ -1,5 +1,5 @@
 // File: ./frontend/src/components/Header.js
-// Description: Fixed top navigation and branding for TrustSphere.
+// Description: Fixed top navigation and branding for LogoSphere.
 // Class: Header — brand wordmark, primary nav, notifications, and account menu.
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -48,8 +48,8 @@ const Header = () => {
         {
             avatar: 'static/elon_musk_avatar.jpg',
             author: 'OpenAI',
-            link: '/union',
-            message: 'You got accepted to the OpenAI union.',
+            link: '/alliance',
+            message: 'You got accepted to the OpenAI alliance.',
             time: '4 hours ago'
         },
         {
@@ -73,15 +73,15 @@ const Header = () => {
             <div className="brand">
                 <Link to="/">
                     <BrandMark />
-                    Trust<b>Sphere</b>
+                    Logo<b>Sphere</b>
                 </Link>
             </div>
 
             <nav>
                 <ul className="nav-primary">
-                    <li><Link to="/marketplace">Marketplace</Link></li>
+                    <li><Link to="/openings">Openings</Link></li>
                     <li><Link to="/spheres">Spheres</Link></li>
-                    <li><Link to="/unions">Unions</Link></li>
+                    <li><Link to="/alliances">Alliances</Link></li>
                     <li><Link to="/projects">Projects</Link></li>
                 </ul>
             </nav>
@@ -119,9 +119,7 @@ const Header = () => {
                     )}
                 </div>
 
-                {isLoggedIn
-                    ? <button className="auth-action" onClick={handleLogout}>Logout</button>
-                    : <Link to="/login" className="auth-action">Login</Link>}
+                {!isLoggedIn && <Link to="/login" className="auth-action">Login</Link>}
             </div>
         </header>
     );

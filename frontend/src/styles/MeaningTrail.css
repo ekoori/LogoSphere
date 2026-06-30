@@ -1,0 +1,295 @@
+/* ============================================================================
+   MeaningTrail — collapsible interaction feed cards.
+   Type-coded left accent bar; Receipts and Acknowledgements are visually distinct.
+   ========================================================================== */
+
+/* ── Base card ─────────────────────────────────────────────────────────── */
+.interaction {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--sage);
+    border-radius: var(--r-lg);
+    margin-bottom: 0.6em;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+    animation: ts-rise 0.35s var(--ease) both;
+    overflow: hidden;
+}
+.interaction.collapsed { cursor: pointer; }
+.interaction.collapsed:hover { box-shadow: var(--shadow-md); }
+.interaction.expanded  { box-shadow: var(--shadow-md); }
+
+.interaction.offer     { border-left-color: var(--terracotta); }
+.interaction.need   { border-left-color: var(--honey); }
+.interaction.completed { border-left-color: var(--leaf); }
+
+/* ── Summary row — always visible ──────────────────────────────────────── */
+.ix-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.7em 0.9em;
+    min-height: 52px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.type-pill {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.25em 0.55em;
+}
+
+/* Title column — takes remaining space */
+.ix-title-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+    overflow: hidden;
+}
+
+.ix-title {
+    font-family: var(--font-display);
+    font-size: 0.97rem;
+    font-weight: 600;
+    color: var(--moss-deep);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+.interaction.expanded .ix-summary .ix-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 1.12rem;
+}
+.ix-title-link {
+    text-decoration: none;
+    color: var(--moss-deep);
+    transition: color 0.15s var(--ease);
+}
+.ix-title-link:hover {
+    color: var(--terracotta-deep);
+    text-decoration: underline;
+    text-decoration-color: var(--terracotta);
+    text-underline-offset: 3px;
+}
+
+/* Participant names shown inline when collapsed */
+.ix-participants-inline {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ix-participants-inline a {
+    color: var(--terracotta-deep);
+    font-weight: 600;
+    text-decoration: none;
+}
+.ix-participants-inline a:hover { text-decoration: underline; }
+
+/* Right cluster: date + likes */
+.ix-summary-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    flex-shrink: 0;
+}
+.ix-date {
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+
+/* Chevron toggle button */
+.ix-expand-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.68rem;
+    color: var(--ink-faint);
+    padding: 0.3em 0.45em;
+    border-radius: var(--r-sm);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.ix-expand-btn:hover { color: var(--moss); background: var(--surface-2); }
+
+/* ── Expanded body ─────────────────────────────────────────────────────── */
+.ix-body {
+    padding: 0 0.9em 1em;
+    border-top: 1px solid var(--border-soft);
+    animation: ts-rise 0.22s var(--ease) both;
+}
+
+/* Context row: participants, sphere pills, project reference */
+.ix-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.65em 0 0.55em;
+    font-size: 0.86rem;
+}
+.ix-context .participants { color: var(--ink-soft); }
+.ix-context .participants a,
+.ix-context a {
+    color: var(--terracotta-deep);
+    font-weight: 600;
+    text-decoration: none;
+}
+.ix-context a:hover { text-decoration: underline; }
+.ix-sphere-pill { font-size: 0.73rem; }
+.ix-project-ref { font-size: 0.83rem; color: var(--ink-soft); }
+.ix-project-ref a { color: var(--moss-deep); font-weight: 600; }
+
+/* Description + image */
+.description-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 1em;
+    margin: 0.3em 0 0.9em;
+}
+.interaction-image {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+.description {
+    flex: 1;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.55;
+}
+
+/* Status progression */
+.status { margin-bottom: 0.75em; }
+
+/* ── Section dividers (Receipts / Acknowledgements) ────────────────────────── */
+.ix-section {
+    border-top: 1px solid var(--border-soft);
+    padding-top: 0.8em;
+    margin-top: 0.8em;
+}
+
+.ix-section-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45em;
+    margin-bottom: 0.6em;
+}
+.ix-section-label > span:first-child {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.77rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+.ix-section-hint {
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.ix-section-receipt > span:first-child { color: var(--leaf); }
+.ix-section-acknowledgement  > span:first-child  { color: var(--honey-deep); }
+
+.ix-empty-section {
+    font-size: 0.83rem;
+    color: var(--ink-faint);
+    margin: 0 0 0.45em;
+    font-style: italic;
+}
+
+/* ── Receipt + Acknowledgement cards ────────────────────────────────────────── */
+.receipt, .acknowledgement {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75em;
+    padding: 0.65em 0.8em;
+    border-radius: var(--r-md);
+    margin-bottom: 0.55em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}
+.receipt { border-left: 3px solid var(--leaf); }
+.acknowledgement   { border-left: 3px solid var(--honey); }
+
+.tf-content { flex: 1; }
+.tf-content p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+.tf-content p strong { color: var(--ink); font-weight: 600; }
+
+/* ── Add buttons ────────────────────────────────────────────────────────── */
+.ix-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.38em 0.8em;
+    border-radius: var(--r-pill);
+    border: 1px solid;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    margin-top: 0.35em;
+    transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+.ix-add-receipt {
+    background: rgba(111, 138, 79, 0.09);
+    border-color: var(--leaf);
+    color: var(--moss-deep);
+}
+.ix-add-receipt:hover { background: var(--leaf); color: #f7f4e8; }
+.ix-add-acknowledgement {
+    background: rgba(217, 162, 63, 0.1);
+    border-color: var(--honey);
+    color: var(--honey-deep);
+}
+.ix-add-acknowledgement:hover { background: var(--honey); color: var(--moss-deep); }
+
+/* ── Acknowledgement form (NewAcknowledgementForm) ───────────────────────────────────── */
+#save-acknowledgement-btn, #cancel-acknowledgement-btn {
+    margin-top: 0.5em;
+    padding: 0.6em;
+    border: none;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    color: #f7f4e8;
+    width: 100%;
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: background-color 0.2s var(--ease);
+}
+#save-acknowledgement-btn   { background: var(--moss); }
+#save-acknowledgement-btn:hover { background: var(--moss-deep); }
+#cancel-acknowledgement-btn { background: var(--ink-faint); }
+#cancel-acknowledgement-btn:hover { background: var(--ink-soft); }
+
+#acknowledgement-entry {
+    padding: 0.9em;
+    border-radius: var(--r-md);
+    margin-top: 0.5em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}

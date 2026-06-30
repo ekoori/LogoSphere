@@ -1,0 +1,320 @@
+/* ============================================================================
+   Interaction detail page — full-page view for a single trust interaction.
+   Reuses MeaningTrail.css card classes for receipts / acknowledgements.
+   ============================================================================ */
+
+.ix-page {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 2em 1.2em 4em;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.ix-page-hero {
+    background: linear-gradient(135deg, var(--paper), var(--surface-2) 80%);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 2em 2.4em 1.8em;
+    margin-bottom: 1.4em;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+.ix-page-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 5px;
+    background: linear-gradient(180deg, var(--leaf), var(--moss));
+}
+
+.ix-page-breadcrumb {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 1em;
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+}
+.ix-page-breadcrumb a {
+    color: var(--terracotta-deep);
+    text-decoration: none;
+    font-weight: 600;
+}
+.ix-page-breadcrumb a:hover { text-decoration: underline; }
+
+.ix-page-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75em;
+    flex-wrap: wrap;
+    margin-bottom: 0.65em;
+}
+
+.ix-page-title {
+    font-family: var(--font-display);
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--moss-deep);
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+    min-width: 200px;
+}
+
+.ix-page-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-size: 0.83rem;
+    color: var(--ink-faint);
+    flex-wrap: wrap;
+}
+.ix-page-meta strong { color: var(--ink-soft); font-weight: 600; }
+
+.ix-cancelled-banner {
+    margin-top: 0.8em;
+    padding: 0.5em 0.85em;
+    background: rgba(191, 90, 60, 0.1);
+    border: 1px solid rgba(191, 90, 60, 0.3);
+    border-radius: var(--r-md);
+    font-size: 0.82rem;
+    color: var(--terracotta-deep);
+    font-weight: 600;
+}
+
+/* ── Timeline ─────────────────────────────────────────────────────────────── */
+.ix-page-timeline {
+    margin-bottom: 1.6em;
+}
+
+/* ── Body grid ────────────────────────────────────────────────────────────── */
+.ix-page-body {
+    display: grid;
+    grid-template-columns: 1fr 288px;
+    gap: 1.4em;
+    align-items: start;
+}
+
+@media (max-width: 680px) {
+    .ix-page-body { grid-template-columns: 1fr; }
+    .ix-page-sidebar { order: -1; }
+    .ix-page-title { font-size: 1.45rem; }
+    .ix-page-hero { padding: 1.4em 1.4em 1.2em; }
+}
+
+.ix-page-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2em;
+}
+
+/* ── Content cards ────────────────────────────────────────────────────────── */
+.ix-page-section {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 1.4em 1.6em;
+    box-shadow: var(--shadow-sm);
+}
+
+.ix-page-section-heading {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 1em;
+}
+
+.ix-about-text {
+    margin: 0 0 0.75em;
+    color: var(--ink-soft);
+    line-height: 1.62;
+    font-size: 0.95rem;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.ix-page-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    position: sticky;
+    top: 1.4em;
+}
+
+.ix-sidebar-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 1.1em 1.3em;
+    box-shadow: var(--shadow-sm);
+}
+
+.ix-sidebar-heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.8em;
+}
+
+/* ── Action buttons ───────────────────────────────────────────────────────── */
+.ix-action-btn {
+    display: block;
+    width: 100%;
+    padding: 0.68em 1em;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.87rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.18s var(--ease), transform 0.15s var(--ease), color 0.15s;
+    margin-bottom: 0.5em;
+}
+.ix-action-btn:last-child { margin-bottom: 0; }
+
+.ix-action-advance {
+    background: var(--moss);
+    color: #f7f4e8;
+}
+.ix-action-advance:hover { background: var(--moss-deep); transform: translateY(-1px); }
+
+.ix-action-secondary {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+}
+.ix-action-secondary:hover { border-color: var(--terracotta); color: var(--terracotta-deep); }
+
+/* ── Participant list ─────────────────────────────────────────────────────── */
+.ix-participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65em;
+}
+
+.ix-participant {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    font-size: 0.88rem;
+}
+.ix-participant a {
+    color: var(--terracotta-deep);
+    font-weight: 600;
+    text-decoration: none;
+}
+.ix-participant a:hover { text-decoration: underline; }
+.ix-participant-you { color: var(--moss-deep); font-weight: 700; }
+.ix-participant-role {
+    font-size: 0.68rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    margin-left: auto;
+    padding: 0.18em 0.5em;
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+}
+
+/* ── Detail rows in sidebar ───────────────────────────────────────────────── */
+.ix-detail-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65em;
+}
+
+.ix-detail-row { font-size: 0.84rem; }
+.ix-detail-label {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 0.12em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+.ix-detail-value { color: var(--ink-soft); font-weight: 500; }
+.ix-detail-value a { color: var(--terracotta-deep); font-weight: 600; text-decoration: none; }
+.ix-detail-value a:hover { text-decoration: underline; }
+.ix-detail-mono {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.68rem;
+    word-break: break-all;
+    color: var(--ink-faint);
+}
+.ix-status-value {
+    font-weight: 700;
+    color: var(--moss-deep);
+}
+
+/* ── Comment input ────────────────────────────────────────────────────────── */
+.ix-comment-area {
+    margin-top: 0.9em;
+    padding-top: 0.9em;
+    border-top: 1px solid var(--border-soft);
+}
+
+.ix-comment-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+.ix-comment-input {
+    width: 100%;
+    min-height: 76px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    padding: 0.65em 0.85em;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    background: var(--surface-2);
+    color: var(--ink);
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    display: block;
+    margin-bottom: 0.55em;
+}
+.ix-comment-input:focus { outline: none; border-color: var(--leaf); }
+.ix-comment-input::placeholder { color: var(--ink-faint); }
+
+.ix-comment-submit {
+    padding: 0.48em 1.15em;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.83rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+}
+.ix-comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ix-submit-receipt { background: var(--leaf); color: #f7f4e8; }
+.ix-submit-receipt:not(:disabled):hover { background: var(--moss); transform: translateY(-1px); }
+
+.ix-submit-acknowledgement { background: var(--honey); color: var(--moss-deep); }
+.ix-submit-acknowledgement:not(:disabled):hover { background: var(--honey-deep); transform: translateY(-1px); }
+
+/* ── Loading / error states ───────────────────────────────────────────────── */
+.ix-loading, .ix-error-state {
+    text-align: center;
+    padding: 5em 2em;
+    font-size: 1rem;
+    font-style: italic;
+}
+.ix-loading { color: var(--ink-faint); }
+.ix-error-state { color: var(--terracotta-deep); }
