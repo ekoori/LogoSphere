@@ -11,9 +11,11 @@ import '../styles/Openings.css';
 
 import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
+import ValueCardChip from '../components/ValueCardChip';
 import api from '../api';
 import { mapExchange, mapService } from '../utils/mappers';
 import { useLogin } from '../App';
+import '../styles/ValueCardChip.css';
 
 function UserPage() {
     const { userId: viewerId } = useLogin();
@@ -23,6 +25,7 @@ function UserPage() {
     const [user, setUser] = useState(null);
     const [trail, setTrail] = useState([]);
     const [services, setServices] = useState([]);
+    const [valueCards, setValueCards] = useState([]);
     const [activeTab, setActiveTab] = useState('meaning_trail');
     const [loading, setLoading] = useState(true);
 
@@ -42,16 +45,18 @@ function UserPage() {
         }
         try {
             const res = await api.get('/api/openings');
-            // Show only services posted by this user.
             const userServices = (res.data || [])
                 .filter((s) => s.provider_id === id)
                 .map(mapService);
             setServices(userServices);
         } catch (e) {
             // ignore
-        } finally {
-            setLoading(false);
         }
+        try {
+            const vcRes = await api.get(`/api/value_cards/${id}`);
+            setValueCards(vcRes.data || []);
+        } catch (_) {}
+        setLoading(false);
     }, [id]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -87,6 +92,17 @@ function UserPage() {
                             <span className="user-stat-label">offerings</span>
                         </div>
                     </div>
+
+                    {valueCards.length > 0 && (
+                        <div className="user-value-chips">
+                            <span className="user-value-chips-label">Values</span>
+                            <div className="vc-chips-row">
+                                {valueCards.map((card, i) => (
+                                    <ValueCardChip key={card.card_id || i} card={card} subjectLabel="Cares about" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </aside>
 

@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import '../styles/EntityPage.css';
+import '../styles/ValueCardChip.css';
 import api from '../api';
+import ValueCardChip from '../components/ValueCardChip';
 
 const FRANKL_META = {
     creative:     { glyph: '✶', label: 'Creative' },
@@ -146,7 +148,13 @@ function SpherePage() {
                     </div>
                     <h1 className="ep-title">{sphere.name}</h1>
                     <p className="ep-description">{sphere.description}</p>
-                    {values.length > 0 && (
+                    {valueCards.length > 0 ? (
+                        <div className="ep-tags vc-chips-row">
+                            {valueCards.map((card, i) => (
+                                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" />
+                            ))}
+                        </div>
+                    ) : values.length > 0 && (
                         <div className="ep-tags">
                             {values.map((v, i) => (
                                 <span key={i} className="ep-tag">#{v}</span>
