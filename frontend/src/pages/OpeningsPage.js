@@ -12,7 +12,9 @@ function OpeningsPage() {
     const [searchParams] = useSearchParams();
     const [isFormVisible, setIsFormVisible] = useState(searchParams.get('new') === '1');
     const [services, setServices] = useState([]);
+    const [spheres, setSpheres] = useState([]);
     const [filter, setFilter] = useState('all');
+    const [sphereFilter, setSphereFilter] = useState('all');
 
     const toggleFormVisibility = () => setIsFormVisible((v) => !v);
 
@@ -27,17 +29,18 @@ function OpeningsPage() {
 
     useEffect(() => {
         fetchServices();
+        api.get('/api/spheres').then((r) => setSpheres(r.data || [])).catch(() => {});
     }, [fetchServices]);
 
-    const shown = services.filter((s) =>
-        filter === 'all' ? true : filter === 'offers' ? s.type === 'offer' : s.type === 'need'
-    );
+    const shown = services
+        .filter((s) => filter === 'all' ? true : filter === 'offers' ? s.type === 'offer' : s.type === 'need')
+        .filter((s) => sphereFilter === 'all' ? true : s.spheres.some((sp) => sp.id === sphereFilter));
 
     return (
         <div className="container">
             <aside>
                 <button className="btn-orange" onClick={toggleFormVisibility}>
-                    {isFormVisible ? 'Hide New Service Form' : 'New Service'}
+                    {isFormVisible ? 'Hide New Opening Form' : 'New Opening'}
                 </button>
                 <div className="search-box">
                     <input type="text" placeholder="Search..." />
@@ -46,6 +49,19 @@ function OpeningsPage() {
                     <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Show All</button>
                     <button className={filter === 'offers' ? 'active' : ''} onClick={() => setFilter('offers')}>Offers</button>
                     <button className={filter === 'needs' ? 'active' : ''} onClick={() => setFilter('needs')}>Needs</button>
+                </div>
+                <div className="opening-sphere-filter">
+                    <label htmlFor="opening-sphere-select">Sphere</label>
+                    <select
+                        id="opening-sphere-select"
+                        value={sphereFilter}
+                        onChange={(e) => setSphereFilter(e.target.value)}
+                    >
+                        <option value="all">All spheres</option>
+                        {spheres.map((s) => (
+                            <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
+                        ))}
+                    </select>
                 </div>
             </aside>
             <main>

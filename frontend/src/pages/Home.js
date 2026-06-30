@@ -40,7 +40,7 @@ function Home() {
             <aside>
                 <h3>Openings</h3>
                 <button className="btn-orange" onClick={() => setIsFormVisible((v) => !v)}>
-                    {isFormVisible ? 'Hide New Service Form' : 'New Service'}
+                    {isFormVisible ? 'Hide New Opening Form' : 'New Opening'}
                 </button>
                 <h3>Meaning Trail</h3>
                 <div className="filters">
