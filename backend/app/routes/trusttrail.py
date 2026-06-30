@@ -49,3 +49,82 @@ def add_transaction(user_id=None):
     except Exception as e:
         logger.error(f"Error in add_transaction: {e}")
         return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def get_transaction(transaction_id, user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        tx_dict, is_initiator = TrustTrail.get_by_id(transaction_id, user_id)
+        if tx_dict is None:
+            return jsonify({'message': 'Transaction not found or not authorized'}), 404
+        return jsonify({'transaction': tx_dict, 'is_initiator': is_initiator}), 200
+    except Exception as e:
+        logger.error(f"Error in get_transaction: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+_VALID_STATUSES = {'Initiated', 'In Progress', 'Finished', 'Trustifacted',
+                   'Additional Comments Added', 'Cancelled'}
+
+
+@validate_session
+def update_tx_status(transaction_id, user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        data = request.get_json() or {}
+        new_status = data.get('status', '')
+        if new_status not in _VALID_STATUSES:
+            return jsonify({'message': 'Invalid status'}), 400
+
+        tx_dict, _ = TrustTrail.get_by_id(transaction_id, user_id)
+        if tx_dict is None:
+            return jsonify({'message': 'Transaction not found or not authorized'}), 404
+
+        TrustTrail.set_status_for(tx_dict['user_id'], transaction_id, new_status)
+        return jsonify({'message': 'Status updated'}), 200
+    except Exception as e:
+        logger.error(f"Error in update_tx_status: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def add_tx_comment(transaction_id, user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        data = request.get_json() or {}
+        comment_type = data.get('type', '')
+        text = (data.get('text') or '').strip()
+        if not text or comment_type not in ('gratitude', 'user', 'other'):
+            return jsonify({'message': 'Invalid comment data'}), 400
+
+        tx_dict, is_initiator = TrustTrail.get_by_id(transaction_id, user_id)
+        if tx_dict is None:
+            return jsonify({'message': 'Transaction not found or not authorized'}), 404
+
+        # Enforce who can add what
+        if comment_type == 'gratitude' and is_initiator:
+            return jsonify({'message': 'Only the other participant can add a trustifact'}), 403
+        if comment_type == 'user' and not is_initiator:
+            return jsonify({'message': 'Only the initiator can add a personal note'}), 403
+
+        author_name = None
+        if comment_type == 'other':
+            from app.models.user import User
+            u = User.get(str(user_id))
+            if u:
+                author_name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
+
+        ok = TrustTrail.add_comment_for(
+            tx_dict['user_id'], transaction_id, comment_type, text,
+            author_id=str(user_id), author_name=author_name,
+        )
+        if ok:
+            return jsonify({'message': 'Comment added'}), 200
+        return jsonify({'message': 'Failed to add comment'}), 500
+    except Exception as e:
+        logger.error(f"Error in add_tx_comment: {e}")
+        return jsonify({'message': 'Internal server error'}), 500

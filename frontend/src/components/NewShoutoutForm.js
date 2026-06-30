@@ -7,32 +7,33 @@ const NewShoutoutForm = ({ onSave, onCancel }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (text.trim() === '') {
+        if (!text.trim()) {
             setError(true);
-        } else {
-            onSave({ text });
+            return;
         }
-    };
-
-    const handleTextChange = (e) => {
-        setText(e.target.innerText);
-        if (error && e.target.innerText.trim() !== '') {
-            setError(false);
-        }
+        onSave({ text: text.trim() });
     };
 
     return (
-        <div id="shoutout-entry" style={{ backgroundColor: '#d9d9f2', padding: '1em', borderRadius: '8px', marginBottom: '1em', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
-            <p
-                id="shoutout-text"
-                contentEditable
-                placeholder="Write your shoutout here..."
-                style={{ width: '100%', marginBottom: '0.5em', border: error ? '1px solid red' : '1px solid #ccc', padding: '0.5em', borderRadius: '4px' }}
-                onInput={handleTextChange}
-            >{text}</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <button className="btn-purple" id="save-shoutout-btn" onClick={handleSubmit} style={{ width: '49%' }}>Save</button>
-                <button className="btn-purple" id="cancel-shoutout-btn" onClick={onCancel} style={{ width: '49%' }}>Cancel</button>
+        <div id="shoutout-entry">
+            <textarea
+                placeholder="Write your shoutout here…"
+                value={text}
+                onChange={(e) => { setText(e.target.value); setError(false); }}
+                rows={3}
+                style={{
+                    width: '100%', boxSizing: 'border-box',
+                    border: error ? '1px solid var(--danger)' : '1px solid var(--border)',
+                    borderRadius: 'var(--r-sm)', padding: '0.55em 0.7em',
+                    fontFamily: 'var(--font-body)', fontSize: '0.92rem',
+                    resize: 'vertical', marginBottom: '0.5em',
+                    background: 'var(--surface)',
+                }}
+            />
+            {error && <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.4em' }}>Please write something first.</p>}
+            <div style={{ display: 'flex', gap: '0.5em' }}>
+                <button id="save-shoutout-btn" onClick={handleSubmit}>Save</button>
+                <button id="cancel-shoutout-btn" onClick={onCancel}>Cancel</button>
             </div>
         </div>
     );

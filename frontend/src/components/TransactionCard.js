@@ -1,38 +1,17 @@
-// File: ./frontend/src/components/TransactionCard.js
-// Description: A React component that displays a transaction card with various details, allowing for modifications and interactions.
-// Props:
-//    type - The type of transaction.
-//    title - The title of the transaction.
-//    spheres - The spheres associated with the transaction.
-//    participants - The participants involved in the transaction.
-//    description - The description of the transaction.
-//    project - The project associated with the transaction.
-//    imageUrl - The image URL for the transaction.
-//    time - The time the transaction occurred.
-//    status - The current status of the transaction.
-//    likesCount - The number of likes for the transaction.
-//    likedByCurrentUser - Whether the current user has liked the transaction.
-//    originService - The service from which the transaction originated.
-//    initiatedTime - The time the transaction was initiated.
-//    inProgressTime - The time the transaction was marked as in progress.
-//    finishedTime - The time the transaction was marked as finished.
-//    trustifactedTime - The time the transaction was marked as trustifacted.
-//    additionalCommentsTime - The time additional comments were added.
-//    trustifacts - An array of trustifacts associated with the transaction.
-//    shoutouts - An array of shoutouts associated with the transaction.
-//    onAddTrustifact - Function to call when a new trustifact is added.
-//    onAddShoutout - Function to call when a new shoutout is added.
-//    onModifyTransaction - Function to call when the transaction is modified.
-//    canModify - Whether the transaction can be modified.
+// TransactionCard — a trust transaction in the TrustTrail feed.
+// Collapsed by default (single compact row); click anywhere to expand.
+// When expanded, the title is a link to the transaction detail page.
+// Trustifacts (verified gratitude records) and Shoutouts (kudos) have
+// distinct visual identities and live in clearly labelled sections.
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import LikeTimestamp from './LikeTimestamp';
 import NewShoutoutForm from './NewShoutoutForm';
 import StatusProgression from './StatusProgression';
 import '../styles/TrustTrail.css';
 
-// Lifecycle phases for a trust transaction (shared chevron control).
 const TX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Trustifacted', 'Additional Comments Added'];
 const txIndex = (status) => {
     const i = TX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
@@ -48,255 +27,281 @@ const pHref = (p) => {
     return id ? `/user?id=${id}` : '/user';
 };
 
+// spheres may be strings or {id, name} pairs — prefer UUID link when available.
+const sName = (s) => (typeof s === 'string' ? s : s.name);
+const sHref = (s) => {
+    const id = typeof s === 'string' ? null : s.id;
+    return id ? `/sphere?id=${id}` : `/sphere?name=${encodeURIComponent(sName(s))}`;
+};
+
+const TYPE_LABELS = { completed: 'Completed', offer: 'Offer', request: 'Request' };
+const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', request: 'pill-honey' };
+
 function TransactionCard({
-    type,
-    title,
-    spheres,
-    participants,
-    description,
-    project,
-    imageUrl,
-    time,
-    status,
-    likesCount,
-    likedByCurrentUser,
-    originService,
-    initiatedTime,
-    inProgressTime,
-    finishedTime,
-    trustifactedTime,
-    additionalCommentsTime,
-    trustifacts,
-    shoutouts,
-    onAddTrustifact,
-    onAddShoutout,
-    onModifyTransaction,
-    canModify
+    id,
+    type, title, spheres, participants, description,
+    project, projectId, imageUrl, time, status,
+    likesCount, likedByCurrentUser,
+    initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime,
+    trustifacts, shoutouts,
+    onAddTrustifact, onAddShoutout, onModifyTransaction, canModify,
 }) {
-    const [editableTitle, setEditableTitle] = useState(title);
-    const [editableDescription, setEditableDescription] = useState(description);
-    const [editableProject, setEditableProject] = useState(project);
-    const [editableImageUrl, setEditableImageUrl] = useState(imageUrl || 'placeholder.jpg');
+    const navigate = useNavigate();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [liked, setLiked] = useState(likedByCurrentUser);
+    const [likes, setLikes] = useState(likesCount);
     const [showShoutoutForm, setShowShoutoutForm] = useState(false);
+    const [img, setImg] = useState(imageUrl);
+    // Local copies so newly submitted entries appear immediately without a refetch.
+    const [localTrustifacts, setLocalTrustifacts] = useState(trustifacts || []);
+    const [localShoutouts, setLocalShoutouts] = useState(shoutouts || []);
 
-    const handleTitleChange = (e) => setEditableTitle(e.target.innerText);
-    const handleDescriptionChange = (e) => setEditableDescription(e.target.innerText);
+    const handleLike = (e) => {
+        e.stopPropagation();
+        setLiked((v) => !v);
+        setLikes((n) => liked ? n - 1 : n + 1);
+    };
 
-    const handleKeyPress = (e, field) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            onModifyTransaction(field, e.target.innerText);
+    const handleTitleClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (id) navigate(`/transaction?id=${id}`);
+    };
+
+    const handleAddTrustifact = () => {
+        const text = window.prompt('Enter your trustifact:');
+        if (text && text.trim()) {
+            const entry = { author: 'You', text: text.trim(), time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
+            setLocalTrustifacts((prev) => [...prev, entry]);
+            onAddTrustifact();
         }
     };
 
     const handleAddShoutout = (shoutout) => {
+        const entry = { author: 'You', text: shoutout.text, time: 'just now', likesCount: 0, likedByCurrentUser: false };
+        setLocalShoutouts((prev) => [...prev, entry]);
         onAddShoutout(shoutout);
         setShowShoutoutForm(false);
     };
 
+    const cancelled = status === 'Cancelled';
+    const stepIdx = txIndex(status);
+    const steps = TX_STEPS.map((label, i) => ({
+        label,
+        time: [initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime][i] || '',
+    }));
+
+    const hasTrustifacts = localTrustifacts.length > 0;
+    const hasShoutouts = localShoutouts.length > 0;
+    const pillClass = TYPE_PILL[type] || 'pill-clay';
+    const typeLabel = TYPE_LABELS[type] || type;
+
     return (
-        <div className={`transaction ${type}`} >
-            <div className="transaction-header">
-                <div className="left">
-                    <small>
-                        {spheres.map((sphere, index) => (
-                            <a href={`/sphere?name=${encodeURIComponent(sphere)}`} onClick={(e) => e.stopPropagation()} key={index}>
-                                {sphere}{index < spheres.length - 1 ? ', ' : ''}
-                            </a>
-                        ))}
-                    </small>
-                    <h3
-                        contentEditable={canModify}
-                        suppressContentEditableWarning={true}
-                        onBlur={handleTitleChange}
-                        onKeyPress={(e) => handleKeyPress(e, 'title')}
-                        className={canModify ? 'editable' : ''}
-                    >
-                        {editableTitle}
-                    </h3>
-                    <div className="participants">
-                        {participants.map((participant, index) => (
-                            <span key={index}>👤 <a href={pHref(participant)} onClick={(e) => e.stopPropagation()}>{pName(participant)}</a>{index < participants.length - 1 ? ', ' : ''}</span>
-                        ))}
-                    </div>
-                    {originService && (
-                        <div className="origin-service">
-                            <small><button onClick={(e) => e.stopPropagation()} className="link-button">{originService}</button></small>
-                        </div>
-                    )}
-                </div>
-                <div className="right">
-                    <LikeTimestamp
-                        likedByCurrentUser={likedByCurrentUser}
-                        likesCount={likesCount}
-                        time={time}
-                        onLike={(e) => {
-                            e.stopPropagation();
-                            // Handle like functionality here
-                        }}
-                    />
-                </div>
-            </div>
-            <div className="description-container">
-                {editableImageUrl ? (
-                    <img
-                        src={editableImageUrl}
-                        alt={editableTitle}
-                        className="transaction-image"
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseEnter={() => canModify && setEditableImageUrl('')}
-                    />
-                ) : (
-                    <div
-                        className="image-placeholder"
-                        onClick={(e) => canModify && document.getElementById('image-upload').click()}
-                    >
-                        Image Placeholder
-                        <input
-                            type="file"
-                            id="image-upload"
-                            style={{ display: 'none' }}
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                    setEditableImageUrl(URL.createObjectURL(file));
-                                }
-                            }}
-                        />
-                    </div>
-                )}
-                <p
-                    contentEditable={canModify}
-                    suppressContentEditableWarning={true}
-                    onBlur={handleDescriptionChange}
-                    onKeyPress={(e) => handleKeyPress(e, 'description')}
-                    className={`description ${canModify ? 'editable' : ''}`}
-                >
-                    {editableDescription}
-                </p>
-                <div className="project-link" onMouseEnter={() => canModify && setEditableProject('')}>
-                    {editableProject ? (
-                        <button onClick={(e) => e.stopPropagation()} className="link-button">{editableProject}</button>
-                    ) : (
-                        <select onChange={(e) => setEditableProject(e.target.value)}>
-                            <option value="Project 1">Project 1</option>
-                            <option value="Project 2">Project 2</option>
-                        </select>
-                    )}
-                </div>
-            </div>
-            <div className="status">
-                <StatusProgression
-                    currentIndex={txIndex(status)}
-                    steps={TX_STEPS.map((label, i) => ({
-                        label,
-                        time: [initiatedTime, inProgressTime, finishedTime, trustifactedTime, additionalCommentsTime][i] || '',
-                    }))}
-                />
-            </div>
-            <hr />
-            {trustifacts && trustifacts.length > 0 ? (
-                <div className="trustifacts">
-                    {trustifacts.map((trustifact, index) => (
-                        <div key={index} className="trustifact">
-                            <div className="left">
-                                {trustifact.imageUrl && <img src={trustifact.imageUrl} alt={trustifact.text} className="trustifact-image" onClick={(e) => e.stopPropagation()} />}
-                                <p><strong>{trustifact.author}:</strong> {trustifact.text}</p>
-                            </div>
-                            <div className="right">
-                                <LikeTimestamp
-                                    likedByCurrentUser={trustifact.likedByCurrentUser}
-                                    likesCount={trustifact.likesCount}
-                                    time={trustifact.time}
-                                    onLike={(e) => {
-                                        e.stopPropagation();
-                                        // Handle like functionality here
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div id="trustifact-entry">
-                    <button id="save-trustifact-btn" onClick={onAddTrustifact}>Add Trustifact</button>
-                </div>
-            )}
-            <hr />
-            <div className="shoutouts">
-                {!showShoutoutForm ? (
-                    <div id="shoutout-entry">
-                        <button
-                            id="save-shoutout-btn"
-                            className={!showShoutoutForm ? '' : 'btn-purple'}
-                            onClick={() => setShowShoutoutForm(true)}
+        <div
+            className={`transaction ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
+            onClick={() => !isExpanded && setIsExpanded(true)}
+        >
+            {/* ── Summary row — always visible ────────────────────────────── */}
+            <div className="tx-summary" onClick={() => setIsExpanded(!isExpanded)}>
+                <span className={`pill ${pillClass} type-pill`}>{typeLabel}</span>
+
+                <div className="tx-title-col">
+                    {isExpanded ? (
+                        <a
+                            className="tx-title tx-title-link"
+                            href={id ? `/transaction?id=${id}` : '#'}
+                            onClick={handleTitleClick}
+                            title="View full transaction"
                         >
-                            Add Shoutout
+                            {title}
+                        </a>
+                    ) : (
+                        <span className="tx-title">{title}</span>
+                    )}
+                    {!isExpanded && participants.length > 0 && (
+                        <span className="tx-participants-inline">
+                            {participants.map((p, i) => (
+                                <React.Fragment key={i}>
+                                    <a href={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</a>
+                                    {i < participants.length - 1 ? ' · ' : ''}
+                                </React.Fragment>
+                            ))}
+                        </span>
+                    )}
+                </div>
+
+                <div className="tx-summary-meta" onClick={(e) => e.stopPropagation()}>
+                    {time && <span className="tx-date">{time}</span>}
+                    <LikeTimestamp
+                        likedByCurrentUser={liked}
+                        likesCount={likes}
+                        time=""
+                        onLike={handleLike}
+                    />
+                </div>
+
+                <button
+                    className="tx-expand-btn"
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                >
+                    {isExpanded ? '▲' : '▼'}
+                </button>
+            </div>
+
+            {/* ── Expanded body ─────────────────────────────────────────── */}
+            {isExpanded && (
+                <div className="tx-body" onClick={(e) => e.stopPropagation()}>
+                    {/* Context: participants, spheres, project */}
+                    <div className="tx-context">
+                        <div className="participants">
+                            {participants.map((p, i) => (
+                                <span key={i}>
+                                    <a href={pHref(p)}>{pName(p)}</a>
+                                    {i < participants.length - 1 ? ' · ' : ''}
+                                </span>
+                            ))}
+                        </div>
+                        {spheres.length > 0 && (
+                            <div className="tx-spheres">
+                                {spheres.map((s, i) => (
+                                    <a key={i} href={sHref(s)} className="pill pill-leaf tx-sphere-pill">
+                                        {sName(s)}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                        {project && (
+                            <div className="tx-project-ref">
+                                <span className="muted">Part of</span>{' '}
+                                <a href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}>
+                                    {project}
+                                </a>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Description + image */}
+                    {(img || description) && (
+                        <div className="description-container">
+                            {img && (
+                                <img
+                                    src={img}
+                                    alt={title}
+                                    className="transaction-image"
+                                    onError={() => setImg(null)}
+                                />
+                            )}
+                            <p className="description">{description}</p>
+                        </div>
+                    )}
+
+                    {/* Status progression */}
+                    <div className="status">
+                        <StatusProgression steps={steps} currentIndex={stepIdx} cancelled={cancelled} />
+                    </div>
+
+                    {/* ── Trustifacts ───────────────────────────────────── */}
+                    <div className="tx-section">
+                        <div className="tx-section-label tx-section-trustifact">
+                            <span>✓ Trustifacts</span>
+                            <span className="tx-section-hint">verified attestations of trust</span>
+                        </div>
+                        {hasTrustifacts ? (
+                            <div className="trustifacts">
+                                {localTrustifacts.map((tf, i) => (
+                                    <div key={i} className="trustifact">
+                                        <div className="tf-content">
+                                            <p><strong>{tf.author}:</strong> {tf.text}</p>
+                                        </div>
+                                        <LikeTimestamp
+                                            likedByCurrentUser={tf.likedByCurrentUser}
+                                            likesCount={tf.likesCount}
+                                            time={tf.time}
+                                            onLike={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="tx-empty-section">No trustifacts yet.</p>
+                        )}
+                        <button
+                            className="tx-add-btn tx-add-trustifact"
+                            onClick={(e) => { e.stopPropagation(); handleAddTrustifact(); }}
+                        >
+                            + Add Trustifact
                         </button>
                     </div>
-                ) : (
-                    <NewShoutoutForm onSave={handleAddShoutout} onCancel={() => setShowShoutoutForm(false)} />
-                )}
-                {shoutouts && shoutouts.length > 0 && shoutouts.map((shoutout, index) => (
-                    <div key={index} className="shoutout">
-                        <div className="left">
-                            <p><strong>{shoutout.author}:</strong> {shoutout.text}</p>
+
+                    {/* ── Shoutouts ─────────────────────────────────────── */}
+                    <div className="tx-section">
+                        <div className="tx-section-label tx-section-shoutout">
+                            <span>📢 Shoutouts</span>
+                            <span className="tx-section-hint">public acknowledgements</span>
                         </div>
-                        <div className="right">
-                            <LikeTimestamp
-                                likedByCurrentUser={shoutout.likedByCurrentUser}
-                                likesCount={shoutout.likesCount}
-                                time={shoutout.time}
-                                onLike={(e) => {
-                                    e.stopPropagation();
-                                    // Handle like functionality here
-                                }}
+                        {hasShoutouts && (
+                            <div className="shoutouts">
+                                {localShoutouts.map((s, i) => (
+                                    <div key={i} className="shoutout">
+                                        <div className="tf-content">
+                                            <p><strong>{s.author}:</strong> {s.text}</p>
+                                        </div>
+                                        <LikeTimestamp
+                                            likedByCurrentUser={s.likedByCurrentUser}
+                                            likesCount={s.likesCount}
+                                            time={s.time}
+                                            onLike={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {!showShoutoutForm ? (
+                            <button
+                                className="tx-add-btn tx-add-shoutout"
+                                onClick={(e) => { e.stopPropagation(); setShowShoutoutForm(true); }}
+                            >
+                                + Add Shoutout
+                            </button>
+                        ) : (
+                            <NewShoutoutForm
+                                onSave={handleAddShoutout}
+                                onCancel={() => setShowShoutoutForm(false)}
                             />
-                        </div>
+                        )}
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
         </div>
     );
 }
 
 TransactionCard.propTypes = {
+    id: PropTypes.string,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
-    spheres: PropTypes.arrayOf(PropTypes.string).isRequired,
+    spheres: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
     participants: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
     description: PropTypes.string.isRequired,
     project: PropTypes.string,
+    projectId: PropTypes.string,
     imageUrl: PropTypes.string,
     time: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,
     likedByCurrentUser: PropTypes.bool.isRequired,
-    originService: PropTypes.string,
     initiatedTime: PropTypes.string,
     inProgressTime: PropTypes.string,
     finishedTime: PropTypes.string,
     trustifactedTime: PropTypes.string,
     additionalCommentsTime: PropTypes.string,
-    trustifacts: PropTypes.arrayOf(PropTypes.shape({
-        author: PropTypes.string.isRequired,
-        text: PropTypes.string.isRequired,
-        time: PropTypes.string.isRequired,
-        likesCount: PropTypes.number.isRequired,
-        likedByCurrentUser: PropTypes.bool.isRequired,
-        imageUrl: PropTypes.string
-    })),
-    shoutouts: PropTypes.arrayOf(PropTypes.shape({
-        author: PropTypes.string.isRequired,
-        text: PropTypes.string.isRequired,
-        time: PropTypes.string.isRequired,
-        likesCount: PropTypes.number.isRequired,
-        likedByCurrentUser: PropTypes.bool.isRequired
-    })),
+    trustifacts: PropTypes.array,
+    shoutouts: PropTypes.array,
     onAddTrustifact: PropTypes.func.isRequired,
     onAddShoutout: PropTypes.func.isRequired,
     onModifyTransaction: PropTypes.func.isRequired,
-    canModify: PropTypes.bool.isRequired
+    canModify: PropTypes.bool.isRequired,
 };
 
 export default TransactionCard;

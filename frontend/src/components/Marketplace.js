@@ -20,7 +20,7 @@ import ServiceCard from './ServiceCard';
 
 
 
-function Marketplace({ services, newServiceVisible }) {
+function Marketplace({ services, newServiceVisible, onServiceAdded }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function Marketplace({ services, newServiceVisible }) {
 
   return (
       <div>
-          <NewServiceForm isVisible={isFormVisible} />
+          <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} />
           <section className="marketplace">
               {services.map(service => (
                   <ServiceCard

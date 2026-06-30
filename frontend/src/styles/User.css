@@ -1,4 +1,73 @@
-/* User.css */
+/* User.css — public user profile page (UserPage.js) */
+
+/* ── Profile aside ─────────────────────────────────────────────────────── */
+.user-profile-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5em;
+    padding: 1.2em 0.5em;
+}
+
+.user-avatar-lg {
+    width: 88px;
+    height: 88px;
+    border-radius: var(--r-pill);
+    object-fit: cover;
+    border: 3px solid var(--surface);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 0.4em;
+}
+
+.user-aside-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--moss-deep);
+    margin: 0;
+    font-family: var(--font-display);
+}
+
+.user-aside-meta {
+    font-size: 0.83rem;
+    color: var(--ink-faint);
+    margin: 0;
+}
+
+.user-aside-stats {
+    display: flex;
+    gap: 1.5em;
+    margin-top: 0.75em;
+    padding-top: 0.75em;
+    border-top: 1px solid var(--border-soft);
+    width: 100%;
+    justify-content: center;
+}
+
+.user-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1em;
+}
+
+.user-stat-count {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--moss-deep);
+    line-height: 1;
+}
+
+.user-stat-label {
+    font-size: 0.73rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+/* ── Legacy / leftover below ───────────────────────────────────────────── */
 
 .user-profile {
     background-color: var(--surface);

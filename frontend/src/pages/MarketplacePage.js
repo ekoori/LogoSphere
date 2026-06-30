@@ -1,5 +1,6 @@
 // MarketplacePage — the full marketplace of offers & requests, fetched live.
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/Marketplace.css';
 
@@ -8,7 +9,8 @@ import api from '../api';
 import { mapService } from '../utils/mappers';
 
 function MarketplacePage() {
-    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [searchParams] = useSearchParams();
+    const [isFormVisible, setIsFormVisible] = useState(searchParams.get('new') === '1');
     const [services, setServices] = useState([]);
     const [filter, setFilter] = useState('all');
 
@@ -50,7 +52,7 @@ function MarketplacePage() {
                 {shown.length === 0 ? (
                     <p className="empty-state">No offers or requests yet. Share something with your community.</p>
                 ) : (
-                    <Marketplace services={shown} newServiceVisible={isFormVisible} />
+                    <Marketplace services={shown} newServiceVisible={isFormVisible} onServiceAdded={fetchServices} />
                 )}
             </main>
         </div>

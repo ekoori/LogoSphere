@@ -93,7 +93,7 @@ def get_spheres(user_id=None):
                 image=row.image,
                 admin1=row.admin1,
                 participants=row.participants,
-                unions=row.unions,
+                alliances=row.alliances,
                 projects=row.projects,
                 values=row.values
             )

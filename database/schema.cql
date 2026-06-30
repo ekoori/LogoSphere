@@ -197,7 +197,7 @@ CREATE TABLE trustsphere.spheres (
     value_graph text,
     participants list<uuid>,
     projects list<text>,
-    unions list<text>,
+    alliances list<text>,
     values list<text>
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -269,9 +269,9 @@ CREATE INDEX user_credentials_email_idx ON trustsphere.user_credentials (email);
 
 CREATE INDEX sessions_user_id_idx ON trustsphere.sessions (user_id);
 
--- Unions: groups of users, usually nested within a Sphere.
-CREATE TABLE trustsphere.unions (
-    union_id uuid PRIMARY KEY,
+-- Alliances: federations/partnerships of users, usually nested within a Sphere.
+CREATE TABLE trustsphere.alliances (
+    alliance_id uuid PRIMARY KEY,
     name text,
     description text,
     admin1 uuid,
@@ -304,7 +304,7 @@ CREATE TABLE trustsphere.services (
 -- Enriched columns on the projects table (see also database/schema_demo.cql).
 ALTER TABLE trustsphere.projects ADD description text;
 ALTER TABLE trustsphere.projects ADD status text;
-ALTER TABLE trustsphere.projects ADD owner_union text;
+ALTER TABLE trustsphere.projects ADD owner_alliance text;
 ALTER TABLE trustsphere.projects ADD sphere_id uuid;
 ALTER TABLE trustsphere.projects ADD sphere_name text;
 ALTER TABLE trustsphere.projects ADD created_at timestamp;

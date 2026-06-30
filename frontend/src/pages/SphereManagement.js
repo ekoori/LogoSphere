@@ -16,7 +16,7 @@ const SphereManagement = () => {
     status: 'Active',
     admin: 'Jane Doe',
     description: 'The AI Development Sphere is dedicated to advancing artificial intelligence technologies and fostering collaboration among AI researchers and developers.',
-    unions: ['Tech Union', 'AI Enthusiasts Union'],
+    alliances: ['Tech Alliance', 'AI Enthusiasts Alliance'],
     members: ['Jane Doe', 'John Smith', '50 more...'],
     projects: ['AI Ethics Initiative', 'OpenAI Collaboration'],
     values: ['innovation', 'technology', 'collaboration'],
@@ -68,11 +68,11 @@ const SphereManagement = () => {
             <h3>Description</h3>
             <p>{sphere.description}</p>
           </div>
-          <div className="sphere-unions">
-            <h3>Member Unions</h3>
-            <ul className="union-list">
-              {sphere.unions.map((union, index) => (
-                <li key={index}><a href="/union">{union}</a></li>
+          <div className="sphere-alliances">
+            <h3>Member Alliances</h3>
+            <ul className="alliance-list">
+              {sphere.alliances.map((alliance, index) => (
+                <li key={index}><a href="/alliance">{alliance}</a></li>
               ))}
             </ul>
           </div>

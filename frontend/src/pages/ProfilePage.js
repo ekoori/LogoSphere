@@ -1,266 +1,488 @@
-// File: ./frontend/src/pages/ProfilePage.js
-// Description: This is the React.js file for the user profile page. It displays user information and allows editing if the user is logged in.
-// Classes/Methods/Properties:
-//    [+] ProfilePage - The main component for the profile page.
-//        [+] isEditing - State property to track whether the profile is in edit mode.
-//        [+] profileData - State property to store the user's profile information.
-//        [+] handleEditToggle - Toggles the edit mode for the profile.
-//        [+] handleInputChange - Handles changes to the input fields in the edit mode.
-//        [+] handleImageChange - Handles changes to the profile image.
-//        [+] handleSaveChanges - Saves the changes made to the profile.
+// ProfilePage — the logged-in user's own profile.
+// Shows: hero banner, Value Cards (Meaning Graph), connections (spheres /
+// alliances / projects), and an inline edit form.
+// Value Cards are fetched from GET /api/value_cards/<user_id>.
 
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
 import { useLogin } from '../App';
 import api from '../api';
 
-const DUMMY_PROFILE = {
-  name: 'Sam Altman',
-  email: 'sam.altman@example.com',
-  location: 'San Francisco, USA',
-  joined: 'January 2023',
-  image: 'static/user-image.jpg',
-  values: ['#community', '#technology', '#sustainability'],
-  spheres: ['AI Development Sphere', 'Renewable Energy Sphere'],
-  unions: ['Tech Union', 'AI Enthusiasts Union'],
-  projects: ['OpenAI Datacenter Expansion', 'Community Garden Initiative'],
-  following: ['Elon Musk', 'Joe Rogan']
+// ── Frankl mode labels & card accent mappings ─────────────────────────────
+const FRANKL_META = {
+    creative:     { label: 'Creative',     glyph: '✶', desc: 'what you make & give' },
+    experiential: { label: 'Experiential', glyph: '❍', desc: 'what you receive & encounter' },
+    attitudinal:  { label: 'Attitudinal',  glyph: '△', desc: 'the stance you take under constraint' },
 };
 
-const ProfilePage = () => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState(DUMMY_PROFILE);
-  const [imageFile, setImageFile] = useState(null);
+const COLOR_CSS = {
+    honey:     '--honey',
+    leaf:      '--leaf',
+    terracotta:'--terracotta',
+    sage:      '--sage',
+    moss:      '--moss',
+};
 
-  const { isLoggedIn } = useLogin();
-  const navigate = useNavigate();
+// ── Inline Value Card display ─────────────────────────────────────────────
+function ValueCardDisplay({ card, onDelete, canDelete, idx }) {
+    const [expanded, setExpanded] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
+    const accentVar = COLOR_CSS[card.color_key] || '--honey';
+    const rotation = (idx % 2 === 0) ? '-0.8deg' : '0.6deg';
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!isLoggedIn) {
-        // navigate('/login', { replace: true });
-        return;
-      }
+    return (
+        <article
+            className={`vc-card ${expanded ? 'vc-card--expanded' : ''}`}
+            style={{ '--vc-accent': `var(${accentVar})`, '--vc-rot': rotation }}
+            onClick={() => { if (!confirmDelete) setExpanded(v => !v); }}
+        >
+            <span className="vc-punch" aria-hidden="true" />
 
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('Fetching user data...');
-        
-        const response = await api.get('/api/user/profile', {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+            <div className="vc-top">
+                <span className="vc-mode-badge">
+                    <span className="vc-mode-glyph" aria-hidden="true">{meta.glyph}</span>
+                    {meta.label}
+                </span>
+                {canDelete && !confirmDelete && (
+                    <button
+                        className="vc-delete"
+                        title="Remove this card"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                        aria-label="Delete value card"
+                    >×</button>
+                )}
+                {canDelete && confirmDelete && (
+                    <span className="vc-delete-confirm" onClick={e => e.stopPropagation()}>
+                        <span className="vc-delete-prompt">Remove this card?</span>
+                        <button className="vc-delete-yes" onClick={(e) => { e.stopPropagation(); onDelete(card.card_id); }}>Remove</button>
+                        <button className="vc-delete-no" onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}>Keep</button>
+                    </span>
+                )}
+            </div>
 
-        console.log('User data response:', response);
+            <h3 className="vc-title">{card.title}</h3>
 
-        if (response.data) {
-          setProfileData(prevData => ({
-            ...prevData,
-            name: response.data.name || prevData.name,
-            email: response.data.email || prevData.email,
-            location: response.data.location || prevData.location,
-            image: response.data.profile_picture ? `data:image/jpeg;base64,${response.data.profile_picture}` : prevData.image,
-            // Keep dummy data for these if not provided by the API
-            values: response.data.values || prevData.values,
-            spheres: response.data.spheres || prevData.spheres,
-            unions: response.data.unions || prevData.unions,
-            projects: response.data.projects || prevData.projects,
-            following: response.data.following || prevData.following
-          }));
+            <div className="vc-field">
+                <span className="vc-label">I care about</span>
+                <p>{card.care_about}</p>
+            </div>
+
+            {expanded && (
+                <>
+                    {card.because && (
+                        <div className="vc-field">
+                            <span className="vc-label">Because</span>
+                            <p>{card.because}</p>
+                        </div>
+                    )}
+                    {card.looks_like && card.looks_like.length > 0 && (
+                        <div className="vc-field">
+                            <span className="vc-label">Looks like</span>
+                            <ul className="vc-list">
+                                {card.looks_like.map((item, i) => <li key={i}>{item}</li>)}
+                            </ul>
+                        </div>
+                    )}
+                    {card.drift_looks_like && (
+                        <div className="vc-field vc-field--drift">
+                            <span className="vc-label">Drift looks like</span>
+                            <p>{card.drift_looks_like}</p>
+                        </div>
+                    )}
+                    {card.in_conflict && (
+                        <div className="vc-field">
+                            <span className="vc-label">In conflict, I prioritise</span>
+                            <p>{card.in_conflict}</p>
+                        </div>
+                    )}
+                    {card.never_do && (
+                        <div className="vc-field vc-field--never">
+                            <span className="vc-label">Never</span>
+                            <p>{card.never_do}</p>
+                        </div>
+                    )}
+                </>
+            )}
+
+            <button className="vc-toggle" aria-label={expanded ? 'Collapse' : 'Expand'}>
+                {expanded ? '▲ Less' : '▼ More'}
+            </button>
+        </article>
+    );
+}
+
+// ── New Value Card form ───────────────────────────────────────────────────
+function NewValueCardForm({ onSaved, onCancel }) {
+    const [form, setForm] = useState({
+        title: '', care_about: '', because: '',
+        looks_like_raw: '', drift_looks_like: '', in_conflict: '', never_do: '',
+        frankl_mode: 'creative', color_key: 'honey',
+    });
+    const [saving, setSaving] = useState(false);
+    const [err, setErr] = useState('');
+
+    const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.care_about.trim()) { setErr('What you care about is required.'); return; }
+        setSaving(true); setErr('');
+        try {
+            const payload = {
+                ...form,
+                looks_like: form.looks_like_raw.split('\n').map(s => s.trim()).filter(Boolean),
+            };
+            delete payload.looks_like_raw;
+            const res = await api.post('/api/value_cards', payload);
+            onSaved(res.data);
+        } catch (e) {
+            setErr(e.response?.data?.message || 'Failed to save.');
+        } finally {
+            setSaving(false);
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        if (error.response?.status === 401) {
-          navigate('/login', { replace: true });
-        } else {
-          setError('Failed to load profile data, showing default profile.');
-          // Keep the dummy data in case of error
-          setProfileData(DUMMY_PROFILE);
-        }
-      } finally {
-        setLoading(false);
-      }
     };
 
-    fetchUserData();
-    
-  }, [isLoggedIn, navigate]);
+    return (
+        <form className="vc-new-form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
+            <h4 className="vc-new-heading">New Value Card</h4>
+            {err && <p className="vc-error">{err}</p>}
 
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfileData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setProfileData(prev => ({
-        ...prev,
-        image: URL.createObjectURL(file)
-      }));
-    }
-  };
-
-  const handleSaveChanges = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData();
-      formData.append('name', profileData.name);
-      formData.append('location', profileData.location);
-      if (imageFile) {
-        formData.append('profile_picture', imageFile);
-      }
-
-      const response = await api.post('/api/updateuser', formData, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      if (response.status === 200) {
-        setProfileData(prev => ({
-          ...prev,
-          ...response.data,
-          image: response.data.profile_picture ? `data:image/jpeg;base64,${response.data.profile_picture}` : prev.image,
-          // Preserve the data that might not be returned by the API
-          values: prev.values,
-          spheres: prev.spheres,
-          unions: prev.unions,
-          projects: prev.projects,
-          following: prev.following
-        }));
-        setIsEditing(false);
-        setError(null);
-      }
-    } catch (error) {
-      console.error('Error saving user data:', error);
-      setError('Failed to save changes. Please try again.');
-    }
-  };
-
-  // If not logged in, redirect to login
-  if (!isLoggedIn) {
-    // return <Navigate to="/login" replace />;
-  }
-
-  if (loading) {
-    return <div className="container">Loading profile...</div>;
-  }
-
-  return (
-    <div className="container">
-      <aside className="profile-sidebar">
-        <img src={profileData.image} alt="Profile" className="profile-image" />
-        <div className="profile-info">
-          <h2>{profileData.name}</h2>
-          <p>Location: {profileData.location}</p>
-          <p>Joined: {profileData.joined}</p>
-          <button className="btn-orange" onClick={handleEditToggle}>
-            {isEditing ? 'Cancel' : 'Edit Profile'}
-          </button>
-          {isEditing && (
-            <form className="profile-form" onSubmit={handleSaveChanges}>
-              <div className="form-group">
-                <label htmlFor="profileImage">Profile Image</label>
-                <input 
-                  type="file" 
-                  id="profileImage" 
-                  name="profileImage" 
-                  onChange={handleImageChange} 
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="name">Name</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  value={profileData.name} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="location">Location</label>
-                <input 
-                  type="text" 
-                  id="location" 
-                  name="location" 
-                  value={profileData.location} 
-                  onChange={handleInputChange} 
-                />
-              </div>
-              <button type="submit" className="btn-orange">Save Changes</button>
-              {error && <div className="error-message">{error}</div>}
-            </form>
-          )}
-        </div>
-      </aside>
-      <main>
-        <div className="profile-section">
-          <div className="profile-header">
-            <h2>{profileData.name}</h2>
-            {error && <div className="error-banner">{error}</div>}
-          </div>
-          <div className="profile-values">
-            <h3>Your Value Graph</h3>
-            <div className="values-container">
-              {profileData.values.map((value, index) => (
-                <span key={index} className="value-tag">{value}</span>
-              ))}
+            <div className="vc-form-row">
+                <label>Title (short name for this value)</label>
+                <input type="text" value={form.title} onChange={set('title')} placeholder="e.g. Honest dialogue" />
             </div>
-          </div>
-          <div className="profile-spheres">
-            <h3>Spheres you are a member of</h3>
-            <ul className="sphere-list">
-              {profileData.spheres.map((sphere, index) => (
-                <li key={index}>{sphere}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="profile-unions">
-            <h3>Unions you are a member of</h3>
-            <ul className="sphere-list">
-              {profileData.unions.map((union, index) => (
-                <li key={index}>{union}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="profile-projects">
-            <h3>Currently active projects</h3>
-            <ul className="sphere-list">
-              {profileData.projects.map((project, index) => (
-                <li key={index}>{project}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="profile-following">
-            <h3>Users you are following</h3>
-            <ul className="sphere-list">
-              {profileData.following.map((user, index) => (
-                <li key={index}>{user}</li>
-              ))}
-            </ul>
-          </div>
+            <div className="vc-form-row">
+                <label>I care about *</label>
+                <textarea rows={2} value={form.care_about} onChange={set('care_about')} placeholder="What specifically do you care about?" required />
+            </div>
+            <div className="vc-form-row">
+                <label>Because</label>
+                <textarea rows={2} value={form.because} onChange={set('because')} placeholder="The reason underneath it" />
+            </div>
+            <div className="vc-form-row">
+                <label>Looks like (one behaviour per line)</label>
+                <textarea rows={3} value={form.looks_like_raw} onChange={set('looks_like_raw')} placeholder="Observable actions that express this value" />
+            </div>
+            <div className="vc-form-row">
+                <label>Drift looks like</label>
+                <input type="text" value={form.drift_looks_like} onChange={set('drift_looks_like')} placeholder="Anti-signals — how you'd know you've drifted" />
+            </div>
+            <div className="vc-form-row">
+                <label>In conflict, I prioritise</label>
+                <input type="text" value={form.in_conflict} onChange={set('in_conflict')} placeholder="The trade-off you make" />
+            </div>
+            <div className="vc-form-row">
+                <label>Never</label>
+                <input type="text" value={form.never_do} onChange={set('never_do')} placeholder="A hard boundary" />
+            </div>
+            <div className="vc-form-two-col">
+                <div className="vc-form-row">
+                    <label>Frankl mode</label>
+                    <select value={form.frankl_mode} onChange={set('frankl_mode')}>
+                        <option value="creative">✶ Creative — what you make & give</option>
+                        <option value="experiential">❍ Experiential — what you receive</option>
+                        <option value="attitudinal">△ Attitudinal — your stance under constraint</option>
+                    </select>
+                </div>
+                <div className="vc-form-row">
+                    <label>Card colour</label>
+                    <select value={form.color_key} onChange={set('color_key')}>
+                        <option value="honey">Honey</option>
+                        <option value="leaf">Leaf</option>
+                        <option value="terracotta">Terracotta</option>
+                        <option value="sage">Sage</option>
+                        <option value="moss">Moss</option>
+                    </select>
+                </div>
+            </div>
+
+            <div className="vc-form-actions">
+                <button type="submit" className="btn btn-accent" disabled={saving}>
+                    {saving ? 'Saving…' : 'Add to Meaning Graph'}
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+            </div>
+        </form>
+    );
+}
+
+// ── Main ProfilePage ──────────────────────────────────────────────────────
+const ProfilePage = () => {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [profileData, setProfileData] = useState(null);
+    const [valueCards, setValueCards] = useState([]);
+    const [isEditing, setIsEditing] = useState(false);
+    const [showNewCard, setShowNewCard] = useState(false);
+    const [imageFile, setImageFile] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '', location: '' });
+    const [saving, setSaving] = useState(false);
+    const [spheres, setSpheres] = useState([]);
+    const [alliances, setAlliances] = useState([]);
+    const [projects, setProjects] = useState([]);
+
+    const { isLoggedIn } = useLogin();
+    const navigate = useNavigate();
+
+    const fetchProfile = useCallback(async () => {
+        try {
+            const res = await api.get('/api/user/profile');
+            const data = res.data;
+            setProfileData(data);
+            setEditForm({ name: data.name || '', location: data.location || '' });
+            if (data.user_id) {
+                try {
+                    const vcRes = await api.get(`/api/value_cards/${data.user_id}`);
+                    setValueCards(vcRes.data || []);
+                } catch (_) {}
+            }
+        } catch (e) {
+            if (e.response?.status === 401) {
+                navigate('/login', { replace: true });
+            } else {
+                setError('Could not load profile.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [navigate]);
+
+    useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+    useEffect(() => {
+        api.get('/api/spheres').then(r => setSpheres(r.data || [])).catch(() => {});
+        api.get('/api/alliances').then(r => setAlliances(r.data || [])).catch(() => {});
+        api.get('/api/projects').then(r => setProjects(r.data || [])).catch(() => {});
+    }, []);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const fd = new FormData();
+            fd.append('name', editForm.name);
+            fd.append('location', editForm.location);
+            if (imageFile) fd.append('profile_picture', imageFile);
+            const res = await api.post('/api/updateuser', fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setProfileData(prev => ({
+                ...prev,
+                ...res.data,
+                profile_picture: res.data.profile_picture || prev?.profile_picture,
+            }));
+            setIsEditing(false);
+        } catch (_) {
+            setError('Failed to save changes.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCardSaved = (newCard) => {
+        setValueCards(prev => [...prev, newCard]);
+        setShowNewCard(false);
+    };
+
+    const handleCardDelete = async (cardId) => {
+        try {
+            await api.delete(`/api/value_cards/${cardId}`);
+            setValueCards(prev => prev.filter(c => c.card_id !== cardId));
+        } catch (_) {}
+    };
+
+    if (loading) return <div className="pf-loading">Loading profile…</div>;
+
+    const avatar = profileData?.profile_picture
+        ? `data:image/jpeg;base64,${profileData.profile_picture}`
+        : '/static/user-image.jpg';
+    const fullName = [profileData?.name, profileData?.surname].filter(Boolean).join(' ') || 'Your Profile';
+    const initials = fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+
+    return (
+        <div className="pf-page">
+            {/* ── Hero banner ─────────────────────────────────────────── */}
+            <header className="pf-hero">
+                <div className="pf-hero-inner">
+                    <div className="pf-avatar-wrap">
+                        {profileData?.profile_picture
+                            ? <img src={avatar} alt={fullName} className="pf-avatar" />
+                            : <div className="pf-avatar pf-avatar--initials">{initials}</div>
+                        }
+                    </div>
+                    <div className="pf-hero-text">
+                        <p className="pf-eyebrow">Your profile</p>
+                        <h1 className="pf-name">{fullName}</h1>
+                        {profileData?.location && (
+                            <p className="pf-location">📍 {profileData.location}</p>
+                        )}
+                    </div>
+                    <div className="pf-hero-actions">
+                        <button
+                            className="btn btn-ghost pf-edit-btn"
+                            onClick={() => setIsEditing(v => !v)}
+                        >
+                            {isEditing ? 'Cancel edit' : 'Edit profile'}
+                        </button>
+                    </div>
+                </div>
+                {error && <p className="pf-error-banner">{error}</p>}
+            </header>
+
+            {/* ── Edit form (inline, slides in) ───────────────────────── */}
+            {isEditing && (
+                <section className="pf-edit-section">
+                    <form className="pf-edit-form" onSubmit={handleSave}>
+                        <h3>Edit profile</h3>
+                        <div className="pf-edit-row">
+                            <label>Name</label>
+                            <input type="text" value={editForm.name}
+                                onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} />
+                        </div>
+                        <div className="pf-edit-row">
+                            <label>Location</label>
+                            <input type="text" value={editForm.location}
+                                onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))}
+                                placeholder="City, Country" />
+                        </div>
+                        <div className="pf-edit-row">
+                            <label>Profile image</label>
+                            <input type="file" accept="image/*"
+                                onChange={e => {
+                                    if (e.target.files?.[0]) setImageFile(e.target.files[0]);
+                                }} />
+                        </div>
+                        <div className="pf-edit-actions">
+                            <button type="submit" className="btn btn-primary" disabled={saving}>
+                                {saving ? 'Saving…' : 'Save changes'}
+                            </button>
+                            <button type="button" className="btn btn-ghost" onClick={() => setIsEditing(false)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            )}
+
+            <div className="pf-body">
+                {/* ── Sidebar: connections ────────────────────────────── */}
+                <div className="pf-sidebar">
+                    {spheres.length > 0 && (
+                        <div className="pf-sidebar-section">
+                            <h4>Spheres</h4>
+                            <ul className="pf-conn-list">
+                                {spheres.map((s) => (
+                                    <li key={s.sphere_id || s.name}>
+                                        <a href={s.sphere_id ? `/sphere?id=${s.sphere_id}` : '#'} className="pf-conn-pill">
+                                            {s.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {alliances.length > 0 && (
+                        <div className="pf-sidebar-section">
+                            <h4>Alliances</h4>
+                            <ul className="pf-conn-list">
+                                {alliances.map((a) => (
+                                    <li key={a.alliance_id || a.name}>
+                                        <a href={a.alliance_id ? `/alliance?id=${a.alliance_id}` : '#'} className="pf-conn-pill">
+                                            {a.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {projects.length > 0 && (
+                        <div className="pf-sidebar-section">
+                            <h4>Active projects</h4>
+                            <ul className="pf-conn-list">
+                                {projects.map((p) => (
+                                    <li key={p.project_id || p.name}>
+                                        <a href={p.project_id ? `/project?id=${p.project_id}` : '#'} className="pf-conn-pill">
+                                            {p.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <div className="pf-sidebar-section pf-sidebar-section--muted">
+                        <p className="pf-sidebar-hint">
+                            Your connections, projects, and spheres will appear here as you participate in the community.
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── Main: Meaning Graph (Value Cards) ───────────────── */}
+                <div className="pf-main">
+                    <div className="pf-section-head">
+                        <div>
+                            <h2 className="pf-section-title">Meaning Graph</h2>
+                            <p className="pf-section-sub">
+                                Your endorsed values — what you care about and why, in a form that can't easily be optimised away.
+                            </p>
+                        </div>
+                        {!showNewCard && (
+                            <button className="btn btn-accent pf-add-card-btn" onClick={() => setShowNewCard(true)}>
+                                + Add card
+                            </button>
+                        )}
+                    </div>
+
+                    {showNewCard && (
+                        <NewValueCardForm
+                            onSaved={handleCardSaved}
+                            onCancel={() => setShowNewCard(false)}
+                        />
+                    )}
+
+                    {valueCards.length === 0 && !showNewCard ? (
+                        <div className="pf-empty-cards">
+                            <p className="pf-empty-heading">No value cards yet.</p>
+                            <p className="pf-empty-body">
+                                A Value Card captures one thing you genuinely care about — not a hashtag,
+                                but a reason, a behaviour, and a drift signal. Start with one value
+                                you'd recognise yourself by.
+                            </p>
+                            <button className="btn btn-accent" onClick={() => setShowNewCard(true)}>
+                                Write your first card
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="pf-cards-grid">
+                            {valueCards.map((card, i) => (
+                                <ValueCardDisplay
+                                    key={card.card_id}
+                                    card={card}
+                                    idx={i}
+                                    canDelete={true}
+                                    onDelete={handleCardDelete}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* ── Frankl legend ─────────────────────────────── */}
+                    {valueCards.length > 0 && (
+                        <div className="pf-frankl-legend">
+                            {Object.entries(FRANKL_META).map(([k, m]) => (
+                                <span key={k} className={`pf-legend-item pf-legend--${k}`}>
+                                    <span aria-hidden="true">{m.glyph}</span> {m.label} — {m.desc}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </main>
-    </div>
-  );
+    );
 };
 
 export default ProfilePage;

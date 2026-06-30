@@ -6,7 +6,7 @@ import '../styles/Spheres.css';
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
 
-const SphereCard = ({ id, name, unions, participants, description, projects, values, onJoin }) => {
+const SphereCard = ({ id, name, alliances, participants, description, projects, values, onJoin }) => {
   const navigate = useNavigate();
   const sphereHref = id ? `/sphere?id=${id}` : '/sphere';
 
@@ -16,8 +16,8 @@ const SphereCard = ({ id, name, unions, participants, description, projects, val
         <div className="sphere-card-left">
           <h3>{name}</h3>
           <div className="sphere-card-participants">
-            <span>🔗 {unions.map((union, index) => (
-              <a key={index} href={`/union?name=${encodeURIComponent(union)}`} onClick={(e) => e.stopPropagation()}>{union}{index < unions.length - 1 ? ', ' : ''}</a>
+            <span>🔗 {alliances.map((alliance, index) => (
+              <a key={index} href={`/alliance?name=${encodeURIComponent(alliance)}`} onClick={(e) => e.stopPropagation()}>{alliance}{index < alliances.length - 1 ? ', ' : ''}</a>
             ))}</span>
           </div>
           <div className="sphere-card-participants">

@@ -67,6 +67,17 @@ class Service:
         project_name = data.get('project_name')
         image_key = data.get('image_key')
 
+        # Look up provider name from users table if not supplied by the client.
+        if not provider_name:
+            try:
+                row = cassandra_session.execute(
+                    "SELECT name, surname FROM users WHERE user_id = %s", [provider_id]
+                ).one()
+                if row:
+                    provider_name = f"{row.name or ''} {row.surname or ''}".strip()
+            except Exception as e:
+                logging.warning(f'Could not look up provider name: {e}')
+
         logging.info(f'Creating service with service_id: {service_id}')
         query = """
         INSERT INTO services (service_id, type, title, description, provider_id, provider_name,

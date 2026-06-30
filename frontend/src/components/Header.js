@@ -48,8 +48,8 @@ const Header = () => {
         {
             avatar: 'static/elon_musk_avatar.jpg',
             author: 'OpenAI',
-            link: '/union',
-            message: 'You got accepted to the OpenAI union.',
+            link: '/alliance',
+            message: 'You got accepted to the OpenAI alliance.',
             time: '4 hours ago'
         },
         {
@@ -81,7 +81,7 @@ const Header = () => {
                 <ul className="nav-primary">
                     <li><Link to="/marketplace">Marketplace</Link></li>
                     <li><Link to="/spheres">Spheres</Link></li>
-                    <li><Link to="/unions">Unions</Link></li>
+                    <li><Link to="/alliances">Alliances</Link></li>
                     <li><Link to="/projects">Projects</Link></li>
                 </ul>
             </nav>
@@ -119,9 +119,7 @@ const Header = () => {
                     )}
                 </div>
 
-                {isLoggedIn
-                    ? <button className="auth-action" onClick={handleLogout}>Logout</button>
-                    : <Link to="/login" className="auth-action">Login</Link>}
+                {!isLoggedIn && <Link to="/login" className="auth-action">Login</Link>}
             </div>
         </header>
     );

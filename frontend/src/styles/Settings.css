@@ -12,39 +12,43 @@
     margin-bottom: 1em;
 }
 
+.settings-main {
+    flex: 1 1 auto;
+}
+
 .settings-list {
     background-color: var(--surface);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin: 2em auto;
-    width: 75%;
+    width: 90%;
 }
 
-main h3 {
+.settings-list h3 {
     margin-bottom: 1em;
 }
 
-main .form-group {
+.settings-list .form-group {
     margin-bottom: 1em;
 }
 
-main .form-group label {
+.settings-list .form-group label {
     display: block;
     margin-bottom: 0.5em;
 }
 
-main .form-group input[type="text"],
-main .form-group input[type="email"],
-main .form-group input[type="password"],
-main .form-group select {
+.settings-list .form-group input[type="text"],
+.settings-list .form-group input[type="email"],
+.settings-list .form-group input[type="password"],
+.settings-list .form-group select {
     width: 100%;
     padding: 0.5em;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-main .form-group input[type="checkbox"] {
+.settings-list .form-group input[type="checkbox"] {
     margin-right: 0.5em;
 }
 

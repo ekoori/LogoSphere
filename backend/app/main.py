@@ -24,12 +24,13 @@ from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
 from app.routes.profile import get_user, get_profile, update_user, get_public_user
 from app.routes.registration import register
-from app.routes.trusttrail import get_trusttrail, add_transaction
+from app.routes.trusttrail import get_trusttrail, add_transaction, get_transaction, update_tx_status, add_tx_comment
 from app.models.user import User
 from app.routes.spheres import create_sphere, get_spheres
-from app.routes.unions import create_union, get_unions
-from app.routes.projects import create_project, get_projects
+from app.routes.alliances import create_alliance, get_alliances, join_alliance
+from app.routes.projects import create_project, get_projects, join_project
 from app.routes.marketplace import create_service, get_services
+from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -54,7 +55,7 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_NAME='session_id',
-    PERMANENT_SESSION_LIFETIME=timedelta(hours=24)
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30)
 )
 
 
@@ -63,7 +64,7 @@ app.config.update(
 session_interface = CassandraSessionInterface(
     cluster_nodes=os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(','),
     keyspace='trustsphere',
-    session_lifetime=timedelta(hours=24)
+    session_lifetime=timedelta(days=30)
 )
 app.session_interface = session_interface   
 
@@ -124,14 +125,22 @@ app.add_url_rule('/api/updateuser', view_func=update_user, methods=['POST', 'OPT
 app.add_url_rule('/api/register', view_func=register, methods=['POST'])
 app.add_url_rule('/api/trusttrail', view_func=get_trusttrail, methods=['GET', 'POST', 'OPTIONS'])
 app.add_url_rule('/api/trusttrail/add_transaction', view_func=add_transaction, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/transaction/<transaction_id>', view_func=get_transaction, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/transaction/<transaction_id>/status', view_func=update_tx_status, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/transaction/<transaction_id>/comment', view_func=add_tx_comment, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=create_sphere, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=get_spheres, methods=['GET', 'OPTIONS'])
-app.add_url_rule('/api/unions', view_func=create_union, methods=['POST', 'OPTIONS'])
-app.add_url_rule('/api/unions', view_func=get_unions, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/alliances', view_func=create_alliance, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/alliances', view_func=get_alliances, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/alliances/<alliance_id>/join', view_func=join_alliance, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=create_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=get_projects, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/projects/<project_id>/join', view_func=join_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/marketplace', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/marketplace', view_func=get_services, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/value_cards/<card_id>', view_func=delete_value_card, methods=['DELETE', 'OPTIONS'])
 
 @app.errorhandler(500)
 def internal_error(error):

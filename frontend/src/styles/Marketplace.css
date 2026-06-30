@@ -93,12 +93,40 @@
 }
 .service-project a { color: var(--moss-deep); font-weight: 600; }
 .service-project .muted { color: var(--ink-faint); font-style: italic; }
+.service-project-name { color: var(--moss-deep); font-weight: 600; }
 
 /* Service sub-listings */
 .service .service-transactions { margin-top: 1em; }
 .service .transaction-summary { margin-top: 0.5em; }
 .service .transaction-summary a { color: var(--terracotta-deep); font-weight: 600; }
 .service .transaction-summary a:hover { text-decoration: underline; }
+
+/* Create service CTA at bottom of each card */
+.service-create-cta {
+    margin-top: 1.2em;
+    padding-top: 0.9em;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.service-create-btn {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--moss);
+    background: transparent;
+    border: 1px solid var(--leaf);
+    border-radius: var(--r-pill);
+    padding: 0.3em 0.85em;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.service-create-btn:hover {
+    background: var(--moss);
+    color: #f7f4e8;
+}
 
 /* New-service form */
 #service-form {

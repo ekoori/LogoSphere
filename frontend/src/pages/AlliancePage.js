@@ -1,8 +1,16 @@
-// SpherePage — sphere detail with value cards charter and linked entities.
+// AlliancePage — governance-first alliance detail page.
+// Shows charter (value cards), member roster with roles, and linked projects.
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import '../styles/EntityPage.css';
 import api from '../api';
+import { useLogin } from '../App';
+
+const ROLE_META = {
+    admin:   { label: 'Admin',   glyph: '◈', cls: 'role--admin' },
+    steward: { label: 'Steward', glyph: '◉', cls: 'role--steward' },
+    member:  { label: 'Member',  glyph: '○', cls: 'role--member' },
+};
 
 const FRANKL_META = {
     creative:     { glyph: '✶', label: 'Creative' },
@@ -77,11 +85,12 @@ function EntityValueCard({ card, idx }) {
     );
 }
 
-function SpherePage() {
+function AlliancePage() {
     const [params] = useSearchParams();
     const id = params.get('id');
     const name = params.get('name');
-    const [sphere, setSphere] = useState(null);
+    const { userId } = useLogin();
+    const [alliance, setAlliance] = useState(null);
     const [valueCards, setValueCards] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -89,23 +98,23 @@ function SpherePage() {
         let active = true;
         (async () => {
             try {
-                const res = await api.get('/api/spheres');
+                const res = await api.get('/api/alliances');
                 const list = res.data || [];
-                const found = list.find((s) =>
-                    (id && s.sphere_id === id) ||
-                    (name && s.name === name)
+                const found = list.find((a) =>
+                    (id && (a.alliance_id === id || a.id === id)) ||
+                    (name && a.name === name)
                 );
                 if (active && found) {
-                    setSphere(found);
+                    setAlliance(found);
                     try {
-                        const vcRes = await api.get(`/api/value_cards/${found.sphere_id}`);
+                        const vcRes = await api.get(`/api/value_cards/${found.alliance_id || found.id}`);
                         if (active) setValueCards(vcRes.data || []);
                     } catch (_) {}
                 } else if (active) {
-                    setSphere(null);
+                    setAlliance(null);
                 }
             } catch (e) {
-                console.error('Error loading sphere:', e);
+                console.error('Error loading alliance:', e);
             } finally {
                 if (active) setLoading(false);
             }
@@ -114,38 +123,51 @@ function SpherePage() {
     }, [id, name]);
 
     if (loading) return <div className="ep-loading">Loading…</div>;
-    if (!sphere) return (
+    if (!alliance) return (
         <div className="ep-page">
-            <p className="ep-not-found">Sphere not found.</p>
+            <p className="ep-not-found">Alliance not found.</p>
         </div>
     );
 
-    const participants = sphere.participants || [];
-    const alliances = sphere.alliances || [];
-    const projects = sphere.projects || [];
-    const values = sphere.values || [];
+    const members = alliance.members || [];
+    const projects = alliance.projects || [];
+    const values = alliance.values || [];
+
+    const adminMember = members.find(m => m.role === 'admin');
+    const stewards = members.filter(m => m.role === 'steward');
+    const regularMembers = members.filter(m => m.role === 'member');
+
+    const currentMember = members.find(m => m.id === userId);
+    const canManage = currentMember?.role === 'admin' || currentMember?.role === 'steward';
 
     return (
-        <div className="ep-page ep-page--sphere">
+        <div className="ep-page ep-page--alliance">
 
             {/* Hero */}
-            <header className="ep-hero ep-hero--sphere">
+            <header className="ep-hero">
                 <div className="ep-hero-inner">
                     <div className="ep-meta-row">
-                        <span className="ep-eyebrow">Sphere</span>
-                        {sphere.location && (
-                            <span className="ep-location-chip">
-                                {sphere.location}
-                            </span>
+                        <span className="ep-eyebrow">Alliance</span>
+                        {alliance.sphere_name && (
+                            <Link
+                                to={`/sphere?id=${alliance.sphere_id}`}
+                                className="ep-sphere-chip"
+                            >
+                                {alliance.sphere_name}
+                            </Link>
                         )}
-                        {participants.length > 0 && (
-                            <span className="ep-location-chip">
-                                {participants.length} member{participants.length !== 1 ? 's' : ''}
-                            </span>
+                        {canManage && (
+                            <Link
+                                to={`/alliance-management?id=${alliance.alliance_id}`}
+                                className="ep-status-badge status--in-progress"
+                                style={{ textDecoration: 'none' }}
+                            >
+                                Manage Alliance
+                            </Link>
                         )}
                     </div>
-                    <h1 className="ep-title">{sphere.name}</h1>
-                    <p className="ep-description">{sphere.description}</p>
+                    <h1 className="ep-title">{alliance.name}</h1>
+                    <p className="ep-description">{alliance.description}</p>
                     {values.length > 0 && (
                         <div className="ep-tags">
                             {values.map((v, i) => (
@@ -158,24 +180,56 @@ function SpherePage() {
 
             <div className="ep-body">
 
-                {/* Alliances */}
-                {alliances.length > 0 && (
-                    <section className="ep-section ep-section--projects">
-                        <h2 className="ep-section-title">
-                            <span className="ep-section-glyph">◎</span> Alliances
-                        </h2>
-                        <ul className="ep-project-list">
-                            {alliances.map((a, i) => (
-                                <li key={i}>
-                                    <Link to={`/alliance?name=${encodeURIComponent(a)}`} className="ep-project-link">
-                                        {a}
-                                        <span className="ep-project-arrow">→</span>
+                {/* Governance roster */}
+                <section className="ep-section ep-section--governance">
+                    <h2 className="ep-section-title">
+                        <span className="ep-section-glyph">◈</span> Governance
+                    </h2>
+
+                    {adminMember && (
+                        <div className="ep-role-tier">
+                            <span className="ep-role-label role--admin">Admin</span>
+                            <div className="ep-roster ep-roster--single">
+                                <Link to={`/user?id=${adminMember.id}`} className="ep-member-pill ep-member-pill--admin">
+                                    <span className="ep-member-initial">{adminMember.name?.[0]}</span>
+                                    <span className="ep-member-name">{adminMember.name}</span>
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
+                    {stewards.length > 0 && (
+                        <div className="ep-role-tier">
+                            <span className="ep-role-label role--steward">Stewards</span>
+                            <div className="ep-roster">
+                                {stewards.map(m => (
+                                    <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill ep-member-pill--steward">
+                                        <span className="ep-member-initial">{m.name?.[0]}</span>
+                                        <span className="ep-member-name">{m.name}</span>
                                     </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {regularMembers.length > 0 && (
+                        <div className="ep-role-tier">
+                            <span className="ep-role-label role--member">Members</span>
+                            <div className="ep-roster">
+                                {regularMembers.map(m => (
+                                    <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill">
+                                        <span className="ep-member-initial">{m.name?.[0]}</span>
+                                        <span className="ep-member-name">{m.name}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {members.length === 0 && (
+                        <p className="ep-empty">No members yet.</p>
+                    )}
+                </section>
 
                 {/* Projects */}
                 {projects.length > 0 && (
@@ -196,12 +250,12 @@ function SpherePage() {
                     </section>
                 )}
 
-                {/* Charter */}
+                {/* Charter — value cards */}
                 {valueCards.length > 0 && (
                     <section className="ep-section ep-section--charter">
                         <h2 className="ep-section-title">
                             <span className="ep-section-glyph">◻</span> Charter
-                            <span className="ep-section-sub">The values this sphere holds itself to</span>
+                            <span className="ep-section-sub">The values this alliance holds itself to</span>
                         </h2>
                         <div className="ep-cards-grid">
                             {valueCards.map((card, i) => (
@@ -215,4 +269,4 @@ function SpherePage() {
     );
 }
 
-export default SpherePage;
+export default AlliancePage;

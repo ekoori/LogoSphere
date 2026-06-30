@@ -6,10 +6,12 @@ import '../styles/Projects.css';
 import NewProjectForm from './NewProjectForm';
 import ProjectCard from './ProjectCard';
 import api from '../api';
+import { useLogin } from '../App';
 
 const STATUS_STEPS = ['Initiated', 'In Progress', 'Completed', 'Trustifacted'];
 
 const Projects = () => {
+  const { userId } = useLogin();
   const [projects, setProjects] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -24,7 +26,7 @@ const Projects = () => {
         .map((p) => ({
           ...p,
           id: p.project_id,
-          owner: p.owner_union || p.owner || 'Independent',
+          owner: p.owner_alliance || p.owner || 'Independent',
           participants: p.members || [],
           values: p.values || [],
           transactions: [],
@@ -44,6 +46,15 @@ const Projects = () => {
   const handleCreateProject = async () => {
     toggleFormVisibility();
     await fetchProjects();
+  };
+
+  const handleJoin = async (projectId) => {
+    try {
+      await api.post(`/api/projects/${projectId}/join`);
+      await fetchProjects();
+    } catch (e) {
+      console.error('Failed to join project:', e);
+    }
   };
 
   return (
@@ -66,7 +77,7 @@ const Projects = () => {
         ) : (
           <div className="projects-grid">
             {projects.map((project) => (
-              <ProjectCard key={project.id} {...project} onLike={(id) => console.log(`Liked project ${id}`)} />
+              <ProjectCard key={project.id} {...project} currentUserId={userId} onJoin={handleJoin} onLike={() => {}} />
             ))}
           </div>
         )}

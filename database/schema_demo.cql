@@ -1,11 +1,11 @@
 -- ============================================================================
--- TrustSphere — schema extensions for Unions, Projects and Marketplace services.
+-- TrustSphere — schema extensions for Alliances, Projects and Marketplace services.
 -- Idempotent-ish: uses IF NOT EXISTS where supported.
 -- ============================================================================
 
--- Unions: groups of users, usually nested within a Sphere.
-CREATE TABLE IF NOT EXISTS trustsphere.unions (
-    union_id uuid PRIMARY KEY,
+-- Alliances: federations/partnerships of users, usually nested within a Sphere.
+CREATE TABLE IF NOT EXISTS trustsphere.alliances (
+    alliance_id uuid PRIMARY KEY,
     name text,
     description text,
     admin1 uuid,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS trustsphere.unions (
 -- Enrich the existing thin projects table (PRIMARY KEY project_id already exists).
 ALTER TABLE trustsphere.projects ADD description text;
 ALTER TABLE trustsphere.projects ADD status text;
-ALTER TABLE trustsphere.projects ADD owner_union text;
+ALTER TABLE trustsphere.projects ADD owner_alliance text;
 ALTER TABLE trustsphere.projects ADD sphere_id uuid;
 ALTER TABLE trustsphere.projects ADD sphere_name text;
 ALTER TABLE trustsphere.projects ADD created_at timestamp;

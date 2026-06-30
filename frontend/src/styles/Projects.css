@@ -181,3 +181,31 @@
 .set-image-btn:hover { background: #fff; }
 
 .form-buttons { display: flex; justify-content: center; gap: 1em; margin-top: 1.2em; }
+
+.like-btn, .join-btn {
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    padding: 0.3em 0.8em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+.join-btn { border-color: var(--leaf); color: var(--leaf); }
+.join-btn:hover { background: var(--leaf); color: #f7f4e8; }
+
+.uc-member-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25em 0.7em;
+    border-radius: 4px;
+    border: 1px solid var(--leaf);
+    color: var(--leaf);
+    background: rgba(111,138,79,0.08);
+}

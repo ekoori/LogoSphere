@@ -16,7 +16,7 @@ const Spheres = () => {
       const fetched = (response.data || []).map((sphere) => ({
         ...sphere,
         id: sphere.sphere_id,
-        unions: sphere.unions || [],
+        alliances: sphere.alliances || [],
         // {id, name} pairs so each member links to their profile.
         participants: sphere.members || [],
         projects: sphere.projects || [],

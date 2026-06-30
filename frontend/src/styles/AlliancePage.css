@@ -1,13 +1,13 @@
-/* Union.css */
+/* Alliance.css */
 
-.union-section {
+.alliance-section {
     background-color: var(--surface);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.union-sidebar {
+.alliance-sidebar {
     width: 20%;
     padding: 1em;
     background-color: var(--surface);
@@ -16,38 +16,38 @@
     text-align: left;
 }
 
-.union-sidebar h2 {
+.alliance-sidebar h2 {
     margin: 0 0 1em 0;
 }
 
-.union-sidebar p {
+.alliance-sidebar p {
     margin: 0.5em 0;
 }
 
-.union-sidebar .btn-orange {
+.alliance-sidebar .btn-orange {
     display: block;
     width: 100%;
     text-align: center;
     margin-top: 1em;
 }
 
-.union-sidebar ul {
+.alliance-sidebar ul {
     margin: 0;
     padding-left: 1.5em;
 }
 
-.union-sidebar ul li {
+.alliance-sidebar ul li {
     margin: 0.5em 0;
 }
 
 
-.union-description {
+.alliance-description {
     margin-bottom: 2em;
 }
 
-.union-orgchart,
-.union-members,
-.union-projects {
+.alliance-orgchart,
+.alliance-members,
+.alliance-projects {
     margin-bottom: 2em;
 }
 
@@ -83,11 +83,11 @@
     color: darkblue;
 }
 
-.union-values {
+.alliance-values {
     margin-top: 2em;
 }
 
-.union-values span {
+.alliance-values span {
     display: inline-block;
     background-color: var(--surface-2);
     padding: 0.2em 0.5em;

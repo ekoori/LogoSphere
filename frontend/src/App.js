@@ -25,13 +25,14 @@ import ProfilePage from './pages/ProfilePage';
 import Spheres from './pages/Spheres';
 import SpherePage from './pages/SpherePage';
 import SphereManagement from './pages/SphereManagement';
-import Unions from './pages/Unions';
-import UnionPage from './pages/UnionPage';
-import UnionManagement from './pages/UnionManagement';
+import Alliances from './pages/Alliances';
+import AlliancePage from './pages/AlliancePage';
+import AllianceManagement from './pages/AllianceManagement';
 import ProjectPage from './pages/ProjectPage';
 import ProjectManagement from './pages/ProjectManagement';
 import UserPage from './pages/UserPage';
 import MarketplacePage from './pages/MarketplacePage';
+import TransactionPage from './pages/TransactionPage';
 import SettingsPage from './pages/Settings';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
@@ -92,10 +93,11 @@ function AppContent() {
         <Route path="/spheres" element={<ErrorBoundary><ProtectedRoute><Spheres/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/sphere" element={<ErrorBoundary><ProtectedRoute><SpherePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/sphere-management" element={<ErrorBoundary><ProtectedRoute><SphereManagement/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/unions" element={<ErrorBoundary><ProtectedRoute><Unions/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/union" element={<ErrorBoundary><ProtectedRoute><UnionPage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/union-management" element={<ErrorBoundary><ProtectedRoute><UnionManagement/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/alliances" element={<ErrorBoundary><ProtectedRoute><Alliances/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><AlliancePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><AllianceManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/marketplace" element={<ErrorBoundary><ProtectedRoute><MarketplacePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/transaction" element={<ErrorBoundary><ProtectedRoute><TransactionPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 

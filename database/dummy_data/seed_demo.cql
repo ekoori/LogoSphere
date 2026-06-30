@@ -2,7 +2,7 @@
 -- TrustSphere — demo seed data
 -- A small but coherent story showing what TrustSphere stands for:
 --   a gift economy (give freely, build trust), communities (Spheres),
---   collectives (Unions), shared missions (Projects), and a TrustTrail that
+--   collectives (Alliances), shared missions (Projects), and a TrustTrail that
 --   records moments of trust between neighbours.
 --
 -- Reuses the 20 seeded users (passwords = first name). Demo login:
@@ -12,7 +12,7 @@
 USE trustsphere;
 
 -- ---- Spheres (communities) -------------------------------------------------
-INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, unions, projects, values)
+INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, alliances, projects, values)
 VALUES (11111111-1111-1111-1111-111111111111,
   'Riverside Commons',
   'A solarpunk neighbourhood where tools, time and skills are shared freely. We grow food, repair what breaks, and look after one another — no money changes hands, only trust.',
@@ -21,11 +21,11 @@ VALUES (11111111-1111-1111-1111-111111111111,
   fe878ccf-aba7-4b16-8b5f-847f7db6e0ad,
   '2026-01-12 09:00:00',
   [fe878ccf-aba7-4b16-8b5f-847f7db6e0ad, 9c89c702-6c61-49c8-9f0c-47b8e4e84e4b, 16f033ca-2b2c-4745-a537-82999209774c, aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358, ff52c318-95e0-4f1f-89cc-62551c814a83],
-  ['Repair Café Collective', 'Seed Keepers Union'],
+  ['Repair Café Collective', 'Seed Keepers Alliance'],
   ['Community Tool Library', 'Neighbourhood Solar Microgrid'],
   ['mutual aid', 'repair culture', 'food sovereignty', 'trust']);
 
-INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, unions, projects, values)
+INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, alliances, projects, values)
 VALUES (22222222-2222-2222-2222-222222222222,
   'AI Commons',
   'A sphere pooling open compute and knowledge so that powerful AI research is a public good, not a private moat. Members share GPUs, datasets and mentorship in the spirit of the gift.',
@@ -38,7 +38,7 @@ VALUES (22222222-2222-2222-2222-222222222222,
   ['Open GPU Cluster'],
   ['open source', 'knowledge sharing', 'compute as commons']);
 
-INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, unions, projects, values)
+INSERT INTO spheres (sphere_id, name, description, value_graph, location, admin1, created_at, participants, alliances, projects, values)
 VALUES (33333333-3333-3333-3333-333333333333,
   'Earthsong Gardens',
   'A regenerative growing community restoring soil and pollinators. We swap heirloom seeds, share harvests, and govern the land together through liquid democracy.',
@@ -47,12 +47,12 @@ VALUES (33333333-3333-3333-3333-333333333333,
   aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358,
   '2026-03-21 08:00:00',
   [aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358, ff52c318-95e0-4f1f-89cc-62551c814a83, 9c89c702-6c61-49c8-9f0c-47b8e4e84e4b],
-  ['Seed Keepers Union'],
+  ['Seed Keepers Alliance'],
   ['Pollinator Corridor'],
   ['regeneration', 'biodiversity', 'stewardship']);
 
--- ---- Unions (collectives within spheres) -----------------------------------
-INSERT INTO unions (union_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
+-- ---- Alliances (collectives within spheres) --------------------------------
+INSERT INTO alliances (alliance_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
 VALUES (aaaaaaaa-0000-0000-0000-000000000001,
   'Repair Café Collective',
   'Neighbours who fix things together every Saturday — bikes, toasters, fences, friendships. Knowledge is shared, never sold.',
@@ -65,7 +65,7 @@ VALUES (aaaaaaaa-0000-0000-0000-000000000001,
   ['repair culture', 'skill sharing'],
   '#repair #skillshare');
 
-INSERT INTO unions (union_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
+INSERT INTO alliances (alliance_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
 VALUES (aaaaaaaa-0000-0000-0000-000000000002,
   'Open Compute Guild',
   'Stewards of the shared GPU cluster. We allocate compute by need and contribution, decided by the members themselves.',
@@ -78,9 +78,9 @@ VALUES (aaaaaaaa-0000-0000-0000-000000000002,
   ['open compute', 'fair allocation'],
   '#compute #governance');
 
-INSERT INTO unions (union_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
+INSERT INTO alliances (alliance_id, name, description, admin1, sphere_id, sphere_name, created_at, members, member_names, projects, values, value_graph)
 VALUES (aaaaaaaa-0000-0000-0000-000000000003,
-  'Seed Keepers Union',
+  'Seed Keepers Alliance',
   'Guardians of heirloom seed diversity. Members save, label and swap seeds so no variety is lost.',
   ff52c318-95e0-4f1f-89cc-62551c814a83,
   33333333-3333-3333-3333-333333333333, 'Earthsong Gardens',
@@ -92,7 +92,7 @@ VALUES (aaaaaaaa-0000-0000-0000-000000000003,
   '#seeds #biodiversity');
 
 -- ---- Projects (shared missions) --------------------------------------------
-INSERT INTO projects (project_id, name, description, owner, owner_union, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
+INSERT INTO projects (project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
 VALUES (bbbbbbbb-0000-0000-0000-000000000001,
   'Community Tool Library',
   'A free lending library of power tools, garden equipment and know-how. Borrow what you need, return it cared-for, teach the next person.',
@@ -103,7 +103,7 @@ VALUES (bbbbbbbb-0000-0000-0000-000000000001,
   ['Steve Wozniak', 'Joe Rogan', 'Marie Kondo'],
   ['sharing over owning', 'repair culture']);
 
-INSERT INTO projects (project_id, name, description, owner, owner_union, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
+INSERT INTO projects (project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
 VALUES (bbbbbbbb-0000-0000-0000-000000000002,
   'Neighbourhood Solar Microgrid',
   'Rooftop panels feeding a shared battery so the block keeps the lights on together. Surplus energy is gifted to households that need it most.',
@@ -114,7 +114,7 @@ VALUES (bbbbbbbb-0000-0000-0000-000000000002,
   ['Joe Rogan', 'Steve Wozniak'],
   ['energy as commons', 'resilience']);
 
-INSERT INTO projects (project_id, name, description, owner, owner_union, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
+INSERT INTO projects (project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
 VALUES (bbbbbbbb-0000-0000-0000-000000000003,
   'Open GPU Cluster',
   'A community-run cluster of donated GPUs for open AI research. Time is allocated by the Open Compute Guild through transparent, member-led voting.',
@@ -125,11 +125,11 @@ VALUES (bbbbbbbb-0000-0000-0000-000000000003,
   ['Elon Musk', 'Bill Gates', 'Joe Rogan'],
   ['open research', 'compute commons']);
 
-INSERT INTO projects (project_id, name, description, owner, owner_union, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
+INSERT INTO projects (project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, created_at, participants, participant_names, values)
 VALUES (bbbbbbbb-0000-0000-0000-000000000004,
   'Pollinator Corridor',
   'A ribbon of wildflower meadows linking gardens across the valley so bees and butterflies can travel safely. Planted and tended by volunteers.',
-  'David Attenborough', 'Seed Keepers Union', 'Completed',
+  'David Attenborough', 'Seed Keepers Alliance', 'Completed',
   33333333-3333-3333-3333-333333333333, 'Earthsong Gardens',
   '2026-03-28 08:30:00',
   [aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358, ff52c318-95e0-4f1f-89cc-62551c814a83],

@@ -25,6 +25,7 @@ from cassandra.cqlengine.management import sync_table
 import uuid
 import os
 from uuid import UUID
+from datetime import datetime
 
 #cluster = Cluster(['143.42.34.42'])  # provide your Cassandra host here
 #cassandra_session = cluster.connect()
@@ -168,3 +169,86 @@ class TrustTrail(Model):
             transaction.update(transaction_status=status)
         except Exception as e:
             print(f"Error occurred while setting the transaction status: {e}")
+
+    @classmethod
+    def get_by_id(cls, transaction_id, current_user_id):
+        """Return (transaction_dict, is_initiator) or (None, None) if not a participant."""
+        try:
+            tx_uuid = UUID(str(transaction_id))
+            user_uuid = UUID(str(current_user_id))
+
+            # Efficient path: current user is the initiator (full PK lookup)
+            rows = list(cls.objects(user_id=user_uuid, transaction_id=tx_uuid))
+            if rows:
+                return rows[0].to_dict(), True
+
+            # Fallback: raw CQL to check if viewer is the other_user_id
+            session = connection.get_session()
+            results = session.execute(
+                "SELECT user_id, other_user_id FROM trusttrail WHERE transaction_id = %s ALLOW FILTERING",
+                [tx_uuid]
+            )
+            for raw in results:
+                if raw.other_user_id == user_uuid:
+                    # Re-fetch as cqlengine object so we can call to_dict()
+                    initiator_rows = list(cls.objects(user_id=raw.user_id, transaction_id=tx_uuid))
+                    if initiator_rows:
+                        return initiator_rows[0].to_dict(), False
+            return None, None
+        except Exception as e:
+            print(f"Error getting transaction by id: {e}")
+            return None, None
+
+    @classmethod
+    def set_status_for(cls, initiator_user_id, transaction_id, status):
+        """Update status using the full PK (initiator_user_id + transaction_id)."""
+        try:
+            rows = list(cls.objects(
+                user_id=UUID(str(initiator_user_id)),
+                transaction_id=UUID(str(transaction_id))
+            ))
+            if rows:
+                rows[0].update(transaction_status=status)
+                return True
+            return False
+        except Exception as e:
+            print(f"Error setting status: {e}")
+            return False
+
+    @classmethod
+    def add_comment_for(cls, initiator_user_id, transaction_id, comment_type, text,
+                        author_id=None, author_name=None):
+        """comment_type: 'gratitude' | 'user' | 'other'"""
+        try:
+            rows = list(cls.objects(
+                user_id=UUID(str(initiator_user_id)),
+                transaction_id=UUID(str(transaction_id))
+            ))
+            if not rows:
+                return False
+            now = datetime.utcnow()
+            row = rows[0]
+            if comment_type == 'gratitude':
+                row.update(
+                    gratitude_comment=text,
+                    gratitude_comment_id=uuid.uuid4(),
+                    gratitude_comment_timestamp=now,
+                )
+            elif comment_type == 'user':
+                row.update(
+                    user_comment=text,
+                    user_comment_id=uuid.uuid4(),
+                    user_comment_timestamp=now,
+                )
+            elif comment_type == 'other':
+                row.update(
+                    other_comment=text,
+                    other_comment_id=uuid.uuid4(),
+                    other_comment_author_id=UUID(str(author_id)) if author_id else None,
+                    other_comment_author_name=author_name or '',
+                    other_comment_timestamp=now,
+                )
+            return True
+        except Exception as e:
+            print(f"Error adding comment: {e}")
+            return False
