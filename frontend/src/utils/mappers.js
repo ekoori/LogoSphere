@@ -63,10 +63,10 @@ function imageFor(text = '') {
     return null;
 }
 
-// Map a flat MeaningTrail row from the API into a InteractionCard item.
-export function mapInteraction(row) {
+// Map a flat MeaningTrail row from the API into a ExchangeCard item.
+export function mapExchange(row) {
     const completed = ['Finished', 'Completed', 'Receipted', 'Additional Comments Added']
-        .includes(row.interaction_status);
+        .includes(row.exchange_status);
 
     const receipts = [];
     if (row.gratitude_comment) {
@@ -97,9 +97,9 @@ export function mapInteraction(row) {
     }
 
     return {
-        id: row.interaction_id,
+        id: row.exchange_id,
         type: completed ? 'completed' : 'offer',
-        title: row.interaction_description || 'An exchange of trust',
+        title: row.exchange_description || 'An exchange of trust',
         // meaning_trail rows have no sphere FK — project shown separately
         spheres: [],
         participants: [
@@ -111,9 +111,9 @@ export function mapInteraction(row) {
             : 'A moment of trust shared in the community.',
         project: row.project_name || null,
         projectId: row.project_id || null,
-        imageUrl: imageFor(row.interaction_description),
+        imageUrl: imageFor(row.exchange_description),
         time: fmtDate(row.project_start_timestamp) || 'recently',
-        status: row.interaction_status || 'Initiated',
+        status: row.exchange_status || 'Initiated',
         likesCount: 0,
         likedByCurrentUser: false,
         initiatedTime: fmtDate(row.project_start_timestamp),
@@ -126,6 +126,6 @@ export function mapInteraction(row) {
         canModify: false,
         onAddReceipt: () => {},
         onAddAcknowledgement: () => {},
-        onModifyInteraction: () => {},
+        onModifyExchange: () => {},
     };
 }

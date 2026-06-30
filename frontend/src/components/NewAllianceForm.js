@@ -30,7 +30,7 @@ const NewAllianceForm = ({ isVisible, onCreateAlliance, onCancel }) => {
   if (!isVisible) return null;
 
   return (
-    <div id="alliance-form" className="interaction">
+    <div id="alliance-form" className="exchange">
       <h3>Create a New Alliance</h3>
       <form onSubmit={handleSubmit}>
         <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />

@@ -8,7 +8,7 @@ import '../styles/Openings.css';
 import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
 import api from '../api';
-import { mapService, mapInteraction } from '../utils/mappers';
+import { mapService, mapExchange } from '../utils/mappers';
 
 function Home() {
     const [activeTab, setActiveTab] = useState('meaning_trail');
@@ -19,7 +19,7 @@ function Home() {
     const fetchFeed = useCallback(async () => {
         try {
             const res = await api.get('/api/meaning_trail');
-            setItems((res.data || []).map(mapInteraction));
+            setItems((res.data || []).map(mapExchange));
         } catch (e) {
             if (e.response?.status !== 401) console.error('Error fetching meaning_trail:', e);
         }

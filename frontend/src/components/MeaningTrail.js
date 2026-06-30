@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import InteractionCard from './InteractionCard';
+import ExchangeCard from './ExchangeCard';
 import AcknowledgementCard from './AcknowledgementCard';
 import '../styles/MeaningTrail.css';
 
@@ -11,7 +11,7 @@ function MeaningTrail({ items }) {
                 item.type === 'acknowledgement' ? (
                     <AcknowledgementCard key={item.id} acknowledgement={item} />
                 ) : (
-                    <InteractionCard
+                    <ExchangeCard
                         key={item.id}
                         id={item.id}
                         type={item.type}
@@ -35,7 +35,7 @@ function MeaningTrail({ items }) {
                         acknowledgements={item.acknowledgements}
                         onAddReceipt={item.onAddReceipt || (() => {})}
                         onAddAcknowledgement={item.onAddAcknowledgement || (() => {})}
-                        onModifyInteraction={item.onModifyInteraction || (() => {})}
+                        onModifyExchange={item.onModifyExchange || (() => {})}
                         canModify={item.canModify || false}
                     />
                 )
@@ -63,7 +63,7 @@ MeaningTrail.propTypes = {
         acknowledgements: PropTypes.array,
         onAddReceipt: PropTypes.func,
         onAddAcknowledgement: PropTypes.func,
-        onModifyInteraction: PropTypes.func,
+        onModifyExchange: PropTypes.func,
         canModify: PropTypes.bool,
     })).isRequired,
 };

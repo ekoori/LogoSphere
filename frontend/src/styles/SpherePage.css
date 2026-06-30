@@ -1,6 +1,6 @@
 /* SphereManagement.css */
 
-.interaction {
+.exchange {
     background-color: var(--surface);
     padding: 1em;
     border-radius: 8px;
@@ -9,45 +9,45 @@
     cursor: pointer;
 }
 
-.interaction.offer {
+.exchange.offer {
     background-color: rgba(111, 138, 79, 0.12);
 }
 
-.interaction.need {
+.exchange.need {
     background-color: rgba(194, 100, 60, 0.10);
 }
 
-.interaction-header {
+.exchange-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     flex-direction: row;
 }
 
-.interaction-header .left {
+.exchange-header .left {
     flex: 2;
     display: flex;
     flex-direction: column;
 }
 
-.interaction-header .right {
+.exchange-header .right {
     flex: 0 0 80px;
     display: flex;
     justify-content: flex-end;
     align-items: flex-start;
 }
 
-.interaction-header h3, .interaction-header small {
+.exchange-header h3, .exchange-header small {
     margin: 0;
 }
 
-.interaction-header small a {
+.exchange-header small a {
     margin-right: 1em;
     color: var(--moss);
     text-decoration: none;
 }
 
-.interaction-header small a:hover {
+.exchange-header small a:hover {
     text-decoration: underline;
 }
 
@@ -65,7 +65,7 @@
     align-items: flex-start;
 }
 
-.interaction-image {
+.exchange-image {
     width: 100px;
     height: auto;
     margin-right: 1em;
@@ -266,6 +266,6 @@ main {
     margin-bottom: 2em;
 }
 
-.offers-needs .interaction {
+.offers-needs .exchange {
     margin-bottom: 1em;
 }

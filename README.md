@@ -46,7 +46,7 @@ None of this is a rewrite of how people already give — it's a structure for na
 | **Acknowledgement** | Public thanks stays lightweight — warmth, not currency. The weight-bearing work belongs to Receipts. |
 | **Sphere & Alliance** | A community or federation declares its shared values — and a "we're drifting if…" clause to catch its own slide. |
 | **Openings** | Offers and Needs carry the values they serve; matching favours overlaps that are endorsed and evidenced. |
-| **Interaction** | The real human event between people that a Receipt or Acknowledgement attests to. |
+| **Exchange** | The real human event between people that a Receipt or Acknowledgement attests to. |
 | **Meaning Trail** | The living trace of a profile's or alliance's Receipts and Acknowledgements over time. |
 | **Governance / Decisions** | Liquid democracy: delegated, revisable decision-making, in the open. |
 

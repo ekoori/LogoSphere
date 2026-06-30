@@ -1,6 +1,6 @@
-// InteractionCard — a trust interaction in the MeaningTrail feed.
+// ExchangeCard — a trust exchange in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
-// When expanded, the title is a link to the interaction detail page.
+// When expanded, the title is a link to the exchange detail page.
 // Receipts (verified gratitude records) and Acknowledgements (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
@@ -12,9 +12,9 @@ import NewAcknowledgementForm from './NewAcknowledgementForm';
 import StatusProgression from './StatusProgression';
 import '../styles/MeaningTrail.css';
 
-const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
-const ixIndex = (status) => {
-    const i = IX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
+const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
+const xcIndex = (status) => {
+    const i = XC_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
     return i >= 0 ? i : 0;
 };
 
@@ -37,14 +37,14 @@ const sHref = (s) => {
 const TYPE_LABELS = { completed: 'Completed', offer: 'Offer', need: 'Need' };
 const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', need: 'pill-honey' };
 
-function InteractionCard({
+function ExchangeCard({
     id,
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     receipts, acknowledgements,
-    onAddReceipt, onAddAcknowledgement, onModifyInteraction, canModify,
+    onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify,
 }) {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
@@ -65,7 +65,7 @@ function InteractionCard({
     const handleTitleClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (id) navigate(`/interaction?id=${id}`);
+        if (id) navigate(`/exchange?id=${id}`);
     };
 
     const handleAddReceipt = () => {
@@ -85,8 +85,8 @@ function InteractionCard({
     };
 
     const cancelled = status === 'Cancelled';
-    const stepIdx = ixIndex(status);
-    const steps = IX_STEPS.map((label, i) => ({
+    const stepIdx = xcIndex(status);
+    const steps = XC_STEPS.map((label, i) => ({
         label,
         time: [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime][i] || '',
     }));
@@ -98,28 +98,28 @@ function InteractionCard({
 
     return (
         <div
-            className={`interaction ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
+            className={`exchange ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
             onClick={() => !isExpanded && setIsExpanded(true)}
         >
             {/* ── Summary row — always visible ────────────────────────────── */}
-            <div className="ix-summary" onClick={() => setIsExpanded(!isExpanded)}>
+            <div className="xc-summary" onClick={() => setIsExpanded(!isExpanded)}>
                 <span className={`pill ${pillClass} type-pill`}>{typeLabel}</span>
 
-                <div className="ix-title-col">
+                <div className="xc-title-col">
                     {isExpanded ? (
                         <a
-                            className="ix-title ix-title-link"
-                            href={id ? `/interaction?id=${id}` : '#'}
+                            className="xc-title xc-title-link"
+                            href={id ? `/exchange?id=${id}` : '#'}
                             onClick={handleTitleClick}
-                            title="View full interaction"
+                            title="View full exchange"
                         >
                             {title}
                         </a>
                     ) : (
-                        <span className="ix-title">{title}</span>
+                        <span className="xc-title">{title}</span>
                     )}
                     {!isExpanded && participants.length > 0 && (
-                        <span className="ix-participants-inline">
+                        <span className="xc-participants-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <a href={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</a>
@@ -130,8 +130,8 @@ function InteractionCard({
                     )}
                 </div>
 
-                <div className="ix-summary-meta" onClick={(e) => e.stopPropagation()}>
-                    {time && <span className="ix-date">{time}</span>}
+                <div className="xc-summary-meta" onClick={(e) => e.stopPropagation()}>
+                    {time && <span className="xc-date">{time}</span>}
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
@@ -141,7 +141,7 @@ function InteractionCard({
                 </div>
 
                 <button
-                    className="ix-expand-btn"
+                    className="xc-expand-btn"
                     onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                     aria-label={isExpanded ? 'Collapse' : 'Expand'}
                 >
@@ -151,9 +151,9 @@ function InteractionCard({
 
             {/* ── Expanded body ─────────────────────────────────────────── */}
             {isExpanded && (
-                <div className="ix-body" onClick={(e) => e.stopPropagation()}>
+                <div className="xc-body" onClick={(e) => e.stopPropagation()}>
                     {/* Context: participants, spheres, project */}
-                    <div className="ix-context">
+                    <div className="xc-context">
                         <div className="participants">
                             {participants.map((p, i) => (
                                 <span key={i}>
@@ -163,16 +163,16 @@ function InteractionCard({
                             ))}
                         </div>
                         {spheres.length > 0 && (
-                            <div className="ix-spheres">
+                            <div className="xc-spheres">
                                 {spheres.map((s, i) => (
-                                    <a key={i} href={sHref(s)} className="pill pill-leaf ix-sphere-pill">
+                                    <a key={i} href={sHref(s)} className="pill pill-leaf xc-sphere-pill">
                                         {sName(s)}
                                     </a>
                                 ))}
                             </div>
                         )}
                         {project && (
-                            <div className="ix-project-ref">
+                            <div className="xc-project-ref">
                                 <span className="muted">Part of</span>{' '}
                                 <a href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}>
                                     {project}
@@ -188,7 +188,7 @@ function InteractionCard({
                                 <img
                                     src={img}
                                     alt={title}
-                                    className="interaction-image"
+                                    className="exchange-image"
                                     onError={() => setImg(null)}
                                 />
                             )}
@@ -202,10 +202,10 @@ function InteractionCard({
                     </div>
 
                     {/* ── Receipts ───────────────────────────────────── */}
-                    <div className="ix-section">
-                        <div className="ix-section-label ix-section-receipt">
+                    <div className="xc-section">
+                        <div className="xc-section-label xc-section-receipt">
                             <span>✓ Receipts</span>
-                            <span className="ix-section-hint">verified attestations of trust</span>
+                            <span className="xc-section-hint">verified attestations of trust</span>
                         </div>
                         {hasReceipts ? (
                             <div className="receipts">
@@ -224,10 +224,10 @@ function InteractionCard({
                                 ))}
                             </div>
                         ) : (
-                            <p className="ix-empty-section">No receipts yet.</p>
+                            <p className="xc-empty-section">No receipts yet.</p>
                         )}
                         <button
-                            className="ix-add-btn ix-add-receipt"
+                            className="xc-add-btn xc-add-receipt"
                             onClick={(e) => { e.stopPropagation(); handleAddReceipt(); }}
                         >
                             + Add Receipt
@@ -235,10 +235,10 @@ function InteractionCard({
                     </div>
 
                     {/* ── Acknowledgements ─────────────────────────────────────── */}
-                    <div className="ix-section">
-                        <div className="ix-section-label ix-section-acknowledgement">
+                    <div className="xc-section">
+                        <div className="xc-section-label xc-section-acknowledgement">
                             <span>📢 Acknowledgements</span>
-                            <span className="ix-section-hint">public acknowledgements</span>
+                            <span className="xc-section-hint">public acknowledgements</span>
                         </div>
                         {hasAcknowledgements && (
                             <div className="acknowledgements">
@@ -259,7 +259,7 @@ function InteractionCard({
                         )}
                         {!showAcknowledgementForm ? (
                             <button
-                                className="ix-add-btn ix-add-acknowledgement"
+                                className="xc-add-btn xc-add-acknowledgement"
                                 onClick={(e) => { e.stopPropagation(); setShowAcknowledgementForm(true); }}
                             >
                                 + Add Acknowledgement
@@ -277,7 +277,7 @@ function InteractionCard({
     );
 }
 
-InteractionCard.propTypes = {
+ExchangeCard.propTypes = {
     id: PropTypes.string,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
@@ -300,8 +300,8 @@ InteractionCard.propTypes = {
     acknowledgements: PropTypes.array,
     onAddReceipt: PropTypes.func.isRequired,
     onAddAcknowledgement: PropTypes.func.isRequired,
-    onModifyInteraction: PropTypes.func.isRequired,
+    onModifyExchange: PropTypes.func.isRequired,
     canModify: PropTypes.bool.isRequired,
 };
 
-export default InteractionCard;
+export default ExchangeCard;
