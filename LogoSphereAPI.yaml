@@ -1,12 +1,12 @@
 openapi: 3.0.0
 info:
-  title: TrustSphere API
-  description: API for handling user interactions within the TrustSphere platform.
+  title: LogoSphere API
+  description: API for handling user interactions within the LogoSphere platform.
   version: 1.0.0
 
 servers:
   - url: "https://api.trustsphere.example.com"
-    description: TrustSphere API server
+    description: LogoSphere API server
 
 paths:
 
@@ -219,11 +219,11 @@ paths:
         - User Management
 
 
-  /api/trusttrail:
+  /api/meaning_trail:
     get:
-      summary: Get User TrustTrail
+      summary: Get User Meaning Trail
       description: Retrieves the trust trail for a specified user.
-      operationId: getTrustTrailDetails
+      operationId: getMeaning TrailDetails
       parameters:
         - name: userId
           in: query
@@ -237,34 +237,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrustTrailDetails'
+                $ref: '#/components/schemas/Meaning TrailDetails'
         '400':
           description: Bad request, possibly missing userId in query
         '405':
           description: Invalid request method. Only GET allowed.
 
-  /api/trusttrail/add_transaction:
+  /api/meaning_trail/add_interaction:
     post:
-      summary: Add Transaction to TrustTrail (duplicate?)
-      description: Adds a new transaction to the user's trust trail.
-      operationId: addTrustTrailTransaction
+      summary: Add Interaction to Meaning Trail (duplicate?)
+      description: Adds a new interaction to the user's trust trail.
+      operationId: addMeaning TrailInteraction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TrustTrailTransaction'
+              $ref: '#/components/schemas/Meaning TrailInteraction'
       responses:
         '200':
-          description: Transaction added successfully
+          description: Interaction added successfully
         '400':
           description: Bad request, possibly due to missing or incorrect data
 
 
-  /api/trusttrail/{userId}:
+  /api/meaning_trail/{userId}:
     get:
-      summary: Get comprehensive TrustTrail for a user
-      operationId: getTrustTrail
+      summary: Get comprehensive Meaning Trail for a user
+      operationId: getMeaning Trail
       parameters:
         - name: userId
           in: path
@@ -273,33 +273,33 @@ paths:
             type: string
       responses:
         200:
-          description: Successful retrieval of TrustTrail
+          description: Successful retrieval of Meaning Trail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrustTrail'
+                $ref: '#/components/schemas/Meaning Trail'
         400:
           description: User ID not provided or invalid
 
-  /api/trusttrail/transaction:
+  /api/meaning_trail/interaction:
     post:
-      summary: Add a new transaction to the TrustTrail
-      operationId: addTransaction
+      summary: Add a new interaction to the Meaning Trail
+      operationId: addInteraction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Transaction'
+              $ref: '#/components/schemas/Interaction'
       responses:
         200:
-          description: Transaction successfully added
+          description: Interaction successfully added
         400:
           description: Missing required fields
 
-  /api/trusttrail/comment/gratitude:
+  /api/meaning_trail/comment/gratitude:
     post:
-      summary: Add a gratitude comment to a transaction
+      summary: Add a gratitude comment to a interaction
       operationId: addGratitudeComment
       requestBody:
         required: true
@@ -308,7 +308,7 @@ paths:
             schema:
               type: object
               properties:
-                transaction_id:
+                interaction_id:
                   type: string
                   format: uuid
                 comment:
@@ -317,12 +317,12 @@ paths:
         200:
           description: Comment added successfully
         400:
-          description: Missing required data or transaction not found
+          description: Missing required data or interaction not found
 
-  /api/marketplace/post_service:
+  /api/openings/post_service:
     post:
       summary: Post a Service
-      description: Allows a user to post a new service to the marketplace.
+      description: Allows a user to post a new service to the openings.
       operationId: postService
       requestBody:
         required: true
@@ -356,9 +356,9 @@ paths:
         '400':
           description: Bad request, possibly missing or incorrect information provided
       tags:
-        - Marketplace
+        - Openings
   
-  /api/marketplace/browse_services:
+  /api/openings/browse_services:
     get:
       summary: Browse Services
       description: Retrieve a list of services based on specified filters.
@@ -382,9 +382,9 @@ paths:
         '400':
           description: Incorrect filter specification
       tags:
-        - Marketplace
+        - Openings
 
-  /api/marketplace/request_service:
+  /api/openings/request_service:
     post:
       summary: Request a Service
       description: Allows a user to request a service.
@@ -419,12 +419,12 @@ paths:
         '400':
           description: Bad request, possibly due to incorrect service or user ID
       tags:
-        - Marketplace
+        - Openings
 
-  /api/marketplace/accept_service:
+  /api/openings/accept_service:
     post:
       summary: Accept a Service
-      description: Accepts a service offer, initiating an active transaction.
+      description: Accepts a service offer, initiating an active interaction.
       operationId: acceptService
       requestBody:
         required: true
@@ -456,30 +456,30 @@ paths:
         '400':
           description: Bad request, possibly due to incorrect service or user ID
       tags:
-        - Marketplace
-  /api/unions:
+        - Openings
+  /api/alliances:
     post:
       summary: Create a new union
       description: Allows an authorized user to create a new union.
-      operationId: createUnion
+      operationId: createAlliance
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Union'
+              $ref: '#/components/schemas/Alliance'
       responses:
         '201':
-          description: Union created successfully.
+          description: Alliance created successfully.
         '400':
           description: Bad request, possibly missing required data.
       tags:
-        - Unions
-  /api/unions/{unionId}:
+        - Alliances
+  /api/alliances/{unionId}:
     get:
       summary: Retrieve a union's details
       description: Returns detailed information about a union, including its members.
-      operationId: getUnion
+      operationId: getAlliance
       parameters:
         - name: unionId
           in: path
@@ -493,16 +493,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Union'
+                $ref: '#/components/schemas/Alliance'
         '404':
-          description: Union not found.
+          description: Alliance not found.
       tags:
-        - Unions
+        - Alliances
 
     patch:
       summary: Update a union's details
       description: Allows modifications to a union's details like name or description.
-      operationId: updateUnion
+      operationId: updateAlliance
       parameters:
         - name: unionId
           in: path
@@ -523,18 +523,18 @@ paths:
                   type: string
       responses:
         '200':
-          description: Union updated successfully.
+          description: Alliance updated successfully.
         '400':
           description: Bad request, invalid data provided.
         '404':
-          description: Union not found.
+          description: Alliance not found.
       tags:
-        - Unions
+        - Alliances
 
     delete:
       summary: Delete a union
       description: Removes a union from the system. Should actually be deactivated instead of deleted.
-      operationId: deleteUnion
+      operationId: deleteAlliance
       parameters:
         - name: unionId
           in: path
@@ -544,11 +544,11 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Union deleted successfully.
+          description: Alliance deleted successfully.
         '404':
-          description: Union not found.
+          description: Alliance not found.
       tags:
-        - Unions
+        - Alliances
 
 
 
@@ -587,7 +587,7 @@ components:
       description: |
         This module contains the Invitation model for handling user invitation related tasks.
 
-    TrustTrailTransaction:
+    Meaning TrailInteraction:
       type: object
       required:
         - user_id
@@ -596,20 +596,20 @@ components:
       properties:
         user_id:
           type: string
-          description: The ID of the user who is initiating the transaction
+          description: The ID of the user who is initiating the interaction
         other_user_id:
           type: string
-          description: The ID of the other user involved in the transaction
+          description: The ID of the other user involved in the interaction
         project_id:
           type: string
-          description: The ID of the project related to the transaction
+          description: The ID of the project related to the interaction
 
-    TrustTrailDetails:
+    Meaning TrailDetails:
       type: array
       items:
         type: object
         properties:
-          transactionId:
+          interactionId:
             type: string
           involvedParties:
             type: array
@@ -620,10 +620,10 @@ components:
             additionalProperties: true
 
 
-    Transaction:
+    Interaction:
       type: object
       properties:
-        transaction_id:
+        interaction_id:
           type: string
           format: uuid
         other_user_id:
@@ -632,14 +632,14 @@ components:
         project_id:
           type: string
           format: uuid
-        transaction_description:
+        interaction_description:
           type: string
-        transaction_status:
+        interaction_status:
           type: string
-    TrustTrail:
+    Meaning Trail:
       type: array
       items:
-        $ref: '#/components/schemas/Transaction'
+        $ref: '#/components/schemas/Interaction'
 
     Service:
       type: object
@@ -655,10 +655,10 @@ components:
           format: uuid
 
 
-    Union:
+    Alliance:
       type: object
       properties:
-        union_id:
+        alliance_id:
           type: string
           format: uuid
           description: A unique identifier for this union.
@@ -679,6 +679,6 @@ components:
           format: date-time
           description: Timestamp of when the union was created.
       required:
-        - union_id
+        - alliance_id
         - name
         - members
