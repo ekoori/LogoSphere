@@ -1,5 +1,5 @@
-# File: ./backend/app/models/marketplace.py
-# Description: Marketplace service model — offers and requests in the gift economy.
+# File: ./backend/app/models/openings.py
+# Description: Openings service model — offers and requests in the gift economy.
 # Class: Service — create() and get_all() backed by the trustsphere.services table.
 
 from cassandra.cluster import Cluster

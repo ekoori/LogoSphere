@@ -1,5 +1,5 @@
 // Shared mappers from API shapes to card props.
-// Used by Home, MarketplacePage, and UserPage.
+// Used by Home, OpeningsPage, and UserPage.
 
 const IMAGE_BY_KEY = {
     gpu: '/static/h100_cpus.webp',
@@ -20,7 +20,7 @@ export function imageForService(imageKey, title = '') {
     return '/static/gift_economy.png';
 }
 
-// Map a marketplace service from the API into ServiceCard props.
+// Map a openings service from the API into ServiceCard props.
 // Spheres are returned as {id, name} pairs so links use UUID not name.
 export function mapService(s) {
     // API returns sphere_id (UUID string) and spheres (array of names) separately.

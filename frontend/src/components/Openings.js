@@ -1,8 +1,8 @@
 /*
-File : ./frontend/src/components/Marketplace.js
-Description: This file creates a React component for the Marketplace, where users can post and view services. 
+File : ./frontend/src/components/Openings.js
+Description: This file creates a React component for the Openings, where users can post and view services. 
         It contains functionality for loading the services from the API and displaying them.
-Class: Marketplace
+Class: Openings
 Properties: 
   [-] state: contains a list of services fetched from the API.
 Methods: 
@@ -13,14 +13,14 @@ Methods:
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/App.css';
-import '../styles/Marketplace.css';
+import '../styles/Openings.css';
 
 import NewServiceForm from './NewServiceForm';
 import ServiceCard from './ServiceCard';
 
 
 
-function Marketplace({ services, newServiceVisible, onServiceAdded }) {
+function Openings({ services, newServiceVisible, onServiceAdded }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ function Marketplace({ services, newServiceVisible, onServiceAdded }) {
   return (
       <div>
           <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} />
-          <section className="marketplace">
+          <section className="openings">
               {services.map(service => (
                   <ServiceCard
                       key={service.id}
@@ -58,5 +58,5 @@ function Marketplace({ services, newServiceVisible, onServiceAdded }) {
   );
 }
 
-export default Marketplace;
+export default Openings;
 

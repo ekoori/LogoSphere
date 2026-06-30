@@ -20,7 +20,7 @@
 .interaction.expanded  { box-shadow: var(--shadow-md); }
 
 .interaction.offer     { border-left-color: var(--terracotta); }
-.interaction.request   { border-left-color: var(--honey); }
+.interaction.need   { border-left-color: var(--honey); }
 .interaction.completed { border-left-color: var(--leaf); }
 
 /* ── Summary row — always visible ──────────────────────────────────────── */

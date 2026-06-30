@@ -13,7 +13,7 @@
     background-color: rgba(111, 138, 79, 0.12);
 }
 
-.interaction.request {
+.interaction.need {
     background-color: rgba(194, 100, 60, 0.10);
 }
 
@@ -266,6 +266,6 @@ main {
     margin-bottom: 2em;
 }
 
-.offers-requests .interaction {
+.offers-needs .interaction {
     margin-bottom: 1em;
 }

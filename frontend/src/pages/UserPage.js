@@ -1,16 +1,16 @@
 // UserPage — public profile for any user, loaded by ?id=.
 // Shows their MeaningTrail as collapsible InteractionCards and their posted
-// marketplace offers/requests, mirroring the Home feed layout.
+// openings offers/needs, mirroring the Home feed layout.
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/User.css';
 import '../styles/MeaningTrail.css';
-import '../styles/Marketplace.css';
+import '../styles/Openings.css';
 
 import MeaningTrail from '../components/MeaningTrail';
-import Marketplace from '../components/Marketplace';
+import Openings from '../components/Openings';
 import api from '../api';
 import { mapInteraction, mapService } from '../utils/mappers';
 
@@ -39,7 +39,7 @@ function UserPage() {
             // empty trail is fine
         }
         try {
-            const res = await api.get('/api/marketplace');
+            const res = await api.get('/api/openings');
             // Show only services posted by this user.
             const userServices = (res.data || [])
                 .filter((s) => s.provider_id === id)
@@ -100,7 +100,7 @@ function UserPage() {
                         className={`btn-selector ${activeTab === 'offerings' ? 'active' : ''}`}
                         onClick={() => setActiveTab('offerings')}
                     >
-                        Offers &amp; Requests
+                        Offers &amp; Needs
                     </button>
                 </div>
 
@@ -112,8 +112,8 @@ function UserPage() {
 
                 {activeTab === 'offerings' && (
                     services.length === 0
-                        ? <p className="empty-state">{fullName} hasn't posted any offers or requests yet.</p>
-                        : <Marketplace services={services} newServiceVisible={false} />
+                        ? <p className="empty-state">{fullName} hasn't posted any offers or needs yet.</p>
+                        : <Openings services={services} newServiceVisible={false} />
                 )}
             </main>
         </div>

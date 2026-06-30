@@ -79,7 +79,7 @@ const Header = () => {
 
             <nav>
                 <ul className="nav-primary">
-                    <li><Link to="/marketplace">Marketplace</Link></li>
+                    <li><Link to="/openings">Openings</Link></li>
                     <li><Link to="/spheres">Spheres</Link></li>
                     <li><Link to="/alliances">Alliances</Link></li>
                     <li><Link to="/projects">Projects</Link></li>

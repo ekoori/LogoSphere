@@ -105,7 +105,7 @@ CREATE TABLE trustsphere.likes (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.marketplace (
+CREATE TABLE trustsphere.openings (
     services text PRIMARY KEY,
     active_interactions text
 ) WITH additional_write_policy = '99p'
@@ -133,7 +133,7 @@ CREATE TABLE trustsphere.projects (
     active_interactions text,
     name text,
     owner text,
-    service_requests text
+    service_needs text
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -286,7 +286,7 @@ CREATE TABLE trustsphere.alliances (
     image blob
 );
 
--- Marketplace offers & requests.
+-- Openings offers & requests.
 CREATE TABLE trustsphere.services (
     service_id uuid PRIMARY KEY,
     type text,

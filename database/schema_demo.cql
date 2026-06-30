@@ -1,5 +1,5 @@
 -- ============================================================================
--- TrustSphere — schema extensions for Alliances, Projects and Marketplace services.
+-- TrustSphere — schema extensions for Alliances, Projects and Openings services.
 -- Idempotent-ish: uses IF NOT EXISTS where supported.
 -- ============================================================================
 
@@ -31,10 +31,10 @@ ALTER TABLE trustsphere.projects ADD participants list<uuid>;
 ALTER TABLE trustsphere.projects ADD participant_names list<text>;
 ALTER TABLE trustsphere.projects ADD values list<text>;
 
--- Marketplace offers & requests.
+-- Openings offers & requests.
 CREATE TABLE IF NOT EXISTS trustsphere.services (
     service_id uuid PRIMARY KEY,
-    type text,           -- 'offer' | 'request'
+    type text,           -- 'offer' | 'need'
     title text,
     description text,
     provider_id uuid,

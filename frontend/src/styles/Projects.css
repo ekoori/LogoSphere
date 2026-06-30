@@ -1,7 +1,7 @@
 /* ============================================================================
    Projects — project listing cards (with nested interactions & acknowledgements)
    Nested .interaction styles are scoped under .project to avoid colliding
-   with the global feed cards in MeaningTrail.css / Marketplace.css.
+   with the global feed cards in MeaningTrail.css / Openings.css.
    ========================================================================== */
 
 .project {

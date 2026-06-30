@@ -43,7 +43,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
         setSubmitting(true);
         setError('');
         try {
-            await api.post('/api/marketplace', {
+            await api.post('/api/openings', {
                 type: formData.type,
                 title: formData.title.trim(),
                 description: formData.description.trim(),
@@ -76,8 +76,8 @@ function NewServiceForm({ isVisible, onSuccess }) {
                         Offer
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
-                        <input type="radio" name="type" value="request" checked={formData.type === 'request'} onChange={handleChange} />
-                        Request
+                        <input type="radio" name="type" value="need" checked={formData.type === 'need'} onChange={handleChange} />
+                        Need
                     </label>
                 </div>
 
@@ -86,7 +86,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
                     <input
                         id="nsf-title" name="title" type="text"
                         value={formData.title} onChange={handleChange}
-                        placeholder="What are you offering or requesting?"
+                        placeholder="What are you offering or asking for?"
                         required
                     />
                 </div>
@@ -127,7 +127,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
                     disabled={submitting}
                     style={{ alignSelf: 'flex-start' }}
                 >
-                    {submitting ? 'Posting…' : 'Post to Marketplace'}
+                    {submitting ? 'Posting…' : 'Post to Openings'}
                 </button>
             </form>
         </div>

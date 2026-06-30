@@ -19,8 +19,8 @@ const fmtDate = (val) => {
     return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const TYPE_LABEL = { completed: 'Completed', offer: 'Offer', request: 'Request' };
-const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', request: 'pill-honey' };
+const TYPE_LABEL = { completed: 'Completed', offer: 'Offer', need: 'Need' };
+const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', need: 'pill-honey' };
 
 function InteractionPage() {
     const [searchParams] = useSearchParams();

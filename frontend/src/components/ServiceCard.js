@@ -1,4 +1,4 @@
-// ServiceCard — a marketplace offer or request card.
+// ServiceCard — a openings offer or need card.
 // Status shown via shared StatusProgression; project is a read-only indication.
 // Spheres accept {id, name} pairs so links use UUID when available.
 
@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
-import '../styles/Marketplace.css';
+import '../styles/Openings.css';
 
 const SERVICE_STEPS = ['Posted', 'Accepted', 'In Progress', 'Completed'];
 
@@ -106,9 +106,9 @@ function ServiceCard({
             <div className="service-create-cta">
                 <button
                     className="service-create-btn"
-                    onClick={(e) => { e.stopPropagation(); navigate('/marketplace?new=1'); }}
+                    onClick={(e) => { e.stopPropagation(); navigate('/openings?new=1'); }}
                 >
-                    + Offer or Request
+                    + Offer or Need
                 </button>
             </div>
         </div>

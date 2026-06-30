@@ -136,7 +136,7 @@ VALUES (bbbbbbbb-0000-0000-0000-000000000004,
   ['David Attenborough', 'Emma Watson'],
   ['biodiversity', 'stewardship']);
 
--- ---- Marketplace (offers & requests in the gift economy) -------------------
+-- ---- Openings (offers & needs in the gift economy) -------------------
 INSERT INTO services (service_id, type, title, description, provider_id, provider_name, sphere_id, sphere_name, status, created_at, values)
 VALUES (cccccccc-0000-0000-0000-000000000001, 'offer',
   'Free podcasting & audio workshop',
@@ -146,7 +146,7 @@ VALUES (cccccccc-0000-0000-0000-000000000001, 'offer',
   ['skill sharing', 'storytelling']);
 
 INSERT INTO services (service_id, type, title, description, provider_id, provider_name, sphere_id, sphere_name, status, created_at, values)
-VALUES (cccccccc-0000-0000-0000-000000000002, 'request',
+VALUES (cccccccc-0000-0000-0000-000000000002, 'need',
   'Hands needed for Saturday fence rebuild',
   'The community garden fence came down in the storm. Looking for a few neighbours to help rebuild it this Saturday — lunch is on the garden.',
   9c89c702-6c61-49c8-9f0c-47b8e4e84e4b, 'Marie Kondo',

@@ -1,5 +1,5 @@
 /* ============================================================================
-   Marketplace — service cards (offers / requests) and the new-service form.
+   Openings — service cards (offers / needs) and the new-service form.
    Shares the warm card + accent-bar language with MeaningTrail.css.
    ========================================================================== */
 
@@ -23,7 +23,7 @@
 .service-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
 .interaction.offer,   .service.offer,   .service-card.offer   { border-left-color: var(--leaf); }
-.interaction.request, .service.request, .service-card.request { border-left-color: var(--terracotta); }
+.interaction.need, .service.need, .service-card.need { border-left-color: var(--terracotta); }
 .interaction.completed { border-left-color: var(--moss); }
 
 /* Header rows (shared) */

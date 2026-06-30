@@ -1,12 +1,12 @@
-// Home — landing feed: the logged-in user's MeaningTrail and the marketplace.
+// Home — landing feed: the logged-in user's MeaningTrail and the openings.
 // Both fetched live from the API; 401 means "not logged in" and shows empty state.
 
 import React, { useState, useEffect, useCallback } from 'react';
 import '../styles/MeaningTrail.css';
-import '../styles/Marketplace.css';
+import '../styles/Openings.css';
 
 import MeaningTrail from '../components/MeaningTrail';
-import Marketplace from '../components/Marketplace';
+import Openings from '../components/Openings';
 import api from '../api';
 import { mapService, mapInteraction } from '../utils/mappers';
 
@@ -24,10 +24,10 @@ function Home() {
             if (e.response?.status !== 401) console.error('Error fetching meaning_trail:', e);
         }
         try {
-            const res = await api.get('/api/marketplace');
+            const res = await api.get('/api/openings');
             setServices((res.data || []).map(mapService));
         } catch (e) {
-            if (e.response?.status !== 401) console.error('Error fetching marketplace:', e);
+            if (e.response?.status !== 401) console.error('Error fetching openings:', e);
         }
     }, []);
 
@@ -38,7 +38,7 @@ function Home() {
     return (
         <div className="container">
             <aside>
-                <h3>Marketplace</h3>
+                <h3>Openings</h3>
                 <button className="btn-orange" onClick={() => setIsFormVisible((v) => !v)}>
                     {isFormVisible ? 'Hide New Service Form' : 'New Service'}
                 </button>
@@ -60,10 +60,10 @@ function Home() {
                         Meaning Trail
                     </button>
                     <button
-                        className={`btn-selector ${activeTab === 'offers-requests' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('offers-requests')}
+                        className={`btn-selector ${activeTab === 'offers-needs' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('offers-needs')}
                     >
-                        Offers / Requests
+                        Offers / Needs
                     </button>
                 </div>
 
@@ -72,8 +72,8 @@ function Home() {
                         ? <p className="empty-state">Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.</p>
                         : <MeaningTrail items={items} />
                 )}
-                {activeTab === 'offers-requests' && (
-                    <Marketplace services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} />
+                {activeTab === 'offers-needs' && (
+                    <Openings services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} />
                 )}
             </main>
         </div>
