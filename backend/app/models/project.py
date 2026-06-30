@@ -1,6 +1,6 @@
 # File: ./backend/app/models/project.py
 # Description: Project model. Projects are mission-driven collaborations within a Sphere.
-# Class: Project — create() and get_all() backed by the trustsphere.projects table.
+# Class: Project — create() and get_all() backed by the logosphere.projects table.
 
 from cassandra.cluster import Cluster
 import uuid
@@ -11,7 +11,7 @@ from datetime import datetime
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 
 class Project:

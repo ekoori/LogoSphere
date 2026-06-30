@@ -1,7 +1,7 @@
 
-CREATE KEYSPACE trustsphere WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
+CREATE KEYSPACE logosphere WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
 
-CREATE TABLE trustsphere.audit_log (
+CREATE TABLE logosphere.audit_log (
     id uuid PRIMARY KEY,
     action_type text,
     description text,
@@ -29,7 +29,7 @@ CREATE TABLE trustsphere.audit_log (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.comment_likes (
+CREATE TABLE logosphere.comment_likes (
     interaction_id uuid,
     comment_type text,
     likes counter,
@@ -55,7 +55,7 @@ CREATE TABLE trustsphere.comment_likes (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.invitation (
+CREATE TABLE logosphere.invitation (
     email text PRIMARY KEY,
     code text,
     inviter_id text
@@ -79,7 +79,7 @@ CREATE TABLE trustsphere.invitation (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.likes (
+CREATE TABLE logosphere.likes (
     interaction_id uuid,
     comment_type text,
     user_id uuid,
@@ -105,7 +105,7 @@ CREATE TABLE trustsphere.likes (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.openings (
+CREATE TABLE logosphere.openings (
     services text PRIMARY KEY,
     active_interactions text
 ) WITH additional_write_policy = '99p'
@@ -128,7 +128,7 @@ CREATE TABLE trustsphere.openings (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.projects (
+CREATE TABLE logosphere.projects (
     project_id uuid PRIMARY KEY,
     active_interactions text,
     name text,
@@ -154,7 +154,7 @@ CREATE TABLE trustsphere.projects (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.sessions (
+CREATE TABLE logosphere.sessions (
     session_id uuid PRIMARY KEY,
     creation_time timestamp,
     expire_at timestamp,
@@ -182,7 +182,7 @@ CREATE TABLE trustsphere.sessions (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.spheres (
+CREATE TABLE logosphere.spheres (
     sphere_id uuid PRIMARY KEY,
     admin1 uuid,
     admin2 uuid,
@@ -194,7 +194,7 @@ CREATE TABLE trustsphere.spheres (
     image blob,
     location text,
     name text,
-    value_graph text,
+    meaning_graph text,
     participants list<uuid>,
     projects list<text>,
     alliances list<text>,
@@ -219,7 +219,7 @@ CREATE TABLE trustsphere.spheres (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.meaning_trail (
+CREATE TABLE logosphere.meaning_trail (
     user_id uuid,
     interaction_id uuid,
     gratitude_comment text,
@@ -265,12 +265,12 @@ CREATE TABLE trustsphere.meaning_trail (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE INDEX user_credentials_email_idx ON trustsphere.user_credentials (email);
+CREATE INDEX user_credentials_email_idx ON logosphere.user_credentials (email);
 
-CREATE INDEX sessions_user_id_idx ON trustsphere.sessions (user_id);
+CREATE INDEX sessions_user_id_idx ON logosphere.sessions (user_id);
 
 -- Alliances: federations/partnerships of users, usually nested within a Sphere.
-CREATE TABLE trustsphere.alliances (
+CREATE TABLE logosphere.alliances (
     alliance_id uuid PRIMARY KEY,
     name text,
     description text,
@@ -282,12 +282,12 @@ CREATE TABLE trustsphere.alliances (
     member_names list<text>,
     projects list<text>,
     values list<text>,
-    value_graph text,
+    meaning_graph text,
     image blob
 );
 
 -- Openings offers & requests.
-CREATE TABLE trustsphere.services (
+CREATE TABLE logosphere.services (
     service_id uuid PRIMARY KEY,
     type text,
     title text,
@@ -302,25 +302,25 @@ CREATE TABLE trustsphere.services (
 );
 
 -- Enriched columns on the projects table (see also database/schema_demo.cql).
-ALTER TABLE trustsphere.projects ADD description text;
-ALTER TABLE trustsphere.projects ADD status text;
-ALTER TABLE trustsphere.projects ADD owner_alliance text;
-ALTER TABLE trustsphere.projects ADD sphere_id uuid;
-ALTER TABLE trustsphere.projects ADD sphere_name text;
-ALTER TABLE trustsphere.projects ADD created_at timestamp;
-ALTER TABLE trustsphere.projects ADD participants list<uuid>;
-ALTER TABLE trustsphere.projects ADD participant_names list<text>;
-ALTER TABLE trustsphere.projects ADD values list<text>;
+ALTER TABLE logosphere.projects ADD description text;
+ALTER TABLE logosphere.projects ADD status text;
+ALTER TABLE logosphere.projects ADD owner_alliance text;
+ALTER TABLE logosphere.projects ADD sphere_id uuid;
+ALTER TABLE logosphere.projects ADD sphere_name text;
+ALTER TABLE logosphere.projects ADD created_at timestamp;
+ALTER TABLE logosphere.projects ADD participants list<uuid>;
+ALTER TABLE logosphere.projects ADD participant_names list<text>;
+ALTER TABLE logosphere.projects ADD values list<text>;
 
-CREATE INDEX meaning_trail_other_user_id_idx ON trustsphere.meaning_trail (other_user_id);
+CREATE INDEX meaning_trail_other_user_id_idx ON logosphere.meaning_trail (other_user_id);
 
-CREATE INDEX meaning_trail_project_id_idx ON trustsphere.meaning_trail (project_id);
+CREATE INDEX meaning_trail_project_id_idx ON logosphere.meaning_trail (project_id);
 
-CREATE INDEX meaning_trail_interaction_status_idx ON trustsphere.meaning_trail (interaction_status);
+CREATE INDEX meaning_trail_interaction_status_idx ON logosphere.meaning_trail (interaction_status);
 
-CREATE MATERIALIZED VIEW trustsphere.vw_meaning_trail_summary AS
+CREATE MATERIALIZED VIEW logosphere.vw_meaning_trail_summary AS
     SELECT user_id, interaction_id, interaction_status, project_id
-    FROM trustsphere.meaning_trail
+    FROM logosphere.meaning_trail
     WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND interaction_status IS NOT NULL AND interaction_id IS NOT NULL
     PRIMARY KEY ((user_id, interaction_id), interaction_status)
  WITH CLUSTERING ORDER BY (interaction_status ASC)
@@ -343,7 +343,7 @@ CREATE MATERIALIZED VIEW trustsphere.vw_meaning_trail_summary AS
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.user_credentials (
+CREATE TABLE logosphere.user_credentials (
     user_id uuid PRIMARY KEY,
     email text,
     password text
@@ -367,7 +367,7 @@ CREATE TABLE trustsphere.user_credentials (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.users (
+CREATE TABLE logosphere.users (
     user_id uuid PRIMARY KEY,
     email text,
     joined_datetime timestamp,
@@ -375,7 +375,7 @@ CREATE TABLE trustsphere.users (
     name text,
     profile_picture blob,
     surname text,
-    valuegraph_id uuid
+    meaning_graph_id uuid
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -396,7 +396,7 @@ CREATE TABLE trustsphere.users (
     AND read_repair = 'BLOCKING'
     AND speculative_retry = '99p';
 
-CREATE TABLE trustsphere.voting (
+CREATE TABLE logosphere.voting (
     choices text PRIMARY KEY,
     votes text
 ) WITH additional_write_policy = '99p'

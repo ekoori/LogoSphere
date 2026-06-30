@@ -6,7 +6,7 @@ const Privacy = () => {
       <main>
         <section className="privacy-intro">
           <h1>Privacy Policy</h1>
-          <p>Your privacy is important to us. This privacy policy explains what personal data TrustSphere collects from you, how we use that data, and your rights regarding your personal information.</p>
+          <p>Your privacy is important to us. This privacy policy explains what personal data LogoSphere collects from you, how we use that data, and your rights regarding your personal information.</p>
         </section>
         <section className="privacy-collection">
           <h2>Data Collection</h2>
@@ -46,7 +46,7 @@ const Privacy = () => {
             <li>The right to data portability</li>
             <li>The right to withdraw consent at any time</li>
           </ul>
-          <p>If you have any questions or concerns about your privacy, please contact us at <a href="mailto:privacy@trustsphere.net">privacy@trustsphere.net</a>.</p>
+          <p>If you have any questions or concerns about your privacy, please contact us at <a href="mailto:privacy@logosphere.net">privacy@logosphere.net</a>.</p>
         </section>
       </main>
     </div>

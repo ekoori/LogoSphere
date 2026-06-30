@@ -1,5 +1,5 @@
 # File: ./backend/app/routes/login.py
-# Description: This file manages user authentication and session management for the TrustSphere platform.
+# Description: This file manages user authentication and session management for the LogoSphere platform.
 #              It defines the routes for user login, logout, and session verification.
 # Classes: None
 # Properties: None

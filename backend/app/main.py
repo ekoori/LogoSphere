@@ -63,7 +63,7 @@ app.config.update(
 # Initialize session interface
 session_interface = CassandraSessionInterface(
     cluster_nodes=os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(','),
-    keyspace='trustsphere',
+    keyspace='logosphere',
     session_lifetime=timedelta(days=30)
 )
 app.session_interface = session_interface   
@@ -153,7 +153,7 @@ def internal_error(error):
     return response
 
 if __name__ == '__main__':
-    context = ('/home/igor/TrustSphere/backend/app/localhost.crt', '/home/igor/TrustSphere/backend/app/localhost.key') 
+    context = ('/home/igor/LogoSphere/backend/app/localhost.crt', '/home/igor/LogoSphere/backend/app/localhost.key') 
     with app.app_context():
         #app.run(debug=True, ssl_context=context, host="0.0.0.0")
         app.run(debug=True, host="0.0.0.0")

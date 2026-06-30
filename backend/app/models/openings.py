@@ -1,6 +1,6 @@
 # File: ./backend/app/models/openings.py
 # Description: Openings service model — offers and requests in the gift economy.
-# Class: Service — create() and get_all() backed by the trustsphere.services table.
+# Class: Service — create() and get_all() backed by the logosphere.services table.
 
 from cassandra.cluster import Cluster
 import uuid
@@ -11,7 +11,7 @@ from datetime import datetime
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 
 class Service:

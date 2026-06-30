@@ -1,5 +1,5 @@
 // FIle: ./frontend/src/components/Admin.js:
-// Description: TrustSphere system administration page
+// Description: LogoSphere system administration page
 // Class: 
 // Properties: None
 // Methods: None

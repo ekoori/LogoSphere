@@ -40,7 +40,7 @@ with open(csv_file_path, 'w', newline='') as csv_file:
 
 # Connect to Cassandra
 cluster = Cluster(['172.18.0.2'])  # Replace with your Cassandra host
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 
 

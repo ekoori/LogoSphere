@@ -14,6 +14,6 @@ from app.main import app
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f'Starting TrustSphere backend on http://0.0.0.0:{port}')
+    print(f'Starting LogoSphere backend on http://0.0.0.0:{port}')
     server = WSGIServer(('0.0.0.0', port), app)
     server.serve_forever()

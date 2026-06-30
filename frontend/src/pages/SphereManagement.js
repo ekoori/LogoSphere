@@ -93,7 +93,7 @@ const SphereManagement = () => {
             </ul>
           </div>
           <div className="sphere-values">
-            <h3>Value Graph</h3>
+            <h3>Meaning Graph</h3>
             {sphere.values.map((value, index) => (
               <span key={index}>#{value}</span>
             ))}

@@ -17,7 +17,7 @@ services:
       - ./dummy_data:/dummy_data
       - cassandra_flags:/scripts  # Persistent volume for the flag file
     environment:
-      - CASSANDRA_CLUSTER_NAME=TrustSphere
+      - CASSANDRA_CLUSTER_NAME=LogoSphere
     healthcheck:
       test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES;' || exit 1"]
       interval: 10s

@@ -5,7 +5,7 @@ import SphereBanner from './SphereBanner'; // Assuming SphereBanner is in the sa
 const NewAllianceForm = ({ isVisible, onCreateAlliance, onCancel }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [valueGraph, setValueGraph] = useState('');
+  const [meaningGraph, setMeaningGraph] = useState('');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -24,7 +24,7 @@ const NewAllianceForm = ({ isVisible, onCreateAlliance, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onCreateAlliance({ name, description, valueGraph, location, image });
+    onCreateAlliance({ name, description, meaningGraph, location, image });
   };
 
   if (!isVisible) return null;
@@ -41,8 +41,8 @@ const NewAllianceForm = ({ isVisible, onCreateAlliance, onCancel }) => {
         <label htmlFor="alliance-description">Alliance Description:</label>
         <textarea id="alliance-description" name="alliance-description" value={description} onChange={(e) => setDescription(e.target.value)} required></textarea>
 
-        <label htmlFor="alliance-value-graph">Value Graph:</label>
-        <input type="text" id="alliance-value-graph" name="alliance-value-graph" value={valueGraph} onChange={(e) => setValueGraph(e.target.value)} required />
+        <label htmlFor="alliance-meaning-graph">Meaning Graph:</label>
+        <input type="text" id="alliance-meaning-graph" name="alliance-meaning-graph" value={meaningGraph} onChange={(e) => setMeaningGraph(e.target.value)} required />
 
         <label htmlFor="alliance-location">Geographical Location:</label>
         <input type="text" id="alliance-location" name="alliance-location" value={location} onChange={(e) => setLocation(e.target.value)} required />

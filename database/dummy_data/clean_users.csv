@@ -1,4 +1,4 @@
-user_id,email,joined_datetime,location,name,profile_picture,surname,valuegraph_id
+user_id,email,joined_datetime,location,name,profile_picture,surname,meaning_graph_id
 39eab94a-b6f7-40e1-81d7-9be14b7c867d,neil.tyson@example.com,,USA,Neil deGrasse Tyson,,,
 fe878ccf-aba7-4b16-8b5f-847f7db6e0ad,joe.rogan@example.com,,USA,Joe Rogan,,,
 8bdce8ab-41e9-49db-a3f5-5cbacd5f60d0,jk.rowling@example.com,,UK,J.K. Rowling,,,

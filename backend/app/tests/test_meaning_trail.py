@@ -11,7 +11,7 @@ from app.models.meaning_trail import MeaningTrail, Likes
 
 
 # File: test_meaning_trail.py
-# Description: Test suite for the MeaningTrail model in TrustSphere project
+# Description: Test suite for the MeaningTrail model in LogoSphere project
 
 import pytest
 from unittest.mock import MagicMock, patch

@@ -1,7 +1,7 @@
 # File: ./backend/app/models/alliance.py
 # Description: Alliance model. Alliances are federations/partnerships between
 # spheres — groups of users, usually nested in a Sphere.
-# Class: Alliance — create() and get_all() backed by the trustsphere.alliances table.
+# Class: Alliance — create() and get_all() backed by the logosphere.alliances table.
 
 from cassandra.cluster import Cluster
 import uuid
@@ -13,12 +13,12 @@ import base64
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 
 class Alliance:
     def __init__(self, alliance_id, name, description, admin1, sphere_id, sphere_name,
-                 members, member_names, projects, values, value_graph, image, member_roles=None):
+                 members, member_names, projects, values, meaning_graph, image, member_roles=None):
         self.alliance_id = alliance_id
         self.name = name
         self.description = description
@@ -29,7 +29,7 @@ class Alliance:
         self.member_names = member_names
         self.projects = projects
         self.values = values
-        self.value_graph = value_graph
+        self.meaning_graph = meaning_graph
         self.image = image
         self.member_roles = member_roles or {}
 
@@ -54,7 +54,7 @@ class Alliance:
             'members': members_with_roles,
             'projects': self.projects or [],
             'values': self.values or [],
-            'value_graph': self.value_graph,
+            'meaning_graph': self.meaning_graph,
             'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
         }
 
@@ -73,21 +73,21 @@ class Alliance:
         member_names = data.get('member_names', [])
         projects = data.get('projects', [])
         values = data.get('values', [])
-        value_graph = data.get('value_graph', '')
+        meaning_graph = data.get('meaning_graph', '')
         image = data.get('image')
 
         logging.info(f'Creating alliance with alliance_id: {alliance_id}')
         query = """
         INSERT INTO alliances (alliance_id, name, description, admin1, sphere_id, sphere_name,
-                            created_at, members, member_names, projects, values, value_graph, image)
+                            created_at, members, member_names, projects, values, meaning_graph, image)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (
             alliance_id, name, description, admin1, sphere_id, sphere_name,
-            datetime.utcnow(), members, member_names, projects, values, value_graph, image
+            datetime.utcnow(), members, member_names, projects, values, meaning_graph, image
         ))
         return cls(alliance_id, name, description, admin1, sphere_id, sphere_name,
-                   members, member_names, projects, values, value_graph, image)
+                   members, member_names, projects, values, meaning_graph, image)
 
     @classmethod
     def get_all(cls):
@@ -97,7 +97,7 @@ class Alliance:
             alliances.append(cls(
                 r.alliance_id, r.name, r.description, r.admin1, r.sphere_id,
                 getattr(r, 'sphere_name', None), r.members, getattr(r, 'member_names', None),
-                r.projects, r.values, r.value_graph, r.image,
+                r.projects, r.values, r.meaning_graph, r.image,
                 getattr(r, 'member_roles', None),
             ))
         return alliances

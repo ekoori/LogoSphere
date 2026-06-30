@@ -14,7 +14,7 @@ from datetime import datetime
 
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-session = cluster.connect('trustsphere')
+session = cluster.connect('logosphere')
 
 # ── 1. Create table if missing ────────────────────────────────────────────────
 session.execute("""

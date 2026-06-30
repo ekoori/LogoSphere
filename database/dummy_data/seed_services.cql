@@ -3,7 +3,7 @@
 -- and varied lifecycle statuses (so the progress control shows real states).
 -- image_key maps to a bundled static asset on the frontend.
 -- ============================================================================
-USE trustsphere;
+USE logosphere;
 
 UPDATE services SET likes=12, project_name='Skill Share', image_key='podcast', status='In Progress'
   WHERE service_id=cccccccc-0000-0000-0000-000000000001;

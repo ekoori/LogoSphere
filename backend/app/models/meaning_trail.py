@@ -31,11 +31,11 @@ from datetime import datetime
 #cassandra_session = cluster.connect()
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-connection.setup(CASSANDRA_HOSTS, 'trustsphere')
+connection.setup(CASSANDRA_HOSTS, 'logosphere')
 
 
 class Likes(Model):
-    __keyspace__ = 'trustsphere'
+    __keyspace__ = 'logosphere'
     __table_name__ = 'likes'
 
     comment_id = columns.UUID(primary_key=True)
@@ -55,7 +55,7 @@ class Likes(Model):
 
 
 class MeaningTrail(Model):
-    __keyspace__ = 'trustsphere'
+    __keyspace__ = 'logosphere'
     __table_name__ = 'meaning_trail'
 
     user_id = columns.UUID(primary_key=True)

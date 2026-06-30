@@ -39,10 +39,10 @@ const MODES = [
     },
 ];
 
-// How existing TrustSphere primitives deepen under a meaning lens.
+// How existing LogoSphere primitives deepen under a meaning lens.
 const MAPPING = [
     {
-        from: 'Value Graph',
+        from: 'Meaning Graph',
         to: 'Meaning Graph',
         d: 'A profile holds a handful of Value Cards instead of a tag cloud — what you care about, and why.',
     },
@@ -156,14 +156,14 @@ const About = () => {
                     </svg>
                 </div>
 
-                <p className="ab-eyebrow">TrustSphere · a meaning-based economy</p>
+                <p className="ab-eyebrow">LogoSphere · a meaning-based economy</p>
                 <h1 className="ab-hero-title">
                     An economy that<br />remembers <em>why.</em>
                 </h1>
                 <p className="ab-lead">
                     Every system that scales human cooperation must compress what people care about into
                     something it can move around. Money does it with price. Platforms do it with clicks.
-                    Each translation is lossy — and what leaks away is the meaning. TrustSphere is an
+                    Each translation is lossy — and what leaks away is the meaning. LogoSphere is an
                     attempt to keep it.
                 </p>
             </header>
@@ -344,7 +344,7 @@ const About = () => {
                 </div>
                 <div className="ab-prose">
                     <p>
-                        None of this is a rewrite. TrustSphere already speaks in profiles, Receipts,
+                        None of this is a rewrite. LogoSphere already speaks in profiles, Receipts,
                         acknowledgements, spheres, and a gift-economy openings. A meaning lens simply lets each
                         primitive carry more of the truth it was always reaching for.
                     </p>
@@ -387,7 +387,7 @@ const About = () => {
                     what they scored, you belong here.
                 </p>
                 <div className="ab-join-actions">
-                    <Link to="/register" className="btn btn-accent ab-btn-lg">Join TrustSphere</Link>
+                    <Link to="/register" className="btn btn-accent ab-btn-lg">Join LogoSphere</Link>
                     <Link to="/contribute" className="btn btn-ghost ab-btn-lg">Contribute</Link>
                 </div>
             </section>

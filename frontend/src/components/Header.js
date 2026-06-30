@@ -1,5 +1,5 @@
 // File: ./frontend/src/components/Header.js
-// Description: Fixed top navigation and branding for TrustSphere.
+// Description: Fixed top navigation and branding for LogoSphere.
 // Class: Header — brand wordmark, primary nav, notifications, and account menu.
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -73,7 +73,7 @@ const Header = () => {
             <div className="brand">
                 <Link to="/">
                     <BrandMark />
-                    Trust<b>Sphere</b>
+                    Logo<b>Sphere</b>
                 </Link>
             </div>
 

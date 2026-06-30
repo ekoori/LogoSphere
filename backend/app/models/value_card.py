@@ -11,7 +11,7 @@ from datetime import datetime
 
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('trustsphere')
+cassandra_session = cluster.connect('logosphere')
 
 FRANKL_MODES = ('creative', 'experiential', 'attitudinal')
 COLOR_KEYS = ('honey', 'leaf', 'terracotta', 'sage', 'moss')

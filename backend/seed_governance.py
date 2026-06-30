@@ -12,7 +12,7 @@ from cassandra.cluster import Cluster
 
 HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(HOSTS)
-session = cluster.connect('trustsphere')
+session = cluster.connect('logosphere')
 
 # -- Known IDs ----------------------------------------------------------------─
 JOE          = uuid.UUID('fe878ccf-aba7-4b16-8b5f-847f7db6e0ad')

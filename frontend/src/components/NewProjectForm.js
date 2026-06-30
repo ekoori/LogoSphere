@@ -5,7 +5,7 @@ import SphereBanner from './SphereBanner'; // Assuming SphereBanner is in the sa
 const NewProjectForm = ({ isVisible, onCreateProject, onCancel }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [valueGraph, setValueGraph] = useState('');
+  const [meaningGraph, setMeaningGraph] = useState('');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -24,7 +24,7 @@ const NewProjectForm = ({ isVisible, onCreateProject, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onCreateProject({ name, description, valueGraph, location, image });
+    onCreateProject({ name, description, meaningGraph, location, image });
   };
 
   if (!isVisible) return null;
@@ -41,8 +41,8 @@ const NewProjectForm = ({ isVisible, onCreateProject, onCancel }) => {
         <label htmlFor="project-description">Project Description:</label>
         <textarea id="project-description" name="project-description" value={description} onChange={(e) => setDescription(e.target.value)} required></textarea>
 
-        <label htmlFor="project-value-graph">Value Graph:</label>
-        <input type="text" id="project-value-graph" name="project-value-graph" value={valueGraph} onChange={(e) => setValueGraph(e.target.value)} required />
+        <label htmlFor="project-meaning-graph">Meaning Graph:</label>
+        <input type="text" id="project-meaning-graph" name="project-meaning-graph" value={meaningGraph} onChange={(e) => setMeaningGraph(e.target.value)} required />
 
         <label htmlFor="project-location">Geographical Location:</label>
         <input type="text" id="project-location" name="project-location" value={location} onChange={(e) => setLocation(e.target.value)} required />

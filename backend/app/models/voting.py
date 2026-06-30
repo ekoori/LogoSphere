@@ -1,5 +1,5 @@
 # File: ./backend/app/models/voting.py
-# Description: Manages voting mechanisms within TrustSphere, enabling user interaction and decision-making through votes on various entities and propositions.
+# Description: Manages voting mechanisms within LogoSphere, enabling user interaction and decision-making through votes on various entities and propositions.
 # Class: Voting
 # Properties:
 #   [-] vote_id: Unique identifier for a vote instance.
