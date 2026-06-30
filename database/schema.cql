@@ -301,6 +301,20 @@ CREATE TABLE logosphere.services (
     values list<text>
 );
 
+-- Enriched columns on the services table (added live in earlier passes,
+-- now tracked here as the source of truth).
+ALTER TABLE logosphere.services ADD likes int;
+ALTER TABLE logosphere.services ADD project_name text;
+ALTER TABLE logosphere.services ADD image_key text;
+
+-- cadence: 'single' (locks after one Accept) | 'perpetual' (e.g. ongoing
+-- lessons — stays open, can be accepted repeatedly, each Accept spawns its
+-- own Exchange). accepted_by/accepted_by_name record who locked a 'single'
+-- opening.
+ALTER TABLE logosphere.services ADD cadence text;
+ALTER TABLE logosphere.services ADD accepted_by uuid;
+ALTER TABLE logosphere.services ADD accepted_by_name text;
+
 -- Enriched columns on the projects table (see also database/schema_demo.cql).
 ALTER TABLE logosphere.projects ADD description text;
 ALTER TABLE logosphere.projects ADD status text;

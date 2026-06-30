@@ -42,6 +42,9 @@ export function mapService(s) {
         likesCount: s.likes || 0,
         likedByCurrentUser: false,
         canModify: false,
+        cadence: s.cadence || 'single',
+        acceptedBy: s.accepted_by || null,
+        acceptedByName: s.accepted_by_name || null,
     };
 }
 

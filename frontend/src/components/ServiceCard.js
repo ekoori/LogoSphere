@@ -25,7 +25,7 @@ const sHref = (s) => {
 
 function ServiceCard({
     type, title, spheres, provider, providerId, description, project,
-    imageUrl, time, status, likesCount, likedByCurrentUser,
+    imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
 }) {
     const navigate = useNavigate();
     const [liked, setLiked] = useState(likedByCurrentUser);
@@ -56,7 +56,17 @@ function ServiceCard({
                             </React.Fragment>
                         ))}
                     </small>
-                    <h3>{title}</h3>
+                    <h3>
+                        {title}
+                        {cadence === 'perpetual' && (
+                            <span className="cadence-badge cadence-badge--perpetual" title="Ongoing — can be accepted repeatedly">
+                                ↻ Ongoing
+                            </span>
+                        )}
+                    </h3>
+                    {status === 'Accepted' && acceptedByName && cadence !== 'perpetual' && (
+                        <div className="accepted-by-note">Accepted by {acceptedByName}</div>
+                    )}
                     <div className="participants">
                         <span>
                             👤{' '}
@@ -128,6 +138,8 @@ ServiceCard.propTypes = {
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,
     likedByCurrentUser: PropTypes.bool.isRequired,
+    cadence: PropTypes.string,
+    acceptedByName: PropTypes.string,
 };
 
 export default ServiceCard;

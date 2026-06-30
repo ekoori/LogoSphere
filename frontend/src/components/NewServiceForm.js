@@ -10,6 +10,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
         sphere_id: '',
         sphere_name: '',
         project_name: '',
+        cadence: 'single',
     });
     const [spheres, setSpheres] = useState([]);
     const [projects, setProjects] = useState([]);
@@ -50,10 +51,11 @@ function NewServiceForm({ isVisible, onSuccess }) {
                 sphere_id: formData.sphere_id || null,
                 sphere_name: formData.sphere_name || null,
                 project_name: formData.project_name || null,
+                cadence: formData.cadence,
                 status: 'Posted',
             });
             setSuccess(true);
-            setFormData({ type: 'offer', title: '', description: '', sphere_id: '', sphere_name: '', project_name: '' });
+            setFormData({ type: 'offer', title: '', description: '', sphere_id: '', sphere_name: '', project_name: '', cadence: 'single' });
             setTimeout(() => { setSuccess(false); if (onSuccess) onSuccess(); }, 1200);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to submit. Are you logged in?');
@@ -78,6 +80,17 @@ function NewServiceForm({ isVisible, onSuccess }) {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
                         <input type="radio" name="type" value="need" checked={formData.type === 'need'} onChange={handleChange} />
                         Need
+                    </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5em' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
+                        <input type="radio" name="cadence" value="single" checked={formData.cadence === 'single'} onChange={handleChange} />
+                        One-time
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
+                        <input type="radio" name="cadence" value="perpetual" checked={formData.cadence === 'perpetual'} onChange={handleChange} />
+                        Ongoing (e.g. lessons — stays open, can be accepted repeatedly)
                     </label>
                 </div>
 
