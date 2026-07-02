@@ -8,14 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
+import { buildOpeningProgress } from '../utils/openingProgress';
 import '../styles/Openings.css';
-
-const SERVICE_STEPS = ['Posted', 'Accepted', 'In Progress', 'Completed'];
-
-function serviceIndex(status) {
-    const i = SERVICE_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
-    return i >= 0 ? i : 0;
-}
 
 // Spheres may be strings or {id, name} pairs — prefer UUID link when available.
 const sName = (s) => (typeof s === 'string' ? s : s.name);
@@ -97,26 +91,9 @@ function ServiceCard({
         }
     };
 
-    const cancelled = status === 'Cancelled';
-    const isPerpetual = cadence === 'perpetual';
-
-    // Perpetual openings gather many acceptances over time — the middle phases
-    // become aggregate labels with the date of their most recent activation,
-    // rather than a single fixed accept→confirm cycle.
-    const idx = cancelled ? 1
-        : isPerpetual
-            ? (activity?.completedLastAt ? 3 : activity?.inProgressCount ? 2 : activity?.acceptedCount ? 1 : 0)
-            : serviceIndex(status);
-
-    const PHASE_DATES = [postedAt, acceptedAt, inProgressAt, completedAt];
-    const PERPETUAL_LABELS = ['Posted', 'Accepted (multiple)', 'In Progress (multiple)', 'Completed (multiple)'];
-    const PERPETUAL_DATES = [postedAt, activity?.acceptedLastAt, activity?.inProgressLastAt, activity?.completedLastAt];
-
-    const steps = SERVICE_STEPS.map((label, i) => ({
-        label: isPerpetual ? PERPETUAL_LABELS[i] : label,
-        // A phase's date only appears once that phase has actually been reached.
-        time: i <= idx ? (isPerpetual ? PERPETUAL_DATES[i] : PHASE_DATES[i]) || '' : '',
-    }));
+    const { steps, currentIndex: idx, cancelled } = buildOpeningProgress({
+        status, cadence, postedAt, acceptedAt, inProgressAt, completedAt, activity,
+    });
 
     return (
         <div className={`service ${type}`}>

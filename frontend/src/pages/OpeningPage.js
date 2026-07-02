@@ -11,11 +11,11 @@ import StatusProgression from '../components/StatusProgression';
 import LikeTimestamp from '../components/LikeTimestamp';
 import EntityBanner from '../components/EntityBanner';
 import { mapService } from '../utils/mappers';
+import { buildOpeningProgress } from '../utils/openingProgress';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
 
-const SERVICE_STEPS = ['Posted', 'Accepted', 'In Progress', 'Completed'];
 const TYPE_LABEL = { offer: 'Offer', need: 'Need' };
 const TYPE_PILL  = { offer: 'pill-clay', need: 'pill-honey' };
 
@@ -116,19 +116,15 @@ function OpeningPage() {
     const canAccept = userId && !isOwnOpening && !service.myAcceptance && !lockedToOther
         && service.status !== 'Cancelled' && service.status !== 'Completed';
 
-    const idx = service.status === 'Cancelled' ? 1
-        : isPerpetual
-            ? (service.activity?.completedLastAt ? 3 : service.activity?.inProgressCount ? 2 : service.activity?.acceptedCount ? 1 : 0)
-            : SERVICE_STEPS.findIndex((s) => s.toLowerCase() === (service.status || '').toLowerCase());
-    const stepIdx = idx >= 0 ? idx : 0;
-
-    const PHASE_DATES = [service.postedAt, service.acceptedAt, service.inProgressAt, service.completedAt];
-    const PERPETUAL_LABELS = ['Posted', 'Accepted (multiple)', 'In Progress (multiple)', 'Completed (multiple)'];
-    const PERPETUAL_DATES = [service.postedAt, service.activity?.acceptedLastAt, service.activity?.inProgressLastAt, service.activity?.completedLastAt];
-    const steps = SERVICE_STEPS.map((label, i) => ({
-        label: isPerpetual ? PERPETUAL_LABELS[i] : label,
-        time: i <= stepIdx ? (isPerpetual ? PERPETUAL_DATES[i] : PHASE_DATES[i]) || '' : '',
-    }));
+    const { steps, currentIndex: stepIdx } = buildOpeningProgress({
+        status: service.status,
+        cadence: service.cadence,
+        postedAt: service.postedAt,
+        acceptedAt: service.acceptedAt,
+        inProgressAt: service.inProgressAt,
+        completedAt: service.completedAt,
+        activity: service.activity,
+    });
 
     const pillClass = TYPE_PILL[service.type] || 'pill-clay';
     const typeLabel = TYPE_LABEL[service.type] || service.type;

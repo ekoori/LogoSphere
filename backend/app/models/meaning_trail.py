@@ -25,6 +25,7 @@ from cassandra.cqlengine.management import sync_table
 import uuid
 import json
 import os
+import time
 from uuid import UUID
 from datetime import datetime
 
@@ -37,6 +38,13 @@ connection.setup(CASSANDRA_HOSTS, 'logosphere')
 # Dedicated raw session (keyspace-bound) for cross-table reads like resolving
 # user display names — mirrors the other models, avoids get_session() keyspace quirks.
 _raw_session = Cluster(CASSANDRA_HOSTS).connect('logosphere')
+
+# Short-lived cache of the {user_id: display name} map. Every meaning-trail read
+# needs it to resolve counterparts, and it changes only when a user registers or
+# renames — so a brief TTL avoids a full `users` scan on every request while
+# staying fresh enough (a newly registered user shows within TTL seconds).
+_NAME_MAP_TTL = 30.0
+_name_map_cache = {'data': None, 'ts': 0.0}
 
 
 # Comment types that can be liked on an exchange. 'exchange' is the card itself;
@@ -219,16 +227,22 @@ class MeaningTrail(Model):
 
     @staticmethod
     def _name_map():
-        """{user_id: display name} for resolving the counterpart in an exchange."""
+        """{user_id: display name} for resolving the counterpart in an exchange.
+        Cached for _NAME_MAP_TTL seconds to avoid a full `users` scan per read."""
+        now = time.time()
+        if _name_map_cache['data'] is not None and (now - _name_map_cache['ts']) < _NAME_MAP_TTL:
+            return _name_map_cache['data']
         try:
             out = {}
             for u in _raw_session.execute("SELECT user_id, name, surname FROM users"):
                 full = f"{u.name or ''} {getattr(u, 'surname', '') or ''}".strip()
                 out[u.user_id] = full or 'A member'
+            _name_map_cache['data'] = out
+            _name_map_cache['ts'] = now
             return out
         except Exception as e:
             print(f"Error building name map: {e}")
-            return {}
+            return _name_map_cache['data'] or {}
 
     @classmethod
     def _enrich(cls, row, target_id, viewer_id, names):
@@ -375,15 +389,20 @@ class MeaningTrail(Model):
             return False
 
     @classmethod
-    def get_completion_signal(cls, exchange_id):
+    def get_completion_signal(cls, exchange_id, initiator_id):
         """Best-available timestamp for "this exchange looks completed" — used
         to aggregate a perpetual opening's 'Completed (multiple)' date.
         meaning_trail has no dedicated "became Finished" column, so this
         approximates using the latest comment timestamp once the exchange has
-        reached a finished/receipted status. Returns None if not completed."""
+        reached a finished/receipted status. Returns None if not completed.
+
+        `initiator_id` is the exchange's initiator (the opening's provider), which
+        together with `exchange_id` is the full primary key — a single-partition
+        point read, so this avoids the previous allow_filtering multi-partition
+        scan (this runs per confirmed acceptance inside the openings list)."""
         try:
-            rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
+            rows = list(cls.objects(
+                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))))
             if not rows:
                 return None
             row = rows[0]

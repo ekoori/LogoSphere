@@ -222,7 +222,7 @@ class Service:
         return out
 
     @classmethod
-    def activity_summary(cls, service_id):
+    def activity_summary(cls, service_id, provider_id):
         """For a 'perpetual' opening, aggregate the many acceptances it has
         gathered into one activation date per progress-bar phase:
         - accepted:    latest acceptance of any status (someone said yes)
@@ -231,6 +231,8 @@ class Service:
                        reached a finished/receipted state (approximated by that
                        exchange's own timestamps, since meaning_trail doesn't
                        track a dedicated "became Finished" moment)
+        `provider_id` is the opening's provider = the initiator of every exchange
+        it spawned, letting the completion lookup be a full-PK point read.
         Returns None fields where that phase has never been reached."""
         accs = cls.acceptances(service_id)
         confirmed = [a for a in accs if a['status'] == 'confirmed' and a['exchange_id']]
@@ -242,7 +244,7 @@ class Service:
         if confirmed:
             from app.models.meaning_trail import MeaningTrail
             for a in confirmed:
-                info = MeaningTrail.get_completion_signal(a['exchange_id'])
+                info = MeaningTrail.get_completion_signal(a['exchange_id'], provider_id)
                 if info and (completed_last is None or info > completed_last):
                     completed_last = info
 

@@ -6,6 +6,7 @@ from app.models.user import User
 from app.models.meaning_trail import MeaningTrail
 from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity, get_entity_info
+from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def _enrich_service(s, viewer):
     d['liked_by_current_user'] = Service.is_liked_by(sid, viewer) if viewer else False
     d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
     d['my_acceptance'] = Service.get_acceptance(sid, viewer) if viewer else None
-    d['activity'] = Service.activity_summary(sid) if s.cadence == 'perpetual' else None
+    d['activity'] = Service.activity_summary(sid, s.provider_id) if s.cadence == 'perpetual' else None
     return d
 
 
@@ -296,7 +297,10 @@ def update_service_image(service_id, user_id=None):
         image_file = request.files.get('image')
         if not image_file:
             return jsonify({'message': 'image file is required'}), 400
-        Service.set_image(service_uuid, image_file.read())
+        image_bytes = image_file.read()
+        if not is_supported_image(image_bytes):
+            return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
+        Service.set_image(service_uuid, image_bytes)
         return jsonify({'message': 'Image updated'}), 200
     except ValueError:
         return jsonify({'message': 'Invalid opening id'}), 400

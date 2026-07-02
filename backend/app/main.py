@@ -71,7 +71,7 @@ app.session_interface = session_interface
 
 # Enable CORS for all routes before defining any routes
 CORS(app, resources={r"/api/*": {
-    "origins": ["http://localhost:3000", "http://172.236.62.11:3000"],
+    "origins": ["http://localhost:3000"],
     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "session_id"],
     "expose_headers": ["Content-Type", "Authorization", "session_id"],
     "supports_credentials": True,
@@ -89,14 +89,14 @@ def handle_preflight():
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers.add('Access-Control-Max-Age', '3600')
         origin = request.headers.get('Origin')
-        if origin in ['http://localhost:3000', 'http://172.236.62.11:3000']:
+        if origin in ['http://localhost:3000']:
             response.headers['Access-Control-Allow-Origin'] = origin
         return response
 
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin in ['http://localhost:3000', 'http://172.236.62.11:3000']:
+    if origin in ['http://localhost:3000']:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, session_id')
@@ -161,7 +161,7 @@ def internal_error(error):
     response = jsonify({"error": "Internal Server Error"})
     response.status_code = 500
     origin = request.headers.get('Origin')
-    if origin in ['http://localhost:3000', 'http://172.236.62.11:3000']:
+    if origin in ['http://localhost:3000']:
         response.headers.add('Access-Control-Allow-Origin', origin)
         response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response

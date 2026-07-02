@@ -26,8 +26,14 @@ from flask_login import UserMixin
 import uuid
 import logging
 import os
+import re
 from datetime import datetime, timedelta
 import base64
+
+# Basic email shape check + minimum password length. This is input validation,
+# not account/ownership verification (no confirmation email is sent).
+_EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+_MIN_PASSWORD_LEN = 8
 
 # Set up Cassandra session
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
@@ -68,11 +74,18 @@ class User(UserMixin):
         if not data:
             logging.error('Registration failed: no data provided')
             return None
-        name = data.get('name')
-        email = data.get('email')
-        password = data.get('password')
+        name = (data.get('name') or '').strip()
+        email = (data.get('email') or '').strip()
+        password = data.get('password') or ''
         if not name or not email or not password:
             logging.error('Registration failed: missing name, email or password')
+            return None
+        # Server-side input validation — never trust the client's checks.
+        if not _EMAIL_RE.match(email):
+            logging.error('Registration failed: invalid email format')
+            return None
+        if len(password) < _MIN_PASSWORD_LEN:
+            logging.error('Registration failed: password too short')
             return None
 
         # Reject duplicate emails — otherwise two accounts share an email and
