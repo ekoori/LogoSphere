@@ -20,11 +20,15 @@ import { useLogin } from '../App';  // Import useLogin hook
 const UserLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const { setIsLoggedIn, setUserId } = useLogin();
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
+        setSubmitting(true);
         try {
             const response = await api.post('/api/login', {
                 email,
@@ -40,19 +44,23 @@ const UserLogin = () => {
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('Login failed: ' + (error.response?.data?.message || 'Unknown error'));
+            setError(error.response?.data?.message || 'Login failed. Check your email and password.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
         <div className="login-container">
             <form className="login-form" onSubmit={handleLogin}>
-                <h2>Login to LogoSphere</h2>
+                <h2>Log in to LogoSphere</h2>
+                {error && <p className="auth-error">{error}</p>}
                 <input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
                     required
                 />
                 <input
@@ -60,9 +68,15 @@ const UserLogin = () => {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                 />
-                <button type="submit">Login</button>
+                <button type="submit" disabled={submitting}>
+                    {submitting ? 'Logging in…' : 'Log in'}
+                </button>
+                <p className="auth-alt">
+                    New to LogoSphere? <Link to="/register">Create an account</Link>
+                </p>
             </form>
         </div>
     );
