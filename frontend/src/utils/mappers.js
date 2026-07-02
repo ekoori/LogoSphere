@@ -36,15 +36,33 @@ export function mapService(s) {
         providerId: s.provider_id || null,
         description: s.description || '',
         project: s.project_name || null,
-        imageUrl: imageForService(s.image_key, s.title),
-        time: 'recently',
+        // A real uploaded photo always wins over the bundled keyword-matched fallback.
+        imageUrl: s.image ? `data:image/jpeg;base64,${s.image}` : imageForService(s.image_key, s.title),
+        // Raw base64 (no data-URI prefix) for EntityBanner, which builds its own.
+        rawImage: s.image || null,
+        time: fmtDate(s.created_at) || 'recently',
         status: s.status || 'Posted',
         likesCount: s.likes || 0,
-        likedByCurrentUser: false,
+        likedByCurrentUser: s.liked_by_current_user || false,
         canModify: false,
         cadence: s.cadence || 'single',
         acceptedBy: s.accepted_by || null,
         acceptedByName: s.accepted_by_name || null,
+        pendingAcceptances: s.pending_acceptances || [],
+        myAcceptance: s.my_acceptance || null,
+        // Per-phase activation dates for the progress bar (single cadence).
+        postedAt: fmtDate(s.created_at),
+        acceptedAt: fmtDate(s.accepted_at),
+        inProgressAt: fmtDate(s.in_progress_at),
+        completedAt: fmtDate(s.completed_at),
+        // Perpetual openings aggregate many acceptances into one date per phase.
+        activity: s.activity ? {
+            acceptedCount: s.activity.accepted_count,
+            acceptedLastAt: fmtDate(s.activity.accepted_last_at),
+            inProgressCount: s.activity.in_progress_count,
+            inProgressLastAt: fmtDate(s.activity.in_progress_last_at),
+            completedLastAt: fmtDate(s.activity.completed_last_at),
+        } : null,
     };
 }
 
@@ -67,25 +85,46 @@ function imageFor(text = '') {
 }
 
 // Map a flat MeaningTrail row from the API into a ExchangeCard item.
-export function mapExchange(row) {
+// `ownerLabel` names the person this trail belongs to — defaults to 'You' for
+// a user's own feed (Home). UserPage passes the profile owner's real name (and
+// id, for the participant link) when the person actually viewing the page is
+// someone else, so the trail doesn't misleadingly call another person's
+// exchange "You".
+export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     const completed = ['Finished', 'Completed', 'Receipted', 'Additional Comments Added']
         .includes(row.exchange_status);
+
+    // Like counts arrive keyed by comment_type: {exchange, gratitude, user, other}.
+    const likes = row.likes || {};
+    const likeOf = (ct) => ({
+        likesCount: likes[ct]?.count || 0,
+        likedByCurrentUser: likes[ct]?.liked || false,
+    });
+
+    // Perspective: an exchange appears in both parties' trails. viewer_is_initiator
+    // (relative to the trail owner) tells us who ownerLabel refers to. Receipts
+    // are always from the recipient; the personal note is always from the initiator.
+    const iAmInitiator = row.viewer_is_initiator !== false;
+    const initiatorName = row.initiator_name || 'Initiator';
+    const recipientName = row.other_user_name || 'A neighbour';
 
     const receipts = [];
     if (row.gratitude_comment) {
         receipts.push({
-            author: row.other_user_name || 'A neighbour',
+            author: iAmInitiator ? recipientName : ownerLabel,
             text: row.gratitude_comment,
             time: fmtDate(row.gratitude_comment_timestamp),
-            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+            commentType: 'gratitude', ...likeOf('gratitude'), imageUrl: null,
+            cards: row.gratitude_comment_cards || [],
         });
     }
     if (row.user_comment) {
         receipts.push({
-            author: 'You',
+            author: iAmInitiator ? ownerLabel : initiatorName,
             text: row.user_comment,
             time: fmtDate(row.user_comment_timestamp),
-            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+            commentType: 'user', ...likeOf('user'), imageUrl: null,
+            cards: row.user_comment_cards || [],
         });
     }
 
@@ -95,7 +134,8 @@ export function mapExchange(row) {
             author: row.other_comment_author_name || 'A neighbour',
             text: row.other_comment,
             time: fmtDate(row.other_comment_timestamp),
-            likesCount: 0, likedByCurrentUser: false,
+            commentType: 'other', ...likeOf('other'),
+            cards: row.other_comment_cards || [],
         });
     }
 
@@ -105,10 +145,15 @@ export function mapExchange(row) {
         title: row.exchange_description || 'An exchange of trust',
         // meaning_trail rows have no sphere FK — project shown separately
         spheres: [],
-        participants: [
-            { name: 'You', id: null },
-            ...(row.other_user_name ? [{ name: row.other_user_name, id: row.other_user_id }] : []),
-        ],
+        participants: iAmInitiator
+            ? [
+                { name: ownerLabel, id: ownerId },
+                ...(row.other_user_name ? [{ name: recipientName, id: row.other_user_id }] : []),
+            ]
+            : [
+                { name: initiatorName, id: row.initiator_id },
+                { name: ownerLabel, id: ownerId },
+            ],
         description: row.project_name
             ? `An act of giving within the "${row.project_name}" project.`
             : 'A moment of trust shared in the community.',
@@ -117,13 +162,15 @@ export function mapExchange(row) {
         imageUrl: imageFor(row.exchange_description),
         time: fmtDate(row.project_start_timestamp) || 'recently',
         status: row.exchange_status || 'Initiated',
-        likesCount: 0,
-        likedByCurrentUser: false,
+        ...likeOf('exchange'),
         initiatedTime: fmtDate(row.project_start_timestamp),
         inProgressTime: '',
         finishedTime: '',
         receiptedTime: '',
-        additionalCommentsTime: '',
+        additionalCommentsTime: fmtDate(row.initiator_comment_timestamp || row.recipient_comment_timestamp),
+        // Presence of either follow-up note is what reveals the 5th progress-bar
+        // step — it's only offered once both sides have receipted.
+        hasFollowupComment: !!(row.initiator_comment || row.recipient_comment),
         receipts,
         acknowledgements,
         canModify: false,

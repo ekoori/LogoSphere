@@ -6,8 +6,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
-import { useLogin } from '../App';
 import api from '../api';
+import ConnectionsPanel from '../components/ConnectionsPanel';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -219,11 +219,7 @@ const ProfilePage = () => {
     const [imageFile, setImageFile] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', location: '' });
     const [saving, setSaving] = useState(false);
-    const [spheres, setSpheres] = useState([]);
-    const [alliances, setAlliances] = useState([]);
-    const [projects, setProjects] = useState([]);
 
-    const { isLoggedIn } = useLogin();
     const navigate = useNavigate();
 
     const fetchProfile = useCallback(async () => {
@@ -250,12 +246,6 @@ const ProfilePage = () => {
     }, [navigate]);
 
     useEffect(() => { fetchProfile(); }, [fetchProfile]);
-
-    useEffect(() => {
-        api.get('/api/spheres').then(r => setSpheres(r.data || [])).catch(() => {});
-        api.get('/api/alliances').then(r => setAlliances(r.data || [])).catch(() => {});
-        api.get('/api/projects').then(r => setProjects(r.data || [])).catch(() => {});
-    }, []);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -369,56 +359,7 @@ const ProfilePage = () => {
 
             <div className="pf-body">
                 {/* ── Sidebar: connections ────────────────────────────── */}
-                <div className="pf-sidebar">
-                    {spheres.length > 0 && (
-                        <div className="pf-sidebar-section">
-                            <h4>Spheres</h4>
-                            <ul className="pf-conn-list">
-                                {spheres.map((s) => (
-                                    <li key={s.sphere_id || s.name}>
-                                        <a href={s.sphere_id ? `/sphere?id=${s.sphere_id}` : '#'} className="pf-conn-pill">
-                                            {s.name}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {alliances.length > 0 && (
-                        <div className="pf-sidebar-section">
-                            <h4>Alliances</h4>
-                            <ul className="pf-conn-list">
-                                {alliances.map((a) => (
-                                    <li key={a.alliance_id || a.name}>
-                                        <a href={a.alliance_id ? `/alliance?id=${a.alliance_id}` : '#'} className="pf-conn-pill">
-                                            {a.name}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {projects.length > 0 && (
-                        <div className="pf-sidebar-section">
-                            <h4>Active projects</h4>
-                            <ul className="pf-conn-list">
-                                {projects.map((p) => (
-                                    <li key={p.project_id || p.name}>
-                                        <a href={p.project_id ? `/project?id=${p.project_id}` : '#'} className="pf-conn-pill">
-                                            {p.name}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    <div className="pf-sidebar-section pf-sidebar-section--muted">
-                        <p className="pf-sidebar-hint">
-                            Your connections, projects, and spheres will appear here as you participate in the community.
-                        </p>
-                    </div>
-                </div>
+                <ConnectionsPanel ownerId={profileData?.user_id} viewerId={profileData?.user_id} />
 
                 {/* ── Main: Meaning Graph (Value Cards) ───────────────── */}
                 <div className="pf-main">

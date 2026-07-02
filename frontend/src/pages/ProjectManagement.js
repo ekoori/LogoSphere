@@ -1,90 +1,172 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import '../styles/ProjectManagement.css';
+// ProjectManagement — manager-only console for a project.
+// Access is restricted to a participant with role 'manager'; anyone else is
+// turned away. Mirrors AllianceManagement/SphereManagement's shape.
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import '../styles/AllianceManagement.css';
+import '../styles/EntityPage.css';
 import api from '../api';
+import { useLogin } from '../App';
+import TabSelector from '../components/TabSelector';
+import EntityValueGraph from '../components/EntityValueGraph';
+import EntityBanner from '../components/EntityBanner';
+
+const TABS = [
+  { key: 'governance', label: 'Governance' },
+  { key: 'valuegraph', label: 'Value Graph' },
+  { key: 'members',    label: 'Contributors' },
+];
 
 const ProjectManagement = () => {
   const [params] = useSearchParams();
   const projectId = params.get('id');
+  const { userId } = useLogin();
 
-  const [project, setProject] = useState({ name: '', description: '', status: '', owner_alliance: '' });
-  const [members, setMembers] = useState([]);
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [nameEdit, setNameEdit] = useState(false);
+  const [descriptionEdit, setDescriptionEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState('governance');
+  const [joinPolicy, setJoinPolicy] = useState('open');
+  const [savingPolicy, setSavingPolicy] = useState(false);
 
-  useEffect(() => {
-    if (!projectId) return;
-    api.get('/api/projects').then((r) => {
+  const fetchProject = useCallback(async () => {
+    if (!projectId) { setLoading(false); return; }
+    try {
+      const r = await api.get('/api/projects');
       const found = (r.data || []).find((p) => p.project_id === projectId || p.id === projectId);
-      if (found) {
-        setProject({
-          name: found.name || '',
-          description: found.description || '',
-          status: found.status || '',
-          owner_alliance: found.owner_alliance || '',
-        });
-        setMembers(found.members || []);
-      }
-    }).catch(() => {});
+      setProject(found || null);
+    } catch (_) {
+      setProject(null);
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
 
-  const ROLE_LABEL = { manager: 'Manager', contributor: 'Contributor', observer: 'Observer' };
+  useEffect(() => { fetchProject(); }, [fetchProject]);
+
+  if (loading) return <div className="ep-loading">Loading…</div>;
+
+  const pid = project ? (project.project_id || project.id) : null;
+  const isManager = !!userId && !!project
+    && (project.members || []).some((m) => m.id === userId && m.role === 'manager');
+
+  if (!project) {
+    return (
+      <div className="ep-page">
+        <p className="ep-not-found">Project not found.</p>
+      </div>
+    );
+  }
+
+  if (!isManager) {
+    return (
+      <div className="ep-page">
+        <p className="ep-not-found">
+          Only this project's manager can access project management.{' '}
+          <Link to={`/project?id=${pid}`}>Back to {project.name}</Link>
+        </p>
+      </div>
+    );
+  }
+
+  const handleImageUpload = async (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    await api.post(`/api/projects/${pid}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await fetchProject();
+  };
+
+  const saveName = (e) => {
+    e.preventDefault();
+    setProject((p) => ({ ...p, name: e.target.projectname.value }));
+    setNameEdit(false);
+  };
+
+  const saveDescription = (e) => {
+    e.preventDefault();
+    setProject((p) => ({ ...p, description: e.target.description.value }));
+    setDescriptionEdit(false);
+  };
 
   return (
+    <>
+    <EntityBanner kind="project" image={project.image} onUpload={handleImageUpload}>
+      <span className="ep-eyebrow">Project Management</span>
+      <h1 className="ep-title">{project.name}</h1>
+    </EntityBanner>
     <div className="container">
-      <aside className="project-sidebar">
-        <h2>{project.name || 'Project Management'}</h2>
+      <aside className="management-sidebar">
+        <h2>Project Management</h2>
+        <div>
+          {!nameEdit ? (
+            <h3 onClick={() => setNameEdit(true)} style={{ cursor: 'pointer' }}>{project.name || '—'}</h3>
+          ) : (
+            <form onSubmit={saveName}>
+              <input type="text" name="projectname" defaultValue={project.name} autoFocus />
+              <button type="submit" className="btn-orange">Save</button>
+            </form>
+          )}
+        </div>
+        <div>
+          {!descriptionEdit ? (
+            <p onClick={() => setDescriptionEdit(true)} style={{ cursor: 'pointer' }}>{project.description || 'Click to add description…'}</p>
+          ) : (
+            <form onSubmit={saveDescription}>
+              <textarea name="description" defaultValue={project.description} rows={4} />
+              <button type="submit" className="btn-orange">Save</button>
+            </form>
+          )}
+        </div>
         {project.owner_alliance && (
-          <p><strong>Alliance:</strong> <a href={`/alliance?name=${encodeURIComponent(project.owner_alliance)}`}>{project.owner_alliance}</a></p>
-        )}
-        {project.status && (
-          <p><strong>Status:</strong> <span className={`status ${(project.status || '').replace(' ', '-').toLowerCase()}`}>{project.status}</span></p>
+          <p><strong>Alliance:</strong> <Link to={`/alliance?name=${encodeURIComponent(project.owner_alliance)}`}>{project.owner_alliance}</Link></p>
         )}
       </aside>
       <main>
-        <div className="project-section">
-          <div className="project-description">
-            <h3>Description</h3>
-            <p>{project.description || '—'}</p>
-          </div>
+        <TabSelector tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
-          <div className="project-description" style={{ marginTop: '2em' }}>
-            <h3>Contributors</h3>
-            {members.length === 0 ? (
-              <p style={{ color: 'var(--ink-faint)', fontStyle: 'italic' }}>No contributors yet.</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {members.map((m) => (
-                  <li key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <a href={`/user?id=${m.id}`} style={{ fontWeight: 500 }}>{m.name}</a>
-                    <span style={{
-                      fontSize: '0.68rem', fontFamily: 'ui-monospace, monospace', fontWeight: 700,
-                      letterSpacing: '0.1em', textTransform: 'uppercase',
-                      padding: '0.2em 0.6em', borderRadius: '4px',
-                      border: '1px solid var(--border-soft)', color: 'var(--ink-faint)'
-                    }}>
-                      {ROLE_LABEL[m.role] || m.role}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        <section className={`management-section tab-content ${activeTab === 'valuegraph' ? '' : 'hidden'}`}>
+          <h3>Value Graph</h3>
+          <p className="management-section-sub">
+            The values this project holds itself to — what it cares about, why, and what drift looks like.
+          </p>
+          <EntityValueGraph entityId={pid} canManage={isManager} entityNoun="project" />
+        </section>
 
-          <div className="project-description" style={{ marginTop: '2em' }}>
-            <h3>Governance</h3>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="form-group">
-                <label htmlFor="join-policy">Participation join policy</label>
-                <select id="join-policy">
-                  <option value="open">Open — anyone can join</option>
-                  <option value="approval">Manager approval required</option>
-                </select>
-              </div>
-              <button type="submit" className="btn-orange">Save Changes</button>
-            </form>
-          </div>
-        </div>
+        <section className={`management-section tab-content ${activeTab === 'governance' ? '' : 'hidden'}`}>
+          <h3>Governance Settings</h3>
+          <form onSubmit={(e) => { e.preventDefault(); setSavingPolicy(true); setTimeout(() => setSavingPolicy(false), 800); }}>
+            <div className="form-group">
+              <label htmlFor="join-policy">Participation join policy</label>
+              <select id="join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
+                <option value="open">Open — anyone can join</option>
+                <option value="approval">Manager approval required</option>
+              </select>
+            </div>
+            <button type="submit" className="btn-orange" disabled={savingPolicy}>
+              {savingPolicy ? 'Saved ✓' : 'Save Changes'}
+            </button>
+          </form>
+        </section>
+
+        <section className={`management-section tab-content ${activeTab === 'members' ? '' : 'hidden'}`}>
+          <h3>Contributors</h3>
+          {(project.members || []).length > 0 ? (
+            <ul className="member-list">
+              {project.members.map((m) => (
+                <li key={m.id}>
+                  <Link to={`/user?id=${m.id}`}>{m.name}</Link>
+                  <span className="pill pill-honey" style={{ marginLeft: '0.6em' }}>{m.role}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ color: 'var(--ink-faint)', fontStyle: 'italic', fontSize: '0.9rem' }}>No contributors yet.</p>
+          )}
+        </section>
       </main>
     </div>
+    </>
   );
 };
 

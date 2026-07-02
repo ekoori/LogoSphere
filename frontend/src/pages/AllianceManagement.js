@@ -1,28 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import '../styles/AllianceManagement.css';
+import '../styles/EntityPage.css';
 import api from '../api';
+import { useLogin } from '../App';
+import TabSelector from '../components/TabSelector';
+import EntityValueGraph from '../components/EntityValueGraph';
+import EntityBanner from '../components/EntityBanner';
+
+const TABS = [
+  { key: 'delegation', label: 'Governance' },
+  { key: 'valuegraph', label: 'Value Graph' },
+  { key: 'voting',     label: 'Voting' },
+  { key: 'projects',   label: 'Projects' },
+  { key: 'members',    label: 'Members' },
+];
 
 const AllianceManagement = () => {
   const [params] = useSearchParams();
   const allianceId = params.get('id');
+  const { userId } = useLogin();
 
-  const [alliance, setAlliance] = useState({ name: '', description: '' });
+  const [alliance, setAlliance] = useState({ name: '', description: '', image: null });
+  const [canManage, setCanManage] = useState(false);
   const [nameEdit, setNameEdit] = useState(false);
   const [descriptionEdit, setDescriptionEdit] = useState(false);
   const [activeTab, setActiveTab] = useState('delegation');
   const [joinPolicy, setJoinPolicy] = useState('open');
   const [savingPolicy, setSavingPolicy] = useState(false);
 
-  useEffect(() => {
+  const fetchAlliance = useCallback(async () => {
     if (!allianceId) return;
-    api.get('/api/alliances').then((r) => {
+    try {
+      const r = await api.get('/api/alliances');
       const found = (r.data || []).find((a) => a.alliance_id === allianceId || a.id === allianceId);
       if (found) {
-        setAlliance({ name: found.name, description: found.description || '' });
+        setAlliance({ name: found.name, description: found.description || '', image: found.image || null });
+        const me = (found.members || []).find((m) => (m.id || m) === userId);
+        setCanManage(me?.role === 'admin' || me?.role === 'steward');
       }
-    }).catch(() => {});
-  }, [allianceId]);
+    } catch (_) { /* ignore */ }
+  }, [allianceId, userId]);
+
+  useEffect(() => { fetchAlliance(); }, [fetchAlliance]);
+
+  const handleImageUpload = async (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    await api.post(`/api/alliances/${allianceId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await fetchAlliance();
+  };
 
   const saveName = (e) => {
     e.preventDefault();
@@ -37,6 +64,11 @@ const AllianceManagement = () => {
   };
 
   return (
+    <>
+    <EntityBanner kind="alliance" image={alliance.image} onUpload={canManage ? handleImageUpload : undefined}>
+      <span className="ep-eyebrow">Alliance Management</span>
+      <h1 className="ep-title">{alliance.name || 'Alliance'}</h1>
+    </EntityBanner>
     <div className="container">
       <aside className="management-sidebar">
         <h2>Alliance Management</h2>
@@ -62,12 +94,16 @@ const AllianceManagement = () => {
         </div>
       </aside>
       <main>
-        <div className="tab-selector">
-          <button className={`btn-selector ${activeTab === 'delegation' ? 'active' : ''}`} onClick={() => setActiveTab('delegation')}>Governance</button>
-          <button className={`btn-selector ${activeTab === 'voting' ? 'active' : ''}`} onClick={() => setActiveTab('voting')}>Voting</button>
-          <button className={`btn-selector ${activeTab === 'projects' ? 'active' : ''}`} onClick={() => setActiveTab('projects')}>Projects</button>
-          <button className={`btn-selector ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>Members</button>
-        </div>
+        <TabSelector tabs={TABS} active={activeTab} onChange={setActiveTab} />
+
+        <section className={`management-section tab-content ${activeTab === 'valuegraph' ? '' : 'hidden'}`}>
+          <h3>Value Graph</h3>
+          <p className="management-section-sub">
+            The values this alliance holds itself to — what it cares about, why, and what drift looks like.
+            {!canManage && ' Only an admin or steward can edit these.'}
+          </p>
+          <EntityValueGraph entityId={allianceId} canManage={canManage} entityNoun="alliance" />
+        </section>
 
         <section className={`management-section tab-content ${activeTab === 'delegation' ? '' : 'hidden'}`}>
           <h3>Governance Settings</h3>
@@ -146,6 +182,7 @@ const AllianceManagement = () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
 

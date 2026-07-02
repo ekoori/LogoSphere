@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
 import NewReceiptForm from './NewReceiptForm';
@@ -15,9 +16,16 @@ import ValueCardChip from './ValueCardChip';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
-const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
-const xcIndex = (status) => {
-    const i = XC_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
+const XC_CORE_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted'];
+const XC_COMMENTS_STEP = 'Additional Comments Added';
+// The 5th step only appears once it's actually relevant — either a follow-up
+// note has been added, or the status has already been manually advanced there.
+const xcSteps = (status, hasFollowupComment) =>
+    hasFollowupComment || status === XC_COMMENTS_STEP
+        ? [...XC_CORE_STEPS, XC_COMMENTS_STEP]
+        : XC_CORE_STEPS;
+const xcIndex = (steps, status) => {
+    const i = steps.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
     return i >= 0 ? i : 0;
 };
 
@@ -46,6 +54,7 @@ function ExchangeCard({
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
+    hasFollowupComment,
     receipts, acknowledgements,
     onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify,
 }) {
@@ -60,10 +69,47 @@ function ExchangeCard({
     const [localReceipts, setLocalReceipts] = useState(receipts || []);
     const [localAcknowledgements, setLocalAcknowledgements] = useState(acknowledgements || []);
 
-    const handleLike = (e) => {
+    // Toggle the like on the exchange itself. Optimistic, rolled back on error.
+    const handleLike = async (e) => {
         e.stopPropagation();
+        if (!id) return;
+        const prevLiked = liked, prevLikes = likes;
         setLiked((v) => !v);
-        setLikes((n) => liked ? n - 1 : n + 1);
+        setLikes((n) => (liked ? n - 1 : n + 1));
+        try {
+            const res = await api.post(`/api/exchange/${id}/like`, { comment_type: 'exchange' });
+            setLiked(res.data.liked);
+            setLikes(res.data.count);
+        } catch (err) {
+            setLiked(prevLiked);
+            setLikes(prevLikes);
+        }
+    };
+
+    // Toggle a like on one of the exchange's comments (gratitude / user / other).
+    // Likes are keyed by (exchange_id, comment_type), so we update whichever
+    // list holds that comment_type. isReceipt selects receipts vs acknowledgements.
+    const handleCommentLike = async (commentType, isReceipt) => {
+        if (!id || !commentType) return;
+        const setList = isReceipt ? setLocalReceipts : setLocalAcknowledgements;
+        const apply = (fn) => setList((prev) => prev.map((it) =>
+            it.commentType === commentType ? fn(it) : it));
+        // optimistic
+        apply((it) => ({
+            ...it,
+            likedByCurrentUser: !it.likedByCurrentUser,
+            likesCount: (it.likesCount || 0) + (it.likedByCurrentUser ? -1 : 1),
+        }));
+        try {
+            const res = await api.post(`/api/exchange/${id}/like`, { comment_type: commentType });
+            apply((it) => ({ ...it, likedByCurrentUser: res.data.liked, likesCount: res.data.count }));
+        } catch (err) {
+            apply((it) => ({
+                ...it,
+                likedByCurrentUser: !it.likedByCurrentUser,
+                likesCount: (it.likesCount || 0) + (it.likedByCurrentUser ? -1 : 1),
+            }));
+        }
     };
 
     const handleTitleClick = (e) => {
@@ -75,31 +121,30 @@ function ExchangeCard({
     const handleAddReceipt = (receipt) => {
         const entry = {
             author: 'You', text: receipt.text, time: 'just now',
-            likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+            commentType: 'user', likesCount: 0, likedByCurrentUser: false, imageUrl: null,
             cards: receipt.cards || [],
         };
         setLocalReceipts((prev) => [...prev, entry]);
-        onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [] });
+        onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [] });
         setShowReceiptForm(false);
     };
 
     const handleAddAcknowledgement = (acknowledgement) => {
         const entry = {
             author: 'You', text: acknowledgement.text, time: 'just now',
-            likesCount: 0, likedByCurrentUser: false,
+            commentType: 'other', likesCount: 0, likedByCurrentUser: false,
             cards: acknowledgement.cards || [],
         };
         setLocalAcknowledgements((prev) => [...prev, entry]);
-        onAddAcknowledgement({ text: acknowledgement.text, cardIds: acknowledgement.cardIds || [] });
+        onAddAcknowledgement({ text: acknowledgement.text, cardIds: acknowledgement.cardIds || [], cards: acknowledgement.cards || [] });
         setShowAcknowledgementForm(false);
     };
 
     const cancelled = status === 'Cancelled';
-    const stepIdx = xcIndex(status);
-    const steps = XC_STEPS.map((label, i) => ({
-        label,
-        time: [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime][i] || '',
-    }));
+    const xcStepLabels = xcSteps(status, hasFollowupComment);
+    const stepIdx = xcIndex(xcStepLabels, status);
+    const stepTimes = [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime];
+    const steps = xcStepLabels.map((label, i) => ({ label, time: stepTimes[i] || '' }));
 
     const hasReceipts = localReceipts.length > 0;
     const hasAcknowledgements = localAcknowledgements.length > 0;
@@ -225,6 +270,7 @@ function ExchangeCard({
                                             <p><strong>{tf.author}:</strong> {tf.text}</p>
                                             {tf.cards?.length > 0 && (
                                                 <div className="comment-value-chips">
+                                                    <span className="comment-vc-label">values</span>
                                                     {tf.cards.map((c, ci) => (
                                                         <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
                                                     ))}
@@ -235,7 +281,7 @@ function ExchangeCard({
                                             likedByCurrentUser={tf.likedByCurrentUser}
                                             likesCount={tf.likesCount}
                                             time={tf.time}
-                                            onLike={(e) => e.stopPropagation()}
+                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType, true); }}
                                         />
                                     </div>
                                 ))}
@@ -271,7 +317,8 @@ function ExchangeCard({
                                         <div className="tf-content">
                                             <p><strong>{s.author}:</strong> {s.text}</p>
                                             {s.cards?.length > 0 && (
-                                                <div className="comment-value-chips">
+                                                <div className="comment-value-chips comment-value-chips--ack">
+                                                    <span className="comment-vc-label">values</span>
                                                     {s.cards.map((c, ci) => (
                                                         <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
                                                     ))}
@@ -282,7 +329,7 @@ function ExchangeCard({
                                             likedByCurrentUser={s.likedByCurrentUser}
                                             likesCount={s.likesCount}
                                             time={s.time}
-                                            onLike={(e) => e.stopPropagation()}
+                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(s.commentType, false); }}
                                         />
                                     </div>
                                 ))}
@@ -327,6 +374,7 @@ ExchangeCard.propTypes = {
     finishedTime: PropTypes.string,
     receiptedTime: PropTypes.string,
     additionalCommentsTime: PropTypes.string,
+    hasFollowupComment: PropTypes.bool,
     receipts: PropTypes.array,
     acknowledgements: PropTypes.array,
     onAddReceipt: PropTypes.func.isRequired,

@@ -146,32 +146,92 @@
 .service-accept-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
 .service-accept-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Create service CTA at bottom of each card */
-.service-create-cta {
-    margin-top: 1.2em;
-    padding-top: 0.9em;
-    border-top: 1px solid var(--border-soft);
-    display: flex;
-    justify-content: flex-end;
-}
-
-.service-create-btn {
+/* Recipient waiting on the provider, or a single opening taken by someone else */
+.service-awaiting {
+    display: block;
+    text-align: center;
+    padding: 0.6em 1em;
     font-family: var(--font-body);
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--moss);
-    background: transparent;
-    border: 1px solid var(--leaf);
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px dashed var(--border-soft);
     border-radius: var(--r-pill);
-    padding: 0.3em 0.85em;
+}
+.service-view-exchange { background: var(--honey); color: var(--ink); }
+.service-view-exchange:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; }
+
+/* Provider view: pending acceptances to confirm */
+.service-pending {
+    margin-top: 1em;
+    padding: 0.8em 0.9em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+}
+.service-pending-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.6em;
+}
+.service-pending-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6em;
+    padding: 0.35em 0;
+}
+.service-pending-row + .service-pending-row { border-top: 1px solid var(--border-soft); }
+.service-pending-name { font-size: 0.9rem; font-weight: 600; }
+.service-pending-actions { display: flex; gap: 0.4em; align-items: center; }
+.service-confirm-btn {
+    padding: 0.5em 0.9em;
+    background: var(--leaf);
+    color: #f7f4e8;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
     cursor: pointer;
-    transition: background-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    transition: background-color 0.18s var(--ease), transform 0.15s var(--ease);
+}
+.service-confirm-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
+.service-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.service-reject-btn {
+    padding: 0.5em 0.8em;
+    background: transparent;
+    color: var(--terracotta);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.service-reject-btn:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; border-color: var(--terracotta); }
+.service-reject-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Sphere | project pipe in the header eyebrow line */
+.service-header-pipe {
+    color: var(--border-soft);
+    margin: 0 0.3em;
 }
 
-.service-create-btn:hover {
-    background: var(--moss);
-    color: #f7f4e8;
+/* Opening title links to its detail page */
+.service-title-link {
+    color: inherit;
+    text-decoration: none;
 }
+.service-title-link:hover { text-decoration: underline; }
 
 /* New-service form */
 #service-form {

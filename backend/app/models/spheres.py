@@ -61,3 +61,37 @@ class Sphere:
         cassandra_session.execute(query, (sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, datetime.utcnow()))
 
         return cls(sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values)
+
+    @classmethod
+    def set_image(cls, sphere_id, image_bytes):
+        cassandra_session.execute(
+            "UPDATE spheres SET image = %s WHERE sphere_id = %s",
+            [image_bytes, sphere_id]
+        )
+
+    @classmethod
+    def join(cls, sphere_id, user_uuid):
+        """Add user as a participant. Returns already_member=True if already in."""
+        result = cassandra_session.execute(
+            "SELECT participants FROM spheres WHERE sphere_id = %s", [sphere_id]
+        ).one()
+        if result and result.participants and user_uuid in result.participants:
+            return True
+        cassandra_session.execute(
+            "UPDATE spheres SET participants = participants + %s WHERE sphere_id = %s",
+            [[user_uuid], sphere_id]
+        )
+        return False
+
+    @classmethod
+    def member_sphere_ids(cls, user_id):
+        """Set of sphere_ids the given user participates in. Used to gate
+        sphere-scoped openings/alliances/projects to members only."""
+        if not user_id:
+            return set()
+        try:
+            uid = user_id if isinstance(user_id, uuid.UUID) else uuid.UUID(str(user_id))
+        except (ValueError, TypeError):
+            return set()
+        rows = cassandra_session.execute("SELECT sphere_id, participants FROM spheres")
+        return {r.sphere_id for r in rows if r.participants and uid in r.participants}

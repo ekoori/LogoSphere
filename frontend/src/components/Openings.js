@@ -21,7 +21,7 @@ import api from '../api';
 
 
 
-function Openings({ services, newServiceVisible, onServiceAdded, currentUserId }) {
+function Openings({ services, newServiceVisible, onServiceAdded, currentUserId, actingAs = null }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const navigate = useNavigate();
 
@@ -29,26 +29,46 @@ function Openings({ services, newServiceVisible, onServiceAdded, currentUserId }
       setIsFormVisible(newServiceVisible);
   }, [newServiceVisible]);
 
-  const toggleFormVisibility = () => {
-      setIsFormVisible(!isFormVisible);
-  };
-
+  // Step 1: recipient signals acceptance. No exchange yet — the provider must
+  // confirm. Refetch so the card reflects the pending state.
   const handleAccept = async (serviceId) => {
       try {
-          const res = await api.post(`/api/openings/${serviceId}/accept`);
+          await api.post(`/api/openings/${serviceId}/accept`);
           if (onServiceAdded) onServiceAdded();
-          if (res.data?.exchange_id) {
-              navigate(`/exchange?id=${res.data.exchange_id}`);
-          }
       } catch (e) {
           console.error('Failed to accept opening:', e);
           alert(e.response?.data?.message || 'Could not accept this opening.');
       }
   };
 
+  // Step 2: provider confirms a pending acceptance → an exchange is created.
+  const handleConfirm = async (serviceId, accepterId) => {
+      try {
+          const res = await api.post(`/api/openings/${serviceId}/confirm`, { accepter_id: accepterId });
+          if (onServiceAdded) onServiceAdded();
+          if (res.data?.exchange_id) {
+              navigate(`/exchange?id=${res.data.exchange_id}`);
+          }
+      } catch (e) {
+          console.error('Failed to confirm acceptance:', e);
+          alert(e.response?.data?.message || 'Could not confirm this acceptance.');
+      }
+  };
+
+  // Provider declines a pending acceptance.
+  const handleReject = async (serviceId, accepterId) => {
+      try {
+          await api.post(`/api/openings/${serviceId}/reject`, { accepter_id: accepterId });
+          if (onServiceAdded) onServiceAdded();
+      } catch (e) {
+          console.error('Failed to reject acceptance:', e);
+          alert(e.response?.data?.message || 'Could not decline this acceptance.');
+      }
+  };
+
   return (
       <div>
-          <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} />
+          <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} actingAs={actingAs} />
           <section className="openings">
               {services.map(service => (
                   <ServiceCard
@@ -56,6 +76,8 @@ function Openings({ services, newServiceVisible, onServiceAdded, currentUserId }
                       {...service}
                       currentUserId={currentUserId}
                       onAccept={() => handleAccept(service.id)}
+                      onConfirm={(accepterId) => handleConfirm(service.id, accepterId)}
+                      onReject={(accepterId) => handleReject(service.id, accepterId)}
                   />
               ))}
           </section>

@@ -74,6 +74,17 @@
     margin-bottom: 0.5em;
 }
 
+/* CompactValueGraph — entity page sidebars */
+.cvg-manage-link {
+    display: inline-block;
+    margin-top: 0.7em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--moss);
+    text-decoration: none;
+}
+.cvg-manage-link:hover { text-decoration: underline; color: var(--moss-deep); }
+
 /* ── Overlay backdrop ─────────────────────────────────────────────────────── */
 .vc-chip-backdrop {
     position: fixed;
@@ -213,6 +224,59 @@
 .comment-value-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3em;
-    margin-top: 0.4em;
+    align-items: center;
+    gap: 0.28em 0.35em;
+    margin-top: 0.6em;
+    padding-top: 0.5em;
+    /* dashed separator tinted to the receipt's accent (leaf) */
+    border-top: 1px dashed color-mix(in srgb, var(--leaf) 45%, var(--border-soft));
+    position: relative;
+}
+
+/* Acknowledgement variant — honey tint */
+.comment-value-chips--ack {
+    border-top-color: color-mix(in srgb, var(--honey) 45%, var(--border-soft));
+}
+
+/* "values" label inline before the chips */
+.comment-vc-label {
+    font-family: var(--font-body);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--moss);
+    opacity: 0.65;
+    align-self: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-right: 0.1em;
+    padding: 0.12em 0.38em;
+    border: 1px solid color-mix(in srgb, var(--leaf) 35%, transparent);
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--leaf) 8%, transparent);
+    line-height: 1.4;
+}
+
+/* Acknowledgement label variant */
+.comment-value-chips--ack .comment-vc-label {
+    color: var(--honey-deep);
+    border-color: color-mix(in srgb, var(--honey) 40%, transparent);
+    background: color-mix(in srgb, var(--honey) 10%, transparent);
+}
+
+/* Chips inside a comment are slightly more compact */
+.comment-value-chips .vc-chip {
+    font-size: 0.73rem;
+    padding: 0.22em 0.6em 0.22em 0.42em;
+    animation: comment-chip-in 0.18s var(--ease) both;
+}
+.comment-value-chips .vc-chip:nth-child(2) { animation-delay: 0s; }
+.comment-value-chips .vc-chip:nth-child(3) { animation-delay: 0.045s; }
+.comment-value-chips .vc-chip:nth-child(4) { animation-delay: 0.09s; }
+.comment-value-chips .vc-chip:nth-child(5) { animation-delay: 0.135s; }
+
+@keyframes comment-chip-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0)  scale(1);    }
 }

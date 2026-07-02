@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useLogin } from '../App';
 import api from '../api';
 import StatusProgression from '../components/StatusProgression';
+import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
@@ -37,11 +38,15 @@ function ExchangePage() {
     const [gratitudeText, setGratitudeText] = useState('');
     const [userNoteText, setUserNoteText] = useState('');
     const [acknowledgementText, setAcknowledgementText] = useState('');
+    const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     const [gratitudeCardIds, setGratitudeCardIds] = useState([]);
+    const [gratitudeCards, setGratitudeCards] = useState([]);
     const [userNoteCardIds, setUserNoteCardIds] = useState([]);
+    const [userNoteCards, setUserNoteCards] = useState([]);
     const [ackCardIds, setAckCardIds] = useState([]);
+    const [ackCards, setAckCards] = useState([]);
 
     const fetchXc = useCallback(async () => {
         if (!xcId) { setFetchError('No exchange ID provided.'); setLoading(false); return; }
@@ -52,7 +57,7 @@ function ExchangePage() {
         } catch (e) {
             setFetchError(
                 e.response?.status === 404
-                    ? 'Exchange not found or you are not a participant.'
+                    ? 'Exchange not found.'
                     : 'Could not load exchange. Please try again.'
             );
         } finally {
@@ -67,6 +72,8 @@ function ExchangePage() {
 
     const isOtherUser = String(xc.other_user_id) === String(userId);
     const canModify = isInitiator || isOtherUser;
+    // Both sides have receipted → the receipt affordance becomes a lighter comment.
+    const bothReceipted = !!(xc.gratitude_comment && xc.user_comment);
     const isCancelled = xc.exchange_status === 'Cancelled';
     const currentIdx = isCancelled ? xcIdx('Initiated') : xcIdx(xc.exchange_status);
     const nextStatus = !isCancelled && currentIdx < XC_STEPS.length - 1 ? XC_STEPS[currentIdx + 1] : null;
@@ -98,13 +105,14 @@ function ExchangePage() {
         }
     };
 
-    const submitComment = async (type, text, clearFn, cardIds = [], clearCardsFn = null) => {
+    const submitComment = async (type, text, clearFn, cardIds = [], clearCardsFn = null, cards = [], clearFullCardsFn = null) => {
         if (!text.trim() || submitting) return;
         setSubmitting(true);
         try {
-            await api.post(`/api/exchange/${xcId}/comment`, { type, text: text.trim(), card_ids: cardIds });
+            await api.post(`/api/exchange/${xcId}/comment`, { type, text: text.trim(), card_ids: cardIds, cards });
             clearFn('');
             if (clearCardsFn) clearCardsFn([]);
+            if (clearFullCardsFn) clearFullCardsFn([]);
             fetchXc();
         } catch (e) {
             console.error('Failed to add comment:', e);
@@ -192,6 +200,14 @@ function ExchangePage() {
                                         <strong>{xc.other_user_name || 'Other party'}:</strong>{' '}
                                         {xc.gratitude_comment}
                                     </p>
+                                    {xc.gratitude_comment_cards?.length > 0 && (
+                                        <div className="comment-value-chips">
+                                            <span className="comment-vc-label">values</span>
+                                            {xc.gratitude_comment_cards.map((c, ci) => (
+                                                <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                            ))}
+                                        </div>
+                                    )}
                                     {fmtDate(xc.gratitude_comment_timestamp) && (
                                         <span className="xc-date" style={{ marginTop: '0.3em', display: 'block', fontSize: '0.74rem' }}>
                                             {fmtDate(xc.gratitude_comment_timestamp)}
@@ -205,9 +221,17 @@ function ExchangePage() {
                             <div className="receipt" style={{ marginTop: xc.gratitude_comment ? '0.55em' : 0 }}>
                                 <div className="tf-content">
                                     <p>
-                                        <strong>{isInitiator ? 'You' : 'Initiator'}:</strong>{' '}
+                                        <strong>{isInitiator ? 'You' : (xc.initiator_name || 'Initiator')}:</strong>{' '}
                                         {xc.user_comment}
                                     </p>
+                                    {xc.user_comment_cards?.length > 0 && (
+                                        <div className="comment-value-chips">
+                                            <span className="comment-vc-label">values</span>
+                                            {xc.user_comment_cards.map((c, ci) => (
+                                                <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                            ))}
+                                        </div>
+                                    )}
                                     {fmtDate(xc.user_comment_timestamp) && (
                                         <span className="xc-date" style={{ marginTop: '0.3em', display: 'block', fontSize: '0.74rem' }}>
                                             {fmtDate(xc.user_comment_timestamp)}
@@ -233,12 +257,12 @@ function ExchangePage() {
                                 />
                                 <ValueCardPicker
                                     selectedIds={gratitudeCardIds}
-                                    onChange={(ids) => setGratitudeCardIds(ids)}
+                                    onChange={(ids, cards) => { setGratitudeCardIds(ids); setGratitudeCards(cards); }}
                                 />
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}
-                                    onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText, gratitudeCardIds, setGratitudeCardIds)}
+                                    onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText, gratitudeCardIds, setGratitudeCardIds, gratitudeCards, setGratitudeCards)}
                                 >
                                     + Add Receipt
                                 </button>
@@ -257,15 +281,62 @@ function ExchangePage() {
                                 />
                                 <ValueCardPicker
                                     selectedIds={userNoteCardIds}
-                                    onChange={(ids) => setUserNoteCardIds(ids)}
+                                    onChange={(ids, cards) => { setUserNoteCardIds(ids); setUserNoteCards(cards); }}
                                 />
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !userNoteText.trim()}
-                                    onClick={() => submitComment('user', userNoteText, setUserNoteText, userNoteCardIds, setUserNoteCardIds)}
+                                    onClick={() => submitComment('user', userNoteText, setUserNoteText, userNoteCardIds, setUserNoteCardIds, userNoteCards, setUserNoteCards)}
                                 >
                                     + Add Note
                                 </button>
+                            </div>
+                        )}
+
+                        {/* ── Follow-up comments — once both sides have receipted,
+                            each may leave one lighter, less formal note. ─────── */}
+                        {(xc.initiator_comment || xc.recipient_comment
+                          || (bothReceipted && canModify)) && (
+                            <div className="xc-followups">
+                                <span className="xc-followups-label">Follow-up</span>
+                                {xc.initiator_comment && (
+                                    <div className="xc-followup">
+                                        <strong>{isInitiator ? 'You' : (xc.initiator_name || 'Initiator')}:</strong>{' '}
+                                        {xc.initiator_comment}
+                                        {fmtDate(xc.initiator_comment_timestamp) && (
+                                            <span className="xc-followup-date">{fmtDate(xc.initiator_comment_timestamp)}</span>
+                                        )}
+                                    </div>
+                                )}
+                                {xc.recipient_comment && (
+                                    <div className="xc-followup">
+                                        <strong>{isOtherUser ? 'You' : (xc.other_user_name || 'Recipient')}:</strong>{' '}
+                                        {xc.recipient_comment}
+                                        {fmtDate(xc.recipient_comment_timestamp) && (
+                                            <span className="xc-followup-date">{fmtDate(xc.recipient_comment_timestamp)}</span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* One comment per side. */}
+                                {bothReceipted
+                                    && ((isInitiator && !xc.initiator_comment) || (isOtherUser && !xc.recipient_comment)) && (
+                                    <div className="xc-followup-add">
+                                        <textarea
+                                            className="xc-followup-input"
+                                            placeholder="Add a brief follow-up comment…"
+                                            value={commentText}
+                                            onChange={e => setCommentText(e.target.value)}
+                                        />
+                                        <button
+                                            className="xc-followup-submit"
+                                            disabled={submitting || !commentText.trim()}
+                                            onClick={() => submitComment('comment', commentText, setCommentText)}
+                                        >
+                                            Add comment
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -284,6 +355,14 @@ function ExchangePage() {
                                         <strong>{xc.other_comment_author_name || 'A participant'}:</strong>{' '}
                                         {xc.other_comment}
                                     </p>
+                                    {xc.other_comment_cards?.length > 0 && (
+                                        <div className="comment-value-chips comment-value-chips--ack">
+                                            <span className="comment-vc-label">values</span>
+                                            {xc.other_comment_cards.map((c, ci) => (
+                                                <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                            ))}
+                                        </div>
+                                    )}
                                     {fmtDate(xc.other_comment_timestamp) && (
                                         <span className="xc-date" style={{ marginTop: '0.3em', display: 'block', fontSize: '0.74rem' }}>
                                             {fmtDate(xc.other_comment_timestamp)}
@@ -295,7 +374,7 @@ function ExchangePage() {
                             <p className="xc-empty-section">No acknowledgements yet.</p>
                         )}
 
-                        {canModify && !xc.other_comment && (
+                        {userId && !xc.other_comment && (
                             <div className="xc-comment-area">
                                 <span className="xc-comment-label">Add an acknowledgement</span>
                                 <textarea
@@ -306,12 +385,12 @@ function ExchangePage() {
                                 />
                                 <ValueCardPicker
                                     selectedIds={ackCardIds}
-                                    onChange={(ids) => setAckCardIds(ids)}
+                                    onChange={(ids, cards) => { setAckCardIds(ids); setAckCards(cards); }}
                                 />
                                 <button
                                     className="xc-comment-submit xc-submit-acknowledgement"
                                     disabled={submitting || !acknowledgementText.trim()}
-                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText, ackCardIds, setAckCardIds)}
+                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText, ackCardIds, setAckCardIds, ackCards, setAckCards)}
                                 >
                                     + Add Acknowledgement
                                 </button>
@@ -352,7 +431,7 @@ function ExchangePage() {
                                 <span>👤</span>
                                 {isInitiator
                                     ? <span className="xc-participant-you">You</span>
-                                    : <a href={`/user?id=${xc.user_id}`}>Initiator</a>
+                                    : <a href={`/user?id=${xc.user_id}`}>{xc.initiator_name || 'Initiator'}</a>
                                 }
                                 <span className="xc-participant-role">Initiator</span>
                             </div>

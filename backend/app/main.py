@@ -24,13 +24,13 @@ from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
 from app.routes.profile import get_user, get_profile, update_user, get_public_user
 from app.routes.registration import register
-from app.routes.meaning_trail import get_meaning_trail, add_exchange, get_exchange, update_xc_status, add_xc_comment
+from app.routes.meaning_trail import get_meaning_trail, get_meaning_trail_by_project, add_exchange, get_exchange, update_xc_status, add_xc_comment, like_exchange
 from app.models.user import User
-from app.routes.spheres import create_sphere, get_spheres
-from app.routes.alliances import create_alliance, get_alliances, join_alliance
-from app.routes.projects import create_project, get_projects, join_project
-from app.routes.openings import create_service, get_services, accept_service
-from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card
+from app.routes.spheres import create_sphere, get_spheres, join_sphere, update_sphere_image
+from app.routes.alliances import create_alliance, get_alliances, join_alliance, update_alliance_image
+from app.routes.projects import create_project, get_projects, join_project, update_project_image
+from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image
+from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card, create_entity_value_card, delete_entity_value_card
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -125,23 +125,36 @@ app.add_url_rule('/api/updateuser', view_func=update_user, methods=['POST', 'OPT
 app.add_url_rule('/api/register', view_func=register, methods=['POST'])
 app.add_url_rule('/api/meaning_trail', view_func=get_meaning_trail, methods=['GET', 'POST', 'OPTIONS'])
 app.add_url_rule('/api/meaning_trail/add_exchange', view_func=add_exchange, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/meaning_trail/by_project/<project_id>', view_func=get_meaning_trail_by_project, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/exchange/<exchange_id>', view_func=get_exchange, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/exchange/<exchange_id>/status', view_func=update_xc_status, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/exchange/<exchange_id>/comment', view_func=add_xc_comment, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/exchange/<exchange_id>/like', view_func=like_exchange, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=create_sphere, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres', view_func=get_spheres, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/spheres/<sphere_id>/join', view_func=join_sphere, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/spheres/<sphere_id>/image', view_func=update_sphere_image, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/alliances', view_func=create_alliance, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/alliances', view_func=get_alliances, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/alliances/<alliance_id>/join', view_func=join_alliance, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/alliances/<alliance_id>/image', view_func=update_alliance_image, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=create_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=get_projects, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/projects/<project_id>/join', view_func=join_project, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/projects/<project_id>/image', view_func=update_project_image, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>', view_func=get_service, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/accept', view_func=accept_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/confirm', view_func=confirm_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/reject', view_func=reject_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/like', view_func=like_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/image', view_func=update_service_image, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<card_id>', view_func=delete_value_card, methods=['DELETE', 'OPTIONS'])
+app.add_url_rule('/api/entity_value_cards/<entity_id>', view_func=create_entity_value_card, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=delete_entity_value_card, methods=['DELETE', 'OPTIONS'])
 
 @app.errorhandler(500)
 def internal_error(error):

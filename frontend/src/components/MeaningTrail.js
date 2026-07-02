@@ -31,6 +31,7 @@ function MeaningTrail({ items }) {
                         finishedTime={item.finishedTime}
                         receiptedTime={item.receiptedTime}
                         additionalCommentsTime={item.additionalCommentsTime}
+                        hasFollowupComment={item.hasFollowupComment}
                         receipts={item.receipts}
                         acknowledgements={item.acknowledgements}
                         onAddReceipt={item.onAddReceipt || (() => {})}

@@ -309,6 +309,65 @@
 .xc-submit-acknowledgement { background: var(--honey); color: var(--moss-deep); }
 .xc-submit-acknowledgement:not(:disabled):hover { background: var(--honey-deep); transform: translateY(-1px); }
 
+/* ── Follow-up comments — deliberately quieter than receipts ───────────────── */
+.xc-followups {
+    margin-top: 1.1em;
+    padding-top: 0.85em;
+    border-top: 1px dashed var(--border-soft);
+}
+.xc-followups-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.55em;
+}
+.xc-followup {
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    padding: 0.3em 0;
+}
+.xc-followup strong { color: var(--ink); font-weight: 700; }
+.xc-followup-date {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    margin-top: 0.1em;
+}
+.xc-followup-add { margin-top: 0.5em; }
+.xc-followup-input {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    padding: 0.5em 0.7em;
+    font-family: var(--font-body);
+    font-size: 0.83rem;
+    background: transparent;
+    color: var(--ink);
+    resize: vertical;
+}
+.xc-followup-input:focus { outline: none; border-color: var(--ink-faint); }
+.xc-followup-input::placeholder { color: var(--ink-faint); }
+.xc-followup-submit {
+    margin-top: 0.4em;
+    padding: 0.36em 0.9em;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.xc-followup-submit:not(:disabled):hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.xc-followup-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ── Loading / error states ───────────────────────────────────────────────── */
 .xc-loading, .xc-error-state {
     text-align: center;

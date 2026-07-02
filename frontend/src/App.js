@@ -32,6 +32,7 @@ import ProjectPage from './pages/ProjectPage';
 import ProjectManagement from './pages/ProjectManagement';
 import UserPage from './pages/UserPage';
 import OpeningsPage from './pages/OpeningsPage';
+import OpeningPage from './pages/OpeningPage';
 import ExchangePage from './pages/ExchangePage';
 import SettingsPage from './pages/Settings';
 import Contribute from './pages/Contribute';
@@ -98,6 +99,7 @@ function AppContent() {
         <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><AllianceManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/openings" element={<ErrorBoundary><ProtectedRoute><OpeningsPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 

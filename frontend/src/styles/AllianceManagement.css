@@ -109,27 +109,14 @@
     background-color: darkred;
 }
 
-.tab-selector {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 1em;
-}
+/* Tab strip is now the shared <TabSelector> (.seg-tabs) — see TabSelector.css. */
 
-.btn-selector {
-    background-color: var(--surface-2);
-    border: none;
-    padding: 0.5em 1em;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 4px;
-    outline: none;
-    margin-right: 0.5em;
-}
-
-.btn-selector:hover,
-.btn-selector.active {
-    background-color: var(--moss);
-    color: white;
+.management-section-sub {
+    margin: -0.4em 0 1.4em;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    max-width: 60ch;
 }
 
 .tab-content.hidden {
