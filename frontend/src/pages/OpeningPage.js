@@ -243,7 +243,15 @@ function OpeningPage() {
                         <div className="xc-participants-list">
                             <div className="xc-participant">
                                 <span>👤</span>
-                                <Link to={service.providerId ? `/user?id=${service.providerId}` : '/user'}>{service.provider}</Link>
+                                {service.actingUser ? (
+                                    <span>
+                                        <Link to={service.actingUserId ? `/user?id=${service.actingUserId}` : '/user'}>{service.actingUser}</Link>
+                                        <span className="on-behalf-of"> on behalf of </span>
+                                        <strong>{service.provider}</strong>
+                                    </span>
+                                ) : (
+                                    <Link to={service.providerId ? `/user?id=${service.providerId}` : '/user'}>{service.provider}</Link>
+                                )}
                             </div>
                         </div>
                     </div>

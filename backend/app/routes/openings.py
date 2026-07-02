@@ -56,7 +56,14 @@ def create_service(user_id=None):
             if not info:
                 return jsonify({'message': 'Unknown entity'}), 400
             provider_id = uuid.UUID(str(acting_as_id))
-            data = {**data, 'provider_name': info['name']}
+            # Record which human posted on the entity's behalf → "Joe on behalf
+            # of <Entity>" — the entity is the provider, but the act is attributed.
+            actor = User.get(str(user_id))
+            actor_name = None
+            if actor:
+                actor_name = f"{actor.name or ''} {actor.surname or ''}".strip() or actor.email
+            data = {**data, 'provider_name': info['name'],
+                    'acting_user_id': str(user_id), 'acting_user_name': actor_name}
         else:
             provider_id = uuid.UUID(str(user_id))
 
@@ -206,6 +213,8 @@ def confirm_service(service_id, user_id=None):
             other_user_name=acceptance['accepter_name'],
             description=service.title,
             project_name=service.project_name,
+            acting_user_id=getattr(service, 'acting_user_id', None),
+            acting_user_name=getattr(service, 'acting_user_name', None),
         )
         if not exchange_id:
             return jsonify({'message': 'Failed to create exchange'}), 500

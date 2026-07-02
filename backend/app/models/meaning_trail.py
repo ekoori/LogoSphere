@@ -145,6 +145,10 @@ class MeaningTrail(Model):
     initiator_comment_timestamp = columns.DateTime()
     recipient_comment = columns.Text()
     recipient_comment_timestamp = columns.DateTime()
+    # When the initiator is an entity (sphere/alliance/project), the human who
+    # acted on its behalf — "Joe on behalf of <Entity>".
+    initiator_acting_user_id = columns.UUID()
+    initiator_acting_user_name = columns.Text()
 
     @classmethod
     def add_exchange(cls, user_id, other_user_id, project_id):
@@ -159,9 +163,11 @@ class MeaningTrail(Model):
             print(f"Error occurred while adding a exchange: {e}")
 
     @classmethod
-    def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description, project_name=None):
+    def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
+                           project_name=None, acting_user_id=None, acting_user_name=None):
         """Create a fully-populated Exchange row when an Opening is accepted.
-        initiator_id is the opening's provider; other_user_id is the accepter."""
+        initiator_id is the opening's provider; other_user_id is the accepter.
+        acting_user_* names the human when the provider is an entity."""
         try:
             exchange_id = uuid.uuid4()
             cls.create(
@@ -173,6 +179,8 @@ class MeaningTrail(Model):
                 exchange_status='Initiated',
                 project_name=project_name,
                 project_start_timestamp=datetime.utcnow(),
+                initiator_acting_user_id=UUID(str(acting_user_id)) if acting_user_id else None,
+                initiator_acting_user_name=acting_user_name,
             )
             return exchange_id
         except Exception as e:
@@ -222,6 +230,8 @@ class MeaningTrail(Model):
             'initiator_comment_timestamp': _dt(self.initiator_comment_timestamp),
             'recipient_comment': self.recipient_comment,
             'recipient_comment_timestamp': _dt(self.recipient_comment_timestamp),
+            'initiator_acting_user_id': _uuid(self.initiator_acting_user_id),
+            'initiator_acting_user_name': self.initiator_acting_user_name,
         }
 
 
@@ -237,6 +247,17 @@ class MeaningTrail(Model):
             for u in _raw_session.execute("SELECT user_id, name, surname FROM users"):
                 full = f"{u.name or ''} {getattr(u, 'surname', '') or ''}".strip()
                 out[u.user_id] = full or 'A member'
+            # Entities can be an exchange's initiator too (an opening posted on
+            # behalf of a sphere/alliance/project), so resolve their ids to names.
+            for s in _raw_session.execute("SELECT sphere_id, name FROM spheres"):
+                if s.name:
+                    out[s.sphere_id] = s.name
+            for a in _raw_session.execute("SELECT alliance_id, name FROM alliances"):
+                if a.name:
+                    out[a.alliance_id] = a.name
+            for p in _raw_session.execute("SELECT project_id, name FROM projects"):
+                if p.name:
+                    out[p.project_id] = p.name
             _name_map_cache['data'] = out
             _name_map_cache['ts'] = now
             return out
@@ -279,17 +300,22 @@ class MeaningTrail(Model):
             return None
 
     @classmethod
-    def get_by_project_id(cls, project_id):
+    def get_by_project_id(cls, project_id, viewer_id=None):
         """All exchanges tagged with this project, from any initiator — used to
         build a project's own (aggregate, multi-person) Meaning Trail. Unlike
         get_meaning_trail, perspective is always relative to each row's own
         initiator (not a single trail owner), so the frontend decides per row
-        whether the actual viewer happens to be that initiator."""
+        whether the actual viewer happens to be that initiator.
+
+        viewer_id drives the "liked by me" flags — it must be the *actual*
+        viewer, not the row's initiator; otherwise a user who already liked an
+        exchange sees it as un-liked here and clicking toggles their like off
+        (making the count appear to drop)."""
         try:
             pid = UUID(str(project_id))
             rows = list(cls.objects.filter(project_id=pid).allow_filtering())
             names = cls._name_map()
-            return [cls._enrich(row, row.user_id, None, names) for row in rows]
+            return [cls._enrich(row, row.user_id, viewer_id, names) for row in rows]
         except Exception as e:
             print(f"Error fetching exchanges by project: {e}")
             return []

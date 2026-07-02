@@ -148,7 +148,8 @@ print("[OK] Created materialized view" if r is True else f"[WARN] Materialized v
 
 # ── Step 4: Apply services ALTERs idempotently ────────────────────────────────
 for col in ["ADD likes int", "ADD project_name text", "ADD image_key text",
-            "ADD cadence text", "ADD accepted_by uuid", "ADD accepted_by_name text"]:
+            "ADD cadence text", "ADD accepted_by uuid", "ADD accepted_by_name text",
+            "ADD acting_user_id uuid", "ADD acting_user_name text"]:
     r = run(f"ALTER TABLE logosphere.services {col}")
     if r is True:
         print(f"[OK]   services: {col}")
@@ -156,6 +157,16 @@ for col in ["ADD likes int", "ADD project_name text", "ADD image_key text",
         print(f"[SKIP] services: {col} (already exists)")
     else:
         print(f"[WARN] services: {col} — {r}")
+
+# meaning_trail: acting-user columns for entity-initiated exchanges.
+for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name text"]:
+    r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
+    if r is True:
+        print(f"[OK]   meaning_trail: {col}")
+    elif "already exists" in str(r).lower() or "duplicate" in str(r).lower():
+        print(f"[SKIP] meaning_trail: {col} (already exists)")
+    else:
+        print(f"[WARN] meaning_trail: {col} — {r}")
 
 # ── Step 5: Re-seed demo data ─────────────────────────────────────────────────
 def U(s): return uuid.UUID(s)

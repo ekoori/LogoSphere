@@ -131,3 +131,23 @@
 #alliance-form input[type="text"], #alliance-form textarea, #alliance-form select { width: 100%; margin-top: 0.5em; }
 
 .form-buttons { display: flex; justify-content: center; gap: 1em; margin-top: 1.2em; }
+
+/* Entity breadcrumb — which sphere (| alliance) this card belongs to */
+.entity-card-breadcrumb {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--moss, #6b7a5e);
+    margin-bottom: 0.15em;
+    font-weight: 600;
+}
+.entity-card-breadcrumb a {
+    color: var(--moss, #6b7a5e);
+    text-decoration: none;
+}
+.entity-card-breadcrumb a:hover { text-decoration: underline; }
+.entity-card-breadcrumb .breadcrumb-pipe {
+    color: var(--border-soft, #cbd2c0);
+    margin: 0 0.3em;
+    font-weight: 400;
+}

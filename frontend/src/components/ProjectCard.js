@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/Projects.css';
 
 const pName = (p) => (typeof p === 'string' ? p : p.name);
@@ -7,8 +8,9 @@ const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.i
 
 const ROLE_LABEL = { manager: 'Manager', contributor: 'Contributor', observer: 'Observer' };
 
-const ProjectCard = ({ id, name, owner, participants, description, values, currentUserId, onJoin, onLike }) => {
+const ProjectCard = ({ id, name, sphere_id, sphere_name, owner, owner_alliance, participants, description, values, currentUserId, onJoin, onLike }) => {
   const navigate = useNavigate();
+  const { entityHref } = useEntityIndex();
   const projectHref = id ? `/project?id=${id}` : '/project';
   const manageHref = id ? `/project-management?id=${id}` : '/project-management';
 
@@ -28,12 +30,22 @@ const ProjectCard = ({ id, name, owner, participants, description, values, curre
     <div className="project" onClick={() => navigate(projectHref)}>
       <div className="project-header">
         <div className="project-left">
-          <h3>{name}</h3>
-          {owner && (
-            <div className="project-owner">
-              <span>🔗 <a href={`/alliance?name=${encodeURIComponent(owner)}`} onClick={(e) => e.stopPropagation()}>{owner}</a></span>
+          {sphere_name && (
+            <div className="entity-card-breadcrumb">
+              <a href={entityHref('sphere', sphere_name, sphere_id)} onClick={(e) => e.stopPropagation()}>
+                {sphere_name}
+              </a>
+              {(owner_alliance || (owner && owner !== 'Independent')) && (
+                <>
+                  <span className="breadcrumb-pipe"> | </span>
+                  <a href={entityHref('alliance', owner_alliance || owner)} onClick={(e) => e.stopPropagation()}>
+                    {owner_alliance || owner}
+                  </a>
+                </>
+              )}
             </div>
           )}
+          <h3>{name}</h3>
           <div className="project-participants">
             <span>👤 {participants.slice(0, 3).map((p, i) => (
               <a key={i} href={pHref(p)} onClick={(e) => e.stopPropagation()}>

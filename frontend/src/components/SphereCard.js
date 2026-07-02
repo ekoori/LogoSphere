@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/Spheres.css';
 import '../styles/ValueCardChip.css';
 import ValueCardChip from './ValueCardChip';
@@ -10,6 +11,7 @@ const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.i
 
 const SphereCard = ({ id, name, alliances, participants, description, projects, values, valueCards = [], isMember = false, currentUserId, onJoin }) => {
   const navigate = useNavigate();
+  const { entityHref } = useEntityIndex();
   const [joining, setJoining] = useState(false);
   const sphereHref = id ? `/sphere?id=${id}` : '/sphere';
 
@@ -31,7 +33,7 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
           <h3>{name}</h3>
           <div className="sphere-card-participants">
             <span>🔗 {alliances.map((alliance, index) => (
-              <a key={index} href={`/alliance?name=${encodeURIComponent(alliance)}`} onClick={(e) => e.stopPropagation()}>{alliance}{index < alliances.length - 1 ? ', ' : ''}</a>
+              <a key={index} href={entityHref('alliance', typeof alliance === 'string' ? alliance : alliance.name, typeof alliance === 'object' ? alliance.id : null)} onClick={(e) => e.stopPropagation()}>{typeof alliance === 'string' ? alliance : alliance.name}{index < alliances.length - 1 ? ', ' : ''}</a>
             ))}</span>
           </div>
           <div className="sphere-card-participants">
@@ -55,7 +57,7 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
       </div>
       <div className="sphere-card-project-link">
         {projects.slice(0, 3).map((project, index) => (
-          <button key={index} className="btn-status" onClick={(e) => { e.stopPropagation(); navigate(`/project?name=${encodeURIComponent(project)}`); }}>{project}</button>
+          <button key={index} className="btn-status" onClick={(e) => { e.stopPropagation(); navigate(entityHref('project', typeof project === 'string' ? project : project.name, typeof project === 'object' ? project.id : null)); }}>{typeof project === 'string' ? project : project.name}</button>
         ))}
         {projects.length > 3 && <a href="/projects" onClick={(e) => e.stopPropagation()}>{projects.length - 3} more...</a>}
       </div>

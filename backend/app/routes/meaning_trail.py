@@ -42,7 +42,7 @@ def get_meaning_trail_by_project(project_id, user_id=None):
     feed (and by Alliance/Sphere pages, which merge several projects' worth)."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
-    return jsonify(MeaningTrail.get_by_project_id(project_id)), 200
+    return jsonify(MeaningTrail.get_by_project_id(project_id, viewer_id=user_id)), 200
 
 
 @validate_session

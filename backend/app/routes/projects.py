@@ -20,11 +20,20 @@ def create_project(user_id=None):
             data = request.form.to_dict()
             image_file = request.files.get('image')
             if image_file:
-                data['image'] = image_file.read()
+                image_bytes = image_file.read()
+                if not is_supported_image(image_bytes):
+                    return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
+                data['image'] = image_bytes
         else:
             data = request.get_json() or {}
         if not data.get('name'):
             return jsonify({'message': 'Project name is required'}), 400
+        if not data.get('sphere_id'):
+            return jsonify({'message': 'A sphere is required'}), 400
+        # Record the founder's display name so they aren't shown as a generic member.
+        creator = User.get(str(user_id))
+        if creator:
+            data['participant_names'] = [f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email]
         new_project = Project.create(data=data, owner_id=uuid.UUID(str(user_id)))
         logger.info(f"Created project {new_project.project_id}")
         return jsonify(new_project.to_dict()), 201

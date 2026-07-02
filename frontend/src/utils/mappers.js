@@ -34,6 +34,9 @@ export function mapService(s) {
         spheres,
         provider: s.provider || 'A member',
         providerId: s.provider_id || null,
+        // When posted on behalf of an entity, the human who acted.
+        actingUser: s.acting_user || null,
+        actingUserId: s.acting_user_id || null,
         description: s.description || '',
         project: s.project_name || null,
         // A real uploaded photo always wins over the bundled keyword-matched fallback.
@@ -108,6 +111,12 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     const initiatorName = row.initiator_name || 'Initiator';
     const recipientName = row.other_user_name || 'A neighbour';
 
+    // When the initiator is an entity acted for by a human, show
+    // "Joe on behalf of <Entity>" and link to the human.
+    const initiatorActing = row.initiator_acting_user_name || null;
+    const initiatorLabel = initiatorActing ? `${initiatorActing} on behalf of ${initiatorName}` : initiatorName;
+    const initiatorLinkId = initiatorActing ? (row.initiator_acting_user_id || null) : (row.initiator_id || null);
+
     const receipts = [];
     if (row.gratitude_comment) {
         receipts.push({
@@ -151,7 +160,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
                 ...(row.other_user_name ? [{ name: recipientName, id: row.other_user_id }] : []),
             ]
             : [
-                { name: initiatorName, id: row.initiator_id },
+                { name: initiatorLabel, id: initiatorLinkId },
                 { name: ownerLabel, id: ownerId },
             ],
         description: row.project_name

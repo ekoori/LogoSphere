@@ -16,9 +16,24 @@ def create_alliance(user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        data = request.get_json() or {}
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            data = request.form.to_dict()
+            image_file = request.files.get('image')
+            if image_file:
+                image_bytes = image_file.read()
+                if not is_supported_image(image_bytes):
+                    return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
+                data['image'] = image_bytes
+        else:
+            data = request.get_json() or {}
         if not data.get('name'):
             return jsonify({'message': 'Alliance name is required'}), 400
+        if not data.get('sphere_id'):
+            return jsonify({'message': 'An operating sphere is required'}), 400
+        # Record the founder's display name so they aren't shown as a generic member.
+        creator = User.get(str(user_id))
+        if creator:
+            data['member_names'] = [f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email]
         new_alliance = Alliance.create(data=data, admin1=uuid.UUID(str(user_id)))
         logger.info(f"Created alliance {new_alliance.alliance_id}")
         return jsonify(new_alliance.to_dict()), 201

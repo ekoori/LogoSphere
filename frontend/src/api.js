@@ -24,6 +24,17 @@ api.interceptors.request.use(
             const sessionId = sessionCookie.split('=')[1];
             config.headers['session_id'] = sessionId;
         }
+        // For file uploads, drop the default JSON Content-Type (and any caller-set
+        // boundary-less "multipart/form-data") so the browser sets it WITH the
+        // multipart boundary — otherwise the server can't parse the parts and the
+        // upload (avatar, banners, entity images) silently fails.
+        if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+            if (config.headers && typeof config.headers.delete === 'function') {
+                config.headers.delete('Content-Type');
+            } else if (config.headers) {
+                delete config.headers['Content-Type'];
+            }
+        }
         return config;
     },
     error => {

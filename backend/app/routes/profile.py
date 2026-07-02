@@ -7,6 +7,7 @@
 import logging
 from flask import request, jsonify, current_app as app
 from app.models.user import User
+from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,8 @@ def update_user(user_id=None):
             profile_picture = request.files.get('profile_picture')
             if profile_picture:
                 profile_picture = profile_picture.read()
+                if not is_supported_image(profile_picture):
+                    return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
         else:
             data = request.get_json()
             profile_picture = data.get('profile_picture')

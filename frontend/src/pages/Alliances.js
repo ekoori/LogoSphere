@@ -8,9 +8,23 @@ import { useLogin } from '../App';
 const Alliances = () => {
   const { userId } = useLogin();
   const [alliances, setAlliances] = useState([]);
+  const [mySpheres, setMySpheres] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const toggleFormVisibility = () => setIsFormVisible((v) => !v);
+
+  // Spheres this user belongs to — an alliance must be anchored to one of them.
+  const fetchMySpheres = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await api.get('/api/spheres');
+      const mine = (res.data || []).filter((s) =>
+        (s.participants || []).map(String).includes(String(userId)));
+      setMySpheres(mine);
+    } catch (e) {
+      console.error('Error fetching spheres:', e);
+    }
+  }, [userId]);
 
   const fetchAlliances = useCallback(async () => {
     try {
@@ -30,10 +44,19 @@ const Alliances = () => {
 
   useEffect(() => {
     fetchAlliances();
-  }, [fetchAlliances]);
+    fetchMySpheres();
+  }, [fetchAlliances, fetchMySpheres]);
 
-  const handleCreateAlliance = async () => {
-    toggleFormVisibility();
+  const handleCreateAlliance = async (data) => {
+    const fd = new FormData();
+    fd.append('name', data.name);
+    fd.append('description', data.description || '');
+    fd.append('location', data.location || '');
+    fd.append('sphere_id', data.sphere_id || '');
+    fd.append('sphere_name', data.sphere_name || '');
+    if (data.image) fd.append('image', data.image);
+    await api.post('/api/alliances', fd);
+    setIsFormVisible(false);
     await fetchAlliances();
   };
 
@@ -61,7 +84,7 @@ const Alliances = () => {
         <button className="btn-orange" onClick={toggleFormVisibility}>Create Alliance</button>
       </aside>
       <main>
-        <NewAllianceForm isVisible={isFormVisible} onCreateAlliance={handleCreateAlliance} onCancel={toggleFormVisibility} />
+        <NewAllianceForm isVisible={isFormVisible} spheres={mySpheres} onCreateAlliance={handleCreateAlliance} onCancel={toggleFormVisibility} />
         {alliances.length === 0 ? (
           <p className="empty-state">No alliances yet. Gather a few people and start one.</p>
         ) : (

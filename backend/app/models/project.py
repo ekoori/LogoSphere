@@ -76,19 +76,24 @@ class Project:
         participant_names = data.get('participant_names', [])
         values = data.get('values', [])
         image = data.get('image')
+        # The founder manages the project from the outset.
+        participant_roles = {owner_id: 'manager'}
 
         logging.info(f'Creating project with project_id: {project_id}')
         query = """
         INSERT INTO projects (project_id, name, description, owner, owner_alliance, status,
-                              sphere_id, sphere_name, created_at, participants, participant_names, values, image)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                              sphere_id, sphere_name, created_at, participants, participant_names,
+                              participant_roles, values, image)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (
             project_id, name, description, owner, owner_alliance, status,
-            sphere_id, sphere_name, datetime.utcnow(), participants, participant_names, values, image
+            sphere_id, sphere_name, datetime.utcnow(), participants, participant_names,
+            participant_roles, values, image
         ))
         return cls(project_id, name, description, owner, owner_alliance, status,
-                   sphere_id, sphere_name, participants, participant_names, values, image=image)
+                   sphere_id, sphere_name, participants, participant_names, values,
+                   participant_roles=participant_roles, image=image)
 
     @classmethod
     def get_all(cls):

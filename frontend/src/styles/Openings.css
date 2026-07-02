@@ -280,3 +280,10 @@
 }
 .step.completed { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
 .step.in-progress { background: var(--terracotta); color: #fff7ef; border-color: var(--terracotta); }
+
+/* "Joe on behalf of <Entity>" attribution */
+.on-behalf-of {
+    color: var(--text-soft, #8a8f80);
+    font-weight: 400;
+    font-style: italic;
+}

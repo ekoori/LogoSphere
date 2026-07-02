@@ -20,7 +20,8 @@ const sHref = (s) => {
 
 function ServiceCard({
     id,
-    type, title, spheres, provider, providerId, description, project, projectId,
+    type, title, spheres, provider, providerId, actingUser, actingUserId,
+    description, project, projectId,
     imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
@@ -138,15 +139,30 @@ function ServiceCard({
                         <div className="accepted-by-note">Accepted by {acceptedByName}</div>
                     )}
                     <div className="participants">
-                        <span>
-                            👤{' '}
-                            <a
-                                href={providerId ? `/user?id=${providerId}` : '/user'}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {provider}
-                            </a>
-                        </span>
+                        {actingUser ? (
+                            // Posted on behalf of an entity — attribute the human.
+                            <span>
+                                👤{' '}
+                                <a
+                                    href={actingUserId ? `/user?id=${actingUserId}` : '/user'}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {actingUser}
+                                </a>
+                                <span className="on-behalf-of"> on behalf of </span>
+                                <strong>{provider}</strong>
+                            </span>
+                        ) : (
+                            <span>
+                                👤{' '}
+                                <a
+                                    href={providerId ? `/user?id=${providerId}` : '/user'}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {provider}
+                                </a>
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className="right">
@@ -259,6 +275,8 @@ ServiceCard.propTypes = {
     spheres: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
     provider: PropTypes.string.isRequired,
     providerId: PropTypes.string,
+    actingUser: PropTypes.string,
+    actingUserId: PropTypes.string,
     description: PropTypes.string.isRequired,
     project: PropTypes.string,
     projectId: PropTypes.string,

@@ -13,9 +13,23 @@ const STATUS_STEPS = ['Initiated', 'In Progress', 'Completed', 'Receipted'];
 const Projects = () => {
   const { userId } = useLogin();
   const [projects, setProjects] = useState([]);
+  const [mySpheres, setMySpheres] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const toggleFormVisibility = () => setIsFormVisible((v) => !v);
+
+  // Spheres this user belongs to — a project must be anchored to one of them.
+  const fetchMySpheres = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await api.get('/api/spheres');
+      const mine = (res.data || []).filter((s) =>
+        (s.participants || []).map(String).includes(String(userId)));
+      setMySpheres(mine);
+    } catch (e) {
+      console.error('Error fetching spheres:', e);
+    }
+  }, [userId]);
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -41,10 +55,19 @@ const Projects = () => {
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    fetchMySpheres();
+  }, [fetchProjects, fetchMySpheres]);
 
-  const handleCreateProject = async () => {
-    toggleFormVisibility();
+  const handleCreateProject = async (data) => {
+    const fd = new FormData();
+    fd.append('name', data.name);
+    fd.append('description', data.description || '');
+    fd.append('location', data.location || '');
+    fd.append('sphere_id', data.sphere_id || '');
+    fd.append('sphere_name', data.sphere_name || '');
+    if (data.image) fd.append('image', data.image);
+    await api.post('/api/projects', fd);
+    setIsFormVisible(false);
     await fetchProjects();
   };
 
@@ -71,7 +94,7 @@ const Projects = () => {
         <button className="btn-orange" onClick={toggleFormVisibility}>Create Project</button>
       </aside>
       <main>
-        <NewProjectForm isVisible={isFormVisible} onCreateProject={handleCreateProject} onCancel={toggleFormVisibility} />
+        <NewProjectForm isVisible={isFormVisible} spheres={mySpheres} onCreateProject={handleCreateProject} onCancel={toggleFormVisibility} />
         {projects.length === 0 ? (
           <p className="empty-state">No projects yet. Start a shared mission for your community.</p>
         ) : (

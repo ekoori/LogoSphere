@@ -19,7 +19,8 @@ class Service:
     def __init__(self, service_id, type, title, description, provider_id, provider_name,
                  sphere_id, sphere_name, status, values, likes=0, project_name=None, image_key=None,
                  cadence='single', accepted_by=None, accepted_by_name=None, created_at=None,
-                 accepted_at=None, in_progress_at=None, completed_at=None, image=None):
+                 accepted_at=None, in_progress_at=None, completed_at=None, image=None,
+                 acting_user_id=None, acting_user_name=None):
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -41,6 +42,10 @@ class Service:
         self.in_progress_at = in_progress_at
         self.completed_at = completed_at
         self.image = image
+        # When an entity (sphere/alliance/project) is the provider, these name
+        # the human who actually posted it — "Joe on behalf of <Entity>".
+        self.acting_user_id = acting_user_id
+        self.acting_user_name = acting_user_name
 
     def to_dict(self):
         def _iso(v):
@@ -68,6 +73,8 @@ class Service:
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
             'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
+            'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
+            'acting_user': self.acting_user_name,
         }
 
     @classmethod
@@ -88,6 +95,12 @@ class Service:
         project_name = data.get('project_name')
         image_key = data.get('image_key')
         cadence = data.get('cadence') if data.get('cadence') in ('single', 'perpetual') else 'single'
+        acting_user_id = data.get('acting_user_id')
+        if isinstance(acting_user_id, str) and acting_user_id:
+            acting_user_id = uuid.UUID(acting_user_id)
+        elif not isinstance(acting_user_id, uuid.UUID):
+            acting_user_id = None
+        acting_user_name = data.get('acting_user_name')
 
         # Look up provider name from users table if not supplied by the client.
         if not provider_name:
@@ -105,16 +118,17 @@ class Service:
         query = """
         INSERT INTO services (service_id, type, title, description, provider_id, provider_name,
                               sphere_id, sphere_name, status, created_at, values, likes, project_name,
-                              image_key, cadence)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                              image_key, cadence, acting_user_id, acting_user_name)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (
             service_id, type_, title, description, provider_id, provider_name,
-            sphere_id, sphere_name, status, created_at, values, 0, project_name, image_key, cadence
+            sphere_id, sphere_name, status, created_at, values, 0, project_name, image_key, cadence,
+            acting_user_id, acting_user_name
         ))
         return cls(service_id, type_, title, description, provider_id, provider_name,
                    sphere_id, sphere_name, status, values, 0, project_name, image_key, cadence,
-                   created_at=created_at)
+                   created_at=created_at, acting_user_id=acting_user_id, acting_user_name=acting_user_name)
 
     @classmethod
     def _from_row(cls, r):
@@ -127,6 +141,7 @@ class Service:
             getattr(r, 'accepted_by_name', None), getattr(r, 'created_at', None),
             getattr(r, 'accepted_at', None), getattr(r, 'in_progress_at', None),
             getattr(r, 'completed_at', None), getattr(r, 'image', None),
+            getattr(r, 'acting_user_id', None), getattr(r, 'acting_user_name', None),
         )
 
     @classmethod
