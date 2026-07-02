@@ -1,20 +1,31 @@
-// InteractionCard — a trust interaction in the MeaningTrail feed.
+// ExchangeCard — a trust exchange in the MeaningTrail feed.
 // Collapsed by default (single compact row); click anywhere to expand.
-// When expanded, the title is a link to the interaction detail page.
+// When expanded, the title is a link to the exchange detail page.
 // Receipts (verified gratitude records) and Acknowledgements (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
+import NewReceiptForm from './NewReceiptForm';
 import StatusProgression from './StatusProgression';
+import ValueCardChip from './ValueCardChip';
 import '../styles/MeaningTrail.css';
+import '../styles/ValueCardChip.css';
 
-const IX_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
-const ixIndex = (status) => {
-    const i = IX_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
+const XC_CORE_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted'];
+const XC_COMMENTS_STEP = 'Additional Comments Added';
+// The 5th step only appears once it's actually relevant — either a follow-up
+// note has been added, or the status has already been manually advanced there.
+const xcSteps = (status, hasFollowupComment) =>
+    hasFollowupComment || status === XC_COMMENTS_STEP
+        ? [...XC_CORE_STEPS, XC_COMMENTS_STEP]
+        : XC_CORE_STEPS;
+const xcIndex = (steps, status) => {
+    const i = steps.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
     return i >= 0 ? i : 0;
 };
 
@@ -37,59 +48,103 @@ const sHref = (s) => {
 const TYPE_LABELS = { completed: 'Completed', offer: 'Offer', need: 'Need' };
 const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', need: 'pill-honey' };
 
-function InteractionCard({
+function ExchangeCard({
     id,
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
     likesCount, likedByCurrentUser,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
+    hasFollowupComment,
     receipts, acknowledgements,
-    onAddReceipt, onAddAcknowledgement, onModifyInteraction, canModify,
+    onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify,
 }) {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
     const [showAcknowledgementForm, setShowAcknowledgementForm] = useState(false);
+    const [showReceiptForm, setShowReceiptForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
     // Local copies so newly submitted entries appear immediately without a refetch.
     const [localReceipts, setLocalReceipts] = useState(receipts || []);
     const [localAcknowledgements, setLocalAcknowledgements] = useState(acknowledgements || []);
 
-    const handleLike = (e) => {
+    // Toggle the like on the exchange itself. Optimistic, rolled back on error.
+    const handleLike = async (e) => {
         e.stopPropagation();
+        if (!id) return;
+        const prevLiked = liked, prevLikes = likes;
         setLiked((v) => !v);
-        setLikes((n) => liked ? n - 1 : n + 1);
+        setLikes((n) => (liked ? n - 1 : n + 1));
+        try {
+            const res = await api.post(`/api/exchange/${id}/like`, { comment_type: 'exchange' });
+            setLiked(res.data.liked);
+            setLikes(res.data.count);
+        } catch (err) {
+            setLiked(prevLiked);
+            setLikes(prevLikes);
+        }
+    };
+
+    // Toggle a like on one of the exchange's comments (gratitude / user / other).
+    // Likes are keyed by (exchange_id, comment_type), so we update whichever
+    // list holds that comment_type. isReceipt selects receipts vs acknowledgements.
+    const handleCommentLike = async (commentType, isReceipt) => {
+        if (!id || !commentType) return;
+        const setList = isReceipt ? setLocalReceipts : setLocalAcknowledgements;
+        const apply = (fn) => setList((prev) => prev.map((it) =>
+            it.commentType === commentType ? fn(it) : it));
+        // optimistic
+        apply((it) => ({
+            ...it,
+            likedByCurrentUser: !it.likedByCurrentUser,
+            likesCount: (it.likesCount || 0) + (it.likedByCurrentUser ? -1 : 1),
+        }));
+        try {
+            const res = await api.post(`/api/exchange/${id}/like`, { comment_type: commentType });
+            apply((it) => ({ ...it, likedByCurrentUser: res.data.liked, likesCount: res.data.count }));
+        } catch (err) {
+            apply((it) => ({
+                ...it,
+                likedByCurrentUser: !it.likedByCurrentUser,
+                likesCount: (it.likesCount || 0) + (it.likedByCurrentUser ? -1 : 1),
+            }));
+        }
     };
 
     const handleTitleClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (id) navigate(`/interaction?id=${id}`);
+        if (id) navigate(`/exchange?id=${id}`);
     };
 
-    const handleAddReceipt = () => {
-        const text = window.prompt('Enter your receipt:');
-        if (text && text.trim()) {
-            const entry = { author: 'You', text: text.trim(), time: 'just now', likesCount: 0, likedByCurrentUser: false, imageUrl: null };
-            setLocalReceipts((prev) => [...prev, entry]);
-            onAddReceipt();
-        }
+    const handleAddReceipt = (receipt) => {
+        const entry = {
+            author: 'You', text: receipt.text, time: 'just now',
+            commentType: 'user', likesCount: 0, likedByCurrentUser: false, imageUrl: null,
+            cards: receipt.cards || [],
+        };
+        setLocalReceipts((prev) => [...prev, entry]);
+        onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [] });
+        setShowReceiptForm(false);
     };
 
     const handleAddAcknowledgement = (acknowledgement) => {
-        const entry = { author: 'You', text: acknowledgement.text, time: 'just now', likesCount: 0, likedByCurrentUser: false };
+        const entry = {
+            author: 'You', text: acknowledgement.text, time: 'just now',
+            commentType: 'other', likesCount: 0, likedByCurrentUser: false,
+            cards: acknowledgement.cards || [],
+        };
         setLocalAcknowledgements((prev) => [...prev, entry]);
-        onAddAcknowledgement(acknowledgement);
+        onAddAcknowledgement({ text: acknowledgement.text, cardIds: acknowledgement.cardIds || [], cards: acknowledgement.cards || [] });
         setShowAcknowledgementForm(false);
     };
 
     const cancelled = status === 'Cancelled';
-    const stepIdx = ixIndex(status);
-    const steps = IX_STEPS.map((label, i) => ({
-        label,
-        time: [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime][i] || '',
-    }));
+    const xcStepLabels = xcSteps(status, hasFollowupComment);
+    const stepIdx = xcIndex(xcStepLabels, status);
+    const stepTimes = [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime];
+    const steps = xcStepLabels.map((label, i) => ({ label, time: stepTimes[i] || '' }));
 
     const hasReceipts = localReceipts.length > 0;
     const hasAcknowledgements = localAcknowledgements.length > 0;
@@ -98,28 +153,28 @@ function InteractionCard({
 
     return (
         <div
-            className={`interaction ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
+            className={`exchange ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
             onClick={() => !isExpanded && setIsExpanded(true)}
         >
             {/* ── Summary row — always visible ────────────────────────────── */}
-            <div className="ix-summary" onClick={() => setIsExpanded(!isExpanded)}>
+            <div className="xc-summary" onClick={() => setIsExpanded(!isExpanded)}>
                 <span className={`pill ${pillClass} type-pill`}>{typeLabel}</span>
 
-                <div className="ix-title-col">
+                <div className="xc-title-col">
                     {isExpanded ? (
                         <a
-                            className="ix-title ix-title-link"
-                            href={id ? `/interaction?id=${id}` : '#'}
+                            className="xc-title xc-title-link"
+                            href={id ? `/exchange?id=${id}` : '#'}
                             onClick={handleTitleClick}
-                            title="View full interaction"
+                            title="View full exchange"
                         >
                             {title}
                         </a>
                     ) : (
-                        <span className="ix-title">{title}</span>
+                        <span className="xc-title">{title}</span>
                     )}
                     {!isExpanded && participants.length > 0 && (
-                        <span className="ix-participants-inline">
+                        <span className="xc-participants-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <a href={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</a>
@@ -130,8 +185,8 @@ function InteractionCard({
                     )}
                 </div>
 
-                <div className="ix-summary-meta" onClick={(e) => e.stopPropagation()}>
-                    {time && <span className="ix-date">{time}</span>}
+                <div className="xc-summary-meta" onClick={(e) => e.stopPropagation()}>
+                    {time && <span className="xc-date">{time}</span>}
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
@@ -141,7 +196,7 @@ function InteractionCard({
                 </div>
 
                 <button
-                    className="ix-expand-btn"
+                    className="xc-expand-btn"
                     onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
                     aria-label={isExpanded ? 'Collapse' : 'Expand'}
                 >
@@ -151,9 +206,9 @@ function InteractionCard({
 
             {/* ── Expanded body ─────────────────────────────────────────── */}
             {isExpanded && (
-                <div className="ix-body" onClick={(e) => e.stopPropagation()}>
+                <div className="xc-body" onClick={(e) => e.stopPropagation()}>
                     {/* Context: participants, spheres, project */}
-                    <div className="ix-context">
+                    <div className="xc-context">
                         <div className="participants">
                             {participants.map((p, i) => (
                                 <span key={i}>
@@ -163,16 +218,16 @@ function InteractionCard({
                             ))}
                         </div>
                         {spheres.length > 0 && (
-                            <div className="ix-spheres">
+                            <div className="xc-spheres">
                                 {spheres.map((s, i) => (
-                                    <a key={i} href={sHref(s)} className="pill pill-leaf ix-sphere-pill">
+                                    <a key={i} href={sHref(s)} className="pill pill-leaf xc-sphere-pill">
                                         {sName(s)}
                                     </a>
                                 ))}
                             </div>
                         )}
                         {project && (
-                            <div className="ix-project-ref">
+                            <div className="xc-project-ref">
                                 <span className="muted">Part of</span>{' '}
                                 <a href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}>
                                     {project}
@@ -188,7 +243,7 @@ function InteractionCard({
                                 <img
                                     src={img}
                                     alt={title}
-                                    className="interaction-image"
+                                    className="exchange-image"
                                     onError={() => setImg(null)}
                                 />
                             )}
@@ -202,10 +257,10 @@ function InteractionCard({
                     </div>
 
                     {/* ── Receipts ───────────────────────────────────── */}
-                    <div className="ix-section">
-                        <div className="ix-section-label ix-section-receipt">
+                    <div className="xc-section">
+                        <div className="xc-section-label xc-section-receipt">
                             <span>✓ Receipts</span>
-                            <span className="ix-section-hint">verified attestations of trust</span>
+                            <span className="xc-section-hint">verified attestations of trust</span>
                         </div>
                         {hasReceipts ? (
                             <div className="receipts">
@@ -213,32 +268,47 @@ function InteractionCard({
                                     <div key={i} className="receipt">
                                         <div className="tf-content">
                                             <p><strong>{tf.author}:</strong> {tf.text}</p>
+                                            {tf.cards?.length > 0 && (
+                                                <div className="comment-value-chips">
+                                                    <span className="comment-vc-label">values</span>
+                                                    {tf.cards.map((c, ci) => (
+                                                        <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <LikeTimestamp
                                             likedByCurrentUser={tf.likedByCurrentUser}
                                             likesCount={tf.likesCount}
                                             time={tf.time}
-                                            onLike={(e) => e.stopPropagation()}
+                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType, true); }}
                                         />
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="ix-empty-section">No receipts yet.</p>
+                            <p className="xc-empty-section">No receipts yet.</p>
                         )}
-                        <button
-                            className="ix-add-btn ix-add-receipt"
-                            onClick={(e) => { e.stopPropagation(); handleAddReceipt(); }}
-                        >
-                            + Add Receipt
-                        </button>
+                        {!showReceiptForm ? (
+                            <button
+                                className="xc-add-btn xc-add-receipt"
+                                onClick={(e) => { e.stopPropagation(); setShowReceiptForm(true); }}
+                            >
+                                + Add Receipt
+                            </button>
+                        ) : (
+                            <NewReceiptForm
+                                onSave={handleAddReceipt}
+                                onCancel={() => setShowReceiptForm(false)}
+                            />
+                        )}
                     </div>
 
                     {/* ── Acknowledgements ─────────────────────────────────────── */}
-                    <div className="ix-section">
-                        <div className="ix-section-label ix-section-acknowledgement">
+                    <div className="xc-section">
+                        <div className="xc-section-label xc-section-acknowledgement">
                             <span>📢 Acknowledgements</span>
-                            <span className="ix-section-hint">public acknowledgements</span>
+                            <span className="xc-section-hint">public acknowledgements</span>
                         </div>
                         {hasAcknowledgements && (
                             <div className="acknowledgements">
@@ -246,12 +316,20 @@ function InteractionCard({
                                     <div key={i} className="acknowledgement">
                                         <div className="tf-content">
                                             <p><strong>{s.author}:</strong> {s.text}</p>
+                                            {s.cards?.length > 0 && (
+                                                <div className="comment-value-chips comment-value-chips--ack">
+                                                    <span className="comment-vc-label">values</span>
+                                                    {s.cards.map((c, ci) => (
+                                                        <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <LikeTimestamp
                                             likedByCurrentUser={s.likedByCurrentUser}
                                             likesCount={s.likesCount}
                                             time={s.time}
-                                            onLike={(e) => e.stopPropagation()}
+                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(s.commentType, false); }}
                                         />
                                     </div>
                                 ))}
@@ -259,7 +337,7 @@ function InteractionCard({
                         )}
                         {!showAcknowledgementForm ? (
                             <button
-                                className="ix-add-btn ix-add-acknowledgement"
+                                className="xc-add-btn xc-add-acknowledgement"
                                 onClick={(e) => { e.stopPropagation(); setShowAcknowledgementForm(true); }}
                             >
                                 + Add Acknowledgement
@@ -277,7 +355,7 @@ function InteractionCard({
     );
 }
 
-InteractionCard.propTypes = {
+ExchangeCard.propTypes = {
     id: PropTypes.string,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
@@ -296,12 +374,13 @@ InteractionCard.propTypes = {
     finishedTime: PropTypes.string,
     receiptedTime: PropTypes.string,
     additionalCommentsTime: PropTypes.string,
+    hasFollowupComment: PropTypes.bool,
     receipts: PropTypes.array,
     acknowledgements: PropTypes.array,
     onAddReceipt: PropTypes.func.isRequired,
     onAddAcknowledgement: PropTypes.func.isRequired,
-    onModifyInteraction: PropTypes.func.isRequired,
+    onModifyExchange: PropTypes.func.isRequired,
     canModify: PropTypes.bool.isRequired,
 };
 
-export default InteractionCard;
+export default ExchangeCard;

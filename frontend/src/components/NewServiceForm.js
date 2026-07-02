@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import '../styles/App.css';
 import api from '../api';
 
-function NewServiceForm({ isVisible, onSuccess }) {
+// `actingAs` (optional): { id, name, sphereId, sphereName, projectName } — when
+// set, the opening is posted on behalf of that sphere/alliance/project instead
+// of the logged-in human, and its own sphere/project context is preset & locked.
+function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     const [formData, setFormData] = useState({
         type: 'offer',
         title: '',
         description: '',
-        sphere_id: '',
-        sphere_name: '',
-        project_name: '',
+        sphere_id: actingAs?.sphereId || '',
+        sphere_name: actingAs?.sphereName || '',
+        project_name: actingAs?.projectName || '',
+        cadence: 'single',
     });
     const [spheres, setSpheres] = useState([]);
     const [projects, setProjects] = useState([]);
@@ -50,10 +54,16 @@ function NewServiceForm({ isVisible, onSuccess }) {
                 sphere_id: formData.sphere_id || null,
                 sphere_name: formData.sphere_name || null,
                 project_name: formData.project_name || null,
+                cadence: formData.cadence,
                 status: 'Posted',
+                acting_as_id: actingAs?.id || undefined,
             });
             setSuccess(true);
-            setFormData({ type: 'offer', title: '', description: '', sphere_id: '', sphere_name: '', project_name: '' });
+            setFormData({
+                type: 'offer', title: '', description: '', cadence: 'single',
+                sphere_id: actingAs?.sphereId || '', sphere_name: actingAs?.sphereName || '',
+                project_name: actingAs?.projectName || '',
+            });
             setTimeout(() => { setSuccess(false); if (onSuccess) onSuccess(); }, 1200);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to submit. Are you logged in?');
@@ -66,7 +76,9 @@ function NewServiceForm({ isVisible, onSuccess }) {
 
     return (
         <div className="card" style={{ padding: '1.2em 1.4em', marginBottom: '1.2em' }}>
-            <h3 style={{ marginBottom: '0.9em' }}>New Service</h3>
+            <h3 style={{ marginBottom: '0.9em' }}>
+                {actingAs ? `New Opening — posting as ${actingAs.name}` : 'New Service'}
+            </h3>
             {success && <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: '0.5em' }}>✓ Posted!</p>}
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.5em' }}>{error}</p>}
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75em' }}>
@@ -78,6 +90,17 @@ function NewServiceForm({ isVisible, onSuccess }) {
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
                         <input type="radio" name="type" value="need" checked={formData.type === 'need'} onChange={handleChange} />
                         Need
+                    </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5em' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
+                        <input type="radio" name="cadence" value="single" checked={formData.cadence === 'single'} onChange={handleChange} />
+                        One-time
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
+                        <input type="radio" name="cadence" value="perpetual" checked={formData.cadence === 'perpetual'} onChange={handleChange} />
+                        Ongoing (e.g. lessons — stays open, can be accepted repeatedly)
                     </label>
                 </div>
 
@@ -103,7 +126,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
 
                 <div>
                     <label htmlFor="nsf-sphere">Sphere</label>
-                    <select id="nsf-sphere" value={formData.sphere_id} onChange={handleSphereChange}>
+                    <select id="nsf-sphere" value={formData.sphere_id} onChange={handleSphereChange} disabled={!!actingAs?.sphereId}>
                         <option value="">— none —</option>
                         {spheres.map((s) => (
                             <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
@@ -113,7 +136,7 @@ function NewServiceForm({ isVisible, onSuccess }) {
 
                 <div>
                     <label htmlFor="nsf-project">Project (optional)</label>
-                    <select id="nsf-project" name="project_name" value={formData.project_name} onChange={handleChange}>
+                    <select id="nsf-project" name="project_name" value={formData.project_name} onChange={handleChange} disabled={!!actingAs?.projectName}>
                         <option value="">— none —</option>
                         {projects.map((p) => (
                             <option key={p.project_id || p.name} value={p.name}>{p.name}</option>

@@ -1,106 +1,166 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import '../styles/SphereManagement.css';
-import SphereBanner from '../components/SphereBanner';
+// SphereManagement — admin-only console for a sphere.
+// Access is restricted to the sphere's admin1; anyone else is turned away.
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import '../styles/AllianceManagement.css';
+import '../styles/EntityPage.css';
 import api from '../api';
+import { useLogin } from '../App';
+import TabSelector from '../components/TabSelector';
+import EntityValueGraph from '../components/EntityValueGraph';
+import EntityBanner from '../components/EntityBanner';
+
+const TABS = [
+  { key: 'governance', label: 'Governance' },
+  { key: 'valuegraph', label: 'Value Graph' },
+  { key: 'members',    label: 'Members' },
+];
 
 const SphereManagement = () => {
-  const { sphereId } = useParams();
+  const [params] = useSearchParams();
+  const sphereId = params.get('id');
+  const { userId } = useLogin();
+
   const [sphere, setSphere] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [nameEdit, setNameEdit] = useState(false);
+  const [descriptionEdit, setDescriptionEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState('governance');
+  const [joinPolicy, setJoinPolicy] = useState('open');
+  const [savingPolicy, setSavingPolicy] = useState(false);
 
-  const dummySphere = {
-    id: 'sphere-ai',
-    name: 'AI Development Sphere',
-    location: 'Global',
-    status: 'Active',
-    admin: 'Jane Doe',
-    description: 'The AI Development Sphere is dedicated to advancing artificial intelligence technologies and fostering collaboration among AI researchers and developers.',
-    alliances: ['Tech Alliance', 'AI Enthusiasts Alliance'],
-    members: ['Jane Doe', 'John Smith', '50 more...'],
-    projects: ['AI Ethics Initiative', 'OpenAI Collaboration'],
-    values: ['innovation', 'technology', 'collaboration'],
-    bannerImage: 'static/A_banner_image_for_an_AI_Development_Sphere_in_a_s.png'
-  };
-
-  useEffect(() => {
-    const fetchSphere = async () => {
-      try {
-        const response = await api.get(`/api/spheres/${sphereId}`, {
-          withCredentials: true,
-        });
-
-        if (response.data) {
-          setSphere(response.data);
-          setPreviewUrl(response.data.image);
-        }
-      } catch (error) {
-        console.error('Error fetching sphere:', error);
-        setSphere(dummySphere);
-        setPreviewUrl(dummySphere.bannerImage);
-      }
-    };
-
-    if (sphereId) {
-      fetchSphere();
-    } else {
-      setSphere(dummySphere);
-      setPreviewUrl(dummySphere.bannerImage);
+  const fetchSphere = useCallback(async () => {
+    if (!sphereId) { setLoading(false); return; }
+    try {
+      const r = await api.get('/api/spheres');
+      const found = (r.data || []).find((s) => s.sphere_id === sphereId);
+      setSphere(found || null);
+    } catch (_) {
+      setSphere(null);
+    } finally {
+      setLoading(false);
     }
   }, [sphereId]);
 
-  if (!sphere) return <div>Loading...</div>;
+  useEffect(() => { fetchSphere(); }, [fetchSphere]);
+
+  const handleImageUpload = async (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    await api.post(`/api/spheres/${sphereId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    await fetchSphere();
+  };
+
+  if (loading) return <div className="ep-loading">Loading…</div>;
+
+  const isAdmin = !!userId && !!sphere && userId === sphere.admin1;
+
+  if (!sphere) {
+    return (
+      <div className="ep-page">
+        <p className="ep-not-found">Sphere not found.</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="ep-page">
+        <p className="ep-not-found">
+          Only this sphere's admin can access sphere management.{' '}
+          <Link to={`/sphere?id=${sphere.sphere_id}`}>Back to {sphere.name}</Link>
+        </p>
+      </div>
+    );
+  }
+
+  const saveName = (e) => {
+    e.preventDefault();
+    setSphere((s) => ({ ...s, name: e.target.spherename.value }));
+    setNameEdit(false);
+  };
+
+  const saveDescription = (e) => {
+    e.preventDefault();
+    setSphere((s) => ({ ...s, description: e.target.description.value }));
+    setDescriptionEdit(false);
+  };
 
   return (
+    <>
+    <EntityBanner kind="sphere" image={sphere.image} onUpload={handleImageUpload}>
+      <span className="ep-eyebrow">Sphere Management</span>
+      <h1 className="ep-title">{sphere.name}</h1>
+    </EntityBanner>
     <div className="container">
-      <aside className="sphere-sidebar">
-        <h2>{sphere.name}</h2>
-        <p><strong>Location:</strong> {sphere.location}</p>
-        <p><strong>Status:</strong> <span className="status active">{sphere.status}</span></p>
-        <p><strong>Admin:</strong> <a href="/user">{sphere.admin}</a></p>
-        <a href="/sphere-management" className="btn-orange">Manage Sphere</a>
+      <aside className="management-sidebar">
+        <h2>Sphere Management</h2>
+        <div>
+          {!nameEdit ? (
+            <h3 onClick={() => setNameEdit(true)} style={{ cursor: 'pointer' }}>{sphere.name || '—'}</h3>
+          ) : (
+            <form onSubmit={saveName}>
+              <input type="text" name="spherename" defaultValue={sphere.name} autoFocus />
+              <button type="submit" className="btn-orange">Save</button>
+            </form>
+          )}
+        </div>
+        <div>
+          {!descriptionEdit ? (
+            <p onClick={() => setDescriptionEdit(true)} style={{ cursor: 'pointer' }}>{sphere.description || 'Click to add description…'}</p>
+          ) : (
+            <form onSubmit={saveDescription}>
+              <textarea name="description" defaultValue={sphere.description} rows={4} />
+              <button type="submit" className="btn-orange">Save</button>
+            </form>
+          )}
+        </div>
       </aside>
       <main>
-        <div className="sphere-section">
-          <SphereBanner previewUrl={previewUrl} onImageChange={(e) => {}} />
+        <TabSelector tabs={TABS} active={activeTab} onChange={setActiveTab} />
 
-          <div className="sphere-description">
-            <h3>Description</h3>
-            <p>{sphere.description}</p>
-          </div>
-          <div className="sphere-alliances">
-            <h3>Member Alliances</h3>
-            <ul className="alliance-list">
-              {sphere.alliances.map((alliance, index) => (
-                <li key={index}><a href="/alliance">{alliance}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div className="sphere-members">
-            <h3>All Members</h3>
+        <section className={`management-section tab-content ${activeTab === 'valuegraph' ? '' : 'hidden'}`}>
+          <h3>Value Graph</h3>
+          <p className="management-section-sub">
+            The values this sphere holds itself to — what it cares about, why, and what drift looks like.
+          </p>
+          <EntityValueGraph entityId={sphere.sphere_id} canManage={isAdmin} entityNoun="sphere" />
+        </section>
+
+        <section className={`management-section tab-content ${activeTab === 'governance' ? '' : 'hidden'}`}>
+          <h3>Governance Settings</h3>
+          <form onSubmit={(e) => { e.preventDefault(); setSavingPolicy(true); setTimeout(() => setSavingPolicy(false), 800); }}>
+            <div className="form-group">
+              <label htmlFor="join-policy">Membership join policy</label>
+              <select id="join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
+                <option value="open">Open — anyone can join directly</option>
+                <option value="approval">Approval required — admin must approve</option>
+              </select>
+            </div>
+            <button type="submit" className="btn-orange" disabled={savingPolicy}>
+              {savingPolicy ? 'Saved ✓' : 'Save Changes'}
+            </button>
+          </form>
+        </section>
+
+        <section className={`management-section tab-content ${activeTab === 'members' ? '' : 'hidden'}`}>
+          <h3>Members</h3>
+          {(sphere.members || []).length > 0 ? (
             <ul className="member-list">
-              {sphere.members.map((member, index) => (
-                <li key={index}><a href={index < sphere.members.length - 1 ? "/user" : "/members"}>{member}</a></li>
+              {sphere.members.map((m) => (
+                <li key={m.id}>
+                  <Link to={`/user?id=${m.id}`}>{m.name}</Link>
+                  {m.id === sphere.admin1 && <span className="pill pill-honey" style={{ marginLeft: '0.6em' }}>Admin</span>}
+                </li>
               ))}
             </ul>
-          </div>
-          <div className="sphere-projects">
-            <h3>Current Projects</h3>
-            <ul className="project-list">
-              {sphere.projects.map((project, index) => (
-                <li key={index}><a href="/project">{project}</a></li>
-              ))}
-            </ul>
-          </div>
-          <div className="sphere-values">
-            <h3>Meaning Graph</h3>
-            {sphere.values.map((value, index) => (
-              <span key={index}>#{value}</span>
-            ))}
-          </div>
-        </div>
+          ) : (
+            <p style={{ color: 'var(--ink-faint)', fontStyle: 'italic', fontSize: '0.9rem' }}>No members yet.</p>
+          )}
+        </section>
       </main>
     </div>
+    </>
   );
 };
 

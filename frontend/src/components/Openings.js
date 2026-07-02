@@ -1,56 +1,83 @@
 /*
 File : ./frontend/src/components/Openings.js
-Description: This file creates a React component for the Openings, where users can post and view services. 
+Description: This file creates a React component for the Openings, where users can post and view services.
         It contains functionality for loading the services from the API and displaying them.
 Class: Openings
-Properties: 
+Properties:
   [-] state: contains a list of services fetched from the API.
-Methods: 
+Methods:
   [-] componentDidMount(): calls the API to fetch the list of services when the component is first mounted.
   [-] handleServiceSubmission(): submits a new service to the API (not yet implemented).
 */
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/Openings.css';
 
 import NewServiceForm from './NewServiceForm';
 import ServiceCard from './ServiceCard';
+import api from '../api';
 
 
 
-function Openings({ services, newServiceVisible, onServiceAdded }) {
+function Openings({ services, newServiceVisible, onServiceAdded, currentUserId, actingAs = null }) {
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
       setIsFormVisible(newServiceVisible);
   }, [newServiceVisible]);
 
-  const toggleFormVisibility = () => {
-      setIsFormVisible(!isFormVisible);
+  // Step 1: recipient signals acceptance. No exchange yet — the provider must
+  // confirm. Refetch so the card reflects the pending state.
+  const handleAccept = async (serviceId) => {
+      try {
+          await api.post(`/api/openings/${serviceId}/accept`);
+          if (onServiceAdded) onServiceAdded();
+      } catch (e) {
+          console.error('Failed to accept opening:', e);
+          alert(e.response?.data?.message || 'Could not accept this opening.');
+      }
   };
 
-  const handleAccept = (serviceId) => {
-      console.log(`Accept service: ${serviceId}`);
-      // Logic to accept the service
+  // Step 2: provider confirms a pending acceptance → an exchange is created.
+  const handleConfirm = async (serviceId, accepterId) => {
+      try {
+          const res = await api.post(`/api/openings/${serviceId}/confirm`, { accepter_id: accepterId });
+          if (onServiceAdded) onServiceAdded();
+          if (res.data?.exchange_id) {
+              navigate(`/exchange?id=${res.data.exchange_id}`);
+          }
+      } catch (e) {
+          console.error('Failed to confirm acceptance:', e);
+          alert(e.response?.data?.message || 'Could not confirm this acceptance.');
+      }
   };
 
-  const handleConfirm = (serviceId) => {
-      console.log(`Confirm service: ${serviceId}`);
-      // Logic to confirm the service
+  // Provider declines a pending acceptance.
+  const handleReject = async (serviceId, accepterId) => {
+      try {
+          await api.post(`/api/openings/${serviceId}/reject`, { accepter_id: accepterId });
+          if (onServiceAdded) onServiceAdded();
+      } catch (e) {
+          console.error('Failed to reject acceptance:', e);
+          alert(e.response?.data?.message || 'Could not decline this acceptance.');
+      }
   };
 
   return (
       <div>
-          <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} />
+          <NewServiceForm isVisible={isFormVisible} onSuccess={onServiceAdded} actingAs={actingAs} />
           <section className="openings">
               {services.map(service => (
                   <ServiceCard
                       key={service.id}
                       {...service}
+                      currentUserId={currentUserId}
                       onAccept={() => handleAccept(service.id)}
-                      onConfirm={() => handleConfirm(service.id)}
+                      onConfirm={(accepterId) => handleConfirm(service.id, accepterId)}
+                      onReject={(accepterId) => handleReject(service.id, accepterId)}
                   />
               ))}
           </section>
@@ -59,4 +86,3 @@ function Openings({ services, newServiceVisible, onServiceAdded }) {
 }
 
 export default Openings;
-

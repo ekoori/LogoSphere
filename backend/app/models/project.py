@@ -6,6 +6,7 @@ from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
+import base64
 from datetime import datetime
 
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
@@ -17,7 +18,7 @@ cassandra_session = cluster.connect('logosphere')
 class Project:
     def __init__(self, project_id, name, description, owner, owner_alliance, status,
                  sphere_id, sphere_name, participants, participant_names, values,
-                 participant_roles=None):
+                 participant_roles=None, image=None):
         self.project_id = project_id
         self.name = name
         self.description = description
@@ -30,6 +31,7 @@ class Project:
         self.participant_names = participant_names
         self.values = values
         self.participant_roles = participant_roles or {}
+        self.image = image
 
     def to_dict(self):
         members_with_roles = [
@@ -53,6 +55,7 @@ class Project:
             'participants': self.participant_names or [],
             'members': members_with_roles,
             'values': self.values or [],
+            'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
         }
 
     @classmethod
@@ -72,19 +75,20 @@ class Project:
         participants = [owner_id]
         participant_names = data.get('participant_names', [])
         values = data.get('values', [])
+        image = data.get('image')
 
         logging.info(f'Creating project with project_id: {project_id}')
         query = """
         INSERT INTO projects (project_id, name, description, owner, owner_alliance, status,
-                              sphere_id, sphere_name, created_at, participants, participant_names, values)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                              sphere_id, sphere_name, created_at, participants, participant_names, values, image)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (
             project_id, name, description, owner, owner_alliance, status,
-            sphere_id, sphere_name, datetime.utcnow(), participants, participant_names, values
+            sphere_id, sphere_name, datetime.utcnow(), participants, participant_names, values, image
         ))
         return cls(project_id, name, description, owner, owner_alliance, status,
-                   sphere_id, sphere_name, participants, participant_names, values)
+                   sphere_id, sphere_name, participants, participant_names, values, image=image)
 
     @classmethod
     def get_all(cls):
@@ -98,8 +102,16 @@ class Project:
                 getattr(r, 'participants', None), getattr(r, 'participant_names', None),
                 getattr(r, 'values', None),
                 getattr(r, 'participant_roles', None),
+                getattr(r, 'image', None),
             ))
         return projects
+
+    @classmethod
+    def set_image(cls, project_id, image_bytes):
+        cassandra_session.execute(
+            "UPDATE projects SET image = %s WHERE project_id = %s",
+            [image_bytes, project_id]
+        )
 
     @classmethod
     def join(cls, project_id, user_uuid, user_name):

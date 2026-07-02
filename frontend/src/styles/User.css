@@ -108,14 +108,14 @@
     margin: 0.5em 0;
 }
 
-.interaction-buttons {
+.exchange-buttons {
     display: flex;
     gap: 1em;
     flex-direction: column;
     margin-top: 10px;
 }
 
-.interaction-buttons button {
+.exchange-buttons button {
     padding: 0.5em;
     border: none;
     border-radius: 4px;
@@ -162,20 +162,20 @@
     text-decoration: underline;
 }
 
-/* Styles for the service interactions */
-.service-interactions {
+/* Styles for the service exchanges */
+.service-exchanges {
     margin-top: 1em;
 }
 
-.interaction-summary {
+.exchange-summary {
     margin-top: 0.5em;
 }
 
-.interaction-summary a {
+.exchange-summary a {
     text-decoration: none;
     color: var(--moss);
 }
 
-.interaction-summary a:hover {
+.exchange-summary a:hover {
     text-decoration: underline;
 }

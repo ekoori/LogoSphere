@@ -186,6 +186,49 @@
     gap: 3rem;
 }
 
+/* ── Two-column layout: aside (governance/members/values) + main (Meaning
+   Trail / Openings), mirroring UserPage's .container/aside/main. ──────────── */
+.ep-layout {
+    display: flex;
+    gap: var(--sp-6, 2rem);
+    align-items: flex-start;
+}
+
+.ep-aside {
+    align-self: flex-start;
+    position: sticky;
+    top: 90px;
+    flex: 0 0 280px;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.ep-aside-section h4 {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.ep-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ep-manage-form-toggle {
+    margin: 1.2rem 0;
+}
+
+@media (max-width: 860px) {
+    .ep-layout { flex-direction: column; }
+    .ep-aside { position: static; width: 100%; max-width: none; flex: 1 1 auto; }
+}
+
 /* ── Sections ─────────────────────────────────────────────────────────────── */
 .ep-section {
     position: relative;
@@ -490,6 +533,53 @@
     left: 0;
     color: var(--evc-accent, var(--leaf));
 }
+
+/* ── Value card delete button ─────────────────────────────────────────────── */
+.vc-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid var(--border-soft);
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.vc-delete:hover { border-color: var(--danger, #b94040); color: var(--danger, #b94040); }
+
+.vc-delete-confirm { display: flex; align-items: center; gap: 0.35em; }
+.vc-delete-prompt { font-size: 0.68rem; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-faint); white-space: nowrap; }
+.vc-delete-yes, .vc-delete-no {
+    font-size: 0.68rem; font-family: var(--font-body); font-weight: 600;
+    padding: 0.15em 0.5em; border-radius: var(--r-sm); border: 1px solid; cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+.vc-delete-yes { background: var(--danger, #b94040); color: #fff; border-color: var(--danger, #b94040); }
+.vc-delete-yes:hover { background: #8c2020; border-color: #8c2020; }
+.vc-delete-no { background: transparent; color: var(--moss); border-color: var(--border-soft); }
+.vc-delete-no:hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+
+/* ── Entity value card form ───────────────────────────────────────────────── */
+.vc-new-form {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 1.5rem 1.6rem;
+    animation: ts-rise 0.35s var(--ease) both;
+}
+.vc-new-heading { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--moss-deep); margin: 0 0 1rem; }
+.vc-form-row { margin-bottom: 0.8rem; }
+.vc-form-row label { display: block; font-weight: 600; font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 0.3rem; }
+.vc-form-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+@media (max-width: 560px) { .vc-form-two-col { grid-template-columns: 1fr; } }
+.vc-form-actions { display: flex; gap: 0.7rem; margin-top: 1.3rem; }
+.vc-error { color: var(--danger, #b94040); font-size: 0.82rem; margin: 0 0 0.8rem; }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {

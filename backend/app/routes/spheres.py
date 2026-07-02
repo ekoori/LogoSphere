@@ -1,6 +1,7 @@
 import logging
 from flask import request, jsonify, current_app as app
 from app.models.spheres import Sphere
+from app.utils.permissions import can_manage_entity
 from app.middleware.session_middleware import validate_session
 import uuid
 
@@ -117,3 +118,44 @@ def get_spheres(user_id=None):
         logger.error(f"Error in get_spheres: {str(e)}")
         response = jsonify({'message': 'Internal server error'})
         return response, 500
+
+
+@validate_session
+def join_sphere(sphere_id, user_id=None):
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        return response, 200
+    try:
+        sphere_uuid = uuid.UUID(sphere_id)
+        user_uuid = uuid.UUID(str(user_id))
+        already_member = Sphere.join(sphere_uuid, user_uuid)
+        return jsonify({
+            'message': 'Already a member' if already_member else 'Joined successfully',
+            'already_member': already_member,
+        }), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid sphere id'}), 400
+    except Exception as e:
+        logger.error(f"Error in join_sphere: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def update_sphere_image(sphere_id, user_id=None):
+    """Set the sphere's banner image — from its management page."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        sphere_uuid = uuid.UUID(sphere_id)
+        if not can_manage_entity(sphere_uuid, user_id):
+            return jsonify({'message': 'Not authorized to manage this sphere'}), 403
+        image_file = request.files.get('image')
+        if not image_file:
+            return jsonify({'message': 'image file is required'}), 400
+        Sphere.set_image(sphere_uuid, image_file.read())
+        return jsonify({'message': 'Image updated'}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid sphere id'}), 400
+    except Exception as e:
+        logger.error(f"Error in update_sphere_image: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 500

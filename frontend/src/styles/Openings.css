@@ -3,8 +3,8 @@
    Shares the warm card + accent-bar language with MeaningTrail.css.
    ========================================================================== */
 
-/* Interaction & service cards share one look */
-.interaction,
+/* Exchange & service cards share one look */
+.exchange,
 .service,
 .service-card {
     background: var(--surface);
@@ -18,31 +18,31 @@
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
     animation: ts-rise 0.5s var(--ease) both;
 }
-.interaction:hover,
+.exchange:hover,
 .service:hover,
 .service-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-.interaction.offer,   .service.offer,   .service-card.offer   { border-left-color: var(--leaf); }
-.interaction.need, .service.need, .service-card.need { border-left-color: var(--terracotta); }
-.interaction.completed { border-left-color: var(--moss); }
+.exchange.offer,   .service.offer,   .service-card.offer   { border-left-color: var(--leaf); }
+.exchange.need, .service.need, .service-card.need { border-left-color: var(--terracotta); }
+.exchange.completed { border-left-color: var(--moss); }
 
 /* Header rows (shared) */
-.interaction-header,
-.service .interaction-header,
-.service-card .interaction-header {
+.exchange-header,
+.service .exchange-header,
+.service-card .exchange-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 1em;
 }
-.interaction-header .left,
-.service .interaction-header .left,
-.service-card .interaction-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
-.interaction-header .right,
-.service .interaction-header .right,
-.service-card .interaction-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
-.interaction-header h3 { margin: 0; font-size: 1.18rem; }
-.interaction-header small { margin: 0; color: var(--ink-faint); }
+.exchange-header .left,
+.service .exchange-header .left,
+.service-card .exchange-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
+.exchange-header .right,
+.service .exchange-header .right,
+.service-card .exchange-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
+.exchange-header h3 { margin: 0; font-size: 1.18rem; }
+.exchange-header small { margin: 0; color: var(--ink-faint); }
 
 .like-timestamp { display: flex; flex-direction: column; align-items: center; text-align: center; }
 
@@ -55,9 +55,9 @@
     align-items: flex-start;
     gap: 1em;
 }
-.interaction-image,
-.service .interaction-image,
-.service-card .interaction-image {
+.exchange-image,
+.service .exchange-image,
+.service-card .exchange-image {
     width: 110px; height: 110px;
     object-fit: cover;
     margin-right: 1em;
@@ -96,37 +96,142 @@
 .service-project-name { color: var(--moss-deep); font-weight: 600; }
 
 /* Service sub-listings */
-.service .service-interactions { margin-top: 1em; }
-.service .interaction-summary { margin-top: 0.5em; }
-.service .interaction-summary a { color: var(--terracotta-deep); font-weight: 600; }
-.service .interaction-summary a:hover { text-decoration: underline; }
+.service .service-exchanges { margin-top: 1em; }
+.service .exchange-summary { margin-top: 0.5em; }
+.service .exchange-summary a { color: var(--terracotta-deep); font-weight: 600; }
+.service .exchange-summary a:hover { text-decoration: underline; }
 
-/* Create service CTA at bottom of each card */
-.service-create-cta {
-    margin-top: 1.2em;
-    padding-top: 0.9em;
-    border-top: 1px solid var(--border-soft);
-    display: flex;
-    justify-content: flex-end;
-}
-
-.service-create-btn {
-    font-family: var(--font-body);
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--moss);
-    background: transparent;
-    border: 1px solid var(--leaf);
+/* Cadence badge — marks a 'perpetual' opening that stays open after Accept */
+.cadence-badge {
+    display: inline-block;
+    margin-left: 0.55em;
+    font-size: 0.65rem;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    padding: 0.2em 0.55em;
     border-radius: var(--r-pill);
-    padding: 0.3em 0.85em;
-    cursor: pointer;
-    transition: background-color 0.15s, color 0.15s;
+}
+.cadence-badge--perpetual {
+    background: rgba(111, 138, 79, 0.12);
+    color: var(--moss-deep);
+    border: 1px solid var(--leaf);
+}
+.accepted-by-note {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    font-style: italic;
+    margin-top: 0.15em;
 }
 
-.service-create-btn:hover {
-    background: var(--moss);
-    color: #f7f4e8;
+/* Accept CTA — distinct from the neutral "+ Offer or Need" link */
+.service-accept-cta {
+    margin-top: 1em;
 }
+.service-accept-btn {
+    width: 100%;
+    padding: 0.7em 1em;
+    background: var(--leaf);
+    color: #f7f4e8;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background-color 0.18s var(--ease), transform 0.15s var(--ease);
+}
+.service-accept-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
+.service-accept-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Recipient waiting on the provider, or a single opening taken by someone else */
+.service-awaiting {
+    display: block;
+    text-align: center;
+    padding: 0.6em 1em;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px dashed var(--border-soft);
+    border-radius: var(--r-pill);
+}
+.service-view-exchange { background: var(--honey); color: var(--ink); }
+.service-view-exchange:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; }
+
+/* Provider view: pending acceptances to confirm */
+.service-pending {
+    margin-top: 1em;
+    padding: 0.8em 0.9em;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+}
+.service-pending-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.6em;
+}
+.service-pending-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6em;
+    padding: 0.35em 0;
+}
+.service-pending-row + .service-pending-row { border-top: 1px solid var(--border-soft); }
+.service-pending-name { font-size: 0.9rem; font-weight: 600; }
+.service-pending-actions { display: flex; gap: 0.4em; align-items: center; }
+.service-confirm-btn {
+    padding: 0.5em 0.9em;
+    background: var(--leaf);
+    color: #f7f4e8;
+    border: none;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.18s var(--ease), transform 0.15s var(--ease);
+}
+.service-confirm-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
+.service-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.service-reject-btn {
+    padding: 0.5em 0.8em;
+    background: transparent;
+    color: var(--terracotta);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.service-reject-btn:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; border-color: var(--terracotta); }
+.service-reject-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Sphere | project pipe in the header eyebrow line */
+.service-header-pipe {
+    color: var(--border-soft);
+    margin: 0 0.3em;
+}
+
+/* Opening title links to its detail page */
+.service-title-link {
+    color: inherit;
+    text-decoration: none;
+}
+.service-title-link:hover { text-decoration: underline; }
 
 /* New-service form */
 #service-form {

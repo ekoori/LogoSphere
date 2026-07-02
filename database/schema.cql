@@ -7,7 +7,7 @@ CREATE TABLE logosphere.audit_log (
     description text,
     executed_at timestamp,
     executed_by uuid,
-    interaction_id uuid,
+    exchange_id uuid,
     user_id uuid
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -30,10 +30,10 @@ CREATE TABLE logosphere.audit_log (
     AND speculative_retry = '99p';
 
 CREATE TABLE logosphere.comment_likes (
-    interaction_id uuid,
+    exchange_id uuid,
     comment_type text,
     likes counter,
-    PRIMARY KEY (interaction_id, comment_type)
+    PRIMARY KEY (exchange_id, comment_type)
 ) WITH CLUSTERING ORDER BY (comment_type ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -80,10 +80,10 @@ CREATE TABLE logosphere.invitation (
     AND speculative_retry = '99p';
 
 CREATE TABLE logosphere.likes (
-    interaction_id uuid,
+    exchange_id uuid,
     comment_type text,
     user_id uuid,
-    PRIMARY KEY ((interaction_id, comment_type), user_id)
+    PRIMARY KEY ((exchange_id, comment_type), user_id)
 ) WITH CLUSTERING ORDER BY (user_id ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
@@ -107,7 +107,7 @@ CREATE TABLE logosphere.likes (
 
 CREATE TABLE logosphere.openings (
     services text PRIMARY KEY,
-    active_interactions text
+    active_exchanges text
 ) WITH additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -130,7 +130,7 @@ CREATE TABLE logosphere.openings (
 
 CREATE TABLE logosphere.projects (
     project_id uuid PRIMARY KEY,
-    active_interactions text,
+    active_exchanges text,
     name text,
     owner text,
     service_needs text
@@ -221,7 +221,7 @@ CREATE TABLE logosphere.spheres (
 
 CREATE TABLE logosphere.meaning_trail (
     user_id uuid,
-    interaction_id uuid,
+    exchange_id uuid,
     gratitude_comment text,
     gratitude_comment_id uuid,
     gratitude_comment_timestamp timestamp,
@@ -237,14 +237,14 @@ CREATE TABLE logosphere.meaning_trail (
     project_id uuid,
     project_name text,
     project_start_timestamp timestamp,
-    interaction_description text,
-    interaction_status text,
+    exchange_description text,
+    exchange_status text,
     user_comment text,
     user_comment_id uuid,
     user_comment_timestamp timestamp,
     validation_flags text,
-    PRIMARY KEY (user_id, interaction_id)
-) WITH CLUSTERING ORDER BY (interaction_id DESC)
+    PRIMARY KEY (user_id, exchange_id)
+) WITH CLUSTERING ORDER BY (exchange_id DESC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01
@@ -301,6 +301,20 @@ CREATE TABLE logosphere.services (
     values list<text>
 );
 
+-- Enriched columns on the services table (added live in earlier passes,
+-- now tracked here as the source of truth).
+ALTER TABLE logosphere.services ADD likes int;
+ALTER TABLE logosphere.services ADD project_name text;
+ALTER TABLE logosphere.services ADD image_key text;
+
+-- cadence: 'single' (locks after one Accept) | 'perpetual' (e.g. ongoing
+-- lessons — stays open, can be accepted repeatedly, each Accept spawns its
+-- own Exchange). accepted_by/accepted_by_name record who locked a 'single'
+-- opening.
+ALTER TABLE logosphere.services ADD cadence text;
+ALTER TABLE logosphere.services ADD accepted_by uuid;
+ALTER TABLE logosphere.services ADD accepted_by_name text;
+
 -- Enriched columns on the projects table (see also database/schema_demo.cql).
 ALTER TABLE logosphere.projects ADD description text;
 ALTER TABLE logosphere.projects ADD status text;
@@ -316,14 +330,14 @@ CREATE INDEX meaning_trail_other_user_id_idx ON logosphere.meaning_trail (other_
 
 CREATE INDEX meaning_trail_project_id_idx ON logosphere.meaning_trail (project_id);
 
-CREATE INDEX meaning_trail_interaction_status_idx ON logosphere.meaning_trail (interaction_status);
+CREATE INDEX meaning_trail_exchange_status_idx ON logosphere.meaning_trail (exchange_status);
 
 CREATE MATERIALIZED VIEW logosphere.vw_meaning_trail_summary AS
-    SELECT user_id, interaction_id, interaction_status, project_id
+    SELECT user_id, exchange_id, exchange_status, project_id
     FROM logosphere.meaning_trail
-    WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND interaction_status IS NOT NULL AND interaction_id IS NOT NULL
-    PRIMARY KEY ((user_id, interaction_id), interaction_status)
- WITH CLUSTERING ORDER BY (interaction_status ASC)
+    WHERE user_id IS NOT NULL AND project_id IS NOT NULL AND exchange_status IS NOT NULL AND exchange_id IS NOT NULL
+    PRIMARY KEY ((user_id, exchange_id), exchange_status)
+ WITH CLUSTERING ORDER BY (exchange_status ASC)
     AND additional_write_policy = '99p'
     AND allow_auto_snapshot = true
     AND bloom_filter_fp_chance = 0.01

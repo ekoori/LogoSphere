@@ -1,14 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Spheres.css';
+import '../styles/ValueCardChip.css';
+import ValueCardChip from './ValueCardChip';
 
 // participants may be plain names (strings) or {id, name} pairs.
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
 
-const SphereCard = ({ id, name, alliances, participants, description, projects, values, onJoin }) => {
+const SphereCard = ({ id, name, alliances, participants, description, projects, values, valueCards = [], isMember = false, currentUserId, onJoin }) => {
   const navigate = useNavigate();
+  const [joining, setJoining] = useState(false);
   const sphereHref = id ? `/sphere?id=${id}` : '/sphere';
+
+  const handleJoin = async (e) => {
+    e.stopPropagation();
+    if (joining || isMember || !onJoin) return;
+    setJoining(true);
+    try {
+      await onJoin(id);
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <div className="sphere-card" onClick={() => navigate(sphereHref)}>
@@ -27,7 +41,13 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
           </div>
         </div>
         <div className="sphere-card-right">
-          <button className="btn-orange" onClick={(e) => { e.stopPropagation(); onJoin(id); }}>Join Sphere</button>
+          {isMember ? (
+            <span className="sphere-card-joined">✓ Joined</span>
+          ) : currentUserId ? (
+            <button className="btn-orange" onClick={handleJoin} disabled={joining}>
+              {joining ? 'Joining…' : 'Join Sphere'}
+            </button>
+          ) : null}
         </div>
       </div>
       <div className="sphere-card-description-container">
@@ -39,11 +59,21 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
         ))}
         {projects.length > 3 && <a href="/projects" onClick={(e) => e.stopPropagation()}>{projects.length - 3} more...</a>}
       </div>
-      <div className="sphere-card-values">
-        {values.map((value, index) => (
-          <span key={index}>#{value}</span>
-        ))}
-      </div>
+      {(valueCards.length > 0 || values.length > 0) && (
+        <div className="sphere-card-values">
+          {valueCards.length > 0 ? (
+            <div className="vc-chips-row">
+              {valueCards.map((card, i) => (
+                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" />
+              ))}
+            </div>
+          ) : (
+            values.map((value, index) => (
+              <span key={index}>#{value}</span>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

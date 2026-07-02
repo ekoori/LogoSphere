@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: LogoSphere API
-  description: API for handling user interactions within the LogoSphere platform.
+  description: API for handling user exchanges within the LogoSphere platform.
   version: 1.0.0
 
 servers:
@@ -243,20 +243,20 @@ paths:
         '405':
           description: Invalid request method. Only GET allowed.
 
-  /api/meaning_trail/add_interaction:
+  /api/meaning_trail/add_exchange:
     post:
-      summary: Add Interaction to Meaning Trail (duplicate?)
-      description: Adds a new interaction to the user's trust trail.
-      operationId: addMeaning TrailInteraction
+      summary: Add Exchange to Meaning Trail (duplicate?)
+      description: Adds a new exchange to the user's trust trail.
+      operationId: addMeaning TrailExchange
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Meaning TrailInteraction'
+              $ref: '#/components/schemas/Meaning TrailExchange'
       responses:
         '200':
-          description: Interaction added successfully
+          description: Exchange added successfully
         '400':
           description: Bad request, possibly due to missing or incorrect data
 
@@ -281,25 +281,25 @@ paths:
         400:
           description: User ID not provided or invalid
 
-  /api/meaning_trail/interaction:
+  /api/meaning_trail/exchange:
     post:
-      summary: Add a new interaction to the Meaning Trail
-      operationId: addInteraction
+      summary: Add a new exchange to the Meaning Trail
+      operationId: addExchange
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Interaction'
+              $ref: '#/components/schemas/Exchange'
       responses:
         200:
-          description: Interaction successfully added
+          description: Exchange successfully added
         400:
           description: Missing required fields
 
   /api/meaning_trail/comment/gratitude:
     post:
-      summary: Add a gratitude comment to a interaction
+      summary: Add a gratitude comment to a exchange
       operationId: addGratitudeComment
       requestBody:
         required: true
@@ -308,7 +308,7 @@ paths:
             schema:
               type: object
               properties:
-                interaction_id:
+                exchange_id:
                   type: string
                   format: uuid
                 comment:
@@ -317,7 +317,7 @@ paths:
         200:
           description: Comment added successfully
         400:
-          description: Missing required data or interaction not found
+          description: Missing required data or exchange not found
 
   /api/openings/post_service:
     post:
@@ -424,7 +424,7 @@ paths:
   /api/openings/accept_service:
     post:
       summary: Accept a Service
-      description: Accepts a service offer, initiating an active interaction.
+      description: Accepts a service offer, initiating an active exchange.
       operationId: acceptService
       requestBody:
         required: true
@@ -587,7 +587,7 @@ components:
       description: |
         This module contains the Invitation model for handling user invitation related tasks.
 
-    Meaning TrailInteraction:
+    Meaning TrailExchange:
       type: object
       required:
         - user_id
@@ -596,20 +596,20 @@ components:
       properties:
         user_id:
           type: string
-          description: The ID of the user who is initiating the interaction
+          description: The ID of the user who is initiating the exchange
         other_user_id:
           type: string
-          description: The ID of the other user involved in the interaction
+          description: The ID of the other user involved in the exchange
         project_id:
           type: string
-          description: The ID of the project related to the interaction
+          description: The ID of the project related to the exchange
 
     Meaning TrailDetails:
       type: array
       items:
         type: object
         properties:
-          interactionId:
+          exchangeId:
             type: string
           involvedParties:
             type: array
@@ -620,10 +620,10 @@ components:
             additionalProperties: true
 
 
-    Interaction:
+    Exchange:
       type: object
       properties:
-        interaction_id:
+        exchange_id:
           type: string
           format: uuid
         other_user_id:
@@ -632,14 +632,14 @@ components:
         project_id:
           type: string
           format: uuid
-        interaction_description:
+        exchange_description:
           type: string
-        interaction_status:
+        exchange_status:
           type: string
     Meaning Trail:
       type: array
       items:
-        $ref: '#/components/schemas/Interaction'
+        $ref: '#/components/schemas/Exchange'
 
     Service:
       type: object

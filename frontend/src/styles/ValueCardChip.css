@@ -1,0 +1,282 @@
+/* ============================================================================
+   ValueCardChip — mini chip + full-card modal overlay.
+   Used in UserPage sidebar (vertical list) and entity hero (horizontal wrap).
+   ========================================================================== */
+
+/* ── Mini chip button ─────────────────────────────────────────────────────── */
+.vc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.28em 0.7em 0.28em 0.5em;
+    border: 1px solid var(--chip-accent, var(--honey));
+    border-left: 3px solid var(--chip-accent, var(--honey));
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--moss-deep);
+    line-height: 1.2;
+    transition:
+        background 0.18s var(--ease),
+        transform 0.18s var(--ease),
+        box-shadow 0.18s var(--ease);
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+}
+.vc-chip:hover {
+    background: var(--surface-2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.vc-chip-glyph {
+    font-size: 0.68rem;
+    color: var(--chip-accent, var(--honey));
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.vc-chip-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Chips row / section ──────────────────────────────────────────────────── */
+.vc-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em;
+}
+
+/* UserPage sidebar value section */
+.user-value-chips {
+    width: 100%;
+    margin-top: 0.8em;
+    padding-top: 0.8em;
+    border-top: 1px solid var(--border-soft);
+    text-align: left;
+}
+
+.user-value-chips-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 700;
+    margin-bottom: 0.5em;
+}
+
+/* CompactValueGraph — entity page sidebars */
+.cvg-manage-link {
+    display: inline-block;
+    margin-top: 0.7em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--moss);
+    text-decoration: none;
+}
+.cvg-manage-link:hover { text-decoration: underline; color: var(--moss-deep); }
+
+/* ── Overlay backdrop ─────────────────────────────────────────────────────── */
+.vc-chip-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 40, 20, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: vc-chip-fade 0.18s var(--ease) both;
+}
+
+@keyframes vc-chip-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Full card modal ─────────────────────────────────────────────────────── */
+.vc-chip-modal {
+    position: relative;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 2.4rem,
+            rgba(155, 171, 131, 0.16) 2.4rem,
+            rgba(155, 171, 131, 0.16) calc(2.4rem + 1px)
+        ),
+        var(--surface);
+    border: 1px solid var(--border);
+    border-top: 5px solid var(--vc-accent, var(--honey));
+    border-radius: var(--r-md);
+    padding: 1.6rem 1.5rem 1.4rem;
+    width: min(480px, 90vw);
+    max-height: 82vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
+    animation: vc-chip-rise 0.22s var(--ease) both;
+}
+
+@keyframes vc-chip-rise {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.vc-chip-close {
+    position: absolute;
+    top: 0.65rem; right: 0.75rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+    line-height: 1;
+}
+.vc-chip-close:hover { border-color: var(--terracotta); color: var(--terracotta); }
+
+/* ── ValueCardPicker ──────────────────────────────────────────────────────── */
+.vc-picker {
+    margin-top: 0.65em;
+    padding: 0.6em 0.75em;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+}
+
+.vc-picker-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 700;
+    margin-bottom: 0.45em;
+}
+
+.vc-picker-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35em;
+}
+
+/* Picker chip — same shape as .vc-chip but toggleable */
+.vc-picker-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28em;
+    padding: 0.22em 0.6em 0.22em 0.42em;
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--chip-accent, var(--honey));
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    line-height: 1.2;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vc-picker-chip:hover {
+    background: var(--surface-2);
+    color: var(--moss-deep);
+}
+.vc-picker-chip--on {
+    background: color-mix(in srgb, var(--chip-accent, var(--honey)) 14%, var(--surface));
+    border-color: var(--chip-accent, var(--honey));
+    color: var(--moss-deep);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px var(--chip-accent, var(--honey));
+}
+.vc-picker-chip--on:hover {
+    background: color-mix(in srgb, var(--chip-accent, var(--honey)) 22%, var(--surface));
+}
+
+.vc-picker-check {
+    font-size: 0.65rem;
+    color: var(--chip-accent, var(--honey));
+    margin-left: 0.1em;
+    flex-shrink: 0;
+}
+
+/* ── Mini chips displayed below a posted comment ─────────────────────────── */
+.comment-value-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.28em 0.35em;
+    margin-top: 0.6em;
+    padding-top: 0.5em;
+    /* dashed separator tinted to the receipt's accent (leaf) */
+    border-top: 1px dashed color-mix(in srgb, var(--leaf) 45%, var(--border-soft));
+    position: relative;
+}
+
+/* Acknowledgement variant — honey tint */
+.comment-value-chips--ack {
+    border-top-color: color-mix(in srgb, var(--honey) 45%, var(--border-soft));
+}
+
+/* "values" label inline before the chips */
+.comment-vc-label {
+    font-family: var(--font-body);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--moss);
+    opacity: 0.65;
+    align-self: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-right: 0.1em;
+    padding: 0.12em 0.38em;
+    border: 1px solid color-mix(in srgb, var(--leaf) 35%, transparent);
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--leaf) 8%, transparent);
+    line-height: 1.4;
+}
+
+/* Acknowledgement label variant */
+.comment-value-chips--ack .comment-vc-label {
+    color: var(--honey-deep);
+    border-color: color-mix(in srgb, var(--honey) 40%, transparent);
+    background: color-mix(in srgb, var(--honey) 10%, transparent);
+}
+
+/* Chips inside a comment are slightly more compact */
+.comment-value-chips .vc-chip {
+    font-size: 0.73rem;
+    padding: 0.22em 0.6em 0.22em 0.42em;
+    animation: comment-chip-in 0.18s var(--ease) both;
+}
+.comment-value-chips .vc-chip:nth-child(2) { animation-delay: 0s; }
+.comment-value-chips .vc-chip:nth-child(3) { animation-delay: 0.045s; }
+.comment-value-chips .vc-chip:nth-child(4) { animation-delay: 0.09s; }
+.comment-value-chips .vc-chip:nth-child(5) { animation-delay: 0.135s; }
+
+@keyframes comment-chip-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.94); }
+    to   { opacity: 1; transform: translateY(0)  scale(1);    }
+}

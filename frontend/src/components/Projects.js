@@ -29,7 +29,7 @@ const Projects = () => {
           owner: p.owner_alliance || p.owner || 'Independent',
           participants: p.members || [],
           values: p.values || [],
-          interactions: [],
+          exchanges: [],
           acknowledgements: [],
           statusButtons: STATUS_STEPS.map((s) => ({ status: s, label: s })),
         }));

@@ -1,0 +1,165 @@
+/* ============================================================================
+   EntityBanner — the top banner shared by Sphere/Alliance/Project pages.
+   Real photo when the entity has one; otherwise a generated, on-brand
+   gradient + glyph so every page still reads as finished and consistent.
+   ========================================================================== */
+
+.ep-banner {
+    position: relative;
+    width: 100%;
+    min-height: clamp(220px, 32vw, 320px);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    border-radius: 0 0 var(--r-lg) var(--r-lg);
+    margin-bottom: 2.4rem;
+    box-shadow: var(--shadow-md);
+}
+
+.ep-banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Generated placeholder — a rich diagonal wash in the entity's accent colour
+   with a single oversized glyph, echoing the section glyphs used elsewhere. */
+.ep-banner-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ep-banner--sphere .ep-banner-fallback {
+    background: linear-gradient(135deg, var(--honey) 0%, var(--terracotta) 55%, var(--moss-deep) 130%);
+}
+.ep-banner--alliance .ep-banner-fallback {
+    background: linear-gradient(135deg, var(--moss) 0%, var(--moss-deep) 60%, #26311e 130%);
+}
+.ep-banner--project .ep-banner-fallback {
+    background: linear-gradient(135deg, var(--leaf) 0%, var(--moss) 65%, var(--moss-deep) 130%);
+}
+.ep-banner--opening .ep-banner-fallback {
+    background: linear-gradient(135deg, var(--terracotta) 0%, var(--honey) 60%, var(--moss-deep) 130%);
+}
+
+.ep-banner-glyph {
+    font-size: clamp(6rem, 16vw, 11rem);
+    line-height: 1;
+    color: rgba(247, 244, 232, 0.16);
+    font-family: var(--font-display);
+    transform: translateY(-0.35em);
+    user-select: none;
+}
+
+/* Scrim so overlaid text stays legible over either a photo or the gradient. */
+.ep-banner-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20, 24, 14, 0) 35%, rgba(20, 24, 14, 0.62) 100%);
+}
+
+.ep-banner-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: clamp(1.4rem, 3vw, 2.2rem) clamp(1.2rem, 3.5vw, 2.6rem);
+    color: #f7f4e8;
+}
+
+.ep-banner-content .ep-eyebrow {
+    color: rgba(247, 244, 232, 0.78);
+}
+
+.ep-banner-content .ep-title {
+    color: #fdfaf2;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.ep-banner-content .ep-description {
+    color: rgba(247, 244, 232, 0.92);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ep-banner-content .ep-sphere-chip,
+.ep-banner-content .ep-location-chip {
+    background: rgba(247, 244, 232, 0.14);
+    border-color: rgba(247, 244, 232, 0.3);
+    color: #fdfaf2;
+}
+.ep-banner-content .ep-sphere-chip:hover {
+    background: #fdfaf2;
+    color: var(--moss-deep);
+}
+
+/* OpeningPage reuses Exchange.css's xc-page-* classes inside the banner —
+   the same legibility treatment as the ep-* equivalents above. */
+.ep-banner-content .xc-page-title {
+    color: #fdfaf2;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+.ep-banner-content .xc-page-breadcrumb,
+.ep-banner-content .xc-page-meta {
+    color: rgba(247, 244, 232, 0.82);
+}
+.ep-banner-content .xc-page-breadcrumb a {
+    color: #fdfaf2;
+}
+.ep-banner-content .xc-page-meta strong {
+    color: #fdfaf2;
+}
+.ep-banner-content .xc-page-meta a {
+    color: #fdfaf2;
+    font-weight: 600;
+    text-decoration: none;
+}
+.ep-banner-content .xc-page-meta a:hover { text-decoration: underline; }
+
+/* ── Upload affordance — management-page-only, top-right of the banner. ─── */
+.ep-banner-upload {
+    position: absolute;
+    top: clamp(1rem, 2.5vw, 1.6rem);
+    right: clamp(1rem, 2.5vw, 1.6rem);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4em;
+}
+
+.ep-banner-upload-btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #fdfaf2;
+    background: rgba(20, 24, 14, 0.45);
+    border: 1px solid rgba(247, 244, 232, 0.45);
+    border-radius: var(--r-pill);
+    padding: 0.5em 1em;
+    cursor: pointer;
+    backdrop-filter: blur(3px);
+    transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.ep-banner-upload-btn:hover:not(:disabled) {
+    background: rgba(20, 24, 14, 0.65);
+    border-color: #fdfaf2;
+    transform: translateY(-1px);
+}
+.ep-banner-upload-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.ep-banner-upload-error {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #ffd7d7;
+    background: rgba(20, 24, 14, 0.55);
+    padding: 0.25em 0.7em;
+    border-radius: var(--r-sm);
+}
+
+@media (max-width: 640px) {
+    .ep-banner { border-radius: 0 0 var(--r-md) var(--r-md); }
+}

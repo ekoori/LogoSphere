@@ -410,6 +410,29 @@ aside .search-box { margin-bottom: 1em; }
 .filters button:hover { background: rgba(111, 138, 79, 0.14); color: var(--moss-deep); border-color: var(--sage); }
 .filters button.active { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
 
+.opening-sphere-filter { margin-top: 0.9em; }
+.opening-sphere-filter label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.4em;
+}
+.opening-sphere-filter select {
+    width: 100%;
+    padding: 0.55em 0.7em;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
 /* Sidebar link lists — scoped to aside so they don't leak into page content
    that reuses the same class names (e.g. the .sphere-list card container). */
 aside .sphere-list, aside .active-offers, aside .active-needs { list-style: none; padding: 0; margin: 0; }

@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
 import '../styles/Openings.css';
@@ -24,27 +25,102 @@ const sHref = (s) => {
 };
 
 function ServiceCard({
-    type, title, spheres, provider, providerId, description, project,
-    imageUrl, time, status, likesCount, likedByCurrentUser,
+    id,
+    type, title, spheres, provider, providerId, description, project, projectId,
+    imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
+    postedAt, acceptedAt, inProgressAt, completedAt, activity,
+    pendingAcceptances = [], myAcceptance = null,
+    currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
     const [img, setImg] = useState(imageUrl);
+    const [accepting, setAccepting] = useState(false);
+    const [confirmingId, setConfirmingId] = useState(null);
+    const [rejectingId, setRejectingId] = useState(null);
 
-    const handleLike = (e) => {
+    // Toggle the like on this opening. Optimistic, rolled back on error.
+    const handleLike = async (e) => {
         e.stopPropagation();
+        if (!id) return;
+        const prevLiked = liked, prevLikes = likes;
         setLiked((v) => !v);
-        setLikes((n) => liked ? n - 1 : n + 1);
+        setLikes((n) => (liked ? n - 1 : n + 1));
+        try {
+            const res = await api.post(`/api/openings/${id}/like`);
+            setLiked(res.data.liked);
+            setLikes(res.data.likes);
+        } catch (err) {
+            setLiked(prevLiked);
+            setLikes(prevLikes);
+        }
+    };
+
+    const isOwnOpening = currentUserId && providerId && currentUserId === providerId;
+    // A recipient who already acted can't accept again; a single opening locked
+    // to someone else can't be accepted by others either.
+    const lockedToOther = status === 'Accepted' && cadence !== 'perpetual' && !myAcceptance;
+    const canAccept = currentUserId && !isOwnOpening && !myAcceptance && !lockedToOther
+        && status !== 'Cancelled' && status !== 'Completed';
+
+    const handleAccept = async (e) => {
+        e.stopPropagation();
+        if (accepting || !onAccept) return;
+        setAccepting(true);
+        try {
+            await onAccept();
+        } finally {
+            setAccepting(false);
+        }
+    };
+
+    const handleConfirm = async (e, accepterId) => {
+        e.stopPropagation();
+        if (confirmingId || !onConfirm) return;
+        setConfirmingId(accepterId);
+        try {
+            await onConfirm(accepterId);
+        } finally {
+            setConfirmingId(null);
+        }
+    };
+
+    const handleReject = async (e, accepterId) => {
+        e.stopPropagation();
+        if (rejectingId || !onReject) return;
+        setRejectingId(accepterId);
+        try {
+            await onReject(accepterId);
+        } finally {
+            setRejectingId(null);
+        }
     };
 
     const cancelled = status === 'Cancelled';
-    const idx = cancelled ? 1 : serviceIndex(status);
-    const steps = SERVICE_STEPS.map((label, i) => ({ label, time: i === idx ? time : '' }));
+    const isPerpetual = cadence === 'perpetual';
+
+    // Perpetual openings gather many acceptances over time — the middle phases
+    // become aggregate labels with the date of their most recent activation,
+    // rather than a single fixed accept→confirm cycle.
+    const idx = cancelled ? 1
+        : isPerpetual
+            ? (activity?.completedLastAt ? 3 : activity?.inProgressCount ? 2 : activity?.acceptedCount ? 1 : 0)
+            : serviceIndex(status);
+
+    const PHASE_DATES = [postedAt, acceptedAt, inProgressAt, completedAt];
+    const PERPETUAL_LABELS = ['Posted', 'Accepted (multiple)', 'In Progress (multiple)', 'Completed (multiple)'];
+    const PERPETUAL_DATES = [postedAt, activity?.acceptedLastAt, activity?.inProgressLastAt, activity?.completedLastAt];
+
+    const steps = SERVICE_STEPS.map((label, i) => ({
+        label: isPerpetual ? PERPETUAL_LABELS[i] : label,
+        // A phase's date only appears once that phase has actually been reached.
+        time: i <= idx ? (isPerpetual ? PERPETUAL_DATES[i] : PHASE_DATES[i]) || '' : '',
+    }));
 
     return (
         <div className={`service ${type}`}>
-            <div className="interaction-header">
+            <div className="exchange-header">
                 <div className="left">
                     <small>
                         {spheres.map((sphere, index) => (
@@ -55,8 +131,35 @@ function ServiceCard({
                                 {index < spheres.length - 1 && ', '}
                             </React.Fragment>
                         ))}
+                        {project && (
+                            <>
+                                <span className="service-header-pipe"> | </span>
+                                <a
+                                    href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {project}
+                                </a>
+                            </>
+                        )}
                     </small>
-                    <h3>{title}</h3>
+                    <h3>
+                        <a
+                            className="service-title-link"
+                            href={id ? `/opening?id=${id}` : '#'}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (id) navigate(`/opening?id=${id}`); }}
+                        >
+                            {title}
+                        </a>
+                        {cadence === 'perpetual' && (
+                            <span className="cadence-badge cadence-badge--perpetual" title="Ongoing — can be accepted repeatedly">
+                                ↻ Ongoing
+                            </span>
+                        )}
+                    </h3>
+                    {status === 'Accepted' && acceptedByName && cadence !== 'perpetual' && (
+                        <div className="accepted-by-note">Accepted by {acceptedByName}</div>
+                    )}
                     <div className="participants">
                         <span>
                             👤{' '}
@@ -83,7 +186,7 @@ function ServiceCard({
                 <img
                     src={img}
                     alt={title}
-                    className="interaction-image"
+                    className="exchange-image"
                     onError={() => setImg('/static/gift_economy.png')}
                     onClick={(e) => e.stopPropagation()}
                 />
@@ -103,14 +206,72 @@ function ServiceCard({
 
             <StatusProgression steps={steps} currentIndex={idx} cancelled={cancelled} />
 
-            <div className="service-create-cta">
-                <button
-                    className="service-create-btn"
-                    onClick={(e) => { e.stopPropagation(); navigate('/openings?new=1'); }}
-                >
-                    + Offer or Need
-                </button>
-            </div>
+            {/* Provider view: pending acceptances awaiting confirmation. */}
+            {isOwnOpening && pendingAcceptances.length > 0 && (
+                <div className="service-pending">
+                    <span className="service-pending-label">Awaiting your confirmation</span>
+                    {pendingAcceptances.map((p) => (
+                        <div key={p.accepter_id} className="service-pending-row">
+                            <span className="service-pending-name">
+                                👤{' '}
+                                <a href={`/user?id=${p.accepter_id}`} onClick={(e) => e.stopPropagation()}>
+                                    {p.accepter_name}
+                                </a>
+                            </span>
+                            <span className="service-pending-actions">
+                                <button
+                                    className="service-confirm-btn"
+                                    onClick={(e) => handleConfirm(e, p.accepter_id)}
+                                    disabled={confirmingId === p.accepter_id || rejectingId === p.accepter_id}
+                                >
+                                    {confirmingId === p.accepter_id ? 'Confirming…' : '✓ Confirm'}
+                                </button>
+                                <button
+                                    className="service-reject-btn"
+                                    onClick={(e) => handleReject(e, p.accepter_id)}
+                                    disabled={confirmingId === p.accepter_id || rejectingId === p.accepter_id}
+                                >
+                                    {rejectingId === p.accepter_id ? 'Declining…' : 'Decline'}
+                                </button>
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Recipient view: their own acceptance state. */}
+            {!isOwnOpening && myAcceptance?.status === 'pending' && (
+                <div className="service-accept-cta">
+                    <span className="service-awaiting">⏳ Awaiting confirmation from {provider}</span>
+                </div>
+            )}
+            {!isOwnOpening && myAcceptance?.status === 'confirmed' && myAcceptance.exchange_id && (
+                <div className="service-accept-cta">
+                    <button
+                        className="service-accept-btn service-view-exchange"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/exchange?id=${myAcceptance.exchange_id}`); }}
+                    >
+                        → View your exchange
+                    </button>
+                </div>
+            )}
+
+            {canAccept && (
+                <div className="service-accept-cta">
+                    <button
+                        className="service-accept-btn"
+                        onClick={handleAccept}
+                        disabled={accepting}
+                    >
+                        {accepting ? 'Accepting…' : (type === 'offer' ? '✓ Accept this Offer' : '✓ Fulfil this Need')}
+                    </button>
+                </div>
+            )}
+            {!isOwnOpening && !myAcceptance && lockedToOther && (
+                <div className="service-accept-cta">
+                    <span className="service-awaiting">Already accepted{acceptedByName ? ` by ${acceptedByName}` : ''}</span>
+                </div>
+            )}
         </div>
     );
 }
@@ -123,11 +284,25 @@ ServiceCard.propTypes = {
     providerId: PropTypes.string,
     description: PropTypes.string.isRequired,
     project: PropTypes.string,
+    projectId: PropTypes.string,
     imageUrl: PropTypes.string,
     time: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,
     likedByCurrentUser: PropTypes.bool.isRequired,
+    cadence: PropTypes.string,
+    acceptedByName: PropTypes.string,
+    postedAt: PropTypes.string,
+    acceptedAt: PropTypes.string,
+    inProgressAt: PropTypes.string,
+    completedAt: PropTypes.string,
+    activity: PropTypes.object,
+    pendingAcceptances: PropTypes.arrayOf(PropTypes.object),
+    myAcceptance: PropTypes.object,
+    currentUserId: PropTypes.string,
+    onAccept: PropTypes.func,
+    onConfirm: PropTypes.func,
+    onReject: PropTypes.func,
 };
 
 export default ServiceCard;

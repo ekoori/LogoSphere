@@ -3,9 +3,12 @@ import '../styles/Spheres.css';
 import NewSphereForm from '../components/NewSphereForm';
 import SphereCard from '../components/SphereCard';
 import api from '../api';
+import { useLogin } from '../App';
 
 const Spheres = () => {
+  const { userId } = useLogin();
   const [spheres, setSpheres] = useState([]);
+  const [sphereCards, setSphereCards] = useState({});
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const toggleFormVisibility = () => setIsFormVisible((v) => !v);
@@ -17,12 +20,23 @@ const Spheres = () => {
         ...sphere,
         id: sphere.sphere_id,
         alliances: sphere.alliances || [],
-        // {id, name} pairs so each member links to their profile.
         participants: sphere.members || [],
         projects: sphere.projects || [],
         values: sphere.values || [],
       }));
       setSpheres(fetched);
+
+      // Fetch value cards for each sphere in parallel
+      const results = await Promise.all(
+        fetched.map(s =>
+          api.get(`/api/value_cards/${s.id}`)
+            .then(r => ({ id: s.id, cards: r.data || [] }))
+            .catch(() => ({ id: s.id, cards: [] }))
+        )
+      );
+      const cardMap = {};
+      results.forEach(r => { cardMap[r.id] = r.cards; });
+      setSphereCards(cardMap);
     } catch (error) {
       console.error('Error fetching spheres:', error);
     }
@@ -36,6 +50,15 @@ const Spheres = () => {
     // The form posts to the API; refresh the list to show the new sphere.
     toggleFormVisibility();
     await fetchSpheres();
+  };
+
+  const handleJoin = async (sphereId) => {
+    try {
+      await api.post(`/api/spheres/${sphereId}/join`);
+      await fetchSpheres();
+    } catch (e) {
+      console.error('Failed to join sphere:', e);
+    }
   };
 
   return (
@@ -59,7 +82,14 @@ const Spheres = () => {
         ) : (
           <div className="spheres-grid">
             {spheres.map((sphere) => (
-              <SphereCard key={sphere.id} {...sphere} onJoin={(id) => console.log(`Joining sphere ${id}`)} />
+              <SphereCard
+                key={sphere.id}
+                {...sphere}
+                valueCards={sphereCards[sphere.id] || []}
+                currentUserId={userId}
+                isMember={!!userId && sphere.participants.some((p) => (p.id || p) === userId)}
+                onJoin={handleJoin}
+              />
             ))}
           </div>
         )}

@@ -1,5 +1,5 @@
 // UserPage — public profile for any user, loaded by ?id=.
-// Shows their MeaningTrail as collapsible InteractionCards and their posted
+// Shows their MeaningTrail as collapsible ExchangeCards and their posted
 // openings offers/needs, mirroring the Home feed layout.
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,46 +11,64 @@ import '../styles/Openings.css';
 
 import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
+import TabSelector from '../components/TabSelector';
+import ConnectionsPanel from '../components/ConnectionsPanel';
+import ValueCardChip from '../components/ValueCardChip';
 import api from '../api';
-import { mapInteraction, mapService } from '../utils/mappers';
+import { mapExchange, mapService } from '../utils/mappers';
+import { useLogin } from '../App';
+import '../styles/ValueCardChip.css';
 
 function UserPage() {
+    const { userId: viewerId } = useLogin();
     const [params] = useSearchParams();
     const id = params.get('id');
 
     const [user, setUser] = useState(null);
     const [trail, setTrail] = useState([]);
     const [services, setServices] = useState([]);
+    const [valueCards, setValueCards] = useState([]);
     const [activeTab, setActiveTab] = useState('meaning_trail');
     const [loading, setLoading] = useState(true);
 
     const fetchAll = useCallback(async () => {
         if (!id) { setLoading(false); return; }
+        let ownerUser = null;
         try {
             const res = await api.get(`/api/users/${id}`);
+            ownerUser = res.data;
             setUser(res.data);
         } catch (e) {
             console.error('Error loading user:', e);
         }
+        // "You" only makes sense when the page owner IS the logged-in viewer;
+        // otherwise the trail should name the actual owner of this page.
+        const isOwnPage = !!viewerId && String(viewerId) === String(id);
+        const ownerFullName = ([ownerUser?.name, ownerUser?.surname].filter(Boolean).join(' ')) || 'This member';
         try {
             const res = await api.post('/api/meaning_trail', { userId: id });
-            setTrail((res.data || []).map(mapInteraction));
+            setTrail((res.data || []).map((row) => mapExchange(row, {
+                ownerLabel: isOwnPage ? 'You' : ownerFullName,
+                ownerId: isOwnPage ? null : id,
+            })));
         } catch (e) {
             // empty trail is fine
         }
         try {
             const res = await api.get('/api/openings');
-            // Show only services posted by this user.
             const userServices = (res.data || [])
                 .filter((s) => s.provider_id === id)
                 .map(mapService);
             setServices(userServices);
         } catch (e) {
             // ignore
-        } finally {
-            setLoading(false);
         }
-    }, [id]);
+        try {
+            const vcRes = await api.get(`/api/value_cards/${id}`);
+            setValueCards(vcRes.data || []);
+        } catch (_) {}
+        setLoading(false);
+    }, [id, viewerId]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -75,34 +93,41 @@ function UserPage() {
                     {user.location && (
                         <p className="user-aside-meta">📍 {user.location}</p>
                     )}
+                    {valueCards.length > 0 && (
+                        <div className="user-value-chips">
+                            <span className="user-value-chips-label">Values</span>
+                            <div className="vc-chips-row">
+                                {valueCards.map((card, i) => (
+                                    <ValueCardChip key={card.card_id || i} card={card} subjectLabel="Cares about" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="user-aside-stats">
                         <div className="user-stat">
                             <span className="user-stat-count">{trail.length}</span>
-                            <span className="user-stat-label">trust acts</span>
+                            <span className="user-stat-label">exchanges</span>
                         </div>
                         <div className="user-stat">
                             <span className="user-stat-count">{services.length}</span>
-                            <span className="user-stat-label">offerings</span>
+                            <span className="user-stat-label">openings</span>
                         </div>
                     </div>
                 </div>
+
+                <ConnectionsPanel ownerId={id} viewerId={viewerId} />
             </aside>
 
             <main>
-                <div className="selector-buttons">
-                    <button
-                        className={`btn-selector ${activeTab === 'meaning_trail' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('meaning_trail')}
-                    >
-                        Meaning Trail
-                    </button>
-                    <button
-                        className={`btn-selector ${activeTab === 'offerings' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('offerings')}
-                    >
-                        Offers &amp; Needs
-                    </button>
-                </div>
+                <TabSelector
+                    tabs={[
+                        { key: 'meaning_trail', label: 'Meaning Trail' },
+                        { key: 'offerings', label: 'Offers & Needs' },
+                    ]}
+                    active={activeTab}
+                    onChange={setActiveTab}
+                />
 
                 {activeTab === 'meaning_trail' && (
                     trail.length === 0
@@ -113,7 +138,7 @@ function UserPage() {
                 {activeTab === 'offerings' && (
                     services.length === 0
                         ? <p className="empty-state">{fullName} hasn't posted any offers or needs yet.</p>
-                        : <Openings services={services} newServiceVisible={false} />
+                        : <Openings services={services} newServiceVisible={false} currentUserId={viewerId} />
                 )}
             </main>
         </div>

@@ -32,7 +32,8 @@ import ProjectPage from './pages/ProjectPage';
 import ProjectManagement from './pages/ProjectManagement';
 import UserPage from './pages/UserPage';
 import OpeningsPage from './pages/OpeningsPage';
-import InteractionPage from './pages/InteractionPage';
+import OpeningPage from './pages/OpeningPage';
+import ExchangePage from './pages/ExchangePage';
 import SettingsPage from './pages/Settings';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
@@ -97,7 +98,8 @@ function AppContent() {
         <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><AlliancePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><AllianceManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/openings" element={<ErrorBoundary><ProtectedRoute><OpeningsPage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/interaction" element={<ErrorBoundary><ProtectedRoute><InteractionPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 

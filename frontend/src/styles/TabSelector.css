@@ -1,0 +1,49 @@
+/* TabSelector — the canonical segmented pill control used across the site.
+   Mirrors the original home-feed selector so every tab strip looks the same. */
+
+.seg-tabs {
+    display: flex;
+    gap: 0.4em;
+    padding: 0.35em;
+    margin-bottom: var(--sp-5, 1.5rem);
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill);
+}
+
+.seg-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45em;
+    padding: 0.65em 1em;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    transition: background-color 0.2s var(--ease),
+                color 0.2s var(--ease),
+                box-shadow 0.2s var(--ease);
+}
+
+.seg-tab:hover { color: var(--moss-deep); }
+
+.seg-tab.is-active {
+    background: var(--surface);
+    color: var(--moss-deep);
+    box-shadow: var(--shadow-sm);
+}
+
+.seg-tab-icon { font-size: 1.05em; line-height: 1; }
+
+/* On narrow screens let the strip wrap rather than overflow. */
+@media (max-width: 560px) {
+    .seg-tabs { flex-wrap: wrap; }
+    .seg-tab { flex: 1 1 40%; }
+}

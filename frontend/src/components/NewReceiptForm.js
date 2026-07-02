@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ValueCardPicker from './ValueCardPicker';
 
-const NewAcknowledgementForm = ({ onSave, onCancel }) => {
+const NewReceiptForm = ({ onSave, onCancel }) => {
     const [text, setText] = useState('');
     const [error, setError] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -23,9 +23,9 @@ const NewAcknowledgementForm = ({ onSave, onCancel }) => {
     };
 
     return (
-        <div id="acknowledgement-entry">
+        <div id="receipt-entry">
             <textarea
-                placeholder="Write your acknowledgement here…"
+                placeholder="How did this exchange feel? What did it mean to you?"
                 value={text}
                 onChange={(e) => { setText(e.target.value); setError(false); }}
                 rows={3}
@@ -41,16 +41,16 @@ const NewAcknowledgementForm = ({ onSave, onCancel }) => {
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.4em' }}>Please write something first.</p>}
             <ValueCardPicker selectedIds={selectedIds} onChange={handlePickerChange} />
             <div style={{ display: 'flex', gap: '0.5em', marginTop: '0.6em' }}>
-                <button id="save-acknowledgement-btn" onClick={handleSubmit}>Save</button>
-                <button id="cancel-acknowledgement-btn" onClick={onCancel}>Cancel</button>
+                <button id="save-receipt-btn" onClick={handleSubmit}>Save</button>
+                <button id="cancel-receipt-btn" onClick={onCancel}>Cancel</button>
             </div>
         </div>
     );
 };
 
-NewAcknowledgementForm.propTypes = {
+NewReceiptForm.propTypes = {
     onSave: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
 };
 
-export default NewAcknowledgementForm;
+export default NewReceiptForm;

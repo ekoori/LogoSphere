@@ -136,4 +136,78 @@ for i, c in enumerate(cards):
     print(f"  [OK] inserted card {i+1}: {c['title']}")
 
 print(f"\n[DONE] Seeded {len(cards)} value cards for Joe Rogan ({joe_id})")
+
+# ── 5. Elon Musk ─────────────────────────────────────────────────────────────
+elon_id = find_user('Elon Musk') or find_user('Musk') or find_user('Elon')
+if not elon_id:
+    print("[SKIP] Elon Musk not found in users table")
+else:
+    print(f"[OK] Found Elon Musk: {elon_id}")
+
+    existing_elon = list(session.execute("SELECT card_id FROM value_cards WHERE user_id = %s", [elon_id]))
+    for row in existing_elon:
+        session.execute("DELETE FROM value_cards WHERE user_id = %s AND card_id = %s", [elon_id, row.card_id])
+    print(f"  cleared {len(existing_elon)} existing cards")
+
+    elon_cards = [
+        {
+            "title": "Making humanity multi-planetary",
+            "care_about": "Ensuring the long-term survival of consciousness by making life multiplanetary before an extinction event wipes out everything we've built.",
+            "because": "All civilisations that have ever existed are gone. Earth is the only backup. A single-planet species is an unacceptable risk over geological timescales.",
+            "looks_like": [
+                "Setting reusable rocket timelines that most engineers call impossible",
+                "Treating Mars colonisation as an engineering problem, not a dream",
+                "Funding SpaceX personally when it was weeks from bankruptcy",
+            ],
+            "drift_looks_like": "Treating space as a prestige project rather than a survival imperative. Optimising for quarterly revenue over a 10-year mission.",
+            "in_conflict": "The mission over the optics.",
+            "never_do": "Accept that something is impossible without doing the physics.",
+            "frankl_mode": "creative",
+            "color_key": "terracotta",
+        },
+        {
+            "title": "Accelerating the energy transition",
+            "care_about": "Moving civilisation off fossil fuels as fast as physically possible — not out of environmentalism but because sustainable energy is simply the correct long-term path.",
+            "because": "The atmosphere is a finite buffer. Every year of delay locks in compounding consequences. The technology exists; the bottleneck is manufacturing scale and political inertia.",
+            "looks_like": [
+                "Building the world's largest battery factories before there was demand",
+                "Treating the energy problem as a manufacturing problem first",
+                "Publishing Tesla's patents openly to accelerate the entire industry",
+            ],
+            "drift_looks_like": "Treating sustainability as a marketing angle. Optimising vehicle range for luxury buyers over energy density for affordability.",
+            "in_conflict": "Speed of transition over profit margin on any single product.",
+            "never_do": "Pretend that incremental improvement is enough.",
+            "frankl_mode": "attitudinal",
+            "color_key": "leaf",
+        },
+        {
+            "title": "Free flow of information",
+            "care_about": "The ability of any person to say what they actually think without institutional gatekeeping deciding what is and isn't permitted discourse.",
+            "because": "Centralised control of speech has historically been the first tool of authoritarians. An open forum — even a messy one — is preferable to a curated one.",
+            "looks_like": [
+                "Reinstating accounts banned for political speech rather than illegal activity",
+                "Publishing moderation decisions and algorithms rather than hiding them",
+                "Tolerating criticism of myself on the platform I own",
+            ],
+            "drift_looks_like": "Permitting any speech I personally agree with while suppressing speech I find inconvenient. Treating 'free speech' as a brand rather than a practice.",
+            "in_conflict": "The open forum over advertiser comfort.",
+            "never_do": "Silence someone for saying something true that I find uncomfortable.",
+            "frankl_mode": "experiential",
+            "color_key": "honey",
+        },
+    ]
+
+    for i, c in enumerate(elon_cards):
+        card_id = uuid.uuid4()
+        session.execute(INSERT, (
+            elon_id, card_id,
+            c["title"], c["care_about"], c["because"], c["looks_like"],
+            c["drift_looks_like"], c["in_conflict"], c["never_do"],
+            c["frankl_mode"], c["color_key"],
+            datetime.utcnow()
+        ))
+        print(f"  [OK] inserted card {i+1}: {c['title']}")
+
+    print(f"\n[DONE] Seeded {len(elon_cards)} value cards for Elon Musk ({elon_id})")
+
 cluster.shutdown()

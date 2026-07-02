@@ -34,11 +34,19 @@ class Alliance:
         self.member_roles = member_roles or {}
 
     def to_dict(self):
+        def _role(mid):
+            # An explicit role wins; otherwise the alliance admin (admin1) is the admin.
+            if self.member_roles and self.member_roles.get(mid):
+                return self.member_roles[mid]
+            if self.admin1 and mid == self.admin1:
+                return 'admin'
+            return 'member'
+
         members_with_roles = [
             {
                 'id': str(mid),
                 'name': (self.member_names[i] if self.member_names and i < len(self.member_names) else 'Member'),
-                'role': self.member_roles.get(mid, 'member') if self.member_roles else 'member',
+                'role': _role(mid),
             }
             for i, mid in enumerate(self.members or [])
         ]
@@ -101,6 +109,13 @@ class Alliance:
                 getattr(r, 'member_roles', None),
             ))
         return alliances
+
+    @classmethod
+    def set_image(cls, alliance_id, image_bytes):
+        cassandra_session.execute(
+            "UPDATE alliances SET image = %s WHERE alliance_id = %s",
+            [image_bytes, alliance_id]
+        )
 
     @classmethod
     def join(cls, alliance_id, user_uuid, user_name):

@@ -36,11 +36,11 @@
     margin-bottom: 2em;
 }
 
-.project-interactions {
+.project-exchanges {
     margin-bottom: 2em;
 }
 
-.interaction {
+.exchange {
     padding: 1em;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -49,22 +49,22 @@
     transition: background-color 0.3s;
 }
 
-.interaction:hover {
+.exchange:hover {
     background-color: var(--surface-2);
 }
 
-.interaction-header {
+.exchange-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5em;
 }
 
-.interaction h4 {
+.exchange h4 {
     margin: 0;
 }
 
-.interaction-status-btn {
+.exchange-status-btn {
     padding: 0.2em 0.5em;
     background-color: var(--moss);
     color: white;
@@ -74,27 +74,27 @@
     transition: background-color 0.3s, color 0.3s;
 }
 
-.interaction-status-btn:hover {
+.exchange-status-btn:hover {
     background-color: darkblue;
 }
 
-.interaction-participants {
+.exchange-participants {
     font-style: italic;
     margin-top: 0.5em;
 }
 
-.interaction-participants span {
+.exchange-participants span {
     display: inline;
     margin-right: 0.5em;
 }
 
-.interaction-participants a {
+.exchange-participants a {
     display: inline;
     color: var(--moss);
     text-decoration: none;
 }
 
-.interaction-participants a:hover {
+.exchange-participants a:hover {
     text-decoration: underline;
 }
 
