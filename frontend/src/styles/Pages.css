@@ -1,38 +1,72 @@
-/* src/styles/Pages.css — shared static-page styling (About, Contribute, Donate) */
+/* src/styles/Pages.css — shared styling for the static text pages
+   (Contribute, Privacy, Terms, Donate). Applied via `.doc-page` on the
+   page's `.container`. Mobile-first: comfortable reading measure, fluid
+   padding, and headings/lists that don't crowd a narrow screen. */
 
-.page-main {
-    padding: var(--sp-6) clamp(1em, 4vw, 2em);
-    max-width: 860px;
-    margin: 0 auto;
+.doc-page {
+    /* Trim the generic .container vertical rhythm so short docs sit higher. */
+    margin-top: var(--sp-6);
+    margin-bottom: var(--sp-8);
 }
 
-.about-concepts .concept,
-.contribute-concept {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.2em;
+.doc-page main {
+    max-width: 760px;
     background: var(--surface);
-    padding: 1.4em;
     border: 1px solid var(--border-soft);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-sm);
-    margin-bottom: 1.2em;
-    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
-}
-.about-concepts .concept:hover,
-.contribute-concept:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-
-.concept-image {
-    width: 180px;
-    height: 180px;
-    flex: none;
-    border-radius: var(--r-md);
-    object-fit: cover;
-    box-shadow: var(--shadow-sm);
+    padding: clamp(1.4rem, 4.5vw, 3rem);
 }
 
-.concept-content { display: flex; flex-direction: column; }
+/* First section carries the page title. */
+.doc-page section { margin: 0 0 2.2rem; }
+.doc-page section:last-child { margin-bottom: 0; }
 
+.doc-page h1 {
+    font-family: var(--font-display);
+    line-height: 1.12;
+    margin: 0 0 0.5em;
+}
+
+/* Every subsequent section header gets a hairline rule so the document reads
+   as distinct sections even on a small screen. */
+.doc-page section + section h2,
+.doc-page section + section h3 {
+    margin: 0 0 0.6em;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--border-soft);
+}
+.doc-page h2, .doc-page h3 {
+    font-family: var(--font-display);
+    line-height: 1.2;
+}
+
+.doc-page p {
+    line-height: 1.7;
+    margin: 0 0 1em;
+    color: var(--ink-soft, var(--ink));
+    overflow-wrap: anywhere; /* long emails/URLs never overflow on mobile */
+}
+.doc-page p:last-child { margin-bottom: 0; }
+
+.doc-page ul {
+    margin: 0.6em 0 1.1em;
+    padding-left: 1.25em;
+}
+.doc-page li {
+    margin: 0.45em 0;
+    line-height: 1.6;
+}
+
+.doc-page a {
+    color: var(--terracotta-deep, var(--terracotta));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    overflow-wrap: anywhere;
+}
+.doc-page a:hover { color: var(--terracotta); }
+
+/* ── Call-to-action buttons (Contribute, Donate) ─────────────────────────── */
 .btn-join, .btn-github {
     padding: 0.72em 1.3em;
     background: var(--terracotta);
@@ -42,6 +76,7 @@
     cursor: pointer;
     font-family: var(--font-body);
     font-weight: 600;
+    font-size: 1rem;
     box-shadow: var(--shadow-sm);
     transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
     text-decoration: none;
@@ -54,13 +89,25 @@
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
-
 .btn-github { background: var(--moss); color: #f7f4e8; }
 .btn-github:hover { background: var(--moss-deep); }
 
-.paypal-button { text-align: center; margin-top: 1em; }
+.doc-page .paypal-button { margin-top: 1.2em; }
+.doc-page .paypal-button input[type="image"] { max-width: 100%; height: auto; }
 
+/* ── Phone ───────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-    .about-concepts .concept, .contribute-concept { flex-direction: column; }
-    .concept-image { width: 100%; height: 200px; }
+    .doc-page {
+        margin-top: var(--sp-4, 1.1rem);
+        margin-bottom: var(--sp-6);
+    }
+    .doc-page section { margin-bottom: 1.7rem; }
+    .doc-page section + section h2,
+    .doc-page section + section h3 { padding-top: 1.2rem; }
+    /* Full-width, thumb-friendly CTAs. */
+    .btn-join, .btn-github {
+        display: block;
+        width: 100%;
+        padding: 0.85em 1.2em;
+    }
 }

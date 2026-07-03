@@ -1,8 +1,9 @@
 import React from 'react';
+import '../styles/Pages.css';
 
 const Contribute = () => {
   return (
-    <div className="container">
+    <div className="container doc-page">
       <main>
         <section className="contribute">
           <h1>Contribute to LogoSphere</h1>
@@ -24,7 +25,7 @@ const Contribute = () => {
         <section className="contribute-github">
           <h3>Get Involved</h3>
           <p>Our project is hosted on GitHub. You can find the repository, contribute to the code, report issues, and join discussions:</p>
-          <a href="https://github.com/ekoori/LogoSphere" target="_blank" className="btn-github">Visit our GitHub Repository</a>
+          <a href="https://github.com/ekoori/LogoSphere" target="_blank" rel="noreferrer noopener" className="btn-github">Visit our GitHub Repository</a>
         </section>
         <section className="contribute-join">
           <h3>Join Our Community</h3>

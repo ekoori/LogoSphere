@@ -1,8 +1,9 @@
 import React from 'react';
+import '../styles/Pages.css';
 
 const Privacy = () => {
   return (
-    <div className="container">
+    <div className="container doc-page">
       <main>
         <section className="privacy-intro">
           <h1>Privacy Policy</h1>

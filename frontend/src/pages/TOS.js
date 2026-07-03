@@ -1,8 +1,9 @@
 import React from 'react';
+import '../styles/Pages.css';
 
 const TOS = () => {
   return (
-    <div className="container">
+    <div className="container doc-page">
       <main>
         <section className="tos-intro">
           <h1>Terms of Service</h1>

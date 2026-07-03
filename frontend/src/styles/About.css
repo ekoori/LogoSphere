@@ -521,6 +521,27 @@
     .ab-map-d { grid-column: 1 / -1; }
 }
 
+/* ── Phone ───────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    /* Tame the oversized hero on small screens. */
+    .ab-hero-title { font-size: clamp(2.1rem, 9vw, 2.6rem); }
+    .ab-hero-graph { opacity: 0.3; width: min(360px, 92%); height: 260px; }
+    .ab-lead { font-size: 1.05rem; }
+    .ab-lead::first-letter { font-size: 2.8em; }
+
+    .ab-section-head { gap: 0.55rem; margin-bottom: 1.1rem; }
+    .ab-section-head h2 { font-size: clamp(1.5rem, 7vw, 1.9rem); }
+
+    /* Mapping rows read as a simple stack: from → to → description. */
+    .ab-map-row { grid-template-columns: 1fr; gap: 0.25rem 0; }
+    .ab-map-arrow { display: none; }
+    .ab-map-to { font-weight: 600; }
+
+    /* CLEAR list and mode cards get a little breathing room back. */
+    .ab-join-actions { flex-direction: column; align-items: stretch; }
+    .ab-btn-lg { width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ab-graph-nodes circle { animation: none; }
     .ab-valuecard { transform: none; }

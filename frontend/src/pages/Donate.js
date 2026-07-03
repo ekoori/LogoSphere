@@ -1,8 +1,9 @@
 import React from 'react';
+import '../styles/Pages.css';
 
 const Donate = () => {
   return (
-    <div className="container">
+    <div className="container doc-page">
       <main>
         <section className="donate-intro">
           <h1>Support LogoSphere</h1>
