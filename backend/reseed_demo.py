@@ -158,8 +158,11 @@ for col in ["ADD likes int", "ADD project_name text", "ADD image_key text",
     else:
         print(f"[WARN] services: {col} — {r}")
 
-# meaning_trail: acting-user columns for entity-initiated exchanges.
-for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name text"]:
+# meaning_trail: acting-user columns for entity-initiated exchanges, plus
+# editable-exchange (long description + image) and receipt context.
+for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name text",
+            "ADD exchange_long_description text", "ADD exchange_image blob",
+            "ADD gratitude_comment_context text"]:
     r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
     if r is True:
         print(f"[OK]   meaning_trail: {col}")
@@ -167,6 +170,30 @@ for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name
         print(f"[SKIP] meaning_trail: {col} (already exists)")
     else:
         print(f"[WARN] meaning_trail: {col} — {r}")
+
+# spheres: member_roles map (promote members to admin).
+r = run("ALTER TABLE logosphere.spheres ADD member_roles map<uuid, text>")
+print(f"[OK]   spheres: member_roles" if r is True else f"[SKIP/WARN] spheres.member_roles: {r}")
+
+# follows + receipt_photos companion tables.
+run("""
+CREATE TABLE IF NOT EXISTS logosphere.follows (
+    follower_id uuid,
+    followee_id uuid,
+    created_at timestamp,
+    PRIMARY KEY (follower_id, followee_id)
+)
+""")
+print("[OK] Created follows")
+run("""
+CREATE TABLE IF NOT EXISTS logosphere.receipt_photos (
+    exchange_id uuid,
+    idx int,
+    image blob,
+    PRIMARY KEY (exchange_id, idx)
+)
+""")
+print("[OK] Created receipt_photos")
 
 # ── Step 5: Re-seed demo data ─────────────────────────────────────────────────
 def U(s): return uuid.UUID(s)

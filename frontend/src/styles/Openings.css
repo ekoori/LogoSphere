@@ -287,3 +287,6 @@
     font-weight: 400;
     font-style: italic;
 }
+
+/* Provider row with inline avatar */
+.provider-line { display: inline-flex; align-items: center; gap: 0.4em; flex-wrap: wrap; }

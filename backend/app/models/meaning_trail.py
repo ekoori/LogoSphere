@@ -149,6 +149,11 @@ class MeaningTrail(Model):
     # acted on its behalf — "Joe on behalf of <Entity>".
     initiator_acting_user_id = columns.UUID()
     initiator_acting_user_name = columns.Text()
+    # Editable details (inherited from the opening, changeable until finished).
+    exchange_long_description = columns.Text()
+    exchange_image = columns.Blob()
+    # Structured context on the recipient's receipt (Time / Effort / Care / ...).
+    gratitude_comment_context = columns.Text()
 
     @classmethod
     def add_exchange(cls, user_id, other_user_id, project_id):
@@ -164,10 +169,12 @@ class MeaningTrail(Model):
 
     @classmethod
     def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
-                           project_name=None, acting_user_id=None, acting_user_name=None):
+                           project_name=None, acting_user_id=None, acting_user_name=None,
+                           long_description=None, image=None):
         """Create a fully-populated Exchange row when an Opening is accepted.
         initiator_id is the opening's provider; other_user_id is the accepter.
-        acting_user_* names the human when the provider is an entity."""
+        acting_user_* names the human when the provider is an entity. The
+        exchange inherits the opening's long description and banner image."""
         try:
             exchange_id = uuid.uuid4()
             cls.create(
@@ -176,6 +183,8 @@ class MeaningTrail(Model):
                 other_user_id=UUID(str(other_user_id)),
                 other_user_name=other_user_name,
                 exchange_description=description,
+                exchange_long_description=long_description,
+                exchange_image=image,
                 exchange_status='Initiated',
                 project_name=project_name,
                 project_start_timestamp=datetime.utcnow(),
@@ -232,6 +241,11 @@ class MeaningTrail(Model):
             'recipient_comment_timestamp': _dt(self.recipient_comment_timestamp),
             'initiator_acting_user_id': _uuid(self.initiator_acting_user_id),
             'initiator_acting_user_name': self.initiator_acting_user_name,
+            'exchange_long_description': self.exchange_long_description,
+            'gratitude_comment_context': self.gratitude_comment_context,
+            # Image bytes are served separately via /api/exchange/<id>/image to
+            # keep the (potentially large) blob out of trail-list payloads.
+            'has_image': bool(self.exchange_image),
         }
 
 
@@ -443,6 +457,94 @@ class MeaningTrail(Model):
             return None
 
     @classmethod
+    def is_finished(cls, exchange_id):
+        """Finished = both sides have receipted (recipient's gratitude + the
+        initiator's note). After this the exchange is immutable."""
+        try:
+            rows = list(cls.objects.filter(
+                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
+            if not rows:
+                return False
+            r = rows[0]
+            return bool(r.gratitude_comment and r.user_comment)
+        except Exception as e:
+            print(f"Error checking finished: {e}")
+            return False
+
+    @classmethod
+    def edit_details(cls, initiator_id, exchange_id, title=None, long_description=None, image=None):
+        """Edit the exchange's title / description / image on the initiator's row
+        (the single stored row). Callers enforce the not-finished rule."""
+        try:
+            rows = list(cls.objects(
+                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))))
+            if not rows:
+                return False
+            fields = {}
+            if title is not None:
+                fields['exchange_description'] = title
+            if long_description is not None:
+                fields['exchange_long_description'] = long_description
+            if image is not None:
+                fields['exchange_image'] = image
+            if fields:
+                rows[0].update(**fields)
+            return True
+        except Exception as e:
+            print(f"Error editing exchange: {e}")
+            return False
+
+    @classmethod
+    def get_image(cls, exchange_id):
+        """Raw banner-image bytes for an exchange (served via an endpoint)."""
+        try:
+            rows = list(cls.objects.filter(
+                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
+            if rows and rows[0].exchange_image:
+                return rows[0].exchange_image
+            return None
+        except Exception as e:
+            print(f"Error getting exchange image: {e}")
+            return None
+
+    @classmethod
+    def set_receipt_photos(cls, exchange_id, images):
+        """Store up to 3 receipt photos (replacing any existing) in the
+        receipt_photos companion table, keyed by (exchange_id, idx)."""
+        ex = UUID(str(exchange_id))
+        try:
+            _raw_session.execute("DELETE FROM receipt_photos WHERE exchange_id = %s", [ex])
+            for i, img in enumerate((images or [])[:3]):
+                _raw_session.execute(
+                    "INSERT INTO receipt_photos (exchange_id, idx, image) VALUES (%s, %s, %s)",
+                    [ex, i, img])
+            return True
+        except Exception as e:
+            print(f"Error storing receipt photos: {e}")
+            return False
+
+    @classmethod
+    def receipt_photo_count(cls, exchange_id):
+        try:
+            rows = _raw_session.execute(
+                "SELECT idx FROM receipt_photos WHERE exchange_id = %s", [UUID(str(exchange_id))])
+            return len(list(rows))
+        except Exception as e:
+            print(f"Error counting receipt photos: {e}")
+            return 0
+
+    @classmethod
+    def get_receipt_photo(cls, exchange_id, idx):
+        try:
+            row = _raw_session.execute(
+                "SELECT image FROM receipt_photos WHERE exchange_id = %s AND idx = %s",
+                [UUID(str(exchange_id)), int(idx)]).one()
+            return row.image if row else None
+        except Exception as e:
+            print(f"Error getting receipt photo: {e}")
+            return None
+
+    @classmethod
     def set_status_for(cls, initiator_user_id, exchange_id, status):
         """Update status using the full PK (initiator_user_id + exchange_id)."""
         try:
@@ -492,8 +594,9 @@ class MeaningTrail(Model):
 
     @classmethod
     def add_comment_for(cls, initiator_user_id, exchange_id, comment_type, text,
-                        author_id=None, author_name=None, cards=None):
-        """comment_type: 'gratitude' | 'user' | 'other'"""
+                        author_id=None, author_name=None, cards=None, context=None):
+        """comment_type: 'gratitude' | 'user' | 'other'. `context` (the
+        Time/Effort/Care/... note) is only stored on a gratitude receipt."""
         try:
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
@@ -510,6 +613,7 @@ class MeaningTrail(Model):
                     gratitude_comment_id=uuid.uuid4(),
                     gratitude_comment_timestamp=now,
                     gratitude_comment_cards=cards_json,
+                    gratitude_comment_context=(context or None),
                 )
             elif comment_type == 'user':
                 row.update(

@@ -85,6 +85,29 @@ def join_alliance(alliance_id, user_id=None):
 
 
 @validate_session
+def set_alliance_role(alliance_id, target_id, user_id=None):
+    """A Lead (admin) promotes/demotes a member. Roles: 'steward' (Board member)
+    or 'member'. Lead ('admin') is not assignable here."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        aid = uuid.UUID(alliance_id)
+        tid = uuid.UUID(target_id)
+        if uuid.UUID(str(user_id)) not in Alliance.lead_ids(aid):
+            return jsonify({'message': 'Only a Lead can change roles'}), 403
+        role = (request.get_json() or {}).get('role')
+        if role not in ('steward', 'member', 'admin'):
+            return jsonify({'message': 'Invalid role'}), 400
+        Alliance.set_role(aid, tid, role)
+        return jsonify({'message': 'Role updated', 'role': role}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid id'}), 400
+    except Exception as e:
+        logger.error(f"Error in set_alliance_role: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def update_alliance_image(alliance_id, user_id=None):
     """Set the alliance's banner image — from its management page."""
     if request.method == 'OPTIONS':

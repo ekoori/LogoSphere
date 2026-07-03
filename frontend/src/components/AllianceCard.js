@@ -6,7 +6,8 @@ import '../styles/Alliances.css';
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
 
-const ROLE_LABEL = { admin: 'Admin', steward: 'Steward', member: 'Member', contributor: 'Contributor', manager: 'Manager' };
+// Alliance leadership vocabulary: admin → Lead, steward → Board member.
+const ROLE_LABEL = { admin: 'Lead', steward: 'Board member', member: 'Member', contributor: 'Contributor', manager: 'Manager' };
 
 const AllianceCard = ({ id, name, sphere_id, sphere_name, participants, description, projects, values, currentUserId, onJoin }) => {
   const navigate = useNavigate();

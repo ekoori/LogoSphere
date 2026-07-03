@@ -11,8 +11,23 @@ CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
 cassandra_session = cluster.connect('logosphere')
 
+def _resolve_user_names(ids):
+    """{user_id: display name} for a list of user UUIDs (single IN query)."""
+    ids = [i for i in (ids or [])]
+    if not ids:
+        return {}
+    try:
+        rows = cassandra_session.execute(
+            "SELECT user_id, name, surname FROM users WHERE user_id IN %s", (tuple(ids),))
+        return {r.user_id: (f"{r.name or ''} {getattr(r, 'surname', '') or ''}".strip() or 'Member')
+                for r in rows}
+    except Exception as e:
+        logging.error(f'Error resolving user names: {e}')
+        return {}
+
+
 class Sphere:
-    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values):
+    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None):
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -24,9 +39,21 @@ class Sphere:
         self.alliances = alliances
         self.projects = projects
         self.values = values
+        self.member_roles = member_roles or {}
 
-    def to_dict(self):
-        return {
+    def members_list(self):
+        """[{id, name, role}] for the sphere — participants are stored as bare
+        UUIDs, so names are resolved from the users table. admin1 is 'admin'."""
+        names = _resolve_user_names(self.participants or [])
+        roles = self.member_roles or {}
+        out = []
+        for pid in (self.participants or []):
+            role = roles.get(pid) or ('admin' if self.admin1 and pid == self.admin1 else 'member')
+            out.append({'id': str(pid), 'name': names.get(pid, 'Member'), 'role': role})
+        return out
+
+    def to_dict(self, include_members=False):
+        d = {
             'sphere_id': str(self.sphere_id),
             'name': self.name,
             'description': self.description,
@@ -39,6 +66,9 @@ class Sphere:
             'projects': self.projects,
             'values': self.values
         }
+        if include_members:
+            d['members'] = self.members_list()
+        return d
 
     @classmethod
     def create(cls, data, admin1):
@@ -68,6 +98,28 @@ class Sphere:
             "UPDATE spheres SET image = %s WHERE sphere_id = %s",
             [image_bytes, sphere_id]
         )
+
+    @classmethod
+    def set_role(cls, sphere_id, target_uuid, role):
+        """Set a member's role in the sphere (e.g. promote to 'admin')."""
+        cassandra_session.execute(
+            "UPDATE spheres SET member_roles = member_roles + %s WHERE sphere_id = %s",
+            [{target_uuid: role}, sphere_id]
+        )
+
+    @classmethod
+    def admin_ids(cls, sphere_id):
+        """Set of user ids allowed to administer the sphere (admin1 + role=admin)."""
+        row = cassandra_session.execute(
+            "SELECT admin1, member_roles FROM spheres WHERE sphere_id = %s", [sphere_id]
+        ).one()
+        if not row:
+            return set()
+        admins = {row.admin1} if row.admin1 else set()
+        for uid, r in (getattr(row, 'member_roles', None) or {}).items():
+            if r == 'admin':
+                admins.add(uid)
+        return admins
 
     @classmethod
     def join(cls, sphere_id, user_uuid):

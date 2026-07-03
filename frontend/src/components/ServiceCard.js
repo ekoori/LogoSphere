@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
+import Avatar from './Avatar';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import '../styles/Openings.css';
 
@@ -141,8 +142,8 @@ function ServiceCard({
                     <div className="participants">
                         {actingUser ? (
                             // Posted on behalf of an entity — attribute the human.
-                            <span>
-                                👤{' '}
+                            <span className="provider-line">
+                                <Avatar userId={actingUserId} name={actingUser} size={20} />
                                 <a
                                     href={actingUserId ? `/user?id=${actingUserId}` : '/user'}
                                     onClick={(e) => e.stopPropagation()}
@@ -153,8 +154,8 @@ function ServiceCard({
                                 <strong>{provider}</strong>
                             </span>
                         ) : (
-                            <span>
-                                👤{' '}
+                            <span className="provider-line">
+                                <Avatar userId={providerId} name={provider} size={20} />
                                 <a
                                     href={providerId ? `/user?id=${providerId}` : '/user'}
                                     onClick={(e) => e.stopPropagation()}

@@ -64,6 +64,66 @@ function ExchangePage() {
     const [ackCardIds, setAckCardIds] = useState([]);
     const [ackCards, setAckCards] = useState([]);
 
+    // Receipt context (Time/Effort/Care/...) + up to 3 photos.
+    const [gratitudeContext, setGratitudeContext] = useState('');
+    const [gratitudePhotos, setGratitudePhotos] = useState([]);
+
+    // Exchange edit (title / description / image), allowed until finished.
+    const [editing, setEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDesc, setEditDesc] = useState('');
+    const [editImage, setEditImage] = useState(null);
+
+    const openEdit = () => {
+        setEditTitle(xc?.exchange_description || '');
+        setEditDesc(xc?.exchange_long_description || '');
+        setEditImage(null);
+        setEditing(true);
+    };
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+            const fd = new FormData();
+            fd.append('title', editTitle);
+            fd.append('description', editDesc);
+            if (editImage) fd.append('image', editImage);
+            await api.post(`/api/exchange/${xcId}/edit`, fd);
+            setEditing(false);
+            await fetchXc();
+        } catch (err) {
+            console.error('Failed to edit exchange:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Receipt submit that also carries the Context note and up to 3 photos.
+    const submitGratitude = async () => {
+        if (!gratitudeText.trim() || submitting) return;
+        setSubmitting(true);
+        try {
+            await api.post(`/api/exchange/${xcId}/comment`, {
+                type: 'gratitude', text: gratitudeText.trim(),
+                card_ids: gratitudeCardIds, cards: gratitudeCards,
+                context: gratitudeContext.trim() || null,
+            });
+            if (gratitudePhotos.length > 0) {
+                const fd = new FormData();
+                gratitudePhotos.slice(0, 3).forEach((p) => fd.append('photos', p));
+                await api.post(`/api/exchange/${xcId}/receipt_photos`, fd);
+            }
+            setGratitudeText(''); setGratitudeContext(''); setGratitudePhotos([]);
+            setGratitudeCardIds([]); setGratitudeCards([]);
+            await fetchXc();
+        } catch (err) {
+            console.error('Failed to add receipt:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const fetchXc = useCallback(async () => {
         if (!xcId) { setFetchError('No exchange ID provided.'); setLoading(false); return; }
         try {
@@ -190,20 +250,52 @@ function ExchangePage() {
                 <div className="xc-page-main">
                     {/* About */}
                     <div className="xc-page-section">
-                        <p className="xc-page-section-heading">About this exchange</p>
-                        <p className="xc-about-text">
-                            {xc.project_name
-                                ? `An act of giving within the "${xc.project_name}" project.`
-                                : 'A moment of trust shared in the community.'}
-                        </p>
-                        {xc.project_id && xc.project_name && (
-                            <Link
-                                to={`/project?id=${xc.project_id}`}
-                                className="pill pill-leaf"
-                                style={{ fontSize: '0.8rem', textDecoration: 'none' }}
-                            >
-                                {xc.project_name}
-                            </Link>
+                        <div className="xc-about-head">
+                            <p className="xc-page-section-heading">About this exchange</p>
+                            {canModify && !xc.is_finished && !isCancelled && !editing && (
+                                <button className="xc-add-btn xc-edit-btn" onClick={openEdit}>✎ Edit</button>
+                            )}
+                        </div>
+
+                        {editing ? (
+                            <form className="xc-edit-form" onSubmit={handleEditSubmit}>
+                                <label>Title</label>
+                                <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                                <label>Description</label>
+                                <textarea rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+                                <label>Banner image</label>
+                                <input type="file" accept="image/*" onChange={(e) => setEditImage(e.target.files?.[0] || null)} />
+                                <div className="xc-edit-actions">
+                                    <button type="submit" className="btn btn-primary" disabled={submitting}>
+                                        {submitting ? 'Saving…' : 'Save changes'}
+                                    </button>
+                                    <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
+                                </div>
+                            </form>
+                        ) : (
+                            <>
+                                {xc.has_image && (
+                                    <img src={`/api/exchange/${xcId}/image`} alt="" className="xc-exchange-image" />
+                                )}
+                                <p className="xc-about-text">
+                                    {xc.exchange_long_description
+                                        || (xc.project_name
+                                            ? `An act of giving within the "${xc.project_name}" project.`
+                                            : 'A moment of trust shared in the community.')}
+                                </p>
+                                {xc.is_finished && (
+                                    <p className="xc-finished-note">✓ This exchange is finished — its details are now locked.</p>
+                                )}
+                                {xc.project_id && xc.project_name && (
+                                    <Link
+                                        to={`/project?id=${xc.project_id}`}
+                                        className="pill pill-leaf"
+                                        style={{ fontSize: '0.8rem', textDecoration: 'none' }}
+                                    >
+                                        {xc.project_name}
+                                    </Link>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -226,6 +318,21 @@ function ExchangePage() {
                                             <span className="comment-vc-label">values</span>
                                             {xc.gratitude_comment_cards.map((c, ci) => (
                                                 <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
+                                            ))}
+                                        </div>
+                                    )}
+                                    {xc.gratitude_comment_context && (
+                                        <div className="xc-context-block">
+                                            <span className="xc-context-label">Context</span>
+                                            <pre className="xc-context-text">{xc.gratitude_comment_context}</pre>
+                                        </div>
+                                    )}
+                                    {xc.receipt_photo_count > 0 && (
+                                        <div className="xc-receipt-photos">
+                                            {Array.from({ length: xc.receipt_photo_count }).map((_, i) => (
+                                                <a key={i} href={`/api/exchange/${xcId}/receipt_photo/${i}`} target="_blank" rel="noreferrer">
+                                                    <img src={`/api/exchange/${xcId}/receipt_photo/${i}`} alt={`Receipt photo ${i + 1}`} className="xc-receipt-photo" />
+                                                </a>
                                             ))}
                                         </div>
                                     )}
@@ -280,10 +387,28 @@ function ExchangePage() {
                                     selectedIds={gratitudeCardIds}
                                     onChange={(ids, cards) => { setGratitudeCardIds(ids); setGratitudeCards(cards); }}
                                 />
+                                <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Context (optional)</label>
+                                <textarea
+                                    className="xc-comment-input xc-context-input"
+                                    placeholder={'Time: 2 hours\nEffort: moderate physical effort\nCare: high\nSkill: everyday\nConstraint: weekend morning'}
+                                    rows={5}
+                                    value={gratitudeContext}
+                                    onChange={e => setGratitudeContext(e.target.value)}
+                                />
+                                <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Photos (up to 3)</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(e) => setGratitudePhotos(Array.from(e.target.files || []).slice(0, 3))}
+                                />
+                                {gratitudePhotos.length > 0 && (
+                                    <span className="xc-photo-hint">{gratitudePhotos.length} photo{gratitudePhotos.length > 1 ? 's' : ''} selected</span>
+                                )}
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}
-                                    onClick={() => submitComment('gratitude', gratitudeText, setGratitudeText, gratitudeCardIds, setGratitudeCardIds, gratitudeCards, setGratitudeCards)}
+                                    onClick={submitGratitude}
                                 >
                                     + Add Receipt
                                 </button>

@@ -643,3 +643,41 @@ footer ul li a:hover { color: var(--honey); }
 
 /* Freeze background scroll while the drawer is open. */
 body.nav-menu-open { overflow: hidden; }
+
+/* ── Follow button (user page) + Following list (home) ─────────────────────── */
+.follow-btn {
+    margin: 0.2em 0 0.6em;
+    padding: 0.5em 1.3em;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #f7f4e8;
+    background: var(--moss);
+    border: 1px solid transparent;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.follow-btn:hover { background: var(--moss-deep); transform: translateY(-1px); }
+.follow-btn.is-following {
+    background: var(--surface-2);
+    color: var(--moss-deep);
+    border-color: var(--border);
+}
+.follow-btn.is-following:hover { background: var(--paper-deep); }
+
+.following-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.following-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.following-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.following-name { font-weight: 600; color: var(--moss-deep); }

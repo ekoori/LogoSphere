@@ -5,12 +5,50 @@
 #    [+] update_user(): Handles the update of user profile data using the User model's update method.
 
 import logging
+import uuid
 from flask import request, jsonify, current_app as app, Response
 from app.models.user import User
+from app.models.follow import Follow
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+@validate_session
+def toggle_follow(target_id, user_id=None):
+    """Follow/unfollow another user. Returns the new {following} state."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        if str(target_id) == str(user_id):
+            return jsonify({'message': "You can't follow yourself"}), 400
+        following = Follow.toggle(user_id, target_id)
+        return jsonify({'following': following}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid user id'}), 400
+    except Exception as e:
+        logger.error(f"Error in toggle_follow: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def get_following(user_id=None):
+    """List the users the current user follows: [{id, name}]."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        ids = Follow.following_ids(user_id)
+        out = []
+        for uid in ids:
+            u = User.get(str(uid))
+            if u:
+                name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
+                out.append({'id': str(uid), 'name': name})
+        return jsonify(out), 200
+    except Exception as e:
+        logger.error(f"Error in get_following: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
 
 
 def get_user_avatar(target_id):
@@ -82,7 +120,11 @@ def get_public_user(target_id, user_id=None):
         user = User.get(str(target_id))
         if not user:
             return jsonify({'message': 'User not found'}), 404
-        return jsonify(user.to_dict()), 200
+        d = user.to_dict()
+        # Whether the viewer follows this user, + their follower/following counts.
+        d['is_following'] = (str(target_id) != str(user_id)) and Follow.is_following(user_id, target_id)
+        d['following_count'] = Follow.following_count(target_id)
+        return jsonify(d), 200
     except Exception as e:
         logger.error(f"Error in get_public_user: {e}")
         return jsonify({'message': 'Internal server error'}), 500

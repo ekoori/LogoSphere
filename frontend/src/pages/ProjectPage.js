@@ -11,6 +11,8 @@ import CompactValueGraph from '../components/CompactValueGraph';
 import Openings from '../components/Openings';
 import MeaningTrail from '../components/MeaningTrail';
 import TabSelector from '../components/TabSelector';
+import MembersList from '../components/MembersList';
+import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
 
@@ -129,7 +131,7 @@ function ProjectPage() {
                                 <div className="ep-roster">
                                     {managers.map(m => (
                                         <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill ep-member-pill--admin">
-                                            <span className="ep-member-initial">{m.name?.[0]}</span>
+                                            <Avatar userId={m.id} name={m.name} size={22} />
                                             <span className="ep-member-name">{m.name}</span>
                                         </Link>
                                     ))}
@@ -142,7 +144,7 @@ function ProjectPage() {
                                 <div className="ep-roster">
                                     {contributors.map(m => (
                                         <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill ep-member-pill--steward">
-                                            <span className="ep-member-initial">{m.name?.[0]}</span>
+                                            <Avatar userId={m.id} name={m.name} size={22} />
                                             <span className="ep-member-name">{m.name}</span>
                                         </Link>
                                     ))}
@@ -155,7 +157,7 @@ function ProjectPage() {
                                 <div className="ep-roster">
                                     {observers.map(m => (
                                         <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill">
-                                            <span className="ep-member-initial">{m.name?.[0]}</span>
+                                            <Avatar userId={m.id} name={m.name} size={22} />
                                             <span className="ep-member-name">{m.name}</span>
                                         </Link>
                                     ))}
@@ -180,10 +182,22 @@ function ProjectPage() {
                         tabs={[
                             { key: 'meaning_trail', label: 'Meaning Trail' },
                             { key: 'offers-needs', label: 'Offers & Needs' },
+                            { key: 'members', label: `People (${members.length})` },
                         ]}
                         active={activeTab}
                         onChange={setActiveTab}
                     />
+
+                    {activeTab === 'members' && (
+                        <MembersList
+                            kind="project"
+                            entityId={pid}
+                            members={members}
+                            canManage={canManage}
+                            currentUserId={userId}
+                            onChanged={fetchProject}
+                        />
+                    )}
 
                     {activeTab === 'meaning_trail' && (
                         trail.length === 0

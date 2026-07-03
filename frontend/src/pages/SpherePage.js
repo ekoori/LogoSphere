@@ -13,6 +13,7 @@ import EntityBanner from '../components/EntityBanner';
 import Openings from '../components/Openings';
 import MeaningTrail from '../components/MeaningTrail';
 import TabSelector from '../components/TabSelector';
+import MembersList from '../components/MembersList';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
 import { useEntityIndex } from '../utils/useEntityIndex';
@@ -194,10 +195,22 @@ function SpherePage() {
                             tabs={[
                                 { key: 'meaning_trail', label: 'Meaning Trail' },
                                 { key: 'offers-needs', label: 'Offers & Needs' },
+                                { key: 'members', label: `People (${(sphere.members || []).length})` },
                             ]}
                             active={activeTab}
                             onChange={setActiveTab}
                         />
+
+                        {activeTab === 'members' && (
+                            <MembersList
+                                kind="sphere"
+                                entityId={sphere.sphere_id}
+                                members={sphere.members || []}
+                                canManage={isAdmin || (sphere.members || []).some(m => m.id === userId && m.role === 'admin')}
+                                currentUserId={userId}
+                                onChanged={fetchSphere}
+                            />
+                        )}
 
                         {activeTab === 'meaning_trail' && (
                             trail.length === 0

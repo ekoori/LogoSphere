@@ -2,6 +2,7 @@
 // Both fetched live from the API; 401 means "not logged in" and shows empty state.
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../styles/MeaningTrail.css';
 import '../styles/Openings.css';
 
@@ -9,6 +10,7 @@ import MeaningTrail from '../components/MeaningTrail';
 import Openings from '../components/Openings';
 import TabSelector from '../components/TabSelector';
 import ConnectionsPanel from '../components/ConnectionsPanel';
+import Avatar from '../components/Avatar';
 import api from '../api';
 import { mapService, mapExchange } from '../utils/mappers';
 import { useLogin } from '../App';
@@ -19,6 +21,7 @@ function Home() {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [items, setItems] = useState([]);
     const [services, setServices] = useState([]);
+    const [following, setFollowing] = useState([]);
 
     const fetchFeed = useCallback(async () => {
         try {
@@ -52,6 +55,12 @@ function Home() {
             }));
         } catch (e) {
             if (e.response?.status !== 401) console.error('Error fetching meaning_trail:', e);
+        }
+        try {
+            const fr = await api.get('/api/following');
+            setFollowing(fr.data || []);
+        } catch (e) {
+            // not logged in / none followed
         }
         try {
             const res = await api.get('/api/openings');
@@ -91,6 +100,7 @@ function Home() {
                     tabs={[
                         { key: 'meaning_trail', label: 'Meaning Trail' },
                         { key: 'offers-needs', label: 'Offers / Needs' },
+                        { key: 'following', label: `Following (${following.length})` },
                     ]}
                     active={activeTab}
                     onChange={setActiveTab}
@@ -103,6 +113,20 @@ function Home() {
                 )}
                 {activeTab === 'offers-needs' && (
                     <Openings services={services} newServiceVisible={isFormVisible} onServiceAdded={fetchFeed} currentUserId={userId} />
+                )}
+                {activeTab === 'following' && (
+                    following.length === 0
+                        ? <p className="empty-state">You're not following anyone yet. Open a member's profile and hit Follow to see them here.</p>
+                        : (
+                            <div className="following-list">
+                                {following.map((f) => (
+                                    <Link key={f.id} to={`/user?id=${f.id}`} className="following-row">
+                                        <Avatar userId={f.id} name={f.name} size={40} />
+                                        <span className="following-name">{f.name}</span>
+                                    </Link>
+                                ))}
+                            </div>
+                        )
                 )}
             </main>
         </div>

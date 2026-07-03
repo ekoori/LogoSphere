@@ -119,6 +119,34 @@ class Project:
         )
 
     @classmethod
+    def set_role(cls, project_id, target_uuid, role):
+        """Set a participant's role. Roles: 'manager', 'steward' (acts on behalf
+        of the manager), 'contributor'."""
+        cassandra_session.execute(
+            "UPDATE projects SET participant_roles = participant_roles + %s WHERE project_id = %s",
+            [{target_uuid: role}, project_id]
+        )
+
+    @classmethod
+    def manager_ids(cls, project_id):
+        """Set of user ids allowed to manage the project (owner + role=manager)."""
+        row = cassandra_session.execute(
+            "SELECT owner, participant_roles FROM projects WHERE project_id = %s", [project_id]
+        ).one()
+        if not row:
+            return set()
+        mgrs = set()
+        if row.owner:
+            try:
+                mgrs.add(uuid.UUID(str(row.owner)))
+            except (ValueError, TypeError):
+                pass
+        for uid, r in (getattr(row, 'participant_roles', None) or {}).items():
+            if r == 'manager':
+                mgrs.add(uid)
+        return mgrs
+
+    @classmethod
     def join(cls, project_id, user_uuid, user_name):
         """Add user as a contributor. Returns already_member=True if already present."""
         result = cassandra_session.execute(

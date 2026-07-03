@@ -30,6 +30,7 @@ function UserPage() {
     const [valueCards, setValueCards] = useState([]);
     const [activeTab, setActiveTab] = useState('meaning_trail');
     const [loading, setLoading] = useState(true);
+    const [following, setFollowing] = useState(false);
 
     const fetchAll = useCallback(async () => {
         if (!id) { setLoading(false); return; }
@@ -71,6 +72,17 @@ function UserPage() {
     }, [id, viewerId]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => { setFollowing(!!user?.is_following); }, [user]);
+
+    const isOwnPage = !!viewerId && String(viewerId) === String(id);
+    const handleFollow = async () => {
+        try {
+            const res = await api.post(`/api/users/${id}/follow`);
+            setFollowing(res.data.following);
+        } catch (e) {
+            console.error('Failed to toggle follow:', e);
+        }
+    };
 
     if (loading) return <div className="route-loading">Loading…</div>;
     if (!user) return (
@@ -90,6 +102,14 @@ function UserPage() {
                 <div className="user-profile-aside">
                     <img className="user-avatar-lg" src={avatar} alt={fullName} />
                     <h2 className="user-aside-name">{fullName}</h2>
+                    {viewerId && !isOwnPage && (
+                        <button
+                            className={`follow-btn ${following ? 'is-following' : ''}`}
+                            onClick={handleFollow}
+                        >
+                            {following ? '✓ Following' : '+ Follow'}
+                        </button>
+                    )}
                     {user.location && (
                         <p className="user-aside-meta">📍 {user.location}</p>
                     )}

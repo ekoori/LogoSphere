@@ -118,6 +118,29 @@ class Alliance:
         )
 
     @classmethod
+    def set_role(cls, alliance_id, target_uuid, role):
+        """Set a member's role. Roles: 'admin' (Lead), 'steward' (Board member),
+        'member'. Display names differ (see frontend) but values are kept stable."""
+        cassandra_session.execute(
+            "UPDATE alliances SET member_roles = member_roles + %s WHERE alliance_id = %s",
+            [{target_uuid: role}, alliance_id]
+        )
+
+    @classmethod
+    def lead_ids(cls, alliance_id):
+        """Set of user ids allowed to lead the alliance (admin1 + role=admin)."""
+        row = cassandra_session.execute(
+            "SELECT admin1, member_roles FROM alliances WHERE alliance_id = %s", [alliance_id]
+        ).one()
+        if not row:
+            return set()
+        leads = {row.admin1} if row.admin1 else set()
+        for uid, r in (getattr(row, 'member_roles', None) or {}).items():
+            if r == 'admin':
+                leads.add(uid)
+        return leads
+
+    @classmethod
     def join(cls, alliance_id, user_uuid, user_name):
         """Add user as a member. Returns already_member=True if they're already in."""
         result = cassandra_session.execute(

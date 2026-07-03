@@ -85,6 +85,29 @@ def join_project(project_id, user_id=None):
 
 
 @validate_session
+def set_project_role(project_id, target_id, user_id=None):
+    """A manager promotes/demotes a contributor. Roles: 'steward' (acts on behalf
+    of the manager) or 'contributor'."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        pid = uuid.UUID(project_id)
+        tid = uuid.UUID(target_id)
+        if uuid.UUID(str(user_id)) not in Project.manager_ids(pid):
+            return jsonify({'message': 'Only a project manager can change roles'}), 403
+        role = (request.get_json() or {}).get('role')
+        if role not in ('steward', 'contributor', 'manager'):
+            return jsonify({'message': 'Invalid role'}), 400
+        Project.set_role(pid, tid, role)
+        return jsonify({'message': 'Role updated', 'role': role}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid id'}), 400
+    except Exception as e:
+        logger.error(f"Error in set_project_role: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def update_project_image(project_id, user_id=None):
     """Set the project's banner image — from its management page."""
     if request.method == 'OPTIONS':

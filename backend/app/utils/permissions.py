@@ -33,8 +33,9 @@ def can_manage_entity(entity_id, user_id):
         "SELECT owner, participant_roles FROM projects WHERE project_id = %s", [eid]
     ).one()
     if row:
+        # Stewards act on behalf of the project manager, so they can manage too.
         roles = row.participant_roles or {}
-        return roles.get(uid) == 'manager' or str(row.owner) == str(uid)
+        return roles.get(uid) in ('manager', 'steward') or str(row.owner) == str(uid)
 
     return False
 

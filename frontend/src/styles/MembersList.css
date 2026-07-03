@@ -1,0 +1,58 @@
+/* MembersList — People tab for sphere / alliance / project. */
+.members-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.member-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.member-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1 1 auto; }
+
+.member-name {
+    font-weight: 600;
+    color: var(--moss-deep);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.member-name:hover { text-decoration: underline; }
+
+.member-role {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+.member-role.role--admin, .member-role.role--manager { color: var(--terracotta-deep); }
+.member-role.role--steward { color: var(--honey-deep); }
+
+.member-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+.member-role-btn {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--moss-deep);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    padding: 0.35em 0.8em;
+    cursor: pointer;
+    transition: background-color 0.18s var(--ease), transform 0.18s var(--ease);
+}
+.member-role-btn:hover:not(:disabled) { background: var(--paper-deep); transform: translateY(-1px); }
+.member-role-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.members-error { color: var(--danger, #b3402f); font-size: 0.85rem; margin: 0 0 0.6rem; }
+
+@media (max-width: 560px) {
+    .member-row { flex-wrap: wrap; }
+    .member-actions { width: 100%; justify-content: flex-start; }
+}

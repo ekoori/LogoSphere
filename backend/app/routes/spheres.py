@@ -100,13 +100,16 @@ def get_spheres(user_id=None):
                 values=row.values
             )
             sphere_dict = sphere.to_dict()
-            # Resolve participant UUIDs to display names, and provide {id,name}
-            # pairs so the frontend can link each member to their profile.
+            # Resolve participant UUIDs to display names, and provide {id,name,role}
+            # pairs so the frontend can link each member to their profile and show
+            # their role. admin1 is 'admin'; an explicit member_roles entry wins.
+            roles = getattr(row, 'member_roles', None) or {}
             sphere_dict['participant_names'] = [
                 name_by_id.get(pid, 'Member') for pid in (row.participants or [])
             ]
             sphere_dict['members'] = [
-                {'id': str(pid), 'name': name_by_id.get(pid, 'Member')}
+                {'id': str(pid), 'name': name_by_id.get(pid, 'Member'),
+                 'role': roles.get(pid) or ('admin' if row.admin1 and pid == row.admin1 else 'member')}
                 for pid in (row.participants or [])
             ]
             spheres.append(sphere_dict)
@@ -138,6 +141,28 @@ def join_sphere(sphere_id, user_id=None):
         return jsonify({'message': 'Invalid sphere id'}), 400
     except Exception as e:
         logger.error(f"Error in join_sphere: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def set_sphere_role(sphere_id, target_id, user_id=None):
+    """A sphere admin promotes/demotes another member (role: 'admin' | 'member')."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        sid = uuid.UUID(sphere_id)
+        tid = uuid.UUID(target_id)
+        if uuid.UUID(str(user_id)) not in Sphere.admin_ids(sid):
+            return jsonify({'message': 'Only a sphere admin can change roles'}), 403
+        role = (request.get_json() or {}).get('role')
+        if role not in ('admin', 'member'):
+            return jsonify({'message': 'Invalid role'}), 400
+        Sphere.set_role(sid, tid, role)
+        return jsonify({'message': 'Role updated', 'role': role}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid id'}), 400
+    except Exception as e:
+        logger.error(f"Error in set_sphere_role: {e}")
         return jsonify({'message': 'Internal server error'}), 500
 
 

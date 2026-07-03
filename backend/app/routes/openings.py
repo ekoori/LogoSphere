@@ -219,6 +219,8 @@ def confirm_service(service_id, user_id=None):
             project_name=service.project_name,
             acting_user_id=getattr(service, 'acting_user_id', None),
             acting_user_name=getattr(service, 'acting_user_name', None),
+            long_description=getattr(service, 'description', None),
+            image=getattr(service, 'image', None),
         )
         if not exchange_id:
             return jsonify({'message': 'Failed to create exchange'}), 500

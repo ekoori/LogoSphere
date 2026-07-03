@@ -12,6 +12,8 @@ import EntityBanner from '../components/EntityBanner';
 import Openings from '../components/Openings';
 import MeaningTrail from '../components/MeaningTrail';
 import TabSelector from '../components/TabSelector';
+import MembersList from '../components/MembersList';
+import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
 
@@ -117,10 +119,10 @@ function AlliancePage() {
                         <h4>Governance</h4>
                         {adminMember && (
                             <div className="ep-role-tier">
-                                <span className="ep-role-label role--admin">Admin</span>
+                                <span className="ep-role-label role--admin">Lead</span>
                                 <div className="ep-roster ep-roster--single">
                                     <Link to={`/user?id=${adminMember.id}`} className="ep-member-pill ep-member-pill--admin">
-                                        <span className="ep-member-initial">{adminMember.name?.[0]}</span>
+                                        <Avatar userId={adminMember.id} name={adminMember.name} size={22} />
                                         <span className="ep-member-name">{adminMember.name}</span>
                                     </Link>
                                 </div>
@@ -128,11 +130,11 @@ function AlliancePage() {
                         )}
                         {stewards.length > 0 && (
                             <div className="ep-role-tier">
-                                <span className="ep-role-label role--steward">Stewards</span>
+                                <span className="ep-role-label role--steward">Board members</span>
                                 <div className="ep-roster">
                                     {stewards.map(m => (
                                         <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill ep-member-pill--steward">
-                                            <span className="ep-member-initial">{m.name?.[0]}</span>
+                                            <Avatar userId={m.id} name={m.name} size={22} />
                                             <span className="ep-member-name">{m.name}</span>
                                         </Link>
                                     ))}
@@ -145,7 +147,7 @@ function AlliancePage() {
                                 <div className="ep-roster">
                                     {regularMembers.map(m => (
                                         <Link key={m.id} to={`/user?id=${m.id}`} className="ep-member-pill">
-                                            <span className="ep-member-initial">{m.name?.[0]}</span>
+                                            <Avatar userId={m.id} name={m.name} size={22} />
                                             <span className="ep-member-name">{m.name}</span>
                                         </Link>
                                     ))}
@@ -186,10 +188,22 @@ function AlliancePage() {
                         tabs={[
                             { key: 'meaning_trail', label: 'Meaning Trail' },
                             { key: 'offers-needs', label: 'Offers & Needs' },
+                            { key: 'members', label: `People (${members.length})` },
                         ]}
                         active={activeTab}
                         onChange={setActiveTab}
                     />
+
+                    {activeTab === 'members' && (
+                        <MembersList
+                            kind="alliance"
+                            entityId={aid}
+                            members={members}
+                            canManage={currentMember?.role === 'admin'}
+                            currentUserId={userId}
+                            onChanged={fetchAlliance}
+                        />
+                    )}
 
                     {activeTab === 'meaning_trail' && (
                         trail.length === 0
