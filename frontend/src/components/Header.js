@@ -22,9 +22,11 @@ const Header = () => {
     const { isLoggedIn, handleLogout } = useLogin();
     const [notificationsVisible, setNotificationsVisible] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const accountRef = useRef(null);
 
     const toggleNotifications = () => setNotificationsVisible((v) => !v);
+    const closeMenu = () => setMenuOpen(false);
 
     // Close the account menu when clicking outside of it.
     useEffect(() => {
@@ -36,6 +38,12 @@ const Header = () => {
         document.addEventListener('mousedown', onClick);
         return () => document.removeEventListener('mousedown', onClick);
     }, []);
+
+    // Lock body scroll while the mobile nav drawer is open.
+    useEffect(() => {
+        document.body.classList.toggle('nav-menu-open', menuOpen);
+        return () => document.body.classList.remove('nav-menu-open');
+    }, [menuOpen]);
 
     const notifications = [
         {
@@ -69,25 +77,32 @@ const Header = () => {
     ];
 
     return (
+        <>
         <header>
             <div className="brand">
-                <Link to="/">
+                <Link to="/" onClick={closeMenu}>
                     <BrandMark />
                     Logo<b>Sphere</b>
                 </Link>
             </div>
 
-            <nav>
+            <nav className={`nav-menu ${menuOpen ? 'is-open' : ''}`}>
                 <ul className="nav-primary">
-                    <li><Link to="/openings">Openings</Link></li>
-                    <li><Link to="/spheres">Spheres</Link></li>
-                    <li><Link to="/alliances">Alliances</Link></li>
-                    <li><Link to="/projects">Projects</Link></li>
+                    <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
+                    <li><Link to="/spheres" onClick={closeMenu}>Spheres</Link></li>
+                    <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>
+                    <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>
+                    {/* Items that live in the top bar on desktop but belong in the
+                        drawer on mobile. */}
+                    <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
+                    <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
+                    <li className="nav-drawer-only"><Link to="/about" onClick={closeMenu}>About</Link></li>
+                    {!isLoggedIn && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
                 </ul>
             </nav>
 
             <div className="nav-actions">
-                <Link to="/donate" className="donate-link">Donate 💛</Link>
+                <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>
 
                 <div className="notification-icon">
                     <button id="notification-bell" onClick={toggleNotifications} aria-label="Toggle notifications">🔔</button>
@@ -102,7 +117,7 @@ const Header = () => {
                         aria-expanded={accountOpen}
                     >
                         <span className="account-avatar">◍</span>
-                        Account
+                        <span className="account-label">Account</span>
                         <span className="account-caret">▾</span>
                     </button>
                     {accountOpen && (
@@ -119,9 +134,27 @@ const Header = () => {
                     )}
                 </div>
 
-                {!isLoggedIn && <Link to="/login" className="auth-action">Login</Link>}
+                {!isLoggedIn && <Link to="/login" className="auth-action nav-bar-only">Login</Link>}
+
+                {/* Hamburger — only shown on mobile (CSS). Toggles the nav drawer. */}
+                <button
+                    className="nav-toggle"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                    aria-expanded={menuOpen}
+                >
+                    <span className={`nav-toggle-bars ${menuOpen ? 'is-open' : ''}`} aria-hidden="true">
+                        <span /><span /><span />
+                    </span>
+                </button>
             </div>
         </header>
+
+        {/* Drawer scrim — kept OUTSIDE <header> because the header's
+            backdrop-filter would otherwise become the containing block for a
+            fixed-position child and clip the overlay to the header. */}
+        {menuOpen && <div className="nav-scrim" onClick={closeMenu} aria-hidden="true" />}
+        </>
     );
 };
 

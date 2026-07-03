@@ -288,6 +288,40 @@ nav ul {
 .auth-action:hover { background: var(--moss-deep); color: #fff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 /* ============================================================================
+   Mobile nav (hamburger + drawer) — hidden on desktop, activated below 900px
+   ========================================================================== */
+.nav-toggle {
+    display: none;               /* revealed in the responsive block */
+    align-items: center;
+    justify-content: center;
+    width: 42px; height: 42px;
+    flex: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.nav-toggle:hover { background: var(--surface-2); box-shadow: var(--shadow-sm); }
+.nav-toggle-bars { position: relative; width: 18px; height: 14px; display: inline-block; }
+.nav-toggle-bars span {
+    position: absolute; left: 0; right: 0; height: 2px; border-radius: 2px;
+    background: var(--moss-deep);
+    transition: transform 0.25s var(--ease), opacity 0.15s var(--ease), top 0.25s var(--ease);
+}
+.nav-toggle-bars span:nth-child(1) { top: 0; }
+.nav-toggle-bars span:nth-child(2) { top: 6px; }
+.nav-toggle-bars span:nth-child(3) { top: 12px; }
+.nav-toggle-bars.is-open span:nth-child(1) { top: 6px; transform: rotate(45deg); }
+.nav-toggle-bars.is-open span:nth-child(2) { opacity: 0; }
+.nav-toggle-bars.is-open span:nth-child(3) { top: 6px; transform: rotate(-45deg); }
+
+/* Items that only appear inside the drawer / only in the top bar. */
+.nav-drawer-only { display: none; }
+.nav-scrim { display: none; }
+
+/* ============================================================================
    Notification panel
    ========================================================================== */
 .notification-panel {
@@ -296,7 +330,7 @@ nav ul {
     right: 0;
     background: var(--surface);
     color: var(--ink);
-    width: 380px;
+    width: min(380px, calc(100vw - 1.5rem));
     max-height: 480px;
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--border);
@@ -560,5 +594,52 @@ footer ul li a:hover { color: var(--honey); }
     .container { flex-direction: column; align-items: stretch; }
     aside { position: static; flex-basis: auto; max-width: none; }
     main { max-width: none; }
-    .nav-primary { display: none; }
+
+    /* Header collapses to a hamburger + slide-down drawer. */
+    header { gap: 0.5em; }
+    .nav-toggle { display: inline-flex; }
+    .nav-bar-only { display: none; }               /* donate + login live in the drawer */
+    .account-label, .account-caret { display: none; } /* compact the account button to its avatar */
+    .account-toggle { padding: 0.28em; gap: 0; }
+
+    .nav-menu {
+        position: absolute;
+        top: 100%;
+        left: 0; right: 0;
+        max-height: calc(100vh - 100%);
+        overflow-y: auto;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
+        opacity: 0;
+        transform: translateY(-8px);
+        pointer-events: none;
+        transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+    }
+    .nav-menu.is-open { opacity: 1; transform: none; pointer-events: auto; }
+    .nav-menu .nav-primary {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.1em;
+        padding: 0.5em;
+    }
+    .nav-drawer-only { display: block; }
+    .nav-primary a {
+        display: block;
+        padding: 0.85em 1em;
+        font-size: 1rem;
+        border-radius: var(--r-md);
+    }
+    .nav-primary a::after { display: none; }        /* drop the hover underline in the drawer */
+
+    .nav-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 900;                               /* under the sticky header (z 1000) */
+        background: rgba(43, 46, 34, 0.34);
+    }
 }
+
+/* Freeze background scroll while the drawer is open. */
+body.nav-menu-open { overflow: hidden; }
