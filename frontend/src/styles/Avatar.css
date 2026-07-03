@@ -1,0 +1,30 @@
+/* Shared round avatar — image or initials fallback. */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: none;
+    vertical-align: middle;
+    background: var(--surface-2, #eef0e6);
+    border: 1px solid var(--border-soft, #d7ddc9);
+}
+
+.avatar--initials {
+    color: #f7f4e8;
+    font-family: var(--font-body);
+    font-weight: 700;
+    line-height: 1;
+    background: radial-gradient(circle at 30% 25%, var(--leaf, #7a9a56), var(--moss, #5f7a4f));
+    border-color: transparent;
+    user-select: none;
+}
+
+/* Name + avatar inline cluster used in lists. */
+.name-with-avatar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    vertical-align: middle;
+}

@@ -10,6 +10,7 @@ import api from '../api';
 import StatusProgression from '../components/StatusProgression';
 import LikeTimestamp from '../components/LikeTimestamp';
 import EntityBanner from '../components/EntityBanner';
+import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import '../styles/Exchange.css';
@@ -275,6 +276,23 @@ function OpeningPage() {
                             )}
                         </div>
                     </div>
+
+                    {service.exchanges && service.exchanges.length > 0 && (
+                        <div className="xc-sidebar-card">
+                            <p className="xc-sidebar-heading">
+                                Exchanges from this opening ({service.exchanges.length})
+                            </p>
+                            <div className="xc-participants-list">
+                                {service.exchanges.map((x) => (
+                                    <div key={x.exchangeId} className="xc-participant xc-opening-exchange">
+                                        <Avatar userId={x.accepterId} name={x.accepterName} size={22} />
+                                        <Link to={`/exchange?id=${x.exchangeId}`}>{x.accepterName || 'A member'}</Link>
+                                        {x.createdAt && <span className="xc-exchange-date">{x.createdAt}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

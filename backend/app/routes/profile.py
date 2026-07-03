@@ -5,12 +5,38 @@
 #    [+] update_user(): Handles the update of user profile data using the User model's update method.
 
 import logging
-from flask import request, jsonify, current_app as app
+from flask import request, jsonify, current_app as app, Response
 from app.models.user import User
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+def get_user_avatar(target_id):
+    """Serve a user's avatar image for <img src> tags. Public (no session) and
+    cacheable — avatars aren't sensitive and this keeps blob bytes out of JSON
+    payloads and lets the browser cache each one. 404 when there's no avatar so
+    the frontend can fall back to initials."""
+    try:
+        user = User.get(str(target_id))
+        if not user or not user.profile_picture:
+            return ('', 404)
+        data = user.profile_picture
+        if data[:8] == b'\x89PNG\r\n\x1a\n':
+            ctype = 'image/png'
+        elif data[:6] in (b'GIF87a', b'GIF89a'):
+            ctype = 'image/gif'
+        elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+            ctype = 'image/webp'
+        else:
+            ctype = 'image/jpeg'
+        resp = Response(data, mimetype=ctype)
+        resp.headers['Cache-Control'] = 'public, max-age=300'
+        return resp
+    except Exception as e:
+        logger.error(f"Error in get_user_avatar: {e}")
+        return ('', 404)
 
 @validate_session
 def get_user(user_id=None):

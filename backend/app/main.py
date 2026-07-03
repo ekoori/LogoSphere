@@ -22,7 +22,7 @@ from datetime import timedelta
 
 from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
-from app.routes.profile import get_user, get_profile, update_user, get_public_user
+from app.routes.profile import get_user, get_profile, update_user, get_public_user, get_user_avatar
 from app.routes.registration import register
 from app.routes.meaning_trail import get_meaning_trail, get_meaning_trail_by_project, add_exchange, get_exchange, update_xc_status, add_xc_comment, like_exchange
 from app.models.user import User
@@ -121,6 +121,7 @@ app.add_url_rule('/api/check_session', view_func=check_session, methods=['POST',
 app.add_url_rule('/api/user', view_func=get_user, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/user/profile', view_func=get_profile, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/users/<target_id>', view_func=get_public_user, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/users/<target_id>/avatar', view_func=get_user_avatar, methods=['GET'])
 app.add_url_rule('/api/updateuser', view_func=update_user, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/register', view_func=register, methods=['POST'])
 app.add_url_rule('/api/meaning_trail', view_func=get_meaning_trail, methods=['GET', 'POST', 'OPTIONS'])

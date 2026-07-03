@@ -13,16 +13,31 @@ import NewAcknowledgementForm from './NewAcknowledgementForm';
 import NewReceiptForm from './NewReceiptForm';
 import StatusProgression from './StatusProgression';
 import ValueCardChip from './ValueCardChip';
+import Avatar from './Avatar';
+import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
+// Author name + avatar, linked to the profile ("You" → own profile).
+function CommentAuthor({ author, authorId }) {
+    const href = author === 'You' ? '/profile' : (authorId ? `/user?id=${authorId}` : null);
+    return (
+        <span className="tf-author">
+            <Avatar userId={authorId} name={author === 'You' ? '' : author} size={20} />
+            {href ? <a href={href}><strong>{author}</strong></a> : <strong>{author}</strong>}
+        </span>
+    );
+}
+
 const XC_CORE_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted'];
-const XC_COMMENTS_STEP = 'Additional Comments Added';
+const XC_FOLLOWUP_STEP = 'Follow up added';
+// Legacy status value stored server-side for the same concept.
+const XC_FOLLOWUP_STATUS = 'Additional Comments Added';
 // The 5th step only appears once it's actually relevant — either a follow-up
-// note has been added, or the status has already been manually advanced there.
+// note has been added, or the status has already been advanced there.
 const xcSteps = (status, hasFollowupComment) =>
-    hasFollowupComment || status === XC_COMMENTS_STEP
-        ? [...XC_CORE_STEPS, XC_COMMENTS_STEP]
+    hasFollowupComment || status === XC_FOLLOWUP_STATUS
+        ? [...XC_CORE_STEPS, XC_FOLLOWUP_STEP]
         : XC_CORE_STEPS;
 const xcIndex = (steps, status) => {
     const i = steps.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());
@@ -59,6 +74,7 @@ function ExchangeCard({
     onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify,
 }) {
     const navigate = useNavigate();
+    const { entityHref } = useEntityIndex();
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
@@ -118,16 +134,25 @@ function ExchangeCard({
         if (id) navigate(`/exchange?id=${id}`);
     };
 
-    const handleAddReceipt = (receipt) => {
+    const handleAddReceipt = async (receipt) => {
         const entry = {
             author: 'You', text: receipt.text, time: 'just now',
             commentType: 'user', likesCount: 0, likedByCurrentUser: false, imageUrl: null,
             cards: receipt.cards || [],
         };
         setLocalReceipts((prev) => [...prev, entry]);
-        onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [] });
         setShowReceiptForm(false);
+        try {
+            // onAddReceipt persists it; if the server rejects (e.g. a receipt
+            // already exists for this side) it throws and we roll the entry back.
+            await onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [] });
+        } catch (e) {
+            setLocalReceipts((prev) => prev.filter((r) => r !== entry));
+        }
     };
+
+    // One receipt per side — once the viewer has added theirs, don't offer again.
+    const hasOwnReceipt = localReceipts.some((r) => r.author === 'You');
 
     const handleAddAcknowledgement = (acknowledgement) => {
         const entry = {
@@ -141,8 +166,11 @@ function ExchangeCard({
     };
 
     const cancelled = status === 'Cancelled';
+    const hasFollowup = !!hasFollowupComment || status === XC_FOLLOWUP_STATUS;
     const xcStepLabels = xcSteps(status, hasFollowupComment);
-    const stepIdx = xcIndex(xcStepLabels, status);
+    // When a follow-up exists it's the terminal step (the stored status may still
+    // read "Receipted", so point the marker at the follow-up explicitly).
+    const stepIdx = hasFollowup ? xcStepLabels.length - 1 : xcIndex(xcStepLabels, status);
     const stepTimes = [initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime];
     const steps = xcStepLabels.map((label, i) => ({ label, time: stepTimes[i] || '' }));
 
@@ -229,7 +257,7 @@ function ExchangeCard({
                         {project && (
                             <div className="xc-project-ref">
                                 <span className="muted">Part of</span>{' '}
-                                <a href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}>
+                                <a href={entityHref('project', project, projectId)}>
                                     {project}
                                 </a>
                             </div>
@@ -267,7 +295,7 @@ function ExchangeCard({
                                 {localReceipts.map((tf, i) => (
                                     <div key={i} className="receipt">
                                         <div className="tf-content">
-                                            <p><strong>{tf.author}:</strong> {tf.text}</p>
+                                            <p className="tf-author-line"><CommentAuthor author={tf.author} authorId={tf.authorId} /> {tf.text}</p>
                                             {tf.cards?.length > 0 && (
                                                 <div className="comment-value-chips">
                                                     <span className="comment-vc-label">values</span>
@@ -289,7 +317,7 @@ function ExchangeCard({
                         ) : (
                             <p className="xc-empty-section">No receipts yet.</p>
                         )}
-                        {!showReceiptForm ? (
+                        {hasOwnReceipt ? null : !showReceiptForm ? (
                             <button
                                 className="xc-add-btn xc-add-receipt"
                                 onClick={(e) => { e.stopPropagation(); setShowReceiptForm(true); }}
@@ -315,7 +343,7 @@ function ExchangeCard({
                                 {localAcknowledgements.map((s, i) => (
                                     <div key={i} className="acknowledgement">
                                         <div className="tf-content">
-                                            <p><strong>{s.author}:</strong> {s.text}</p>
+                                            <p className="tf-author-line"><CommentAuthor author={s.author} authorId={s.authorId} /> {s.text}</p>
                                             {s.cards?.length > 0 && (
                                                 <div className="comment-value-chips comment-value-chips--ack">
                                                     <span className="comment-vc-label">values</span>

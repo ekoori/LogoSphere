@@ -377,3 +377,9 @@
 }
 .xc-loading { color: var(--ink-faint); }
 .xc-error-state { color: var(--terracotta-deep); }
+
+/* "Exchanges from this opening" sidebar list */
+.xc-opening-exchange { display: flex; align-items: center; gap: 0.5em; }
+.xc-opening-exchange a { color: var(--moss-deep); font-weight: 600; text-decoration: none; }
+.xc-opening-exchange a:hover { text-decoration: underline; }
+.xc-exchange-date { margin-left: auto; font-size: 0.74rem; color: var(--ink-faint); white-space: nowrap; }

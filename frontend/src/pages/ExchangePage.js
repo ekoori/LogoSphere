@@ -5,11 +5,16 @@ import api from '../api';
 import StatusProgression from '../components/StatusProgression';
 import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
+import Avatar from '../components/Avatar';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
-const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted', 'Additional Comments Added'];
+// Manual status advances stop at "Receipted"; the follow-up step is only ever
+// reached by actually adding a follow-up note, so it isn't part of XC_STEPS.
+const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted'];
+const XC_FOLLOWUP_STEP = 'Follow up added';
+const XC_FOLLOWUP_STATUS = 'Additional Comments Added';
 
 const xcIdx = (status) => {
     const i = XC_STEPS.findIndex(s => s.toLowerCase() === (status || '').toLowerCase());
@@ -20,6 +25,17 @@ const fmtDate = (val) => {
     if (!val) return '';
     const d = new Date(val);
     return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// Author name + avatar, linked to the profile ("You" → own profile).
+const AuthorTag = ({ name, id }) => {
+    const href = name === 'You' ? '/profile' : (id ? `/user?id=${id}` : null);
+    return (
+        <span className="tf-author">
+            <Avatar userId={id} name={name === 'You' ? '' : name} size={20} />
+            {href ? <a href={href}><strong>{name}</strong></a> : <strong>{name}</strong>}
+        </span>
+    );
 };
 
 const TYPE_LABEL = { completed: 'Completed', offer: 'Offer', need: 'Need' };
@@ -78,12 +94,17 @@ function ExchangePage() {
     const currentIdx = isCancelled ? xcIdx('Initiated') : xcIdx(xc.exchange_status);
     const nextStatus = !isCancelled && currentIdx < XC_STEPS.length - 1 ? XC_STEPS[currentIdx + 1] : null;
 
-    const completed = ['Finished', 'Receipted', 'Additional Comments Added'].includes(xc.exchange_status);
+    const completed = ['Finished', 'Receipted', XC_FOLLOWUP_STATUS].includes(xc.exchange_status);
     const xcType = completed ? 'completed' : 'offer';
     const pillClass = TYPE_PILL[xcType] || 'pill-clay';
     const typeLabel = TYPE_LABEL[xcType] || xcType;
 
-    const steps = XC_STEPS.map((label) => ({ label, time: '' }));
+    // The follow-up step only appears once a follow-up note has been left; when
+    // present it's the terminal state.
+    const hasFollowup = !!(xc.initiator_comment || xc.recipient_comment) || xc.exchange_status === XC_FOLLOWUP_STATUS;
+    const stepLabels = hasFollowup ? [...XC_STEPS, XC_FOLLOWUP_STEP] : XC_STEPS;
+    const steps = stepLabels.map((label) => ({ label, time: '' }));
+    const progressIdx = hasFollowup ? stepLabels.length - 1 : currentIdx;
 
     const handleAdvanceStatus = async () => {
         if (!nextStatus) return;
@@ -160,7 +181,7 @@ function ExchangePage() {
 
             {/* ── Status timeline ───────────────────────────────────────── */}
             <div className="xc-page-timeline">
-                <StatusProgression steps={steps} currentIndex={currentIdx} cancelled={isCancelled} />
+                <StatusProgression steps={steps} currentIndex={progressIdx} cancelled={isCancelled} />
             </div>
 
             {/* ── Body ─────────────────────────────────────────────────── */}
@@ -196,8 +217,8 @@ function ExchangePage() {
                         {xc.gratitude_comment && (
                             <div className="receipt">
                                 <div className="tf-content">
-                                    <p>
-                                        <strong>{xc.other_user_name || 'Other party'}:</strong>{' '}
+                                    <p className="tf-author-line">
+                                        <AuthorTag name={xc.other_user_name || 'Other party'} id={xc.other_user_id} />{' '}
                                         {xc.gratitude_comment}
                                     </p>
                                     {xc.gratitude_comment_cards?.length > 0 && (
@@ -220,8 +241,8 @@ function ExchangePage() {
                         {xc.user_comment && (
                             <div className="receipt" style={{ marginTop: xc.gratitude_comment ? '0.55em' : 0 }}>
                                 <div className="tf-content">
-                                    <p>
-                                        <strong>{isInitiator ? 'You' : (xc.initiator_name || 'Initiator')}:</strong>{' '}
+                                    <p className="tf-author-line">
+                                        <AuthorTag name={isInitiator ? 'You' : (xc.initiator_name || 'Initiator')} id={xc.initiator_id || xc.user_id} />{' '}
                                         {xc.user_comment}
                                     </p>
                                     {xc.user_comment_cards?.length > 0 && (
@@ -351,8 +372,8 @@ function ExchangePage() {
                         {xc.other_comment ? (
                             <div className="acknowledgement">
                                 <div className="tf-content">
-                                    <p>
-                                        <strong>{xc.other_comment_author_name || 'A participant'}:</strong>{' '}
+                                    <p className="tf-author-line">
+                                        <AuthorTag name={xc.other_comment_author_name || 'A participant'} id={xc.other_comment_author_id} />{' '}
                                         {xc.other_comment}
                                     </p>
                                     {xc.other_comment_cards?.length > 0 && (

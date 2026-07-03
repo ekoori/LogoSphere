@@ -148,6 +148,13 @@ def add_xc_comment(exchange_id, user_id=None):
         if comment_type == 'user' and not is_initiator:
             return jsonify({'message': 'Only the initiator can add a personal note'}), 403
 
+        # Exactly one receipt per side — reject a second submission rather than
+        # silently overwriting the first (the column holds a single value).
+        if comment_type == 'gratitude' and tx_dict.get('gratitude_comment'):
+            return jsonify({'message': 'A receipt has already been added for this side'}), 409
+        if comment_type == 'user' and tx_dict.get('user_comment'):
+            return jsonify({'message': 'A note has already been added for this side'}), 409
+
         author_name = None
         if comment_type == 'other':
             from app.models.user import User

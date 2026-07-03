@@ -53,6 +53,13 @@ export function mapService(s) {
         acceptedByName: s.accepted_by_name || null,
         pendingAcceptances: s.pending_acceptances || [],
         myAcceptance: s.my_acceptance || null,
+        // Confirmed exchanges spawned from this opening (single-opening page).
+        exchanges: (s.exchanges || []).map((x) => ({
+            exchangeId: x.exchange_id,
+            accepterId: x.accepter_id,
+            accepterName: x.accepter_name,
+            createdAt: fmtDate(x.created_at),
+        })),
         // Per-phase activation dates for the progress bar (single cadence).
         postedAt: fmtDate(s.created_at),
         acceptedAt: fmtDate(s.accepted_at),
@@ -119,8 +126,10 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
 
     const receipts = [];
     if (row.gratitude_comment) {
+        // The receipt (gratitude) is always authored by the recipient.
         receipts.push({
             author: iAmInitiator ? recipientName : ownerLabel,
+            authorId: iAmInitiator ? (row.other_user_id || null) : (ownerId || null),
             text: row.gratitude_comment,
             time: fmtDate(row.gratitude_comment_timestamp),
             commentType: 'gratitude', ...likeOf('gratitude'), imageUrl: null,
@@ -128,8 +137,10 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         });
     }
     if (row.user_comment) {
+        // The personal note is always authored by the initiator.
         receipts.push({
             author: iAmInitiator ? ownerLabel : initiatorName,
+            authorId: iAmInitiator ? (ownerId || null) : (row.initiator_id || null),
             text: row.user_comment,
             time: fmtDate(row.user_comment_timestamp),
             commentType: 'user', ...likeOf('user'), imageUrl: null,
@@ -141,6 +152,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     if (row.other_comment) {
         acknowledgements.push({
             author: row.other_comment_author_name || 'A neighbour',
+            authorId: row.other_comment_author_id || null,
             text: row.other_comment,
             time: fmtDate(row.other_comment_timestamp),
             commentType: 'other', ...likeOf('other'),

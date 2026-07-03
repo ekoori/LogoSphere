@@ -15,6 +15,7 @@ import MeaningTrail from '../components/MeaningTrail';
 import TabSelector from '../components/TabSelector';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
+import { useEntityIndex } from '../utils/useEntityIndex';
 import { useLogin } from '../App';
 
 function SpherePage() {
@@ -22,6 +23,7 @@ function SpherePage() {
     const id = params.get('id');
     const name = params.get('name');
     const { userId } = useLogin();
+    const { entityHref } = useEntityIndex();
     const [sphere, setSphere] = useState(null);
     const [openings, setOpenings] = useState([]);
     const [trail, setTrail] = useState([]);
@@ -151,7 +153,7 @@ function SpherePage() {
                                 <ul className="ep-project-list">
                                     {alliances.map((a, i) => (
                                         <li key={i}>
-                                            <Link to={`/alliance?name=${encodeURIComponent(a)}`} className="ep-project-link">
+                                            <Link to={entityHref('alliance', a)} className="ep-project-link">
                                                 {a}
                                                 <span className="ep-project-arrow">→</span>
                                             </Link>
@@ -167,7 +169,7 @@ function SpherePage() {
                                 <ul className="ep-project-list">
                                     {projects.map((p, i) => (
                                         <li key={i}>
-                                            <Link to={`/project?name=${encodeURIComponent(p)}`} className="ep-project-link">
+                                            <Link to={entityHref('project', p)} className="ep-project-link">
                                                 {p}
                                                 <span className="ep-project-arrow">→</span>
                                             </Link>

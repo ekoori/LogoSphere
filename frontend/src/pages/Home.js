@@ -24,7 +24,8 @@ function Home() {
         try {
             const res = await api.get('/api/meaning_trail');
             setItems((res.data || []).map(row => {
-                const mapped = mapExchange(row);
+                // Pass the viewer id so "You" rows get an avatar + own-profile link.
+                const mapped = mapExchange(row, { ownerId: userId });
                 // On the home feed the viewer is always the initiator, so:
                 //   "Add Receipt" → personal note (type: user)
                 //   "Add Acknowledgement" → public shoutout (type: other)
@@ -32,13 +33,11 @@ function Home() {
                     ...mapped,
                     canModify: true,
                     onAddReceipt: async ({ text, cardIds, cards }) => {
-                        try {
-                            await api.post(`/api/exchange/${mapped.id}/comment`, {
-                                type: 'user', text, card_ids: cardIds || [], cards: cards || [],
-                            });
-                        } catch (e) {
-                            console.error('Failed to save note:', e);
-                        }
+                        // Let errors propagate so ExchangeCard can roll back its
+                        // optimistic entry (e.g. server rejects a duplicate receipt).
+                        await api.post(`/api/exchange/${mapped.id}/comment`, {
+                            type: 'user', text, card_ids: cardIds || [], cards: cards || [],
+                        });
                     },
                     onAddAcknowledgement: async ({ text, cardIds, cards }) => {
                         try {

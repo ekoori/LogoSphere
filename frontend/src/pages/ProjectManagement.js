@@ -91,10 +91,12 @@ const ProjectManagement = () => {
 
   return (
     <>
-    <EntityBanner kind="project" image={project.image} onUpload={handleImageUpload}>
-      <span className="ep-eyebrow">Project Management</span>
-      <h1 className="ep-title">{project.name}</h1>
-    </EntityBanner>
+    <div className="ep-page-banner">
+      <EntityBanner kind="project" image={project.image} onUpload={handleImageUpload}>
+        <span className="ep-eyebrow">Project Management</span>
+        <h1 className="ep-title">{project.name}</h1>
+      </EntityBanner>
+    </div>
     <div className="container">
       <aside className="management-sidebar">
         <h2>Project Management</h2>

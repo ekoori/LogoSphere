@@ -65,10 +65,12 @@ const AllianceManagement = () => {
 
   return (
     <>
-    <EntityBanner kind="alliance" image={alliance.image} onUpload={canManage ? handleImageUpload : undefined}>
-      <span className="ep-eyebrow">Alliance Management</span>
-      <h1 className="ep-title">{alliance.name || 'Alliance'}</h1>
-    </EntityBanner>
+    <div className="ep-page-banner">
+      <EntityBanner kind="alliance" image={alliance.image} onUpload={canManage ? handleImageUpload : undefined}>
+        <span className="ep-eyebrow">Alliance Management</span>
+        <h1 className="ep-title">{alliance.name || 'Alliance'}</h1>
+      </EntityBanner>
+    </div>
     <div className="container">
       <aside className="management-sidebar">
         <h2>Alliance Management</h2>

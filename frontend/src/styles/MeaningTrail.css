@@ -319,3 +319,9 @@
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
 }
+
+/* Receipt / acknowledgement author line with inline avatar + profile link */
+.tf-author-line { display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap; margin: 0; }
+.tf-author { display: inline-flex; align-items: center; gap: 0.35em; }
+.tf-author a { color: inherit; text-decoration: none; }
+.tf-author a:hover { text-decoration: underline; }

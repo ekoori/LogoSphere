@@ -21,9 +21,11 @@ def _is_provider_or_manager(service, user_id):
     return can_manage_entity(service.provider_id, user_id)
 
 
-def _enrich_service(s, viewer):
+def _enrich_service(s, viewer, include_exchanges=False):
     """Build the full dict for one service, including viewer-relative fields.
-    Shared by the list and single-item endpoints."""
+    Shared by the list and single-item endpoints. `include_exchanges` adds the
+    confirmed exchanges spawned from this opening (single-opening page only —
+    it's an extra per-opening query we don't want in the marketplace list)."""
     sid = s.service_id
     is_provider = viewer is not None and _is_provider_or_manager(s, viewer)
     d = s.to_dict()
@@ -32,6 +34,8 @@ def _enrich_service(s, viewer):
     d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
     d['my_acceptance'] = Service.get_acceptance(sid, viewer) if viewer else None
     d['activity'] = Service.activity_summary(sid, s.provider_id) if s.cadence == 'perpetual' else None
+    if include_exchanges:
+        d['exchanges'] = Service.acceptances(sid, status='confirmed')
     return d
 
 
@@ -126,7 +130,7 @@ def get_service(service_id, user_id=None):
             if service.sphere_id not in joined_spheres:
                 return jsonify({'message': 'Not authorized to view this opening'}), 403
 
-        return jsonify(_enrich_service(service, viewer)), 200
+        return jsonify(_enrich_service(service, viewer, include_exchanges=True)), 200
     except ValueError:
         return jsonify({'message': 'Invalid opening id'}), 400
     except Exception as e:

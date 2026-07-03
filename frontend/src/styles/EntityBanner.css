@@ -160,6 +160,15 @@
     border-radius: var(--r-sm);
 }
 
+/* Management pages render the banner outside the constrained .ep-page wrapper
+   that the read-only entity pages use, so give it the same max-width + gutter
+   here — otherwise it bleeds to the full viewport width. */
+.ep-page-banner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
 @media (max-width: 640px) {
     .ep-banner { border-radius: 0 0 var(--r-md) var(--r-md); }
 }

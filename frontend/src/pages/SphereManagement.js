@@ -88,10 +88,12 @@ const SphereManagement = () => {
 
   return (
     <>
-    <EntityBanner kind="sphere" image={sphere.image} onUpload={handleImageUpload}>
-      <span className="ep-eyebrow">Sphere Management</span>
-      <h1 className="ep-title">{sphere.name}</h1>
-    </EntityBanner>
+    <div className="ep-page-banner">
+      <EntityBanner kind="sphere" image={sphere.image} onUpload={handleImageUpload}>
+        <span className="ep-eyebrow">Sphere Management</span>
+        <h1 className="ep-title">{sphere.name}</h1>
+      </EntityBanner>
+    </div>
     <div className="container">
       <aside className="management-sidebar">
         <h2>Sphere Management</h2>
