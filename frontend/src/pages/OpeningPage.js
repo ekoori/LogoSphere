@@ -139,7 +139,7 @@ function OpeningPage() {
     };
 
     return (
-        <div className="xc-page">
+        <div className="xc-page xc-page--banner">
             {/* ── Banner ───────────────────────────────────────────────── */}
             <EntityBanner kind="opening" image={service.rawImage} onUpload={isOwnOpening ? handleImageUpload : undefined}>
                 <div className="xc-page-breadcrumb">

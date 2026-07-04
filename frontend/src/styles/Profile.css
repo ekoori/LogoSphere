@@ -26,7 +26,8 @@
    Page scaffold
    ========================================================================== */
 .pf-page {
-    max-width: 1100px;
+    /* Same width + gutter as .ep-page / .container so every page lines up. */
+    max-width: 1000px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 2rem) 5rem;
     animation: ts-rise 0.5s var(--ease) both;

@@ -9,6 +9,11 @@
     padding: 2em clamp(1rem, 3vw, 2rem) 4em;
 }
 
+/* Pages that open with an EntityBanner (OpeningPage): the banner is designed
+   to sit flush against the top like on the entity/management pages, so drop
+   the default top padding. */
+.xc-page--banner { padding-top: 0; }
+
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .xc-page-hero {
     background: linear-gradient(135deg, var(--paper), var(--surface-2) 80%);
