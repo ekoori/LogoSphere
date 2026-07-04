@@ -29,6 +29,11 @@
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 2rem) 5rem;
     animation: ts-rise 0.45s var(--ease) both;
+    /* Long unbreakable tokens (an email used as a name, a URL in a description)
+       must wrap instead of forcing the column — and the whole page — out to the
+       full viewport width. overflow-wrap is inherited, so this covers the
+       banner, sidebar, and every tab's content. */
+    overflow-wrap: anywhere;
 }
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
@@ -218,6 +223,10 @@
 .ep-main {
     flex: 1 1 auto;
     min-width: 0;
+    /* Backstop: even if some tab's content can't shrink, clip it to the column
+       rather than let it push the page to full viewport width. clip (not hidden)
+       leaves the vertical axis visible, so sticky/expand behaviour is unaffected. */
+    overflow-x: clip;
 }
 
 .ep-manage-form-toggle {

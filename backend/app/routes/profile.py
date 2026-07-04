@@ -6,6 +6,7 @@
 
 import logging
 import uuid
+from html import escape
 from flask import request, jsonify, current_app as app, Response
 from app.models.user import User
 from app.models.follow import Follow
@@ -13,6 +14,25 @@ from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+def _initials_avatar_svg(name):
+    """A small SVG avatar (initials on the brand's moss gradient), returned in
+    place of a 404 when a user has no uploaded photo — so <img> tags never log a
+    console 404 and everyone gets a consistent placeholder. Mirrors the frontend
+    Avatar component's initials look."""
+    parts = [p for p in (name or '').split() if p]
+    initials = escape(''.join(p[0] for p in parts[:2]).upper() or '?')
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">'
+        '<defs><radialGradient id="g" cx="30%" cy="25%" r="90%">'
+        '<stop offset="0%" stop-color="#7a9a56"/><stop offset="100%" stop-color="#5f7a4f"/>'
+        '</radialGradient></defs>'
+        '<rect width="80" height="80" rx="40" fill="url(#g)"/>'
+        '<text x="40" y="43" font-family="system-ui,-apple-system,Segoe UI,sans-serif" '
+        'font-size="34" font-weight="600" fill="#f7f4e8" text-anchor="middle" '
+        f'dominant-baseline="central">{initials}</text></svg>'
+    )
 
 
 @validate_session
@@ -54,12 +74,16 @@ def get_following(user_id=None):
 def get_user_avatar(target_id):
     """Serve a user's avatar image for <img src> tags. Public (no session) and
     cacheable — avatars aren't sensitive and this keeps blob bytes out of JSON
-    payloads and lets the browser cache each one. 404 when there's no avatar so
-    the frontend can fall back to initials."""
+    payloads and lets the browser cache each one. When the user has no uploaded
+    photo we return a generated initials SVG (HTTP 200) rather than a 404, so
+    the browser console isn't spammed with 404s for every avatar-less user."""
     try:
         user = User.get(str(target_id))
         if not user or not user.profile_picture:
-            return ('', 404)
+            name = (f"{user.name or ''} {user.surname or ''}".strip() if user else '')
+            resp = Response(_initials_avatar_svg(name), mimetype='image/svg+xml')
+            resp.headers['Cache-Control'] = 'public, max-age=300'
+            return resp
         data = user.profile_picture
         if data[:8] == b'\x89PNG\r\n\x1a\n':
             ctype = 'image/png'
@@ -74,7 +98,10 @@ def get_user_avatar(target_id):
         return resp
     except Exception as e:
         logger.error(f"Error in get_user_avatar: {e}")
-        return ('', 404)
+        # Last-resort placeholder so the <img> still resolves without a console error.
+        resp = Response(_initials_avatar_svg(''), mimetype='image/svg+xml')
+        resp.headers['Cache-Control'] = 'no-cache'
+        return resp
 
 @validate_session
 def get_user(user_id=None):
