@@ -10,7 +10,7 @@ import api from '../api';
 import ValueCardChip from './ValueCardChip';
 import '../styles/ValueCardChip.css';
 
-function CompactValueGraph({ entityId, manageHref }) {
+function CompactValueGraph({ entityId, manageHref, currentUserId }) {
     const [cards, setCards] = useState([]);
     const [loaded, setLoaded] = useState(false);
 
@@ -31,7 +31,7 @@ function CompactValueGraph({ entityId, manageHref }) {
             {cards.length > 0 ? (
                 <div className="vc-chips-row">
                     {cards.map((card, i) => (
-                        <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" />
+                        <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" currentUserId={currentUserId} />
                     ))}
                 </div>
             ) : (
@@ -49,6 +49,7 @@ function CompactValueGraph({ entityId, manageHref }) {
 CompactValueGraph.propTypes = {
     entityId: PropTypes.string,
     manageHref: PropTypes.string,
+    currentUserId: PropTypes.string,
 };
 
 export default CompactValueGraph;

@@ -118,7 +118,7 @@ function UserPage() {
                             <span className="user-value-chips-label">Values</span>
                             <div className="vc-chips-row">
                                 {valueCards.map((card, i) => (
-                                    <ValueCardChip key={card.card_id || i} card={card} subjectLabel="Cares about" />
+                                    <ValueCardChip key={card.card_id || i} card={card} subjectLabel="Cares about" currentUserId={viewerId} />
                                 ))}
                             </div>
                         </div>

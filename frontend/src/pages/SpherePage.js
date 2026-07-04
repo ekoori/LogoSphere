@@ -184,6 +184,7 @@ function SpherePage() {
                             <h4>Charter</h4>
                             <CompactValueGraph
                                 entityId={sphere.sphere_id}
+                                currentUserId={userId}
                                 manageHref={isAdmin ? `/sphere-management?id=${sphere.sphere_id}` : null}
                             />
                         </div>

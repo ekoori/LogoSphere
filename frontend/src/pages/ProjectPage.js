@@ -171,6 +171,7 @@ function ProjectPage() {
                         <h4>Charter</h4>
                         <CompactValueGraph
                             entityId={pid}
+                            currentUserId={userId}
                             manageHref={canManage ? `/project-management?id=${pid}` : null}
                         />
                     </div>

@@ -4,6 +4,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
+import api from '../api';
+import { useManagedEntities } from '../utils/useManagedEntities';
 import '../styles/ValueCardChip.css';
 
 const COLOR_MAP = {
@@ -17,11 +19,34 @@ const COLOR_MAP = {
 const FRANKL_GLYPH  = { creative: '✶', experiential: '❍', attitudinal: '△' };
 const FRANKL_LABEL  = { creative: 'creative', experiential: 'experiential', attitudinal: 'attitudinal' };
 
-function ValueCardChip({ card, subjectLabel = 'Cares about' }) {
+function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = null }) {
     const [open, setOpen] = useState(false);
     const accent = COLOR_MAP[card.color_key] || 'var(--honey)';
     const glyph  = FRANKL_GLYPH[card.frankl_mode]  || '✶';
     const modeLabel = FRANKL_LABEL[card.frankl_mode] || card.frankl_mode;
+
+    // Cloning: only offered when we know who's looking (currentUserId passed
+    // in) and this isn't already their own card. `managed` is the set of
+    // entities they can also clone onto (see useManagedEntities).
+    const managed = useManagedEntities(currentUserId);
+    const canClone = !!currentUserId && String(card.user_id) !== String(currentUserId);
+    const [cloneTarget, setCloneTarget] = useState('');
+    const [cloning, setCloning] = useState(false);
+    const [cloneMsg, setCloneMsg] = useState(null);
+
+    const handleClone = async () => {
+        const targetId = cloneTarget || currentUserId;
+        setCloning(true);
+        setCloneMsg(null);
+        try {
+            await api.post('/api/value_cards/clone', { source: card, target_id: targetId });
+            setCloneMsg({ ok: true, text: '✓ Added to Meaning Graph' });
+        } catch (err) {
+            setCloneMsg({ ok: false, text: err.response?.data?.message || 'Could not clone this card.' });
+        } finally {
+            setCloning(false);
+        }
+    };
 
     return (
         <>
@@ -108,6 +133,33 @@ function ValueCardChip({ card, subjectLabel = 'Cares about' }) {
                                 <p>{card.never_do}</p>
                             </div>
                         )}
+
+                        {canClone && (
+                            <div className="vc-clone">
+                                <span className="vc-label">Make this yours</span>
+                                <p className="vc-clone-hint">Copy this value onto your own Meaning Graph — or one you manage.</p>
+                                <div className="vc-clone-row">
+                                    <select
+                                        value={cloneTarget}
+                                        onChange={(e) => { setCloneTarget(e.target.value); setCloneMsg(null); }}
+                                        aria-label="Clone destination"
+                                    >
+                                        <option value="">My profile</option>
+                                        {managed.map((m) => (
+                                            <option key={m.id} value={m.id}>{m.name} ({m.kind})</option>
+                                        ))}
+                                    </select>
+                                    <button className="vc-clone-btn" onClick={handleClone} disabled={cloning}>
+                                        {cloning ? 'Cloning…' : '+ Clone'}
+                                    </button>
+                                </div>
+                                {cloneMsg && (
+                                    <p className={`vc-clone-msg ${cloneMsg.ok ? 'vc-clone-msg--ok' : 'vc-clone-msg--err'}`}>
+                                        {cloneMsg.text}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>,
                 document.body
@@ -130,6 +182,7 @@ ValueCardChip.propTypes = {
         color_key:        PropTypes.string,
     }).isRequired,
     subjectLabel: PropTypes.string,
+    currentUserId: PropTypes.string,
 };
 
 export default ValueCardChip;

@@ -30,7 +30,8 @@ from app.routes.spheres import create_sphere, get_spheres, join_sphere, update_s
 from app.routes.alliances import create_alliance, get_alliances, join_alliance, update_alliance_image, set_alliance_role
 from app.routes.projects import create_project, get_projects, join_project, update_project_image, set_project_role
 from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image
-from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card, create_entity_value_card, delete_entity_value_card
+from app.routes.value_cards import get_value_cards, create_value_card, delete_value_card, create_entity_value_card, delete_entity_value_card, clone_value_card
+from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -165,10 +166,14 @@ app.add_url_rule('/api/openings/<service_id>/confirm', view_func=confirm_service
 app.add_url_rule('/api/openings/<service_id>/reject', view_func=reject_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/like', view_func=like_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/image', view_func=update_service_image, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/value_cards/clone', view_func=clone_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<card_id>', view_func=delete_value_card, methods=['DELETE', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>', view_func=create_entity_value_card, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/notifications', view_func=get_notifications, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/notifications/read', view_func=mark_notification_read, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/notifications/read_all', view_func=mark_all_notifications_read, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=delete_entity_value_card, methods=['DELETE', 'OPTIONS'])
 
 @app.errorhandler(500)

@@ -150,6 +150,54 @@
 }
 .vc-chip-close:hover { border-color: var(--terracotta); color: var(--terracotta); }
 
+/* ── Clone-to-mine section (inside the full card modal) ──────────────────── */
+.vc-clone {
+    margin-top: 1.1rem;
+    padding-top: 0.95rem;
+    border-top: 1px dashed var(--border);
+}
+.vc-clone-hint {
+    margin: 0.15rem 0 0.6rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--ink-soft);
+}
+.vc-clone-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.vc-clone-row select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.5em 0.6em;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+.vc-clone-btn {
+    flex: none;
+    padding: 0.5em 0.9em;
+    border: 1px solid var(--leaf);
+    border-radius: var(--r-pill);
+    background: rgba(111, 138, 79, 0.1);
+    color: var(--moss-deep);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.18s var(--ease);
+    white-space: nowrap;
+}
+.vc-clone-btn:hover:not(:disabled) { background: var(--leaf); color: #f7f4e8; }
+.vc-clone-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.vc-clone-msg { margin: 0.55rem 0 0; font-size: 0.8rem; font-weight: 600; }
+.vc-clone-msg--ok { color: var(--moss-deep); }
+.vc-clone-msg--err { color: var(--danger); }
+
 /* ── ValueCardPicker ──────────────────────────────────────────────────────── */
 .vc-picker {
     margin-top: 0.65em;

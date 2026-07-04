@@ -177,6 +177,7 @@ function AlliancePage() {
                         <h4>Charter</h4>
                         <CompactValueGraph
                             entityId={aid}
+                            currentUserId={userId}
                             manageHref={canManage ? `/alliance-management?id=${aid}` : null}
                         />
                     </div>
