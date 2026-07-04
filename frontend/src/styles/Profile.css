@@ -334,7 +334,13 @@
 }
 .vc-mode-glyph { font-size: 0.75rem; }
 
-.vc-delete {
+.vc-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.vc-delete, .vc-edit {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -350,6 +356,8 @@
     transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
 }
 .vc-delete:hover { border-color: var(--danger); color: var(--danger); }
+.vc-edit { font-size: 0.72rem; }
+.vc-edit:hover { border-color: var(--moss); color: var(--moss-deep); }
 
 .vc-delete-confirm {
     display: flex;

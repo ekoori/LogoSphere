@@ -543,8 +543,8 @@
     color: var(--evc-accent, var(--leaf));
 }
 
-/* ── Value card delete button ─────────────────────────────────────────────── */
-.vc-delete {
+/* ── Value card edit/delete buttons ───────────────────────────────────────── */
+.vc-edit, .vc-delete {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -561,6 +561,7 @@
     transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 .vc-delete:hover { border-color: var(--danger, #b94040); color: var(--danger, #b94040); }
+.vc-edit:hover { border-color: var(--moss); color: var(--moss-deep); }
 
 .vc-delete-confirm { display: flex; align-items: center; gap: 0.35em; }
 .vc-delete-prompt { font-size: 0.68rem; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-faint); white-space: nowrap; }

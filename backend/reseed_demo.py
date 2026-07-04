@@ -403,7 +403,7 @@ VC_Q = """INSERT INTO logosphere.value_cards
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
 
 try:
-    session.execute("CREATE TABLE IF NOT EXISTS logosphere.value_cards (user_id uuid, card_id uuid, title text, care_about text, because text, looks_like list<text>, drift_looks_like text, in_conflict text, never_do text, frankl_mode text, color_key text, created_at timestamp, PRIMARY KEY (user_id, card_id)) WITH CLUSTERING ORDER BY (card_id ASC)")
+    session.execute("CREATE TABLE IF NOT EXISTS logosphere.value_cards (user_id uuid, card_id uuid, title text, care_about text, because text, looks_like list<text>, drift_looks_like text, in_conflict text, never_do text, frankl_mode text, color_key text, created_at timestamp, is_current boolean, replaces_card_id uuid, PRIMARY KEY (user_id, card_id)) WITH CLUSTERING ORDER BY (card_id ASC)")
     print("[OK] value_cards table ready")
 except Exception as e:
     print(f"[WARN] value_cards table: {e}")

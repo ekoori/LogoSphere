@@ -25,7 +25,7 @@ const COLOR_CSS = {
 };
 
 // ── Inline Value Card display ─────────────────────────────────────────────
-function ValueCardDisplay({ card, onDelete, canDelete, idx }) {
+function ValueCardDisplay({ card, onDelete, onEdit, canDelete, idx }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -46,12 +46,20 @@ function ValueCardDisplay({ card, onDelete, canDelete, idx }) {
                     {meta.label}
                 </span>
                 {canDelete && !confirmDelete && (
-                    <button
-                        className="vc-delete"
-                        title="Remove this card"
-                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                        aria-label="Delete value card"
-                    >×</button>
+                    <span className="vc-card-actions" onClick={e => e.stopPropagation()}>
+                        <button
+                            className="vc-edit"
+                            title="Edit this card"
+                            onClick={() => onEdit(card)}
+                            aria-label="Edit value card"
+                        >✎</button>
+                        <button
+                            className="vc-delete"
+                            title="Remove this card"
+                            onClick={() => setConfirmDelete(true)}
+                            aria-label="Delete value card"
+                        >×</button>
+                    </span>
                 )}
                 {canDelete && confirmDelete && (
                     <span className="vc-delete-confirm" onClick={e => e.stopPropagation()}>
@@ -113,9 +121,24 @@ function ValueCardDisplay({ card, onDelete, canDelete, idx }) {
     );
 }
 
-// ── New Value Card form ───────────────────────────────────────────────────
-function NewValueCardForm({ onSaved, onCancel }) {
-    const [form, setForm] = useState({
+// ── New / Edit Value Card form ─────────────────────────────────────────────
+// When `editingCard` is given, submitting PATCHes the existing card instead
+// of POSTing a new one. The backend never overwrites the old row in place —
+// it writes the edit as a new card_id and marks the old one superseded, so
+// anything that already snapshotted the old wording (e.g. a meaning-trail
+// receipt) is unaffected. `onSaved` always receives the new/current card.
+function NewValueCardForm({ onSaved, onCancel, editingCard }) {
+    const [form, setForm] = useState(() => editingCard ? {
+        title: editingCard.title || '',
+        care_about: editingCard.care_about || '',
+        because: editingCard.because || '',
+        looks_like_raw: (editingCard.looks_like || []).join('\n'),
+        drift_looks_like: editingCard.drift_looks_like || '',
+        in_conflict: editingCard.in_conflict || '',
+        never_do: editingCard.never_do || '',
+        frankl_mode: editingCard.frankl_mode || 'creative',
+        color_key: editingCard.color_key || 'honey',
+    } : {
         title: '', care_about: '', because: '',
         looks_like_raw: '', drift_looks_like: '', in_conflict: '', never_do: '',
         frankl_mode: 'creative', color_key: 'honey',
@@ -135,7 +158,9 @@ function NewValueCardForm({ onSaved, onCancel }) {
                 looks_like: form.looks_like_raw.split('\n').map(s => s.trim()).filter(Boolean),
             };
             delete payload.looks_like_raw;
-            const res = await api.post('/api/value_cards', payload);
+            const res = editingCard
+                ? await api.patch(`/api/value_cards/${editingCard.card_id}`, payload)
+                : await api.post('/api/value_cards', payload);
             onSaved(res.data);
         } catch (e) {
             setErr(e.response?.data?.message || 'Failed to save.');
@@ -146,7 +171,7 @@ function NewValueCardForm({ onSaved, onCancel }) {
 
     return (
         <form className="vc-new-form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
-            <h4 className="vc-new-heading">New Value Card</h4>
+            <h4 className="vc-new-heading">{editingCard ? 'Edit Value Card' : 'New Value Card'}</h4>
             {err && <p className="vc-error">{err}</p>}
 
             <div className="vc-form-row">
@@ -200,7 +225,7 @@ function NewValueCardForm({ onSaved, onCancel }) {
 
             <div className="vc-form-actions">
                 <button type="submit" className="btn btn-accent" disabled={saving}>
-                    {saving ? 'Saving…' : 'Add to Meaning Graph'}
+                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Meaning Graph')}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
             </div>
@@ -216,6 +241,7 @@ const ProfilePage = () => {
     const [valueCards, setValueCards] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [showNewCard, setShowNewCard] = useState(false);
+    const [editingCard, setEditingCard] = useState(null);
     const [imageFile, setImageFile] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', location: '' });
     const [saving, setSaving] = useState(false);
@@ -272,7 +298,12 @@ const ProfilePage = () => {
     };
 
     const handleCardSaved = (newCard) => {
-        setValueCards(prev => [...prev, newCard]);
+        if (editingCard) {
+            setValueCards(prev => prev.map(c => c.card_id === editingCard.card_id ? newCard : c));
+            setEditingCard(null);
+        } else {
+            setValueCards(prev => [...prev, newCard]);
+        }
         setShowNewCard(false);
     };
 
@@ -370,17 +401,18 @@ const ProfilePage = () => {
                                 Your endorsed values — what you care about and why, in a form that can't easily be optimised away.
                             </p>
                         </div>
-                        {!showNewCard && (
+                        {!showNewCard && !editingCard && (
                             <button className="btn btn-accent pf-add-card-btn" onClick={() => setShowNewCard(true)}>
                                 + Add card
                             </button>
                         )}
                     </div>
 
-                    {showNewCard && (
+                    {(showNewCard || editingCard) && (
                         <NewValueCardForm
+                            editingCard={editingCard}
                             onSaved={handleCardSaved}
-                            onCancel={() => setShowNewCard(false)}
+                            onCancel={() => { setShowNewCard(false); setEditingCard(null); }}
                         />
                     )}
 
@@ -405,6 +437,7 @@ const ProfilePage = () => {
                                     idx={i}
                                     canDelete={true}
                                     onDelete={handleCardDelete}
+                                    onEdit={setEditingCard}
                                 />
                             ))}
                         </div>

@@ -1,7 +1,13 @@
 # Routes: Value Cards API
-# GET  /api/value_cards/<user_id>  — public, returns all cards for a user
-# POST /api/value_cards             — authenticated, creates a card for the session user
-# DELETE /api/value_cards/<card_id> — authenticated, deletes own card
+# GET    /api/value_cards/<user_id>  — public, returns all current cards for a user
+# POST   /api/value_cards             — authenticated, creates a card for the session user
+# PATCH  /api/value_cards/<card_id>   — authenticated, edits own card (versioned, see below)
+# DELETE /api/value_cards/<card_id>   — authenticated, deletes own card
+#
+# Edits never mutate a card's stored history: ValueCard.update() writes the
+# change as a new row and flips the old row to is_current=False rather than
+# overwriting it, so anything that already captured the old wording (e.g. a
+# meaning-trail comment snapshot) keeps showing it as it was.
 
 import logging
 from flask import request, jsonify, current_app as app
@@ -43,6 +49,24 @@ def create_value_card(user_id=None):
 
 
 @validate_session
+def edit_value_card(card_id, user_id=None):
+    """Authenticated — only the card owner can edit their own card."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        card = ValueCard.update(user_id, card_id, data)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error editing value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def delete_value_card(card_id, user_id=None):
     """Authenticated — only the card owner can delete."""
     if request.method == 'OPTIONS':
@@ -70,6 +94,26 @@ def create_entity_value_card(entity_id, user_id=None):
         return jsonify(card.to_dict()), 201
     except Exception as e:
         logger.error(f'Error creating entity value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def edit_entity_value_card(entity_id, card_id, user_id=None):
+    """Edit a value card owned by an entity (sphere, alliance, project)."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        if not _can_manage_entity(entity_id, user_id):
+            return jsonify({'message': 'Not authorized to manage this entity'}), 403
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'No data provided'}), 400
+        card = ValueCard.update(entity_id, card_id, data)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error editing entity value card: {e}')
         return jsonify({'message': 'Internal server error'}), 500
 
 

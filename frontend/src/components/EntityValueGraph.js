@@ -22,7 +22,7 @@ const COLOR_CSS = {
     sage: '--sage', moss: '--moss',
 };
 
-function EntityValueCard({ card, idx, canDelete, onDelete }) {
+function EntityValueCard({ card, idx, canDelete, onDelete, onEdit }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -39,6 +39,9 @@ function EntityValueCard({ card, idx, canDelete, onDelete }) {
             <div className="evc-top">
                 <span className="evc-mode">{meta.glyph} {meta.label}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
+                    {canDelete && !confirmDelete && (
+                        <button className="vc-edit" onClick={e => { e.stopPropagation(); onEdit(card); }} title="Edit">✎</button>
+                    )}
                     {canDelete && !confirmDelete && (
                         <button className="vc-delete" onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} title="Remove">×</button>
                     )}
@@ -103,8 +106,18 @@ const BLANK_CARD = {
     frankl_mode: 'creative', color_key: 'honey',
 };
 
-function EntityCardForm({ entityId, entityNoun, onSaved, onCancel }) {
-    const [form, setForm] = useState(BLANK_CARD);
+function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }) {
+    const [form, setForm] = useState(() => editingCard ? {
+        title: editingCard.title || '',
+        care_about: editingCard.care_about || '',
+        because: editingCard.because || '',
+        looks_like_raw: (editingCard.looks_like || []).join('\n'),
+        drift_looks_like: editingCard.drift_looks_like || '',
+        in_conflict: editingCard.in_conflict || '',
+        never_do: editingCard.never_do || '',
+        frankl_mode: editingCard.frankl_mode || 'creative',
+        color_key: editingCard.color_key || 'honey',
+    } : BLANK_CARD);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
     const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
@@ -116,7 +129,9 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel }) {
         try {
             const payload = { ...form, looks_like: form.looks_like_raw.split('\n').map(s => s.trim()).filter(Boolean) };
             delete payload.looks_like_raw;
-            const res = await api.post(`/api/entity_value_cards/${entityId}`, payload);
+            const res = editingCard
+                ? await api.patch(`/api/entity_value_cards/${entityId}/${editingCard.card_id}`, payload)
+                : await api.post(`/api/entity_value_cards/${entityId}`, payload);
             onSaved(res.data);
         } catch (e) {
             setErr(e.response?.data?.message || 'Failed to save.');
@@ -127,7 +142,7 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel }) {
 
     return (
         <form className="vc-new-form" onSubmit={handleSubmit} style={{ marginTop: '1.4rem' }}>
-            <h4 className="vc-new-heading">New Value Card</h4>
+            <h4 className="vc-new-heading">{editingCard ? 'Edit Value Card' : 'New Value Card'}</h4>
             {err && <p className="vc-error">{err}</p>}
             <div className="vc-form-row"><label>Title</label><input type="text" value={form.title} onChange={set('title')} placeholder="e.g. Honest dialogue" /></div>
             <div className="vc-form-row"><label>We care about *</label><textarea rows={2} value={form.care_about} onChange={set('care_about')} placeholder={`What specifically does this ${entityNoun} care about?`} required /></div>
@@ -152,7 +167,9 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel }) {
                 </div>
             </div>
             <div className="vc-form-actions">
-                <button type="submit" className="btn btn-accent" disabled={saving}>{saving ? 'Saving…' : 'Add to Value Graph'}</button>
+                <button type="submit" className="btn btn-accent" disabled={saving}>
+                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Value Graph')}
+                </button>
                 <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
             </div>
         </form>
@@ -163,6 +180,7 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
     const [cards, setCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddCard, setShowAddCard] = useState(false);
+    const [editingCard, setEditingCard] = useState(null);
 
     useEffect(() => {
         let active = true;
@@ -174,7 +192,15 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
         return () => { active = false; };
     }, [entityId]);
 
-    const handleCardSaved = (card) => { setCards(prev => [...prev, card]); setShowAddCard(false); };
+    const handleCardSaved = (card) => {
+        if (editingCard) {
+            setCards(prev => prev.map(c => c.card_id === editingCard.card_id ? card : c));
+            setEditingCard(null);
+        } else {
+            setCards(prev => [...prev, card]);
+        }
+        setShowAddCard(false);
+    };
     const handleCardDelete = async (cardId) => {
         try {
             await api.delete(`/api/entity_value_cards/${entityId}/${cardId}`);
@@ -191,7 +217,7 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
                     {cards.map((card, i) => (
                         <EntityValueCard
                             key={card.card_id} card={card} idx={i}
-                            canDelete={canManage} onDelete={handleCardDelete}
+                            canDelete={canManage} onDelete={handleCardDelete} onEdit={setEditingCard}
                         />
                     ))}
                 </div>
@@ -201,17 +227,18 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
                 </p>
             )}
 
-            {canManage && !showAddCard && (
+            {canManage && !showAddCard && !editingCard && (
                 <button className="btn btn-accent" style={{ marginTop: '1.2rem' }} onClick={() => setShowAddCard(true)}>
                     + Add to Value Graph
                 </button>
             )}
-            {canManage && showAddCard && (
+            {canManage && (showAddCard || editingCard) && (
                 <EntityCardForm
                     entityId={entityId}
                     entityNoun={entityNoun}
+                    editingCard={editingCard}
                     onSaved={handleCardSaved}
-                    onCancel={() => setShowAddCard(false)}
+                    onCancel={() => { setShowAddCard(false); setEditingCard(null); }}
                 />
             )}
         </div>
