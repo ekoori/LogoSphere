@@ -92,6 +92,7 @@ const SphereManagement = () => {
       <EntityBanner kind="sphere" image={sphere.image} onUpload={handleImageUpload}>
         <span className="ep-eyebrow">Sphere Management</span>
         <h1 className="ep-title">{sphere.name}</h1>
+        {sphere.description && <p className="ep-description">{sphere.description}</p>}
       </EntityBanner>
     </div>
     <div className="container">

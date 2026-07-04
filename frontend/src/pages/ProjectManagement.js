@@ -95,6 +95,7 @@ const ProjectManagement = () => {
       <EntityBanner kind="project" image={project.image} onUpload={handleImageUpload}>
         <span className="ep-eyebrow">Project Management</span>
         <h1 className="ep-title">{project.name}</h1>
+        {project.description && <p className="ep-description">{project.description}</p>}
       </EntityBanner>
     </div>
     <div className="container">

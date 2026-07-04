@@ -69,6 +69,7 @@ const AllianceManagement = () => {
       <EntityBanner kind="alliance" image={alliance.image} onUpload={canManage ? handleImageUpload : undefined}>
         <span className="ep-eyebrow">Alliance Management</span>
         <h1 className="ep-title">{alliance.name || 'Alliance'}</h1>
+        {alliance.description && <p className="ep-description">{alliance.description}</p>}
       </EntityBanner>
     </div>
     <div className="container">
