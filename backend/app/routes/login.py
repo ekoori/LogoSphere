@@ -1,11 +1,15 @@
 # File: ./backend/app/routes/login.py
 # Description: This file manages user authentication and session management for the LogoSphere platform.
 #              It defines the routes for user login, logout, and session verification.
+#              Sessions are server-stored (Cassandra `sessions` table); the token is
+#              accepted as either `Authorization: Bearer <session_id>` (the documented
+#              API contract) or the httpOnly session cookie (the reference web client) —
+#              see session_middleware.get_session_token(). Never via query parameter.
 # Classes: None
 # Properties: None
-# Methods: 
+# Methods:
 #    [+] load_user(user_id): Retrieves a user by their user_id, used by Flask-Login for session management.
-#    [+] login(): Handles the POST request for user login, verifies user credentials, creates a session, and sets the session cookie.
+#    [+] login(): Handles the POST request for user login, verifies user credentials, creates a session, returns the token in the body, and sets the session cookie.
 #    [+] logout(): Handles the POST request for user logout, clears the session cookie, and removes the session from the database.
 #    [+] check_session(): Handles GET and POST requests to verify if a session is active or inactive.
 #    [+] is_valid_uuid(uuid_to_test, version=4): Utility function to validate if a string is a valid UUID of a specified version.
@@ -18,6 +22,7 @@ from flask import request, jsonify, session, make_response, current_app
 from flask_login import login_user, logout_user, current_user
 
 from app.models.user import User
+from app.middleware.session_middleware import get_session_token
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +57,13 @@ def login():
             
             logger.info(f'User {user.email} logged in successfully')
             
-            # Create response
+            # Create response. `session_id` is returned in the body so API
+            # clients (anything that isn't the browser SPA) can capture it and
+            # send it back as `Authorization: Bearer <session_id>` — the
+            # browser SPA ignores this field and relies on the cookie below.
             response = make_response(jsonify({
                 'message': 'Login successful',
+                'session_id': session_id,
                 'data': user.to_dict()
             }))
 
@@ -113,7 +122,7 @@ def check_session():
         return response, 200
 
     try:
-        session_id = request.cookies.get('session_id')
+        session_id = get_session_token()
         logger.info(f'Checking session for session_id: {str(session_id)}')
 
         if not session_id:
@@ -162,11 +171,11 @@ def logout():
         return response, 200
     
     try:
-        session_id = request.cookies.get('session_id')
-        logger.info(f'Retrieved session_id from cookie: {session_id}')
+        session_id = get_session_token()
+        logger.info(f'Retrieved session_id for logout: {session_id}')
 
         if not session_id or not is_valid_uuid(session_id):
-            logger.error(f'Invalid session_id retrieved from cookie: {session_id}')
+            logger.error(f'Invalid or missing session_id for logout: {session_id}')
             response = jsonify({'error': 'Invalid session_id'})
             return response, 400
 

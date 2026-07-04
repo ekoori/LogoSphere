@@ -1,5 +1,22 @@
 # File: ./backend/app/middleware/session_middleware.py
 # Description: Middleware for session validation and management
+#
+# Auth model: sessions are server-stored (Cassandra `sessions` table, opaque
+# random session_id, 30-day TTL, instantly revocable on logout) — not JWT.
+# We keep the DB-backed model because it gives us cheap, immediate revocation
+# and doesn't require rotating a signing key; a stateless JWT would need a
+# blacklist for logout/revocation anyway, which is most of the complexity of
+# a session store without the benefit.
+#
+# Token transport: the documented API contract is a standard
+# `Authorization: Bearer <session_id>` header — never a query parameter (query
+# strings end up in server logs, proxy logs, and browser history). The
+# reference web client additionally receives the same token as an httpOnly,
+# Secure, SameSite=Lax cookie on login; that cookie is what the browser SPA
+# actually authenticates with (a JS-readable Authorization header would be
+# strictly worse for the SPA, since it'd be stealable via XSS — the httpOnly
+# cookie can't be read by injected script). Both transports resolve to the
+# same server-stored session row, so either is valid on any request.
 from functools import wraps
 from flask import request, jsonify, current_app
 import logging
@@ -8,14 +25,26 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
+def get_session_token():
+    """Extract the bearer token for this request: the standard
+    `Authorization: Bearer <token>` header takes priority, falling back to the
+    session cookie the browser SPA sends. Never accepts a query parameter."""
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header[len('Bearer '):].strip()
+        if token:
+            return token
+    return request.cookies.get('session_id')
+
+
 def validate_session(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if request.method == 'OPTIONS':
             return f(*args, **kwargs)
 
-        # Check both cookie and header for session_id
-        session_id = request.cookies.get('session_id') or request.headers.get('session_id')
+        session_id = get_session_token()
         logger.debug(f'Validating session: {session_id}')
 
         if not session_id:

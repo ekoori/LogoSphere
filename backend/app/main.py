@@ -69,11 +69,16 @@ session_interface = CassandraSessionInterface(
 app.session_interface = session_interface   
 
 
-# Enable CORS for all routes before defining any routes
+# Enable CORS for all routes before defining any routes.
+# `Authorization` (standard `Bearer <session_id>`) is the documented header for
+# API auth; the browser SPA instead relies on the httpOnly session cookie sent
+# automatically via credentials. There's no other custom auth header — a
+# non-standard header carrying a bearer credential is itself a smell (tooling,
+# proxies, and log redaction all expect `Authorization`).
 CORS(app, resources={r"/api/*": {
     "origins": ["http://localhost:3000"],
-    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "session_id"],
-    "expose_headers": ["Content-Type", "Authorization", "session_id"],
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+    "expose_headers": ["Content-Type", "Authorization"],
     "supports_credentials": True,
     "allow_credentials": True,
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -84,7 +89,7 @@ CORS(app, resources={r"/api/*": {
 def handle_preflight():
     if request.method == "OPTIONS":
         response = app.make_default_options_response()
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, session_id')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         response.headers['Access-Control-Allow-Credentials'] = 'true'
         response.headers.add('Access-Control-Max-Age', '3600')
@@ -99,9 +104,9 @@ def after_request(response):
     if origin in ['http://localhost:3000']:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, session_id')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        response.headers.add('Access-Control-Expose-Headers', 'Content-Type, Authorization, session_id')
+        response.headers.add('Access-Control-Expose-Headers', 'Content-Type, Authorization')
     return response
 
 

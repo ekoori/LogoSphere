@@ -1,12 +1,48 @@
 openapi: 3.0.0
 info:
   title: LogoSphere API
-  description: API for handling user exchanges within the LogoSphere platform.
-  version: 1.0.0
+  description: |
+    API for handling user exchanges within the LogoSphere platform.
+
+    ## Authentication
+
+    Sessions are **server-stored** (a Cassandra-backed `sessions` table keyed
+    by an opaque random `session_id`, 30-day TTL, instantly revoked on
+    `/api/logout`) — not a stateless JWT. This is a deliberate choice: it
+    gives immediate, no-blacklist-required revocation, and avoids managing a
+    signing-key rotation policy for a token type we'd still need a DB-backed
+    denylist for anyway to support logout.
+
+    `POST /api/login` returns the session token as `session_id` in the JSON
+    body. Send it back on every subsequent request as a standard bearer
+    credential:
+
+    ```
+    Authorization: Bearer <session_id>
+    ```
+
+    Tokens are **never** accepted via query parameter — query strings end up
+    in server logs, proxy logs, and browser history, so that transport is
+    intentionally unsupported.
+
+    The reference web client (the LogoSphere React app) additionally receives
+    the same token as an `httpOnly`, `Secure`, `SameSite=Lax` cookie set on
+    login, and authenticates with that cookie instead of the header. This is
+    not a second, inconsistent mechanism — both resolve to the same
+    server-stored session row — it's simply a stronger transport for a
+    same-origin browser client: an `httpOnly` cookie can't be read by injected
+    script, whereas a JS-readable `Authorization` header value would have to
+    live in `localStorage`/`sessionStorage` and become an XSS exfiltration
+    target. Non-browser clients (scripts, tests, mobile apps, integrations)
+    should use the `Authorization: Bearer` header documented here.
+  version: 1.1.0
 
 servers:
   - url: "https://api.trustsphere.example.com"
     description: LogoSphere API server
+
+security:
+  - bearerAuth: []
 
 paths:
 
@@ -15,6 +51,7 @@ paths:
       summary: User Login
       description: Logs in a user using their email and password.
       operationId: loginUser
+      security: []
       requestBody:
         required: true
         content:
@@ -30,6 +67,16 @@ paths:
                   format: email
                 password:
                   type: string
+                  description: >-
+                    Plaintext password, sent once over TLS. The server hashes
+                    it (PBKDF2, via werkzeug) before ever touching storage;
+                    the client does not pre-hash it. This is the normal,
+                    correct approach for a password-based login endpoint —
+                    pre-hashing client-side would just turn the hash into the
+                    de facto password without adding real protection (see
+                    SRP/OPAQUE for the actual zero-knowledge alternative,
+                    which this API does not implement). The password is never
+                    logged, echoed back, or included in any response.
       responses:
         '200':
           description: User successfully logged in
@@ -40,7 +87,12 @@ paths:
                 properties:
                   session_id:
                     type: string
-                    description: Auth token to use for accessing account-specific actions
+                    description: >-
+                      Server-stored session token. Send it on subsequent
+                      requests as `Authorization: Bearer <session_id>`. (The
+                      reference web client instead uses the httpOnly cookie
+                      also set on this response — see the Authentication
+                      section above.)
         '401':
           description: Authentication failed
       tags:
@@ -56,7 +108,10 @@ paths:
   /api/logout:
     post:
       summary: User Logout
-      description: Handles the POST request for user logout and ends the current user session.
+      description: >-
+        Ends the current session. Deletes the server-stored session row (so
+        the token in `Authorization: Bearer` or the cookie becomes invalid
+        immediately) and clears the session cookie for browser clients.
       operationId: logoutUser
       responses:
         200:
@@ -85,15 +140,10 @@ paths:
         - Authentication
     get:
       summary: Check User Session
-      description: Verifies if there is a currently logged-in user by checking the session ID.
+      description: >-
+        Verifies whether the caller's session (from the `Authorization`
+        header or session cookie) is currently valid.
       operationId: checkUserSession
-      parameters:
-        - name: session_id
-          in: query
-          required: true
-          schema:
-            type: string
-          description: The session ID to verify the user session
       responses:
         '200':
           description: Session check successful
@@ -114,6 +164,7 @@ paths:
     post:
       summary: Register a new user
       description: Registers a new user with their name, email, and password.
+      security: []
       requestBody:
         required: true
         content:
@@ -132,7 +183,11 @@ paths:
                   format: email
                 password:
                   type: string
-                  description: Password Hash (Never send in plaintext)
+                  description: >-
+                    Plaintext password, sent once over TLS; the server hashes
+                    it before storage (see the Authentication section for why
+                    client-side pre-hashing isn't done). Minimum 8 characters.
+                    Never logged or returned in any response.
       responses:
         '201':
           description: User successfully registered
@@ -149,15 +204,11 @@ paths:
   /api/user:
     get:
       summary: Retrieve User Profile
-      description: Fetches details of the currently logged-in user.
+      description: >-
+        Fetches details of the currently logged-in user, identified by the
+        caller's `Authorization: Bearer <session_id>` header (or session
+        cookie for the reference web client).
       operationId: getUserProfile
-      parameters:
-        - name: session_id
-          in: query
-          required: true
-          schema:
-            type: string
-          description: The session ID to verify which user's profile to fetch
       responses:
         '200':
           description: User profile fetched successfully
@@ -180,7 +231,10 @@ paths:
         - User Management
     post:
       summary: Update User Profile
-      description: Updates the profile information for the logged-in user.
+      description: >-
+        Updates the profile information for the logged-in user, identified by
+        the caller's `Authorization: Bearer <session_id>` header (or session
+        cookie for the reference web client) — not by a field in the body.
       operationId: updateUserProfile
       requestBody:
         required: true
@@ -188,12 +242,7 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - session_id
               properties:
-                session_id:
-                  type: string
-                  description: Auth token to use for verifying user identity
                 email:
                   type: string
                   format: email
@@ -557,6 +606,17 @@ paths:
 
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        `Authorization: Bearer <session_id>`, where `session_id` is the token
+        returned by `POST /api/login`. See the top-level Authentication
+        section for the full model (server-stored sessions; cookie transport
+        for the reference web client). Applies to every endpoint except
+        `/api/login`, `/api/register`, and `OPTIONS` requests, which are
+        marked `security: []` individually.
   schemas:
     User:
       type: object
