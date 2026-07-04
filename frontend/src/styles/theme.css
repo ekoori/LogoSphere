@@ -79,6 +79,12 @@ html {
 
 body {
     margin: 0;
+    /* Unconditional guarantee: no component anywhere — however deeply nested,
+       however long its content — can ever widen the page past the viewport.
+       Individual components should still wrap/contain their own content
+       properly (better UX than silently clipping), but this is the backstop
+       that makes "the page keeps getting wider" structurally impossible. */
+    overflow-x: hidden;
     font-family: var(--font-body);
     font-size: var(--fs-body);
     line-height: 1.6;

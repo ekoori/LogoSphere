@@ -10,6 +10,7 @@
     border: 1px solid var(--border-soft);
     border-radius: var(--r-md);
     box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
 .member-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1 1 auto; }
@@ -34,7 +35,7 @@
 .member-role.role--admin, .member-role.role--manager { color: var(--terracotta-deep); }
 .member-role.role--steward { color: var(--honey-deep); }
 
-.member-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+.member-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; min-width: 0; flex-shrink: 1; }
 .member-role-btn {
     font-family: var(--font-body);
     font-size: 0.78rem;

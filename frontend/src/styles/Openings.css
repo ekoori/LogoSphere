@@ -17,6 +17,11 @@
     cursor: pointer;
     transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
     animation: ts-rise 0.5s var(--ease) both;
+    /* Contain any long unbroken token (a title, an on-behalf-of name) to the
+       card's own box — .exchange already had this via MeaningTrail.css, but
+       .service/.service-card (ServiceCard) didn't, letting content bleed past
+       the card and force the whole tab/page wider. */
+    overflow: hidden;
 }
 .exchange:hover,
 .service:hover,
@@ -37,12 +42,12 @@
 }
 .exchange-header .left,
 .service .exchange-header .left,
-.service-card .exchange-header .left { flex: 2; display: flex; flex-direction: column; gap: 0.2em; }
+.service-card .exchange-header .left { flex: 2; min-width: 0; display: flex; flex-direction: column; gap: 0.2em; }
 .exchange-header .right,
 .service .exchange-header .right,
 .service-card .exchange-header .right { flex: 0 0 80px; display: flex; justify-content: flex-end; align-items: flex-start; }
-.exchange-header h3 { margin: 0; font-size: 1.18rem; }
-.exchange-header small { margin: 0; color: var(--ink-faint); }
+.exchange-header h3 { margin: 0; font-size: 1.18rem; overflow-wrap: anywhere; }
+.exchange-header small { margin: 0; color: var(--ink-faint); overflow-wrap: anywhere; }
 
 .like-timestamp { display: flex; flex-direction: column; align-items: center; text-align: center; }
 
