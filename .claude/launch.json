@@ -9,6 +9,15 @@
       "autoPort": false,
       "cwd": "frontend",
       "env": { "BROWSER": "none" }
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["run_local.py"],
+      "port": 5000,
+      "autoPort": false,
+      "cwd": "backend",
+      "env": { "CASSANDRA_HOST": "127.0.0.1", "PYTHONPATH": "." }
     }
   ]
 }
