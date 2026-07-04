@@ -96,6 +96,7 @@ const Header = () => {
                         drawer on mobile. */}
                     <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
                     <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
+                    <li className="nav-drawer-only"><Link to="/how-it-works" onClick={closeMenu}>How it Works</Link></li>
                     <li className="nav-drawer-only"><Link to="/about" onClick={closeMenu}>About</Link></li>
                     {!isLoggedIn && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
                 </ul>
@@ -125,6 +126,7 @@ const Header = () => {
                             <Link to="/profile" onClick={() => setAccountOpen(false)}>Profile</Link>
                             <Link to="/settings" onClick={() => setAccountOpen(false)}>Settings</Link>
                             <Link to="/admin" onClick={() => setAccountOpen(false)}>Admin</Link>
+                            <Link to="/how-it-works" onClick={() => setAccountOpen(false)}>How it Works</Link>
                             <Link to="/about" onClick={() => setAccountOpen(false)}>About</Link>
                             <div className="menu-divider" />
                             {isLoggedIn

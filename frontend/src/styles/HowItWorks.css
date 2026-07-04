@@ -1,0 +1,493 @@
+/* ============================================================================
+   HowItWorks — the plain-language companion to About.
+   Where About reads like an essay (drop caps, ledger mono, scroll reveals),
+   this page reads like a field guide: a literal winding trail connects the
+   steps, mock-up cards make the mechanism tangible, and the FAQ answers the
+   objections a first-time visitor actually raises. Namespaced `hiw-` to stay
+   safe in the global CSS bundle. Built on the solarpunk tokens (theme.css).
+   ========================================================================== */
+
+.hiw-page {
+    --hiw-measure: 62ch;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.5rem) 6rem;
+    overflow: hidden;
+}
+
+.hiw-kicker {
+    display: block;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--leaf);
+    margin: 0 0 0.6rem;
+}
+
+.hiw-eyebrow {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--terracotta-deep);
+    margin: 0 0 1.1rem;
+}
+
+.hiw-prose {
+    max-width: var(--hiw-measure);
+    font-size: 1.06rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    margin: 0 0 1.6rem;
+}
+.hiw-prose strong { color: var(--moss-deep); font-weight: 700; }
+.hiw-prose--center { margin-left: auto; margin-right: auto; text-align: center; }
+
+/* ============================================================================
+   Hero — a literal winding trail replaces About's abstract node graph.
+   ========================================================================== */
+.hiw-hero {
+    position: relative;
+    padding: clamp(1.5rem, 5vw, 3.5rem) 0 clamp(2rem, 4vw, 3.2rem);
+    margin-bottom: clamp(2rem, 4vw, 3.2rem);
+}
+.hiw-hero-trail {
+    position: absolute;
+    inset: -6% -10% auto auto;
+    width: min(560px, 82%);
+    height: 320px;
+    opacity: 0.55;
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+            mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+}
+.hiw-hero-trail svg { width: 100%; height: 100%; }
+.hiw-trail-path {
+    stroke: var(--sage);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 1 14;
+    animation: hiw-walk 10s linear infinite;
+}
+@keyframes hiw-walk { to { stroke-dashoffset: -300; } }
+.hiw-trail-dot {
+    fill: var(--terracotta);
+    opacity: 0;
+    animation: hiw-appear 6s var(--ease) infinite;
+}
+@keyframes hiw-appear {
+    0%, 100% { opacity: 0; transform: scale(0.6); transform-box: fill-box; transform-origin: center; }
+    15%, 70% { opacity: 1; transform: scale(1); transform-box: fill-box; transform-origin: center; }
+}
+
+.hiw-hero-title {
+    position: relative;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 6.2vw, 4.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    color: var(--moss-deep);
+    margin: 0 0 1.3rem;
+    max-width: 16ch;
+}
+.hiw-hero-title em { font-style: italic; color: var(--leaf); }
+
+.hiw-lead {
+    max-width: 58ch;
+    font-size: clamp(1.05rem, 1.6vw, 1.28rem);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin: 0 0 1.8rem;
+}
+
+.hiw-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+}
+.hiw-hero-link {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--moss-deep);
+}
+.hiw-hero-link:hover { color: var(--terracotta); }
+
+/* ============================================================================
+   Section scaffold — lighter than About's numbered/hairline treatment; a
+   left leaf-tick marks each heading instead of a mono index number.
+   ========================================================================== */
+.hiw-section {
+    padding: clamp(2rem, 4.5vw, 3.2rem) 0;
+    border-top: 1px solid var(--border-soft);
+}
+.hiw-section-head { margin-bottom: 1.6rem; }
+.hiw-section-head h2 {
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    line-height: 1.08;
+    margin: 0;
+    position: relative;
+    padding-left: 1.1rem;
+}
+.hiw-section-head h2::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.22em; bottom: 0.18em;
+    width: 4px;
+    border-radius: var(--r-pill);
+    background: var(--leaf);
+}
+
+/* ============================================================================
+   The gap — "today" cards + the fix line
+   ========================================================================== */
+.hiw-today-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.8rem 0;
+}
+.hiw-today-card {
+    background: var(--paper-deep);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.3rem 1.4rem;
+}
+.hiw-today-glyph { font-size: 1.6rem; display: block; margin-bottom: 0.6rem; }
+.hiw-today-card h3 { font-size: 1.05rem; margin: 0 0 0.4rem; color: var(--moss-deep); }
+.hiw-today-card p { margin: 0; font-size: var(--fs-sm); line-height: 1.55; color: var(--ink-soft); }
+
+.hiw-gap-fix {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--leaf);
+    border-radius: var(--r-lg);
+    padding: 1.1rem 1.4rem;
+    box-shadow: var(--shadow-sm);
+}
+.hiw-gap-fix-arrow {
+    flex: none;
+    font-size: 1.3rem;
+    color: var(--leaf);
+}
+.hiw-gap-fix p { margin: 0; font-weight: 600; color: var(--moss-deep); font-size: 1.05rem; }
+
+/* ============================================================================
+   The five steps — a literal trail: numbered pin markers on a dotted spine.
+   ========================================================================== */
+.hiw-steps {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    position: relative;
+}
+.hiw-steps::before {
+    content: "";
+    position: absolute;
+    left: 21px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background-image: linear-gradient(var(--sage), var(--sage));
+    background-size: 2px 12px;
+    background-repeat: repeat-y;
+    opacity: 0.55;
+}
+.hiw-step {
+    position: relative;
+    display: flex;
+    gap: 1.3rem;
+    padding: 0 0 2rem 0;
+}
+.hiw-step:last-child { padding-bottom: 0; }
+.hiw-step-marker {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    border: 2px solid var(--leaf);
+    color: var(--moss-deep);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    box-shadow: var(--shadow-sm);
+}
+.hiw-step:nth-child(even) .hiw-step-marker { border-color: var(--terracotta); }
+.hiw-step-body { padding-top: 0.35rem; }
+.hiw-step-body h3 { margin: 0 0 0.35rem; font-size: 1.2rem; }
+.hiw-step-body p { margin: 0; max-width: 56ch; font-size: 1rem; line-height: 1.6; color: var(--ink-soft); }
+
+/* ============================================================================
+   Concrete walkthrough — illustrative mock-up cards (not real components,
+   deliberately simplified facsimiles so the mechanism reads at a glance).
+   ========================================================================== */
+.hiw-mock-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.8rem;
+    margin: 2rem 0 1.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.4rem;
+}
+.hiw-mock-card {
+    flex: 1 1 240px;
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.hiw-mock-label {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+.hiw-mock-inner {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-left: 4px solid var(--sage);
+    border-radius: var(--r-lg);
+    padding: 1.1rem 1.2rem;
+    box-shadow: var(--shadow-sm);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.hiw-mock-card--receipt .hiw-mock-inner { border-left-color: var(--honey); }
+.hiw-mock-pill {
+    align-self: flex-start;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.28em 0.65em;
+    border-radius: var(--r-pill);
+}
+.hiw-mock-pill--need { background: rgba(194, 100, 60, 0.14); color: var(--terracotta-deep); }
+.hiw-mock-pill--accept { background: rgba(111, 138, 79, 0.16); color: var(--moss-deep); }
+.hiw-mock-pill--receipt { background: rgba(217, 162, 63, 0.2); color: var(--honey-deep); }
+.hiw-mock-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; color: var(--moss-deep); }
+.hiw-mock-body { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--ink-soft); }
+.hiw-mock-quote { font-style: italic; color: var(--ink); }
+.hiw-mock-avatar-row { display: flex; align-items: center; gap: 0.5rem; margin-top: auto; padding-top: 0.3rem; }
+.hiw-mock-avatar {
+    flex: none;
+    width: 26px; height: 26px;
+    border-radius: var(--r-pill);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #f7f4e8;
+    background: radial-gradient(circle at 30% 25%, var(--leaf), var(--moss));
+}
+.hiw-mock-name { font-size: 0.8rem; color: var(--ink-faint); font-weight: 600; }
+
+.hiw-mock-arrow {
+    flex: none;
+    align-self: center;
+    color: var(--sage);
+    font-size: 1.4rem;
+}
+
+.hiw-story-outcome {
+    margin: 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: var(--hiw-measure);
+}
+
+/* ============================================================================
+   Glossary — plain-English term cards
+   ========================================================================== */
+.hiw-terms {
+    list-style: none;
+    margin: 1.8rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+}
+.hiw-term {
+    background: var(--surface);
+    padding: 1.2rem 1.3rem;
+    transition: background-color 0.25s var(--ease);
+}
+.hiw-term:hover { background: var(--surface-2); }
+.hiw-term h3 { margin: 0 0 0.35rem; font-size: 1.02rem; color: var(--moss-deep); }
+.hiw-term p { margin: 0; font-size: var(--fs-sm); line-height: 1.55; color: var(--ink-soft); }
+
+/* ============================================================================
+   Benefits — for members / for organizers
+   ========================================================================== */
+.hiw-benefit-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.6rem;
+    margin-top: 1.8rem;
+}
+.hiw-benefit-col {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 1.5rem 1.6rem;
+    box-shadow: var(--shadow-sm);
+}
+.hiw-benefit-col h3 {
+    margin: 0 0 1rem;
+    font-size: 1.15rem;
+    color: var(--moss-deep);
+}
+.hiw-benefit-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+.hiw-benefit-col li {
+    position: relative;
+    padding-left: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+}
+.hiw-benefit-col li::before {
+    content: "✦";
+    position: absolute;
+    left: 0; top: 0.05em;
+    color: var(--honey-deep);
+    font-size: 0.85em;
+}
+
+/* ============================================================================
+   Comparison list
+   ========================================================================== */
+.hiw-compare-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1.8rem;
+}
+.hiw-compare-row {
+    display: grid;
+    grid-template-columns: minmax(0, 12em) 1fr;
+    gap: 0.8rem 1.2rem;
+    align-items: baseline;
+    padding: 1rem 1.3rem;
+    background: var(--paper-deep);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-md);
+}
+.hiw-compare-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+.hiw-compare-note { font-size: 0.92rem; color: var(--ink-faint); line-height: 1.5; }
+.hiw-compare-row--highlight {
+    background: rgba(111, 138, 79, 0.1);
+    border: 1px solid rgba(111, 138, 79, 0.4);
+    border-left: 4px solid var(--leaf);
+}
+.hiw-compare-row--highlight .hiw-compare-name { color: var(--moss-deep); }
+.hiw-compare-row--highlight .hiw-compare-note { color: var(--ink-soft); font-weight: 500; }
+
+/* ============================================================================
+   FAQ — native <details>/<summary>, custom-styled disclosure icon
+   ========================================================================== */
+.hiw-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin-top: 1.8rem;
+}
+.hiw-faq-item {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-md);
+    padding: 0.2rem 1.2rem;
+}
+.hiw-faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--moss-deep);
+    list-style: none;
+}
+.hiw-faq-item summary::-webkit-details-marker { display: none; }
+.hiw-faq-icon {
+    flex: none;
+    position: relative;
+    width: 1.1em; height: 1.1em;
+}
+.hiw-faq-icon::before, .hiw-faq-icon::after {
+    content: "";
+    position: absolute;
+    background: var(--leaf);
+    border-radius: 2px;
+    transition: transform 0.25s var(--ease);
+}
+.hiw-faq-icon::before { left: 0; top: 50%; width: 100%; height: 2px; transform: translateY(-50%); }
+.hiw-faq-icon::after { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
+.hiw-faq-item[open] .hiw-faq-icon::after { transform: translateX(-50%) scaleY(0); }
+.hiw-faq-item p { margin: 0 0 1rem; font-size: 0.96rem; line-height: 1.6; color: var(--ink-soft); }
+
+/* ============================================================================
+   Join CTA
+   ========================================================================== */
+.hiw-join {
+    text-align: center;
+    margin-top: clamp(2rem, 4vw, 3.2rem);
+    padding: clamp(2.2rem, 5vw, 3.4rem) clamp(1.2rem, 4vw, 2.5rem);
+    background:
+        radial-gradient(700px 300px at 50% -10%, rgba(111, 138, 79, 0.14), transparent 65%),
+        var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-sm);
+}
+.hiw-join h2 { font-size: clamp(1.6rem, 3.4vw, 2.4rem); margin: 0.5rem auto 1rem; max-width: 18ch; }
+.hiw-join .hiw-prose--center { margin-bottom: 1.6rem; }
+.hiw-join-actions { display: flex; gap: 0.9rem; justify-content: center; flex-wrap: wrap; }
+.hiw-btn-lg { padding: 0.85em 1.7em; font-size: 1rem; }
+
+/* ============================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 760px) {
+    .hiw-mock-row { flex-direction: column; }
+    .hiw-mock-arrow { align-self: center; transform: rotate(90deg); }
+    .hiw-compare-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .hiw-hero-trail { opacity: 0.32; width: min(340px, 90%); height: 240px; }
+    .hiw-hero-title { font-size: clamp(2rem, 8.5vw, 2.5rem); }
+    .hiw-lead { font-size: 1rem; }
+    .hiw-section-head h2 { font-size: clamp(1.4rem, 6.5vw, 1.8rem); }
+    .hiw-join-actions { flex-direction: column; align-items: stretch; }
+    .hiw-btn-lg { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hiw-trail-path { animation: none; }
+    .hiw-trail-dot { animation: none; opacity: 0.9; }
+}

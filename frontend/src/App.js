@@ -20,6 +20,7 @@ import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, useLocat
 
 // Page Imports
 import About from './pages/About';
+import HowItWorks from './pages/HowItWorks';
 import Home from './pages/Home';
 import ProfilePage from './pages/ProfilePage';
 import Spheres from './pages/Spheres';
@@ -80,6 +81,7 @@ function AppContent() {
         {/* Public Routes */}
         <Route path="/" element={<Home/>}/>
         <Route path="/about" element={<About/>}/>
+        <Route path="/how-it-works" element={<HowItWorks/>}/>
         <Route path="/register" element={<div className='container'><UserRegistration/></div>}/>
         <Route path="/login" element={<div className='container'><UserLogin/></div>}/>
         <Route path="/privacy" element={<div className='container'><Privacy/></div>}/>

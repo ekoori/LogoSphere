@@ -166,6 +166,9 @@ const About = () => {
                     Each translation is lossy — and what leaks away is the meaning. LogoSphere is an
                     attempt to keep it.
                 </p>
+                <p className="ab-hero-alt-link">
+                    Prefer the plain-language version? <Link to="/how-it-works">See how it works, step by step →</Link>
+                </p>
             </header>
 
             {/* ── 01 · The collapse of value ─────────────────────────────── */}
