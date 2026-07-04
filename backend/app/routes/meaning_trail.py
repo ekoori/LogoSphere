@@ -11,6 +11,7 @@ Methods:
 import logging
 from flask import request, jsonify, current_app as app, Response
 from app.models.meaning_trail import MeaningTrail, Likes, LIKE_TYPES
+from app.models.notification import Notification
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
@@ -270,7 +271,7 @@ def add_xc_comment(exchange_id, user_id=None):
             return jsonify({'message': 'A note has already been added for this side'}), 409
 
         author_name = None
-        if comment_type == 'other':
+        if comment_type in ('other', 'gratitude'):
             from app.models.user import User
             u = User.get(str(user_id))
             if u:
@@ -283,6 +284,17 @@ def add_xc_comment(exchange_id, user_id=None):
             context=(data.get('context') or None),
         )
         if ok:
+            if comment_type == 'gratitude':
+                # Notify whoever can read a notification: for an entity-
+                # initiated exchange, that's the human who acted on its
+                # behalf, not the entity's own id.
+                notify_target = tx_dict.get('initiator_acting_user_id') or tx_dict['user_id']
+                Notification.create(
+                    user_id=notify_target, actor_id=user_id, actor_name=author_name,
+                    type_='receipt_received',
+                    message=f'{author_name} left you a receipt',
+                    link=f'/exchange?id={exchange_id}',
+                )
             return jsonify({'message': 'Comment added'}), 200
         return jsonify({'message': 'Failed to add comment'}), 500
     except Exception as e:

@@ -194,6 +194,21 @@ CREATE TABLE IF NOT EXISTS logosphere.receipt_photos (
 )
 """)
 print("[OK] Created receipt_photos")
+run("""
+CREATE TABLE IF NOT EXISTS logosphere.notifications (
+    user_id uuid,
+    created_at timestamp,
+    notification_id uuid,
+    actor_id uuid,
+    actor_name text,
+    type text,
+    message text,
+    link text,
+    is_read boolean,
+    PRIMARY KEY (user_id, created_at, notification_id)
+) WITH CLUSTERING ORDER BY (created_at DESC, notification_id ASC)
+""")
+print("[OK] Created notifications")
 
 # ── Step 5: Re-seed demo data ─────────────────────────────────────────────────
 def U(s): return uuid.UUID(s)

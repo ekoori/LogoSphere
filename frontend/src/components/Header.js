@@ -1,11 +1,12 @@
 // File: ./frontend/src/components/Header.js
 // Description: Fixed top navigation and branding for LogoSphere.
 // Class: Header — brand wordmark, primary nav, notifications, and account menu.
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/App.css';
 import { useLogin } from '../App';  // Import the useLogin hook from App.js
 import NotificationPanel from './NotificationPanel';
+import api from '../api';
 
 // Hand-drawn sun/leaf brand mark — sits beside the wordmark.
 const BrandMark = () => (
@@ -21,12 +22,56 @@ const BrandMark = () => (
 const Header = () => {
     const { isLoggedIn, handleLogout } = useLogin();
     const [notificationsVisible, setNotificationsVisible] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [accountOpen, setAccountOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const accountRef = useRef(null);
 
-    const toggleNotifications = () => setNotificationsVisible((v) => !v);
     const closeMenu = () => setMenuOpen(false);
+
+    const fetchNotifications = useCallback(async () => {
+        if (!isLoggedIn) return;
+        try {
+            const res = await api.get('/api/notifications');
+            setNotifications(res.data?.notifications || []);
+            setUnreadCount(res.data?.unread_count || 0);
+        } catch (_) {
+            // Logged out mid-poll, or a transient error — just leave the last
+            // known state rather than surface an error for a background poll.
+        }
+    }, [isLoggedIn]);
+
+    // Poll every 60s, plus an immediate fetch whenever login state changes.
+    useEffect(() => {
+        fetchNotifications();
+        const id = setInterval(fetchNotifications, 60_000);
+        return () => clearInterval(id);
+    }, [fetchNotifications]);
+
+    const toggleNotifications = () => {
+        setNotificationsVisible((v) => {
+            if (!v) fetchNotifications(); // catch anything received since the last poll
+            return !v;
+        });
+    };
+
+    const handleItemClick = async (n) => {
+        if (n.is_read) return;
+        setNotifications((prev) => prev.map((x) => (x.notification_id === n.notification_id ? { ...x, is_read: true } : x)));
+        setUnreadCount((c) => Math.max(0, c - 1));
+        try {
+            await api.post('/api/notifications/read', { created_at: n.created_at, notification_id: n.notification_id });
+        } catch (_) { /* best-effort */ }
+    };
+
+    const handleMarkAllRead = async () => {
+        setNotifications((prev) => prev.map((x) => ({ ...x, is_read: true })));
+        setUnreadCount(0);
+        try {
+            await api.post('/api/notifications/read_all');
+        } catch (_) { /* best-effort */ }
+    };
 
     // Close the account menu when clicking outside of it.
     useEffect(() => {
@@ -44,37 +89,6 @@ const Header = () => {
         document.body.classList.toggle('nav-menu-open', menuOpen);
         return () => document.body.classList.remove('nav-menu-open');
     }, [menuOpen]);
-
-    const notifications = [
-        {
-            avatar: 'static/elon_musk_avatar.jpg',
-            author: 'Elon Musk',
-            link: '/user',
-            message: 'Elon accepted your request for a Roadster drive.',
-            time: '2 hours ago'
-        },
-        {
-            avatar: 'static/elon_musk_avatar.jpg',
-            author: 'OpenAI',
-            link: '/alliance',
-            message: 'You got accepted to the OpenAI alliance.',
-            time: '4 hours ago'
-        },
-        {
-            avatar: 'static/elon_musk_avatar.jpg',
-            author: 'John Doe',
-            link: '/user',
-            message: 'John Doe liked your post.',
-            time: '1 day ago'
-        },
-        {
-            avatar: 'static/elon_musk_avatar.jpg',
-            author: 'Jane Smith',
-            link: '/project',
-            message: 'Jane Smith commented on your project.',
-            time: '2 days ago'
-        }
-    ];
 
     return (
         <>
@@ -106,8 +120,19 @@ const Header = () => {
                 <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>
 
                 <div className="notification-icon">
-                    <button id="notification-bell" onClick={toggleNotifications} aria-label="Toggle notifications">🔔</button>
-                    <NotificationPanel notifications={notifications} isVisible={notificationsVisible} onClose={toggleNotifications} />
+                    <button id="notification-bell" onClick={toggleNotifications} aria-label="Toggle notifications">
+                        🔔
+                        {unreadCount > 0 && (
+                            <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                        )}
+                    </button>
+                    <NotificationPanel
+                        notifications={notifications}
+                        isVisible={notificationsVisible}
+                        onClose={() => setNotificationsVisible(false)}
+                        onItemClick={handleItemClick}
+                        onMarkAllRead={handleMarkAllRead}
+                    />
                 </div>
 
                 <div className="account" ref={accountRef}>

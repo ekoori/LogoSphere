@@ -10,6 +10,7 @@ from html import escape
 from flask import request, jsonify, current_app as app, Response
 from app.models.user import User
 from app.models.follow import Follow
+from app.models.notification import Notification
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 
@@ -44,6 +45,15 @@ def toggle_follow(target_id, user_id=None):
         if str(target_id) == str(user_id):
             return jsonify({'message': "You can't follow yourself"}), 400
         following = Follow.toggle(user_id, target_id)
+        if following:
+            follower = User.get(str(user_id))
+            follower_name = (f"{follower.name or ''} {follower.surname or ''}".strip() or follower.email) if follower else 'Someone'
+            Notification.create(
+                user_id=target_id, actor_id=user_id, actor_name=follower_name,
+                type_='new_follower',
+                message=f'{follower_name} started following you',
+                link=f'/user?id={user_id}',
+            )
         return jsonify({'following': following}), 200
     except ValueError:
         return jsonify({'message': 'Invalid user id'}), 400

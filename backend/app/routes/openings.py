@@ -8,6 +8,7 @@ from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity, get_entity_info
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
+from app.models.notification import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +173,17 @@ def accept_service(service_id, user_id=None):
         if service.cadence != 'perpetual':
             Service.mark_accepted(service_uuid, uuid.UUID(str(user_id)), accepter_name)
 
+        # Notify whoever can actually read a notification: for an opening
+        # posted as an entity, that's the human who acted on its behalf
+        # (acting_user_id), not the entity's own id — an entity has no inbox.
+        notify_target = getattr(service, 'acting_user_id', None) or service.provider_id
+        Notification.create(
+            user_id=notify_target, actor_id=user_id, actor_name=accepter_name,
+            type_='opening_accepted',
+            message=f'{accepter_name} wants to accept your opening "{service.title}"',
+            link=f'/opening?id={service_id}',
+        )
+
         logger.info(f"Opening {service_id} accepted (pending) by {user_id}")
         return jsonify({
             'message': 'Acceptance recorded — awaiting the provider\'s confirmation',
@@ -229,6 +241,15 @@ def confirm_service(service_id, user_id=None):
         # A single opening is now spoken for and leaves the marketplace.
         if service.cadence != 'perpetual':
             Service.set_status(service_uuid, 'In Progress')
+
+        confirmer = User.get(str(user_id))
+        confirmer_name = (f"{confirmer.name or ''} {confirmer.surname or ''}".strip() or confirmer.email) if confirmer else service.provider_name
+        Notification.create(
+            user_id=accepter_uuid, actor_id=user_id, actor_name=confirmer_name,
+            type_='opening_confirmed',
+            message=f'Your acceptance of "{service.title}" was confirmed — the exchange has started',
+            link=f'/exchange?id={exchange_id}',
+        )
 
         logger.info(f"Opening {service_id} confirmed for {accepter_id}, exchange {exchange_id}")
         return jsonify({'message': 'Confirmed', 'exchange_id': str(exchange_id)}), 200
