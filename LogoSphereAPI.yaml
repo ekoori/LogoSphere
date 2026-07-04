@@ -2,7 +2,13 @@ openapi: 3.0.0
 info:
   title: LogoSphere API
   description: |
-    API for handling user exchanges within the LogoSphere platform.
+    API for the LogoSphere gift-economy / trust platform: spheres, alliances,
+    projects, openings (offers/needs), exchanges, value cards (Meaning Graph),
+    and notifications.
+
+    This document describes the API surface as it actually exists in
+    `backend/app/main.py` and its route modules — every path, method, and
+    schema below is backed by a real Flask handler. It is not a design sketch.
 
     ## Authentication
 
@@ -35,22 +41,43 @@ info:
     live in `localStorage`/`sessionStorage` and become an XSS exfiltration
     target. Non-browser clients (scripts, tests, mobile apps, integrations)
     should use the `Authorization: Bearer` header documented here.
-  version: 1.1.0
+
+    ## Errors
+
+    Every endpoint that can fail returns a JSON body of shape
+    `{"message": string}` (a few auth endpoints predate this convention and
+    use `{"error": string}` instead — noted on those operations). A `500`
+    always means an unexpected server-side failure, not a validation error.
+  version: 2.0.0
 
 servers:
-  - url: "https://api.trustsphere.example.com"
-    description: LogoSphere API server
+  - url: "https://ts.krbavcic.com"
+    description: LogoSphere production server
 
 security:
   - bearerAuth: []
 
+tags:
+  - name: Authentication
+  - name: User Management
+  - name: Meaning Trail
+  - name: Exchanges
+  - name: Spheres
+  - name: Alliances
+  - name: Projects
+  - name: Openings
+  - name: Value Cards
+  - name: Notifications
+
 paths:
+
+  # ─────────────────────────── Authentication ───────────────────────────
 
   /api/login:
     post:
-      summary: User Login
-      description: Logs in a user using their email and password.
-      operationId: loginUser
+      summary: Log in
+      description: Authenticates a user and returns a session token.
+      operationId: login
       security: []
       requestBody:
         required: true
@@ -58,9 +85,7 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - email
-                - password
+              required: [email, password]
               properties:
                 email:
                   type: string
@@ -70,100 +95,99 @@ paths:
                   description: >-
                     Plaintext password, sent once over TLS. The server hashes
                     it (PBKDF2, via werkzeug) before ever touching storage;
-                    the client does not pre-hash it. This is the normal,
-                    correct approach for a password-based login endpoint —
-                    pre-hashing client-side would just turn the hash into the
-                    de facto password without adding real protection (see
-                    SRP/OPAQUE for the actual zero-knowledge alternative,
-                    which this API does not implement). The password is never
-                    logged, echoed back, or included in any response.
+                    the client does not pre-hash it. Never logged, echoed
+                    back, or included in any response.
       responses:
         '200':
-          description: User successfully logged in
+          description: Login successful. Also sets an httpOnly `session_id` cookie.
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  message:
+                    type: string
+                    example: Login successful
                   session_id:
                     type: string
                     description: >-
                       Server-stored session token. Send it on subsequent
                       requests as `Authorization: Bearer <session_id>`. (The
                       reference web client instead uses the httpOnly cookie
-                      also set on this response — see the Authentication
-                      section above.)
+                      also set on this response.)
+                  data:
+                    $ref: '#/components/schemas/User'
         '401':
-          description: Authentication failed
-      tags:
-        - Authentication
-    options:
-      summary: Options for User Login
-      description: Retrieve the supported methods and other communicative options for the login endpoint.
-      responses:
-        '204':
-          description: No Content
-      tags:
-        - Options
+          description: Invalid email or password.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Authentication]
+
   /api/logout:
     post:
-      summary: User Logout
+      summary: Log out
       description: >-
-        Ends the current session. Deletes the server-stored session row (so
-        the token in `Authorization: Bearer` or the cookie becomes invalid
-        immediately) and clears the session cookie for browser clients.
-      operationId: logoutUser
-      responses:
-        200:
-          description: Logout successful, session ended.
-      tags:
-        - Authentication
-    options:
-      summary: Options for User Logout
-      description: Retrieve the supported methods and other communicative options for the login endpoint.
-      responses:
-        '204':
-          description: No Content
-      tags:
-        - Options
-  /api/check_session:
-    post:
-      summary: Check User Session
-      description: Checks the validity of the current user session.
-      operationId: postUserSession
-      responses:
-        200:
-          description: Session is valid.
-        401:
-          description: Session is invalid or expired.
-      tags:
-        - Authentication
-    get:
-      summary: Check User Session
-      description: >-
-        Verifies whether the caller's session (from the `Authorization`
-        header or session cookie) is currently valid.
-      operationId: checkUserSession
+        Deletes the server-stored session row (so the token in
+        `Authorization: Bearer` or the cookie becomes invalid immediately)
+        and clears the session cookie for browser clients.
+      operationId: logout
       responses:
         '200':
-          description: Session check successful
+          description: Logout successful.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  isLoggedIn:
-                    type: boolean
-                    description: Indicates whether a user is logged in or not
+                  success: { type: boolean, example: true }
         '400':
-          description: Bad request, possibly missing session information
-      tags:
-        - Authentication
+          description: No valid session token was present to log out.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Authentication]
+
+  /api/check_session:
+    get:
+      summary: Check session (idempotent)
+      description: Reports whether the caller's session is currently valid.
+      operationId: checkSession
+      security: []
+      responses:
+        '200':
+          description: >-
+            Always 200 — the body's `status` field distinguishes active from
+            inactive/expired/missing sessions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionStatus' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Authentication]
+    post:
+      summary: Check session
+      description: Identical behavior to `GET /api/check_session`; accepted for legacy clients.
+      operationId: checkSessionPost
+      security: []
+      responses:
+        '200':
+          description: Always 200 — see `GET /api/check_session`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionStatus' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Authentication]
 
   /api/register:
     post:
       summary: Register a new user
-      description: Registers a new user with their name, email, and password.
+      operationId: registerUser
       security: []
       requestBody:
         required: true
@@ -171,439 +195,1663 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - name
-                - email
-                - password
+              required: [name, email, password]
               properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                  format: email
+                name: { type: string }
+                email: { type: string, format: email }
                 password:
                   type: string
+                  minLength: 8
                   description: >-
                     Plaintext password, sent once over TLS; the server hashes
-                    it before storage (see the Authentication section for why
-                    client-side pre-hashing isn't done). Minimum 8 characters.
-                    Never logged or returned in any response.
-      responses:
-        '201':
-          description: User successfully registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          description: Invalid input parameters
-      tags:
-        - User Management
-
-
-  /api/user:
-    get:
-      summary: Retrieve User Profile
-      description: >-
-        Fetches details of the currently logged-in user, identified by the
-        caller's `Authorization: Bearer <session_id>` header (or session
-        cookie for the reference web client).
-      operationId: getUserProfile
+                    it before storage. Minimum 8 characters. Never logged or
+                    returned in any response.
       responses:
         '200':
-          description: User profile fetched successfully
+          description: Registration successful.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  user_id:
-                    type: string
-                  email:
-                    type: string
-                  name:
-                    type: string
-                  additionalProperties:
-                    type: object
-        '401':
-          description: Unauthorized access, session invalid or not provided
-      tags:
-        - User Management
-    post:
-      summary: Update User Profile
+                  reg_success: { type: boolean, example: true }
+                  message: { type: string }
+                  user_id: { type: string, format: uuid }
+        '400':
+          description: >-
+            Missing fields, invalid email, password under 8 characters, or
+            the email is already registered — all collapse to the same
+            message/status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Authentication]
+
+  # ─────────────────────────── User Management ───────────────────────────
+
+  /api/user:
+    get:
+      summary: Get the logged-in user's basic identity
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string, format: uuid }
+                  email: { type: string, format: email }
+                  name: { type: string }
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  /api/user/profile:
+    get:
+      summary: Get the logged-in user's full profile
+      operationId: getCurrentUserProfile
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  /api/users/{target_id}:
+    get:
+      summary: Get a user's public profile
+      operationId: getPublicUser
+      parameters:
+        - $ref: '#/components/parameters/TargetId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      is_following:
+                        type: boolean
+                        description: Whether the caller follows this user (always false for one's own id).
+                      following_count:
+                        type: integer
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  /api/users/{target_id}/avatar:
+    get:
+      summary: Get a user's avatar image
       description: >-
-        Updates the profile information for the logged-in user, identified by
-        the caller's `Authorization: Bearer <session_id>` header (or session
-        cookie for the reference web client) — not by a field in the body.
-      operationId: updateUserProfile
+        Public, no session required, cacheable. Returns the uploaded photo,
+        or a generated initials SVG (still HTTP 200) if the user has none —
+        so `<img>` tags never produce a 404.
+      operationId: getUserAvatar
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TargetId'
+      responses:
+        '200':
+          description: Image bytes (`image/png`, `image/gif`, `image/webp`, `image/jpeg`, or `image/svg+xml`).
+          content:
+            image/*: { schema: { type: string, format: binary } }
+      tags: [User Management]
+
+  /api/users/{target_id}/follow:
+    post:
+      summary: Toggle following a user
+      description: Follows the target user if not already followed, otherwise unfollows. Fires a `new_follower` notification on follow.
+      operationId: toggleFollow
+      parameters:
+        - $ref: '#/components/parameters/TargetId'
+      responses:
+        '200':
+          description: New follow state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  following: { type: boolean }
+        '400':
+          description: Cannot follow yourself, or an invalid user id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  /api/following:
+    get:
+      summary: List who the logged-in user follows
+      operationId: getFollowing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string, format: uuid }
+                    name: { type: string }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  /api/updateuser:
+    post:
+      summary: Update the logged-in user's profile
+      operationId: updateCurrentUser
       requestBody:
         required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                surname: { type: string }
+                location: { type: string }
+                profile_picture: { type: string, format: binary }
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                surname: { type: string }
+                location: { type: string }
+      responses:
+        '200':
+          description: Updated profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400':
+          description: No data provided, or an unsupported image format was uploaded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [User Management]
+
+  # ─────────────────────────── Meaning Trail ───────────────────────────
+
+  /api/meaning_trail:
+    get:
+      summary: Get a user's meaning trail (exchange history)
+      description: Defaults to the logged-in user; use the POST form to view someone else's.
+      operationId: getMeaningTrail
+      responses:
+        '200':
+          description: Exchanges the user has participated in, most recent first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MeaningTrailEntry' }
+        '404':
+          description: Meaning trail could not be fetched.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Meaning Trail]
+    post:
+      summary: Get another user's meaning trail
+      operationId: getMeaningTrailForUser
+      requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                email:
-                  type: string
-                  format: email
-                  description: (Optional) New email to update
-                name:
-                  type: string
-                  description: (Optional) New name to update
+                user_id: { type: string, format: uuid }
       responses:
         '200':
-          description: User profile updated successfully
+          description: Exchanges the given user has participated in, most recent first.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '400':
-          description: Bad request, missing or incorrect information provided
-        '401':
-          description: Unauthorized to update user profile
-      tags:
-        - User Management
-
-
-  /api/meaning_trail:
-    get:
-      summary: Get User Meaning Trail
-      description: Retrieves the trust trail for a specified user.
-      operationId: getMeaning TrailDetails
-      parameters:
-        - name: userId
-          in: query
-          required: true
-          schema:
-            type: string
-          description: The ID of the user for whom to fetch the trust trail
-      responses:
-        '200':
-          description: Trust trail fetched successfully
+                type: array
+                items: { $ref: '#/components/schemas/MeaningTrailEntry' }
+        '404':
+          description: Meaning trail could not be fetched.
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Meaning TrailDetails'
-        '400':
-          description: Bad request, possibly missing userId in query
-        '405':
-          description: Invalid request method. Only GET allowed.
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Meaning Trail]
 
   /api/meaning_trail/add_exchange:
     post:
-      summary: Add Exchange to Meaning Trail (duplicate?)
-      description: Adds a new exchange to the user's trust trail.
-      operationId: addMeaning TrailExchange
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Meaning TrailExchange'
-      responses:
-        '200':
-          description: Exchange added successfully
-        '400':
-          description: Bad request, possibly due to missing or incorrect data
-
-
-  /api/meaning_trail/{userId}:
-    get:
-      summary: Get comprehensive Meaning Trail for a user
-      operationId: getMeaning Trail
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Successful retrieval of Meaning Trail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Meaning Trail'
-        400:
-          description: User ID not provided or invalid
-
-  /api/meaning_trail/exchange:
-    post:
-      summary: Add a new exchange to the Meaning Trail
+      summary: Start a new exchange
       operationId: addExchange
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Exchange'
-      responses:
-        200:
-          description: Exchange successfully added
-        400:
-          description: Missing required fields
-
-  /api/meaning_trail/comment/gratitude:
-    post:
-      summary: Add a gratitude comment to a exchange
-      operationId: addGratitudeComment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
               type: object
+              required: [other_user_id, project_id]
               properties:
-                exchange_id:
-                  type: string
-                  format: uuid
-                comment:
-                  type: string
+                other_user_id: { type: string, format: uuid }
+                project_id: { type: string, format: uuid }
       responses:
-        200:
-          description: Comment added successfully
-        400:
-          description: Missing required data or exchange not found
-
-  /api/openings/post_service:
-    post:
-      summary: Post a Service
-      description: Allows a user to post a new service to the openings.
-      operationId: postService
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - title
-                - description
-                - is_part_of_project
-              properties:
-                title:
-                  type: string
-                description:
-                  type: string
-                is_part_of_project:
-                  type: boolean
-                  description: Indicates whether the service is part of an existing project.
-      responses:
-        '201':
-          description: Service successfully posted
+        '200':
+          description: Exchange created.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Service successfully posted."
+                  message: { type: string, example: Exchange added successfully }
         '400':
-          description: Bad request, possibly missing or incorrect information provided
-      tags:
-        - Openings
-  
-  /api/openings/browse_services:
+          description: A required field is missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Meaning Trail]
+
+  /api/meaning_trail/by_project/{project_id}:
     get:
-      summary: Browse Services
-      description: Retrieve a list of services based on specified filters.
-      operationId: browseServices
+      summary: Get all exchanges tied to a project
+      operationId: getMeaningTrailByProject
       parameters:
-        - name: filter
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Filter criteria for browsing services.
+        - $ref: '#/components/parameters/ProjectId'
       responses:
         '200':
-          description: Successfully retrieved list of services
+          description: OK
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: '#/components/schemas/Service'
-        '400':
-          description: Incorrect filter specification
-      tags:
-        - Openings
+                items: { $ref: '#/components/schemas/MeaningTrailEntry' }
+      tags: [Meaning Trail]
 
-  /api/openings/request_service:
+  # ─────────────────────────── Exchanges ───────────────────────────
+
+  /api/exchange/{exchange_id}:
+    get:
+      summary: Get a single exchange
+      operationId: getExchange
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exchange:
+                    allOf:
+                      - $ref: '#/components/schemas/MeaningTrailEntry'
+                      - type: object
+                        properties:
+                          receipt_photo_count: { type: integer }
+                          is_finished: { type: boolean }
+                  is_initiator: { type: boolean }
+                  is_other: { type: boolean }
+                  is_participant: { type: boolean }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/status:
     post:
-      summary: Request a Service
-      description: Allows a user to request a service.
-      operationId: requestService
+      summary: Update an exchange's status
+      operationId: updateExchangeStatus
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - service_id
-                - user_id
+              required: [status]
               properties:
-                service_id:
+                status:
                   type: string
-                  format: uuid
-                user_id:
-                  type: string
-                  format: uuid
+                  enum: [Initiated, In Progress, Finished, Receipted, Additional Comments Added, Cancelled]
       responses:
         '200':
-          description: Service request successful
+          description: Status updated.
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Service request successful."
+                properties: { message: { type: string, example: Status updated } }
         '400':
-          description: Bad request, possibly due to incorrect service or user ID
-      tags:
-        - Openings
+          description: Invalid status value.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only participants can change the status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
 
-  /api/openings/accept_service:
+  /api/exchange/{exchange_id}/comment:
     post:
-      summary: Accept a Service
-      description: Accepts a service offer, initiating an active exchange.
-      operationId: acceptService
+      summary: Add a receipt, gratitude note, or comment to an exchange
+      description: >-
+        `type: gratitude` is the recipient's receipt; `type: user` is the
+        initiator's personal note; `type: other`/`comment` are open
+        follow-up comments. Each side may only add its receipt/note once.
+        Value cards attached here (`cards`) are stored as a point-in-time
+        JSON snapshot — later edits to those cards do not change what's
+        shown on this comment.
+      operationId: addExchangeComment
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - service_id
-                - user_id
+              required: [type, text]
               properties:
-                service_id:
+                type:
                   type: string
-                  format: uuid
-                user_id:
+                  enum: [gratitude, user, other, comment]
+                text:
                   type: string
-                  format: uuid
+                cards:
+                  type: array
+                  items: { $ref: '#/components/schemas/ValueCard' }
+                context:
+                  type: string
+                  description: Structured context text, gratitude comments only.
       responses:
         '200':
-          description: Service accepted successfully
+          description: Comment added.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Comment added } }
+        '400':
+          description: Invalid comment data (missing type/text).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: >-
+            Not authorized for this comment type on this exchange (e.g. only
+            the recipient can add a receipt).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: >-
+            Sequencing conflict — e.g. both sides must receipt first, or this
+            side has already commented.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/like:
+    post:
+      summary: Toggle a like on an exchange or one of its comments
+      operationId: toggleExchangeLike
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment_type:
+                  type: string
+                  enum: [exchange, gratitude, user, other]
+                  default: exchange
+      responses:
+        '200':
+          description: New like state and count.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Service accepted successfully."
+                  liked: { type: boolean }
+                  count: { type: integer }
+                  comment_type: { type: string }
         '400':
-          description: Bad request, possibly due to incorrect service or user ID
-      tags:
-        - Openings
+          description: Invalid comment_type.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/edit:
+    post:
+      summary: Edit an exchange's title, description, or image
+      description: Only participants may edit, and only until the exchange is finished.
+      operationId: editExchange
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                image: { type: string, format: binary }
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Exchange updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Exchange updated } }
+        '400':
+          description: Unsupported image format.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only participants can edit this exchange.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: This exchange is finished and can no longer be changed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/image:
+    get:
+      summary: Get an exchange's image
+      operationId: getExchangeImage
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      responses:
+        '200':
+          description: Image bytes.
+          content:
+            image/*: { schema: { type: string, format: binary } }
+        '404':
+          description: No image set, or exchange not found.
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/receipt_photos:
+    post:
+      summary: Upload receipt photos
+      description: Only the recipient may upload photos for their receipt. Keeps at most 3.
+      operationId: uploadReceiptPhotos
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photos:
+                  type: array
+                  items: { type: string, format: binary }
+      responses:
+        '200':
+          description: Number of photos stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { count: { type: integer } }
+        '403':
+          description: Only the recipient can add receipt photos.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Exchange not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Exchanges]
+
+  /api/exchange/{exchange_id}/receipt_photo/{idx}:
+    get:
+      summary: Get one receipt photo
+      operationId: getReceiptPhoto
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ExchangeId'
+        - name: idx
+          in: path
+          required: true
+          schema: { type: integer, minimum: 0, maximum: 2 }
+      responses:
+        '200':
+          description: Image bytes.
+          content:
+            image/*: { schema: { type: string, format: binary } }
+        '404':
+          description: No photo at that index, or exchange not found.
+      tags: [Exchanges]
+
+  # ─────────────────────────── Spheres ───────────────────────────
+
+  /api/spheres:
+    post:
+      summary: Create a sphere
+      operationId: createSphere
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/SphereInput' }
+          application/json:
+            schema: { $ref: '#/components/schemas/SphereInput' }
+      responses:
+        '201':
+          description: Sphere created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sphere' }
+        '400':
+          description: No data provided, or creation failed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Spheres]
+    get:
+      summary: List spheres
+      operationId: listSpheres
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Sphere' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Spheres]
+
+  /api/spheres/{sphere_id}/join:
+    post:
+      summary: Join a sphere
+      operationId: joinSphere
+      parameters:
+        - $ref: '#/components/parameters/SphereId'
+      responses:
+        '200':
+          description: Membership result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  already_member: { type: boolean }
+        '400':
+          description: Invalid sphere id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Spheres]
+
+  /api/spheres/{sphere_id}/image:
+    post:
+      summary: Update a sphere's banner image
+      operationId: updateSphereImage
+      parameters:
+        - $ref: '#/components/parameters/SphereId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties: { image: { type: string, format: binary } }
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Image updated } }
+        '400':
+          description: Missing file, unsupported format, or invalid sphere id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this sphere.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Spheres]
+
+  /api/spheres/{sphere_id}/members/{target_id}/role:
+    post:
+      summary: Change a sphere member's role
+      operationId: setSphereMemberRole
+      parameters:
+        - $ref: '#/components/parameters/SphereId'
+        - $ref: '#/components/parameters/TargetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [admin, member] }
+      responses:
+        '200':
+          description: Role updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string }, role: { type: string } }
+        '400':
+          description: Invalid role or id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only a sphere admin can change roles.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Spheres]
+
+  # ─────────────────────────── Alliances ───────────────────────────
+
   /api/alliances:
     post:
-      summary: Create a new union
-      description: Allows an authorized user to create a new union.
+      summary: Create an alliance
       operationId: createAlliance
       requestBody:
         required: true
         content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/AllianceInput' }
           application/json:
-            schema:
-              $ref: '#/components/schemas/Alliance'
+            schema: { $ref: '#/components/schemas/AllianceInput' }
       responses:
         '201':
-          description: Alliance created successfully.
+          description: Alliance created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alliance' }
         '400':
-          description: Bad request, possibly missing required data.
-      tags:
-        - Alliances
-  /api/alliances/{unionId}:
+          description: Name or operating sphere missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Alliances]
     get:
-      summary: Retrieve a union's details
-      description: Returns detailed information about a union, including its members.
-      operationId: getAlliance
-      parameters:
-        - name: unionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      summary: List alliances
+      description: Returns alliances the caller's spheres make visible, plus any the caller is already a member of.
+      operationId: listAlliances
       responses:
         '200':
-          description: Successfully retrieved union details.
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alliance'
-        '404':
-          description: Alliance not found.
-      tags:
-        - Alliances
+                type: array
+                items: { $ref: '#/components/schemas/Alliance' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Alliances]
 
-    patch:
-      summary: Update a union's details
-      description: Allows modifications to a union's details like name or description.
-      operationId: updateAlliance
+  /api/alliances/{alliance_id}/join:
+    post:
+      summary: Join an alliance
+      operationId: joinAlliance
       parameters:
-        - name: unionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - $ref: '#/components/parameters/AllianceId'
+      responses:
+        '200':
+          description: Membership result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  already_member: { type: boolean }
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Alliances]
+
+  /api/alliances/{alliance_id}/image:
+    post:
+      summary: Update an alliance's banner image
+      operationId: updateAllianceImage
+      parameters:
+        - $ref: '#/components/parameters/AllianceId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties: { image: { type: string, format: binary } }
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Image updated } }
+        '400':
+          description: Missing file, unsupported format, or invalid alliance id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this alliance.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Alliances]
+
+  /api/alliances/{alliance_id}/members/{target_id}/role:
+    post:
+      summary: Change an alliance member's role
+      operationId: setAllianceMemberRole
+      parameters:
+        - $ref: '#/components/parameters/AllianceId'
+        - $ref: '#/components/parameters/TargetId'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [role]
               properties:
-                name:
-                  type: string
-                description:
-                  type: string
+                role: { type: string, enum: [steward, member, admin] }
       responses:
         '200':
-          description: Alliance updated successfully.
+          description: Role updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string }, role: { type: string } }
         '400':
-          description: Bad request, invalid data provided.
-        '404':
-          description: Alliance not found.
-      tags:
-        - Alliances
+          description: Invalid role or id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only a Lead can change roles.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Alliances]
 
-    delete:
-      summary: Delete a union
-      description: Removes a union from the system. Should actually be deactivated instead of deleted.
-      operationId: deleteAlliance
+  # ─────────────────────────── Projects ───────────────────────────
+
+  /api/projects:
+    post:
+      summary: Create a project
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectInput' }
+      responses:
+        '201':
+          description: Project created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400':
+          description: Name or sphere missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+    get:
+      summary: List projects
+      description: Returns projects the caller's spheres make visible, plus any the caller already participates in.
+      operationId: listProjects
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Project' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+
+  /api/projects/{project_id}/join:
+    post:
+      summary: Join a project
+      operationId: joinProject
       parameters:
-        - name: unionId
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Membership result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  already_member: { type: boolean }
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+
+  /api/projects/{project_id}/image:
+    post:
+      summary: Update a project's banner image
+      operationId: updateProjectImage
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties: { image: { type: string, format: binary } }
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Image updated } }
+        '400':
+          description: Missing file, unsupported format, or invalid project id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this project.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+
+  /api/projects/{project_id}/members/{target_id}/role:
+    post:
+      summary: Change a project member's role
+      operationId: setProjectMemberRole
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/TargetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [steward, contributor, manager] }
+      responses:
+        '200':
+          description: Role updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string }, role: { type: string } }
+        '400':
+          description: Invalid role or id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only a project manager can change roles.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+
+  # ─────────────────────────── Openings ───────────────────────────
+
+  /api/openings:
+    post:
+      summary: Post an opening (offer or need)
+      operationId: createOpening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string }
+                type: { type: string, example: offer }
+                description: { type: string }
+                sphere_id: { type: string, format: uuid }
+                sphere_name: { type: string }
+                values:
+                  type: array
+                  items: { type: string }
+                project_name: { type: string }
+                image_key: { type: string }
+                cadence: { type: string, enum: [single, perpetual] }
+                acting_as_id:
+                  type: string
+                  format: uuid
+                  description: Post on behalf of a sphere/alliance/project the caller manages.
+      responses:
+        '201':
+          description: Opening created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Opening' }
+        '400':
+          description: Title missing, or acting_as_id doesn't resolve to a known entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to post on behalf of that entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+    get:
+      summary: List openings
+      description: >-
+        Filters out non-perpetual openings that are already in progress or
+        completed, and openings scoped to a sphere the caller isn't a member
+        of.
+      operationId: listOpenings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/OpeningEnriched' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}:
+    get:
+      summary: Get a single opening
+      operationId: getOpening
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OpeningEnriched'
+                  - type: object
+                    properties:
+                      exchanges:
+                        type: array
+                        items: { $ref: '#/components/schemas/MeaningTrailEntry' }
+        '400':
+          description: Invalid opening id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to view this opening.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}/accept:
+    post:
+      summary: Accept an opening
+      description: Creates a pending acceptance; the provider must confirm it to create the exchange.
+      operationId: acceptOpening
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        '200':
+          description: Acceptance recorded (or already existed).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  status: { type: string, example: pending }
+                  acceptance: { type: object }
+        '400':
+          description: Cannot accept your own opening, or invalid opening id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening or user not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Opening is no longer open, or already accepted by this caller.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}/confirm:
+    post:
+      summary: Confirm an acceptance, creating the exchange
+      operationId: confirmOpeningAcceptance
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accepter_id]
+              properties:
+                accepter_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Exchange created (or was already confirmed).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  exchange_id: { type: string, format: uuid }
+        '400':
+          description: accepter_id missing or invalid.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only the provider can confirm acceptances.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening or acceptance not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}/reject:
+    post:
+      summary: Reject a pending acceptance
+      operationId: rejectOpeningAcceptance
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accepter_id]
+              properties:
+                accepter_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Acceptance declined.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Acceptance declined } }
+        '400':
+          description: accepter_id missing or invalid.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Only the provider can reject acceptances.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening or acceptance not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: This acceptance is already confirmed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}/like:
+    post:
+      summary: Toggle a like on an opening
+      operationId: toggleOpeningLike
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      responses:
+        '200':
+          description: New like state and count.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  liked: { type: boolean }
+                  likes: { type: integer }
+        '400':
+          description: Invalid opening id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  /api/openings/{service_id}/image:
+    post:
+      summary: Update an opening's image
+      operationId: updateOpeningImage
+      parameters:
+        - $ref: '#/components/parameters/ServiceId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties: { image: { type: string, format: binary } }
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: Image updated } }
+        '400':
+          description: Missing file, unsupported format, or invalid opening id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this opening.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Opening not found.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Openings]
+
+  # ─────────────────────────── Value Cards ───────────────────────────
+
+  /api/value_cards/{target_user_id}:
+    get:
+      summary: List a user's or entity's current value cards
+      description: Public — no session required. Only returns the current (non-superseded) version of each card; edits are versioned, not overwritten in place.
+      operationId: listValueCards
+      security: []
+      parameters:
+        - name: target_user_id
           in: path
           required: true
-          schema:
-            type: string
-            format: uuid
+          schema: { type: string, format: uuid }
+          description: A user id, or an entity id (sphere/alliance/project) for its own value cards.
       responses:
-        '204':
-          description: Alliance deleted successfully.
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ValueCard' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
+
+  /api/value_cards:
+    post:
+      summary: Create a value card for the logged-in user
+      operationId: createValueCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValueCardInput' }
+      responses:
+        '201':
+          description: Card created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValueCard' }
+        '400':
+          description: No data provided, or care_about is missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
+
+  /api/value_cards/{card_id}:
+    patch:
+      summary: Edit a value card (versioned)
+      description: >-
+        Only the card's owner may edit it. The edit is never written in
+        place: the server creates a new card with the merged fields
+        (`replaces_card_id` pointing at the old card) and flips the old
+        card's `is_current` to false. The old row's content is never
+        mutated, so anything that already captured it (e.g. a meaning-trail
+        receipt snapshot) is unaffected — full edit history survives in
+        Cassandra even though only the current version is returned by
+        `GET /api/value_cards/{target_user_id}`.
+      operationId: editValueCard
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValueCardInput' }
+      responses:
+        '200':
+          description: The new current version of the card.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValueCard' }
+        '400':
+          description: No data provided.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '404':
-          description: Alliance not found.
-      tags:
-        - Alliances
+          description: No card with that id exists for the caller.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
+    delete:
+      summary: Delete a value card
+      description: Deletes only within the caller's own partition — a card_id belonging to someone else is silently a no-op.
+      operationId: deleteValueCard
+      parameters:
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: deleted } }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
 
+  /api/value_cards/clone:
+    post:
+      summary: Clone a value card onto your own or a managed entity's Meaning Graph
+      description: >-
+        The client sends the full source card's field values (it already has
+        them, from rendering the card) rather than a bare id — value_cards is
+        keyed by (owner_id, card_id), so a card_id alone can't be looked up
+        without an inefficient scan. The clone becomes a brand-new,
+        independent card; it is never linked back to its source.
+      operationId: cloneValueCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source, target_id]
+              properties:
+                source: { $ref: '#/components/schemas/ValueCardInput' }
+                target_id:
+                  type: string
+                  format: uuid
+                  description: The caller's own id, or an entity id the caller manages.
+      responses:
+        '201':
+          description: New card created for the target.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValueCard' }
+        '400':
+          description: target_id missing, or the source card has no care_about.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to add a value card to that target.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
 
+  /api/entity_value_cards/{entity_id}:
+    post:
+      summary: Create a value card owned by an entity
+      description: Caller must manage the sphere/alliance/project (see `can_manage_entity`).
+      operationId: createEntityValueCard
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValueCardInput' }
+      responses:
+        '201':
+          description: Card created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValueCard' }
+        '400':
+          description: No data provided, or care_about is missing.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
 
+  /api/entity_value_cards/{entity_id}/{card_id}:
+    patch:
+      summary: Edit an entity's value card (versioned)
+      description: Same versioning behavior as `PATCH /api/value_cards/{card_id}`, scoped to an entity the caller manages.
+      operationId: editEntityValueCard
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+        - $ref: '#/components/parameters/CardId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValueCardInput' }
+      responses:
+        '200':
+          description: The new current version of the card.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValueCard' }
+        '400':
+          description: No data provided.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Not authorized to manage this entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: No card with that id exists for this entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
+    delete:
+      summary: Delete an entity's value card
+      operationId: deleteEntityValueCard
+      parameters:
+        - $ref: '#/components/parameters/EntityId'
+        - $ref: '#/components/parameters/CardId'
+      responses:
+        '200':
+          description: Deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: deleted } }
+        '403':
+          description: Not authorized to manage this entity.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Value Cards]
 
+  # ─────────────────────────── Notifications ───────────────────────────
 
+  /api/notifications:
+    get:
+      summary: List the logged-in user's notifications
+      operationId: listNotifications
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items: { $ref: '#/components/schemas/Notification' }
+                  unread_count: { type: integer }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Notifications]
 
+  /api/notifications/read:
+    post:
+      summary: Mark one notification as read
+      operationId: markNotificationRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [created_at, notification_id]
+              properties:
+                created_at: { type: string, format: date-time }
+                notification_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: ok } }
+        '400':
+          description: created_at/notification_id missing, or created_at isn't a valid timestamp.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Notifications]
+
+  /api/notifications/read_all:
+    post:
+      summary: Mark all notifications as read
+      operationId: markAllNotificationsRead
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { message: { type: string, example: ok } }
+        '500':
+          $ref: '#/components/responses/InternalError'
+      tags: [Notifications]
 
 components:
   securitySchemes:
@@ -615,130 +1863,401 @@ components:
         returned by `POST /api/login`. See the top-level Authentication
         section for the full model (server-stored sessions; cookie transport
         for the reference web client). Applies to every endpoint except
-        `/api/login`, `/api/register`, and `OPTIONS` requests, which are
-        marked `security: []` individually.
+        `/api/login`, `/api/register`, `/api/check_session`, and the public
+        image/GET endpoints, which are marked `security: []` individually.
+
+  parameters:
+    TargetId:
+      name: target_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: The id of the user being acted on.
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ExchangeId:
+      name: exchange_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SphereId:
+      name: sphere_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    AllianceId:
+      name: alliance_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ServiceId:
+      name: service_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: An opening's id.
+    CardId:
+      name: card_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    EntityId:
+      name: entity_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: A sphere, alliance, or project id.
+
+  responses:
+    InternalError:
+      description: Unexpected server-side failure.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
   schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+      description: >-
+        The standard error body. A few auth endpoints (`/api/login`,
+        `/api/logout`, `/api/check_session`) predate this convention and use
+        `{"error": string}` with the same meaning instead.
+
     User:
       type: object
       properties:
-        name:
+        user_id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        surname: { type: string }
+        location: { type: string }
+        profile_picture:
           type: string
-        email:
-          type: string
-          format: email
-        password:
-          type: string
+          nullable: true
+          description: Base64-encoded image, or null if the user has no photo.
         session_id:
           type: string
-    Invitation:
+          description: Present only on login/check-session responses.
+
+    SessionStatus:
       type: object
       properties:
-        code:
-          type: string
-          format: uuid
-          description: A unique identifier for the invitation.
-          readOnly: true
-        email:
-          type: string
-          format: email
-          description: Email of the user to be invited.
-      required:
-        - email
-      description: |
-        This module contains the Invitation model for handling user invitation related tasks.
+        status: { type: string, enum: [active, inactive] }
+        user_id: { type: string, format: uuid, nullable: true }
+        user_data:
+          allOf:
+            - $ref: '#/components/schemas/User'
+          description: Present only when status is "active".
 
-    Meaning TrailExchange:
+    MeaningTrailEntry:
       type: object
-      required:
-        - user_id
-        - other_user_id
-        - project_id
+      description: One exchange, enriched with the viewer's perspective and per-comment like counts.
       properties:
-        user_id:
-          type: string
-          description: The ID of the user who is initiating the exchange
-        other_user_id:
-          type: string
-          description: The ID of the other user involved in the exchange
-        project_id:
-          type: string
-          description: The ID of the project related to the exchange
-
-    Meaning TrailDetails:
-      type: array
-      items:
-        type: object
-        properties:
-          exchangeId:
-            type: string
-          involvedParties:
-            type: array
-            items:
-              type: string
-          details:
-            type: object
-            additionalProperties: true
-
-
-    Exchange:
-      type: object
-      properties:
-        exchange_id:
-          type: string
-          format: uuid
-        other_user_id:
-          type: string
-          format: uuid
-        project_id:
-          type: string
-          format: uuid
-        exchange_description:
-          type: string
+        user_id: { type: string, format: uuid }
+        exchange_id: { type: string, format: uuid }
+        other_user_id: { type: string, format: uuid }
+        other_user_name: { type: string }
+        exchange_description: { type: string }
+        exchange_long_description: { type: string }
         exchange_status:
           type: string
-    Meaning Trail:
-      type: array
-      items:
-        $ref: '#/components/schemas/Exchange'
-
-    Service:
-      type: object
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-        is_part_of_project:
-          type: boolean
-        service_id:
+          enum: [Initiated, In Progress, Finished, Receipted, Additional Comments Added, Cancelled]
+        project_id: { type: string, format: uuid, nullable: true }
+        project_name: { type: string, nullable: true }
+        project_start_timestamp: { type: string, format: date-time, nullable: true }
+        gratitude_comment: { type: string, nullable: true }
+        gratitude_comment_id: { type: string, format: uuid, nullable: true }
+        gratitude_comment_timestamp: { type: string, format: date-time, nullable: true }
+        gratitude_comment_context: { type: string, nullable: true }
+        gratitude_comment_cards:
+          type: array
+          items: { $ref: '#/components/schemas/ValueCard' }
+        user_comment: { type: string, nullable: true }
+        user_comment_id: { type: string, format: uuid, nullable: true }
+        user_comment_timestamp: { type: string, format: date-time, nullable: true }
+        user_comment_cards:
+          type: array
+          items: { $ref: '#/components/schemas/ValueCard' }
+        other_comment: { type: string, nullable: true }
+        other_comment_id: { type: string, format: uuid, nullable: true }
+        other_comment_author_id: { type: string, format: uuid, nullable: true }
+        other_comment_author_name: { type: string, nullable: true }
+        other_comment_timestamp: { type: string, format: date-time, nullable: true }
+        other_comment_cards:
+          type: array
+          items: { $ref: '#/components/schemas/ValueCard' }
+        initiator_comment: { type: string, nullable: true }
+        initiator_comment_timestamp: { type: string, format: date-time, nullable: true }
+        recipient_comment: { type: string, nullable: true }
+        recipient_comment_timestamp: { type: string, format: date-time, nullable: true }
+        initiator_acting_user_id:
           type: string
           format: uuid
+          nullable: true
+          description: Set when the initiator posted this exchange on behalf of an entity they manage.
+        initiator_acting_user_name: { type: string, nullable: true }
+        has_image: { type: boolean }
+        likes:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              count: { type: integer }
+              liked: { type: boolean }
+        initiator_id: { type: string, format: uuid }
+        initiator_name: { type: string }
+        viewer_is_initiator: { type: boolean }
 
+    SphereInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        meaning_graph: { type: string }
+        location: { type: string }
+        image: { type: string, format: binary }
+
+    Sphere:
+      type: object
+      properties:
+        sphere_id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        meaning_graph: { type: string }
+        location: { type: string }
+        image: { type: string, nullable: true, description: Base64-encoded. }
+        admin1: { type: string, format: uuid }
+        participants:
+          type: array
+          items: { type: string, format: uuid }
+        participant_names:
+          type: array
+          items: { type: string }
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/MemberRef' }
+        alliances:
+          type: array
+          items: { type: string, format: uuid }
+        projects:
+          type: array
+          items: { type: string, format: uuid }
+        values:
+          type: array
+          items: { type: string }
+
+    MemberRef:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        role: { type: string }
+
+    AllianceInput:
+      type: object
+      required: [name, sphere_id]
+      properties:
+        name: { type: string }
+        sphere_id: { type: string, format: uuid }
+        description: { type: string }
+        meaning_graph: { type: string }
+        values:
+          type: array
+          items: { type: string }
+        projects:
+          type: array
+          items: { type: string, format: uuid }
+        image: { type: string, format: binary }
 
     Alliance:
       type: object
       properties:
-        alliance_id:
-          type: string
-          format: uuid
-          description: A unique identifier for this union.
-        name:
-          type: string
-          description: The name of the union.
+        alliance_id: { type: string, format: uuid }
+        id: { type: string, format: uuid, description: Alias of alliance_id. }
+        name: { type: string }
+        description: { type: string }
+        admin1: { type: string, format: uuid }
+        sphere_id: { type: string, format: uuid }
+        sphere_name: { type: string }
+        participants:
+          type: array
+          items: { type: string }
+          description: Member display names.
         members:
           type: array
-          items:
-            type: string
-            format: uuid
-          description: List of user IDs who are members of this union.
-        description:
+          items: { $ref: '#/components/schemas/MemberRef' }
+        projects:
+          type: array
+          items: { type: string, format: uuid }
+        values:
+          type: array
+          items: { type: string }
+        meaning_graph: { type: string }
+        image: { type: string, nullable: true, description: Base64-encoded. }
+
+    ProjectInput:
+      type: object
+      required: [name, sphere_id]
+      properties:
+        name: { type: string }
+        sphere_id: { type: string, format: uuid }
+        description: { type: string }
+        values:
+          type: array
+          items: { type: string }
+        image: { type: string, format: binary }
+
+    Project:
+      type: object
+      properties:
+        project_id: { type: string, format: uuid }
+        id: { type: string, format: uuid, description: Alias of project_id. }
+        name: { type: string }
+        description: { type: string }
+        owner: { type: string, format: uuid }
+        owner_alliance: { type: string, format: uuid, nullable: true }
+        status: { type: string }
+        sphere_id: { type: string, format: uuid }
+        sphere_name: { type: string }
+        participants:
+          type: array
+          items: { type: string }
+          description: Member display names.
+        members:
+          type: array
+          items: { $ref: '#/components/schemas/MemberRef' }
+        values:
+          type: array
+          items: { type: string }
+        image: { type: string, nullable: true, description: Base64-encoded. }
+
+    Opening:
+      type: object
+      properties:
+        service_id: { type: string, format: uuid }
+        id: { type: string, format: uuid, description: Alias of service_id. }
+        type: { type: string, example: offer }
+        title: { type: string }
+        description: { type: string }
+        provider: { type: string }
+        provider_id: { type: string, format: uuid }
+        sphere_id: { type: string, format: uuid, nullable: true }
+        spheres:
+          type: array
+          items: { type: string }
+        status: { type: string }
+        values:
+          type: array
+          items: { type: string }
+        likes: { type: integer }
+        project_name: { type: string, nullable: true }
+        image_key: { type: string, nullable: true }
+        cadence: { type: string, enum: [single, perpetual] }
+        accepted_by: { type: string, format: uuid, nullable: true }
+        accepted_by_name: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        accepted_at: { type: string, format: date-time, nullable: true }
+        in_progress_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        image: { type: string, nullable: true, description: Base64-encoded. }
+        acting_user_id: { type: string, format: uuid, nullable: true }
+        acting_user: { type: string, nullable: true }
+
+    OpeningEnriched:
+      allOf:
+        - $ref: '#/components/schemas/Opening'
+        - type: object
+          properties:
+            liked_by_current_user: { type: boolean }
+            pending_acceptances:
+              type: array
+              items: { $ref: '#/components/schemas/Acceptance' }
+            my_acceptance:
+              allOf:
+                - $ref: '#/components/schemas/Acceptance'
+              nullable: true
+            activity:
+              allOf:
+                - $ref: '#/components/schemas/OpeningActivity'
+              nullable: true
+              description: Present only when cadence is "perpetual".
+
+    Acceptance:
+      type: object
+      properties:
+        accepter_id: { type: string, format: uuid }
+        accepter_name: { type: string }
+        status: { type: string }
+        exchange_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    OpeningActivity:
+      type: object
+      properties:
+        accepted_count: { type: integer }
+        accepted_last_at: { type: string, format: date-time, nullable: true }
+        in_progress_count: { type: integer }
+        in_progress_last_at: { type: string, format: date-time, nullable: true }
+        completed_last_at: { type: string, format: date-time, nullable: true }
+
+    ValueCardInput:
+      type: object
+      required: [care_about]
+      properties:
+        title: { type: string }
+        care_about: { type: string }
+        because: { type: string }
+        looks_like:
+          type: array
+          items: { type: string }
+        drift_looks_like: { type: string }
+        in_conflict: { type: string }
+        never_do: { type: string }
+        frankl_mode:
           type: string
-          description: A brief description or purpose of the union.
-        created_at:
+          enum: [creative, experiential, attitudinal]
+          default: creative
+        color_key:
           type: string
-          format: date-time
-          description: Timestamp of when the union was created.
-      required:
-        - alliance_id
-        - name
-        - members
+          enum: [honey, leaf, terracotta, sage, moss]
+          default: honey
+
+    ValueCard:
+      allOf:
+        - $ref: '#/components/schemas/ValueCardInput'
+        - type: object
+          properties:
+            card_id: { type: string, format: uuid }
+            user_id:
+              type: string
+              format: uuid
+              description: The owning user or entity id.
+            created_at: { type: string, format: date-time }
+            is_current:
+              type: boolean
+              description: False once this card has been superseded by an edit.
+            replaces_card_id:
+              type: string
+              format: uuid
+              nullable: true
+              description: The card_id this version was edited from, if any.
+
+    Notification:
+      type: object
+      properties:
+        notification_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        actor_id: { type: string, format: uuid }
+        actor_name: { type: string }
+        type:
+          type: string
+          example: new_follower
+        message: { type: string }
+        link: { type: string }
+        is_read: { type: boolean }
