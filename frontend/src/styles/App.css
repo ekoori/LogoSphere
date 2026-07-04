@@ -366,12 +366,17 @@ nav ul {
     display: flex;
     gap: var(--sp-6);
     width: 100%;
-    max-width: 1240px;
+    /* Same width + gutter as the entity pages' .ep-page so every page lines up. */
+    max-width: 1000px;
     margin: var(--sp-8) auto var(--sp-10);
-    padding: 0 clamp(1em, 4vw, 2.5em);
+    padding: 0 clamp(1rem, 3vw, 2rem);
     box-sizing: border-box;
     justify-content: center;
 }
+
+/* On management pages the banner sits directly above .container; the banner
+   already carries its own bottom margin, so drop the container's top gap. */
+.ep-page-banner + .container { margin-top: 0.6rem; }
 
 aside {
     align-self: flex-start;

@@ -69,7 +69,13 @@
 /* ---- Reset / base --------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+    -webkit-text-size-adjust: 100%;
+    /* Always reserve the scrollbar gutter so centered layouts don't shift/resize
+       when a tab's content grows tall enough to add a vertical scrollbar. */
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+}
 
 body {
     margin: 0;
