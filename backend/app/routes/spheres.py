@@ -1,7 +1,7 @@
 import logging
 from flask import request, jsonify, current_app as app
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity
+from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 import uuid
@@ -109,7 +109,10 @@ def get_spheres(user_id=None):
                 participants=row.participants,
                 alliances=row.alliances,
                 projects=row.projects,
-                values=row.values
+                values=row.values,
+                member_roles=getattr(row, 'member_roles', None),
+                is_sandbox=getattr(row, 'is_sandbox', False),
+                is_public=getattr(row, 'is_public', False)
             )
             # Banner images are served separately via GET /api/spheres/<id>/image
             # (see has_image) — keeping the base64 blob out of the list response.
@@ -201,4 +204,77 @@ def update_sphere_image(sphere_id, user_id=None):
         return jsonify({'message': 'Invalid sphere id'}), 400
     except Exception as e:
         logger.error(f"Error in update_sphere_image: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def update_sphere_governance(sphere_id, user_id=None):
+    """Update a sphere's governance flags from its management page.
+
+    - `is_public` (logged-out visitors can view the sphere's activity) may be
+      set by anyone who can manage the sphere — its admin or a platform admin.
+    - `is_sandbox` (auto-enroll every new user) is a platform-wide decision, so
+      only platform administrators may set it.
+    """
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        sphere_uuid = uuid.UUID(sphere_id)
+        data = request.get_json(silent=True) or {}
+
+        is_public = data.get('is_public')
+        is_sandbox = data.get('is_sandbox')
+
+        if is_public is not None and not can_manage_entity(sphere_uuid, user_id):
+            return jsonify({'message': 'Not authorized to manage this sphere'}), 403
+        if is_sandbox is not None and not is_platform_admin(user_id):
+            return jsonify({'message': 'Only a platform administrator can make a sphere a sandbox'}), 403
+
+        Sphere.set_governance(
+            sphere_uuid,
+            is_sandbox=None if is_sandbox is None else bool(is_sandbox),
+            is_public=None if is_public is None else bool(is_public))
+        updated = Sphere.get_by_id(sphere_uuid)
+        return jsonify({'message': 'Governance updated',
+                        'is_sandbox': updated.is_sandbox if updated else False,
+                        'is_public': updated.is_public if updated else False}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid sphere id'}), 400
+    except Exception as e:
+        logger.error(f"Error in update_sphere_governance: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+def get_public_sphere(sphere_id):
+    """Public, no-auth view of a sphere's activity — only when the sphere has
+    been flagged `is_public`. Returns the sphere plus its projects, alliances
+    and openings so logged-out visitors can see what's happening inside."""
+    try:
+        sphere = Sphere.get_by_id(sphere_id)
+        if not sphere or not sphere.is_public:
+            return jsonify({'message': 'This sphere is not public'}), 404
+
+        # Imported here to avoid a heavy import graph at module load.
+        from app.models.project import Project
+        from app.models.alliance import Alliance
+        from app.models.openings import Service
+
+        sid = sphere.sphere_id
+        d = sphere.to_dict(include_members=True, include_image=False)
+
+        d['project_list'] = [
+            p.to_dict(include_image=False) for p in Project.get_all()
+            if getattr(p, 'sphere_id', None) == sid]
+        d['alliance_list'] = [
+            a.to_dict(include_image=False) for a in Alliance.get_all()
+            if getattr(a, 'sphere_id', None) == sid]
+        d['openings'] = [
+            s.to_dict(include_image=False) for s in Service.get_all()
+            if getattr(s, 'sphere_id', None) == sid and s.is_current
+            and (s.cadence == 'perpetual' or s.status not in ('In Progress', 'Completed'))]
+        return jsonify(d), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid sphere id'}), 400
+    except Exception as e:
+        logger.error(f"Error in get_public_sphere: {str(e)}")
         return jsonify({'message': 'Internal server error'}), 500

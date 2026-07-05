@@ -94,7 +94,9 @@ function AppContent() {
         <Route path="/project" element={<ErrorBoundary><ProtectedRoute><ProjectPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/project-management" element={<ErrorBoundary><ProtectedRoute><ProjectManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/spheres" element={<ErrorBoundary><ProtectedRoute><Spheres/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/sphere" element={<ErrorBoundary><ProtectedRoute><SpherePage/></ProtectedRoute></ErrorBoundary>} />
+        {/* Public: a sphere flagged "public activity" is viewable without an
+            account; SpherePage itself gates private spheres. */}
+        <Route path="/sphere" element={<ErrorBoundary><SpherePage/></ErrorBoundary>} />
         <Route path="/sphere-management" element={<ErrorBoundary><ProtectedRoute><SphereManagement/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/alliances" element={<ErrorBoundary><ProtectedRoute><Alliances/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><AlliancePage/></ProtectedRoute></ErrorBoundary>} />
@@ -124,6 +126,10 @@ function AppContent() {
 function LoginProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
+  // The signed-in user's first name, for the nav account button.
+  const [userName, setUserName] = useState('');
+  // Platform administrators can see all data and manage any sphere.
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   // Tracks whether the initial session check has completed, so protected routes
   // don't redirect to /login before we know the real auth state.
   const [authChecked, setAuthChecked] = useState(false);
@@ -138,6 +144,8 @@ function LoginProvider({ children }) {
         console.log('Logout successful');
         setIsLoggedIn(false);
         setUserId(null);
+        setUserName('');
+        setIsPlatformAdmin(false);
         navigate('/login', { replace: true });
       } else {
         console.error('Logout failed:', response.data.message);
@@ -158,10 +166,14 @@ function LoginProvider({ children }) {
       if (response.data.status === 'active' && response.data.user_id) {
         setIsLoggedIn(true);
         setUserId(response.data.user_id);
+        setUserName((response.data.user_data?.name || '').trim());
+        setIsPlatformAdmin(!!response.data.user_data?.is_platform_admin);
       } else {
         console.log('No active session found');
         setIsLoggedIn(false);
         setUserId(null);
+        setUserName('');
+        setIsPlatformAdmin(false);
       }
     } catch (error) {
       if (error.response?.status === 500) {
@@ -188,6 +200,10 @@ function LoginProvider({ children }) {
       setIsLoggedIn,
       userId,
       setUserId,
+      userName,
+      setUserName,
+      isPlatformAdmin,
+      setIsPlatformAdmin,
       authChecked,
       handleLogout
     }}>

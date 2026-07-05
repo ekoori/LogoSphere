@@ -20,7 +20,9 @@ const BrandMark = () => (
 );
 
 const Header = () => {
-    const { isLoggedIn, handleLogout } = useLogin();
+    const { isLoggedIn, userName, handleLogout } = useLogin();
+    // Show the user's first name on the account button when signed in.
+    const accountLabel = (isLoggedIn && userName) ? userName.split(/\s+/)[0] : 'Account';
     const [notificationsVisible, setNotificationsVisible] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -96,16 +98,16 @@ const Header = () => {
             <div className="brand">
                 <Link to="/" onClick={closeMenu}>
                     <BrandMark />
-                    Logo<b>Sphere</b>
+                    <span className="brand-word">Logo<b>Sphere</b></span>
                 </Link>
             </div>
 
             <nav className={`nav-menu ${menuOpen ? 'is-open' : ''}`}>
                 <ul className="nav-primary">
-                    <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
                     <li><Link to="/spheres" onClick={closeMenu}>Spheres</Link></li>
                     <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>
                     <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>
+                    <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
                         drawer on mobile. */}
                     <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
@@ -143,7 +145,7 @@ const Header = () => {
                         aria-expanded={accountOpen}
                     >
                         <span className="account-avatar">◍</span>
-                        <span className="account-label">Account</span>
+                        <span className="account-label">{accountLabel}</span>
                         <span className="account-caret">▾</span>
                     </button>
                     {accountOpen && (

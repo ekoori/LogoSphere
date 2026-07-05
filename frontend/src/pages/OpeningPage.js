@@ -35,6 +35,11 @@ function OpeningPage() {
     const [busy, setBusy] = useState(false);
     const [acceptAs, setAcceptAs] = useState('');
     const [imgVersion, setImgVersion] = useState(0);
+    const [editing, setEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDesc, setEditDesc] = useState('');
+    const [savingEdit, setSavingEdit] = useState(false);
+    const [editNote, setEditNote] = useState(null);
     const managed = useManagedEntities(userId);
 
     const fetchService = useCallback(async () => {
@@ -96,6 +101,38 @@ function OpeningPage() {
             alert(e.response?.data?.message || 'Could not confirm this acceptance.');
         } finally {
             setBusy(false);
+        }
+    };
+
+    const startEditing = () => {
+        setEditTitle(service.title || '');
+        setEditDesc(service.description || '');
+        setEditNote(null);
+        setEditing(true);
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        if (savingEdit) return;
+        const title = editTitle.trim();
+        if (!title) { setEditNote({ ok: false, text: 'Title cannot be empty.' }); return; }
+        setSavingEdit(true);
+        try {
+            const res = await api.patch(`/api/openings/${openingId}`, { title, description: editDesc });
+            setEditing(false);
+            const newId = res.data?.service?.service_id;
+            if (res.data?.versioned && newId && newId !== openingId) {
+                // A new version was branched (the old one is now frozen because
+                // an exchange links to it) — jump to the new current version.
+                navigate(`/opening?id=${newId}`);
+            } else {
+                await fetchService();
+                setEditNote({ ok: true, text: 'Opening updated.' });
+            }
+        } catch (err) {
+            setEditNote({ ok: false, text: err.response?.data?.message || 'Could not save changes.' });
+        } finally {
+            setSavingEdit(false);
         }
     };
 
@@ -198,8 +235,52 @@ function OpeningPage() {
             <div className="xc-page-body">
                 <div className="xc-page-main">
                     <div className="xc-page-section">
-                        <p className="xc-page-section-heading">About this opening</p>
-                        <p className="xc-about-text">{service.description}</p>
+                        <div className="xc-section-head-row">
+                            <p className="xc-page-section-heading">About this opening</p>
+                            {isOwnOpening && service.isCurrent && !editing && (
+                                <button className="xc-inline-edit-btn" onClick={startEditing}>✎ Edit</button>
+                            )}
+                        </div>
+                        {!service.isCurrent && (
+                            <p className="xc-version-note">
+                                This is version {service.version} — a past version kept because an exchange was created from it.
+                            </p>
+                        )}
+                        {editing ? (
+                            <form className="xc-edit-form" onSubmit={handleEditSubmit}>
+                                <label className="xc-edit-label">Title</label>
+                                <input
+                                    className="xc-edit-input"
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    autoFocus
+                                />
+                                <label className="xc-edit-label">Description</label>
+                                <textarea
+                                    className="xc-edit-textarea"
+                                    rows={5}
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                />
+                                <p className="xc-edit-hint">
+                                    If an exchange has already started from this opening, saving keeps the
+                                    current version and creates a new one, so those exchanges stay unchanged.
+                                </p>
+                                <div className="xc-edit-actions">
+                                    <button type="submit" className="xc-action-btn xc-action-advance" disabled={savingEdit}>
+                                        {savingEdit ? 'Saving…' : 'Save changes'}
+                                    </button>
+                                    <button type="button" className="xc-action-btn" onClick={() => setEditing(false)} disabled={savingEdit}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <p className="xc-about-text">{service.description}</p>
+                        )}
+                        {editNote && (
+                            <p className={editNote.ok ? 'xc-edit-ok' : 'xc-edit-err'}>{editNote.text}</p>
+                        )}
                     </div>
 
                     {/* Provider view: pending acceptances awaiting confirmation. */}
@@ -320,6 +401,37 @@ function OpeningPage() {
                                         <Avatar userId={x.accepterId} name={x.accepterName} size={22} />
                                         <Link to={`/exchange?id=${x.exchangeId}`}>{x.accepterName || 'A member'}</Link>
                                         {x.createdAt && <span className="xc-exchange-date">{x.createdAt}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Previous versions — only those a version-branching edit kept
+                        because an exchange was created from them. */}
+                    {service.history && service.history.length > 0 && (
+                        <div className="xc-sidebar-card">
+                            <p className="xc-sidebar-heading">
+                                Previous versions ({service.history.length})
+                            </p>
+                            <div className="xc-version-list">
+                                {service.history.map((h) => (
+                                    <div key={h.serviceId} className="xc-version-item">
+                                        <div className="xc-version-head">
+                                            <Link to={`/opening?id=${h.serviceId}`} className="xc-version-title">
+                                                v{h.version}: {h.title}
+                                            </Link>
+                                            {h.createdAt && <span className="xc-exchange-date">{h.createdAt}</span>}
+                                        </div>
+                                        {h.exchanges.length > 0 && (
+                                            <div className="xc-version-exchanges">
+                                                {h.exchanges.map((x) => (
+                                                    <Link key={x.exchangeId} to={`/exchange?id=${x.exchangeId}`} className="xc-version-exchange-link">
+                                                        ↳ exchange with {x.accepterName || 'a member'}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

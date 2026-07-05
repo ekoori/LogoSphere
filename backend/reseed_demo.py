@@ -189,9 +189,26 @@ for col in ["ADD acting_user_id uuid", "ADD acting_user_name text"]:
     else:
         print(f"[WARN] opening_acceptances: {col} — {r}")
 
+# services: versioning columns — editing an opening that already has a related
+# exchange freezes the current version and branches a new one (Phase 6).
+for col in ["ADD version int", "ADD is_current boolean", "ADD replaces_service_id uuid"]:
+    r = run(f"ALTER TABLE logosphere.services {col}")
+    if r is True:
+        print(f"[OK]   services: {col}")
+    elif "already exists" in str(r).lower() or "conflicts with an existing column" in str(r).lower():
+        print(f"[SKIP] services: {col} (already exists)")
+    else:
+        print(f"[WARN] services: {col} — {r}")
+
 # spheres: member_roles map (promote members to admin).
 r = run("ALTER TABLE logosphere.spheres ADD member_roles map<uuid, text>")
 print(f"[OK]   spheres: member_roles" if r is True else f"[SKIP/WARN] spheres.member_roles: {r}")
+
+# spheres: governance flags — sandbox (auto-enroll every new user) and public
+# (logged-out visitors can view the sphere's activity).
+for col in ["ADD is_sandbox boolean", "ADD is_public boolean"]:
+    r = run(f"ALTER TABLE logosphere.spheres {col}")
+    print(f"[OK]   spheres: {col}" if r is True else f"[SKIP/WARN] spheres {col}: {r}")
 
 # follows + receipt_photos companion tables.
 run("""

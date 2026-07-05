@@ -4,7 +4,7 @@ from flask import request, jsonify, current_app as app
 from app.models.alliance import Alliance
 from app.models.user import User
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity
+from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
@@ -61,13 +61,14 @@ def get_alliances(user_id=None):
     try:
         viewer = uuid.UUID(str(user_id))
         joined_spheres = Sphere.member_sphere_ids(viewer)
+        see_all = is_platform_admin(viewer)
         alliances = []
         for a in Alliance.get_all():
             # Sphere-scoped alliances are only visible to that sphere's members
             # (an existing alliance member sees it regardless). Alliances with
-            # no sphere_id remain visible to everyone.
+            # no sphere_id remain visible to everyone. Platform admins see all.
             is_member = viewer in (a.members or [])
-            if a.sphere_id and a.sphere_id not in joined_spheres and not is_member:
+            if not see_all and a.sphere_id and a.sphere_id not in joined_spheres and not is_member:
                 continue
             # Image served via GET /api/alliances/<id>/image (see has_image).
             alliances.append(a.to_dict(include_image=False))

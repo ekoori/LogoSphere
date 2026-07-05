@@ -6,7 +6,6 @@ import api from '../api';
 const NewSphereForm = ({ isVisible, onCreateSphere, onCancel }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [meaningGraph, setMeaningGraph] = useState('');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -28,7 +27,6 @@ const NewSphereForm = ({ isVisible, onCreateSphere, onCancel }) => {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('description', description);
-    formData.append('meaning_graph', meaningGraph);
     formData.append('location', location);
     if (image) {
       formData.append('image', image);
@@ -63,9 +61,6 @@ const NewSphereForm = ({ isVisible, onCreateSphere, onCancel }) => {
 
         <label htmlFor="sphere-description">Sphere Description:</label>
         <textarea id="sphere-description" name="sphere-description" value={description} onChange={(e) => setDescription(e.target.value)} required></textarea>
-
-        <label htmlFor="sphere-meaning-graph">Meaning Graph:</label>
-        <input type="text" id="sphere-meaning-graph" name="sphere-meaning-graph" value={meaningGraph} onChange={(e) => setMeaningGraph(e.target.value)} required />
 
         <label htmlFor="sphere-location">Geographical Location:</label>
         <input type="text" id="sphere-location" name="sphere-location" value={location} onChange={(e) => setLocation(e.target.value)} required />

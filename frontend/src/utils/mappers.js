@@ -42,6 +42,7 @@ export function mapService(s) {
         actingUserId: s.acting_user_id || null,
         description: s.description || '',
         project: s.project_name || null,
+        projectId: s.project_id || null,
         // A real uploaded photo (served lazily from the opening's /image
         // endpoint) always wins over the bundled keyword-matched fallback.
         imageUrl: s.has_image ? `/api/openings/${s.service_id}/image` : imageForService(s.image_key, s.title),
@@ -63,6 +64,23 @@ export function mapService(s) {
             accepterId: x.accepter_id,
             accepterName: x.accepter_name,
             createdAt: fmtDate(x.created_at),
+        })),
+        // Versioning: which version this is, and the previous versions (each
+        // frozen because it had a related exchange) with their exchanges.
+        version: s.version || 1,
+        isCurrent: s.is_current !== false,
+        history: (s.history || []).map((h) => ({
+            serviceId: h.service_id,
+            version: h.version || 1,
+            title: h.title,
+            description: h.description,
+            createdAt: fmtDate(h.created_at),
+            exchanges: (h.exchanges || []).map((x) => ({
+                exchangeId: x.exchange_id,
+                accepterId: x.accepter_id,
+                accepterName: x.accepter_name,
+                createdAt: fmtDate(x.created_at),
+            })),
         })),
         // Per-phase activation dates for the progress bar (single cadence).
         postedAt: fmtDate(s.created_at),

@@ -2,6 +2,9 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/Alliances.css';
+import '../styles/ValueCardChip.css';
+import ValueCardChip from './ValueCardChip';
+import CardBanner from './CardBanner';
 
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
@@ -9,7 +12,7 @@ const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.i
 // Alliance leadership vocabulary: admin → Lead, steward → Board member.
 const ROLE_LABEL = { admin: 'Lead', steward: 'Board member', member: 'Member', contributor: 'Contributor', manager: 'Manager' };
 
-const AllianceCard = ({ id, name, sphere_id, sphere_name, participants, description, projects, values, currentUserId, onJoin }) => {
+const AllianceCard = ({ id, name, sphere_id, sphere_name, participants, description, projects, values, valueCards = [], has_image = false, currentUserId, onJoin }) => {
   const navigate = useNavigate();
   const { entityHref } = useEntityIndex();
   const allianceHref = id ? `/alliance?id=${id}` : '/alliance';
@@ -30,6 +33,7 @@ const AllianceCard = ({ id, name, sphere_id, sphere_name, participants, descript
 
   return (
     <div className="alliance-card" onClick={() => navigate(allianceHref)}>
+      <CardBanner imageUrl={has_image && id ? `/api/alliances/${id}/image` : null} alt={name} />
       <div className="alliance-card-header">
         <div className="alliance-card-left">
           {sphere_name && (
@@ -80,11 +84,21 @@ const AllianceCard = ({ id, name, sphere_id, sphere_name, participants, descript
         ))}
         {projects.length > 3 && <a href="/projects" onClick={(e) => e.stopPropagation()}>{projects.length - 3} more…</a>}
       </div>
-      <div className="alliance-card-values">
-        {values.map((value, index) => (
-          <span key={index}>#{value}</span>
-        ))}
-      </div>
+      {(valueCards.length > 0 || values.length > 0) && (
+        <div className="alliance-card-values">
+          {valueCards.length > 0 ? (
+            <div className="vc-chips-row">
+              {valueCards.map((card, i) => (
+                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" currentUserId={currentUserId} />
+              ))}
+            </div>
+          ) : (
+            values.map((value, index) => (
+              <span key={index}>#{value}</span>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

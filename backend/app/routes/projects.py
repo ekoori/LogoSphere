@@ -4,7 +4,7 @@ from flask import request, jsonify, current_app as app, Response
 from app.models.project import Project
 from app.models.user import User
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids
+from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
@@ -81,13 +81,14 @@ def get_projects(user_id=None):
     try:
         viewer = uuid.UUID(str(user_id))
         joined_spheres = Sphere.member_sphere_ids(viewer)
+        see_all = is_platform_admin(viewer)
         projects = []
         for p in Project.get_all():
             # Sphere-scoped projects are only visible to that sphere's members
             # (an existing participant sees it regardless). Projects with no
-            # sphere_id remain visible to everyone.
+            # sphere_id remain visible to everyone. Platform admins see all.
             is_participant = viewer in (p.participants or [])
-            if p.sphere_id and p.sphere_id not in joined_spheres and not is_participant:
+            if not see_all and p.sphere_id and p.sphere_id not in joined_spheres and not is_participant:
                 continue
             # Image served via GET /api/projects/<id>/image (see has_image).
             projects.append(p.to_dict(include_image=False))

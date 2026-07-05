@@ -19,7 +19,7 @@ const TABS = [
 const SphereManagement = () => {
   const [params] = useSearchParams();
   const sphereId = params.get('id');
-  const { userId } = useLogin();
+  const { userId, isPlatformAdmin } = useLogin();
 
   const [sphere, setSphere] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,8 @@ const SphereManagement = () => {
   const [activeTab, setActiveTab] = useState('governance');
   const [joinPolicy, setJoinPolicy] = useState('open');
   const [savingPolicy, setSavingPolicy] = useState(false);
+  const [isSandbox, setIsSandbox] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
   const [imgVersion, setImgVersion] = useState(0);
 
   const fetchSphere = useCallback(async () => {
@@ -36,6 +38,10 @@ const SphereManagement = () => {
       const r = await api.get('/api/spheres');
       const found = (r.data || []).find((s) => s.sphere_id === sphereId);
       setSphere(found || null);
+      if (found) {
+        setIsSandbox(!!found.is_sandbox);
+        setIsPublic(!!found.is_public);
+      }
     } catch (_) {
       setSphere(null);
     } finally {
@@ -55,7 +61,7 @@ const SphereManagement = () => {
 
   if (loading) return <div className="ep-loading">Loading…</div>;
 
-  const isAdmin = !!userId && !!sphere && userId === sphere.admin1;
+  const isAdmin = (!!userId && !!sphere && userId === sphere.admin1) || (!!sphere && isPlatformAdmin);
 
   if (!sphere) {
     return (
@@ -75,6 +81,23 @@ const SphereManagement = () => {
       </div>
     );
   }
+
+  const saveGovernance = async (e) => {
+    e.preventDefault();
+    setSavingPolicy(true);
+    try {
+      // Only send is_sandbox when the user is a platform admin (the backend
+      // rejects it otherwise). is_public may be set by any sphere admin.
+      const payload = { is_public: isPublic };
+      if (isPlatformAdmin) payload.is_sandbox = isSandbox;
+      await api.post(`/api/spheres/${sphereId}/governance`, payload);
+      await fetchSphere();
+    } catch (err) {
+      console.error('Failed to save governance settings:', err);
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
 
   const saveName = (e) => {
     e.preventDefault();
@@ -134,7 +157,7 @@ const SphereManagement = () => {
 
         <section className={`management-section tab-content ${activeTab === 'governance' ? '' : 'hidden'}`}>
           <h3>Governance Settings</h3>
-          <form onSubmit={(e) => { e.preventDefault(); setSavingPolicy(true); setTimeout(() => setSavingPolicy(false), 800); }}>
+          <form onSubmit={saveGovernance}>
             <div className="form-group">
               <label htmlFor="join-policy">Membership join policy</label>
               <select id="join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
@@ -142,8 +165,36 @@ const SphereManagement = () => {
                 <option value="approval">Approval required — admin must approve</option>
               </select>
             </div>
+
+            <div className="form-group management-toggle">
+              <label>
+                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+                {' '}Public activity
+              </label>
+              <p className="management-section-sub">
+                When on, anyone — even visitors without an account — can see this sphere's
+                projects, alliances and openings.
+              </p>
+            </div>
+
+            <div className="form-group management-toggle">
+              <label style={{ opacity: isPlatformAdmin ? 1 : 0.55 }}>
+                <input
+                  type="checkbox"
+                  checked={isSandbox}
+                  disabled={!isPlatformAdmin}
+                  onChange={(e) => setIsSandbox(e.target.checked)}
+                />
+                {' '}Sandbox sphere
+              </label>
+              <p className="management-section-sub">
+                Every new member who registers is automatically enrolled into this sphere.
+                {!isPlatformAdmin && ' Only a platform administrator can change this.'}
+              </p>
+            </div>
+
             <button type="submit" className="btn-orange" disabled={savingPolicy}>
-              {savingPolicy ? 'Saved ✓' : 'Save Changes'}
+              {savingPolicy ? 'Saving…' : 'Save Changes'}
             </button>
           </form>
         </section>

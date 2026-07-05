@@ -1,0 +1,24 @@
+/* Small banner strip at the top of an entity listing card. The negative
+   margins pull it out to the card edges (cards pad 1.5em 1.6em); the parent's
+   overflow:hidden + border-radius round the top corners. */
+.card-banner {
+    margin: -1.5em -1.6em 1.2em;
+    height: 108px;
+    overflow: hidden;
+    background: var(--sage, #e7ecdf);
+}
+
+.card-banner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* A soft downward fade so overlaid text below reads cleanly. */
+    transition: transform 0.4s var(--ease);
+}
+
+.sphere-card:hover .card-banner img,
+.alliance-card:hover .card-banner img,
+.project:hover .card-banner img {
+    transform: scale(1.04);
+}

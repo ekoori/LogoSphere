@@ -4,12 +4,13 @@ import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/Spheres.css';
 import '../styles/ValueCardChip.css';
 import ValueCardChip from './ValueCardChip';
+import CardBanner from './CardBanner';
 
 // participants may be plain names (strings) or {id, name} pairs.
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
 
-const SphereCard = ({ id, name, alliances, participants, description, projects, values, valueCards = [], isMember = false, currentUserId, onJoin }) => {
+const SphereCard = ({ id, name, alliances, participants, description, projects, values, valueCards = [], has_image = false, isMember = false, currentUserId, onJoin }) => {
   const navigate = useNavigate();
   const { entityHref } = useEntityIndex();
   const [joining, setJoining] = useState(false);
@@ -28,6 +29,7 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
 
   return (
     <div className="sphere-card" onClick={() => navigate(sphereHref)}>
+      <CardBanner imageUrl={has_image && id ? `/api/spheres/${id}/image` : null} alt={name} />
       <div className="sphere-card-header">
         <div className="sphere-card-left">
           <h3>{name}</h3>
@@ -66,7 +68,7 @@ const SphereCard = ({ id, name, alliances, participants, description, projects, 
           {valueCards.length > 0 ? (
             <div className="vc-chips-row">
               {valueCards.map((card, i) => (
-                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" />
+                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" currentUserId={currentUserId} />
               ))}
             </div>
           ) : (

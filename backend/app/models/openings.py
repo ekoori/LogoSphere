@@ -21,7 +21,8 @@ class Service:
                  sphere_id, sphere_name, status, values, likes=0, project_name=None, image_key=None,
                  cadence='single', accepted_by=None, accepted_by_name=None, created_at=None,
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
-                 acting_user_id=None, acting_user_name=None):
+                 acting_user_id=None, acting_user_name=None,
+                 version=1, is_current=True, replaces_service_id=None):
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -47,6 +48,12 @@ class Service:
         # the human who actually posted it — "Joe on behalf of <Entity>".
         self.acting_user_id = acting_user_id
         self.acting_user_name = acting_user_name
+        # Versioning (Phase 6): editing an opening that already has a related
+        # exchange branches a new current version and freezes the old one, so
+        # each exchange keeps linking to the exact version it was created from.
+        self.version = version or 1
+        self.is_current = True if is_current is None else bool(is_current)
+        self.replaces_service_id = replaces_service_id
 
     def to_dict(self, include_image=True):
         # `include_image=False` (used by the openings LIST) omits the base64
@@ -81,6 +88,9 @@ class Service:
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
             'acting_user': self.acting_user_name,
+            'version': self.version,
+            'is_current': self.is_current,
+            'replaces_service_id': str(self.replaces_service_id) if self.replaces_service_id else None,
         }
 
     @classmethod
@@ -148,6 +158,9 @@ class Service:
             getattr(r, 'accepted_at', None), getattr(r, 'in_progress_at', None),
             getattr(r, 'completed_at', None), getattr(r, 'image', None),
             getattr(r, 'acting_user_id', None), getattr(r, 'acting_user_name', None),
+            version=getattr(r, 'version', None) or 1,
+            is_current=getattr(r, 'is_current', None),
+            replaces_service_id=getattr(r, 'replaces_service_id', None),
         )
 
     @classmethod
@@ -203,6 +216,74 @@ class Service:
             cassandra_session.execute(
                 "UPDATE services SET status = %s WHERE service_id = %s", [status, service_id]
             )
+
+    # ── Versioning (edit history for openings tied to an exchange) ─────────────
+    _EDITABLE = ('title', 'description', 'values')
+
+    @classmethod
+    def has_related_exchange(cls, service_id):
+        """True once at least one acceptance of this opening has been confirmed —
+        i.e. an exchange has started from it. Such a version must be frozen."""
+        return any(a['status'] == 'confirmed' for a in cls.acceptances(service_id))
+
+    @classmethod
+    def update_in_place(cls, service_id, edits):
+        """Overwrite the given editable fields on an opening — used only while it
+        has no related exchange, so no history need be preserved."""
+        sets, params = [], []
+        for k in cls._EDITABLE:
+            if k in edits:
+                sets.append(f"{k} = %s")
+                params.append(edits[k])
+        if not sets:
+            return
+        params.append(service_id)
+        cassandra_session.execute(
+            f"UPDATE services SET {', '.join(sets)} WHERE service_id = %s", params)
+
+    @classmethod
+    def create_version(cls, old, edits):
+        """Branch a new current version from `old` (a Service), applying `edits`.
+        The old row is frozen (is_current=False) and keeps the content the
+        existing exchange was created from; the returned new row becomes the
+        live opening in the marketplace."""
+        new_id = uuid.uuid4()
+        title = edits.get('title', old.title)
+        description = edits.get('description', old.description)
+        values = edits.get('values', old.values)
+        created_at = datetime.utcnow()
+        cassandra_session.execute(
+            """INSERT INTO services (service_id, type, title, description, provider_id,
+               provider_name, sphere_id, sphere_name, status, created_at, values, likes,
+               project_name, image_key, cadence, acting_user_id, acting_user_name,
+               image, version, is_current, replaces_service_id)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            [new_id, old.type, title, description, old.provider_id, old.provider_name,
+             old.sphere_id, old.sphere_name, 'Posted', created_at, values or [], 0,
+             old.project_name, old.image_key, old.cadence, old.acting_user_id,
+             old.acting_user_name, old.image, (old.version or 1) + 1, True, old.service_id])
+        # Freeze the previous version so it no longer appears as the live opening.
+        cassandra_session.execute(
+            "UPDATE services SET is_current = false WHERE service_id = %s", [old.service_id])
+        return cls.get_by_id(new_id)
+
+    @classmethod
+    def get_history(cls, service_id):
+        """Ordered list (newest→oldest) of the *previous* versions of an opening,
+        walking the replaces_service_id chain backward from the current one.
+        Every version in the chain is a frozen one that a version-branching edit
+        created, so each relates to an exchange by construction."""
+        history = []
+        cur = cls.get_by_id(service_id)
+        seen = set()
+        while cur and cur.replaces_service_id and cur.replaces_service_id not in seen:
+            seen.add(cur.replaces_service_id)
+            prev = cls.get_by_id(cur.replaces_service_id)
+            if not prev:
+                break
+            history.append(prev)
+            cur = prev
+        return history
 
     # ── Acceptances (two-step: accept → provider confirms → exchange) ──────────
     @staticmethod

@@ -10,6 +10,7 @@ const NewAllianceForm = ({ isVisible, spheres = [], onCreateAlliance, onCancel }
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [sphereId, setSphereId] = useState('');
+  const [joinPolicy, setJoinPolicy] = useState('open');
   const [image, setImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -36,6 +37,7 @@ const NewAllianceForm = ({ isVisible, spheres = [], onCreateAlliance, onCancel }
         name, description, location, image,
         sphere_id: sphereId,
         sphere_name: sphere ? sphere.name : '',
+        join_policy: joinPolicy,
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create alliance.');
@@ -70,6 +72,12 @@ const NewAllianceForm = ({ isVisible, spheres = [], onCreateAlliance, onCancel }
             ))}
           </select>
         )}
+
+        <label htmlFor="alliance-join-policy">Membership join policy:</label>
+        <select id="alliance-join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
+          <option value="open">Open — anyone can join directly</option>
+          <option value="approval">Approval required — a Lead or Board member must approve</option>
+        </select>
 
         <label htmlFor="alliance-location">Geographical Location:</label>
         <input type="text" id="alliance-location" value={location} onChange={(e) => setLocation(e.target.value)} />

@@ -28,7 +28,7 @@ def _resolve_user_names(ids):
 
 
 class Sphere:
-    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None):
+    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False):
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -41,6 +41,10 @@ class Sphere:
         self.projects = projects
         self.values = values
         self.member_roles = member_roles or {}
+        # Governance flags (Phase 5): a sandbox sphere auto-enrolls every new
+        # user; a public sphere is viewable by logged-out visitors.
+        self.is_sandbox = bool(is_sandbox)
+        self.is_public = bool(is_public)
 
     def members_list(self):
         """[{id, name, role}] for the sphere — participants are stored as bare
@@ -66,7 +70,9 @@ class Sphere:
             'participants': self.participants,
             'alliances': self.alliances,
             'projects': self.projects,
-            'values': self.values
+            'values': self.values,
+            'is_sandbox': self.is_sandbox,
+            'is_public': self.is_public
         }
         if include_members:
             d['members'] = self.members_list()
@@ -145,6 +151,50 @@ class Sphere:
             [[user_uuid], sphere_id]
         )
         return False
+
+    @classmethod
+    def set_governance(cls, sphere_id, is_sandbox=None, is_public=None):
+        """Update a sphere's governance flags. Only the flags passed (non-None)
+        are written, so callers can update sandbox/public independently."""
+        sets, params = [], []
+        if is_sandbox is not None:
+            sets.append("is_sandbox = %s")
+            params.append(bool(is_sandbox))
+        if is_public is not None:
+            sets.append("is_public = %s")
+            params.append(bool(is_public))
+        if not sets:
+            return
+        params.append(sphere_id)
+        cassandra_session.execute(
+            f"UPDATE spheres SET {', '.join(sets)} WHERE sphere_id = %s", params)
+
+    @classmethod
+    def sandbox_ids(cls):
+        """List of (sphere_id) for spheres flagged as sandboxes — every new user
+        is auto-enrolled into these on registration."""
+        rows = cassandra_session.execute("SELECT sphere_id, is_sandbox FROM spheres")
+        return [r.sphere_id for r in rows if getattr(r, 'is_sandbox', False)]
+
+    @classmethod
+    def get_by_id(cls, sphere_id):
+        """Full sphere by id, including governance flags. Returns None if absent."""
+        try:
+            sid = sphere_id if isinstance(sphere_id, uuid.UUID) else uuid.UUID(str(sphere_id))
+        except (ValueError, TypeError):
+            return None
+        row = cassandra_session.execute(
+            "SELECT * FROM spheres WHERE sphere_id = %s", [sid]).one()
+        if not row:
+            return None
+        return cls(
+            sphere_id=row.sphere_id, name=row.name, description=row.description,
+            meaning_graph=row.meaning_graph, location=row.location, image=row.image,
+            admin1=row.admin1, participants=row.participants, alliances=row.alliances,
+            projects=row.projects, values=row.values,
+            member_roles=getattr(row, 'member_roles', None),
+            is_sandbox=getattr(row, 'is_sandbox', False),
+            is_public=getattr(row, 'is_public', False))
 
     @classmethod
     def member_sphere_ids(cls, user_id):

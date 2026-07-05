@@ -2,13 +2,16 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useEntityIndex } from '../utils/useEntityIndex';
 import '../styles/Projects.css';
+import '../styles/ValueCardChip.css';
+import ValueCardChip from './ValueCardChip';
+import CardBanner from './CardBanner';
 
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.id}`);
 
 const ROLE_LABEL = { manager: 'Manager', contributor: 'Contributor', observer: 'Observer' };
 
-const ProjectCard = ({ id, name, sphere_id, sphere_name, owner_alliance, owner_name, owner_id, participants, description, values, currentUserId, onJoin, onLike }) => {
+const ProjectCard = ({ id, name, sphere_id, sphere_name, owner_alliance, owner_name, owner_id, participants, description, values, valueCards = [], has_image = false, currentUserId, onJoin, onLike }) => {
   const navigate = useNavigate();
   const { entityHref } = useEntityIndex();
   const projectHref = id ? `/project?id=${id}` : '/project';
@@ -28,6 +31,7 @@ const ProjectCard = ({ id, name, sphere_id, sphere_name, owner_alliance, owner_n
 
   return (
     <div className="project" onClick={() => navigate(projectHref)}>
+      <CardBanner imageUrl={has_image && id ? `/api/projects/${id}/image` : null} alt={name} />
       <div className="project-header">
         <div className="project-left">
           {sphere_name && (
@@ -81,11 +85,21 @@ const ProjectCard = ({ id, name, sphere_id, sphere_name, owner_alliance, owner_n
       <div className="project-description-container">
         <p className="project-description">{description}</p>
       </div>
-      <div className="project-values">
-        {(values || []).map((value, index) => (
-          <span key={index}>#{value}</span>
-        ))}
-      </div>
+      {(valueCards.length > 0 || (values || []).length > 0) && (
+        <div className="project-values">
+          {valueCards.length > 0 ? (
+            <div className="vc-chips-row">
+              {valueCards.map((card, i) => (
+                <ValueCardChip key={card.card_id || i} card={card} subjectLabel="We care about" currentUserId={currentUserId} />
+              ))}
+            </div>
+          ) : (
+            (values || []).map((value, index) => (
+              <span key={index}>#{value}</span>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

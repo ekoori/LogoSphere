@@ -421,3 +421,63 @@
 .xc-receipt-photos { display: flex; flex-wrap: wrap; gap: 0.5em; margin-top: 0.55em; }
 .xc-receipt-photo { width: 96px; height: 96px; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--border-soft); box-shadow: var(--shadow-sm); }
 .xc-photo-hint { font-size: 0.78rem; color: var(--ink-faint); }
+
+/* ── Opening versioning (edit form + previous-versions list) ───────────── */
+.xc-section-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.xc-inline-edit-btn {
+    flex: none;
+    background: transparent;
+    border: 1px solid var(--border-soft, #d8d2c4);
+    color: var(--moss-deep, #3a4a2f);
+    border-radius: var(--r-pill, 999px);
+    padding: 0.25em 0.85em;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.xc-inline-edit-btn:hover {
+    background: var(--paper, #f5f1e8);
+    border-color: var(--moss, #5a6b45);
+}
+.xc-version-note {
+    margin: 0 0 0.6rem;
+    font-size: 0.85rem;
+    color: var(--terracotta-deep, #a5502f);
+    font-style: italic;
+}
+.xc-edit-form { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.4rem; }
+.xc-edit-label { font-size: 0.8rem; font-weight: 600; color: var(--ink-faint, #7a7362); }
+.xc-edit-input,
+.xc-edit-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.55em 0.7em;
+    border: 1px solid var(--border-soft, #d8d2c4);
+    border-radius: var(--r-md, 10px);
+    font: inherit;
+    background: var(--surface, #fff);
+    resize: vertical;
+}
+.xc-edit-input:focus,
+.xc-edit-textarea:focus { outline: none; border-color: var(--moss, #5a6b45); }
+.xc-edit-hint { font-size: 0.78rem; color: var(--ink-faint, #7a7362); margin: 0.2rem 0 0; }
+.xc-edit-actions { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+.xc-edit-ok { color: var(--moss-deep, #3a4a2f); font-size: 0.85rem; margin-top: 0.5rem; }
+.xc-edit-err { color: var(--terracotta-deep, #a5502f); font-size: 0.85rem; margin-top: 0.5rem; }
+
+.xc-version-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.xc-version-item {
+    padding: 0.55rem 0.65rem;
+    background: var(--paper, #f5f1e8);
+    border-radius: var(--r-md, 10px);
+    border: 1px solid var(--border-soft, #e4dccd);
+}
+.xc-version-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.xc-version-title { font-weight: 600; font-size: 0.88rem; color: var(--moss-deep, #3a4a2f); }
+.xc-version-exchanges { display: flex; flex-direction: column; gap: 0.15rem; margin-top: 0.3rem; }
+.xc-version-exchange-link { font-size: 0.8rem; color: var(--terracotta-deep, #a5502f); }

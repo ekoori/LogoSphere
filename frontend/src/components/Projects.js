@@ -13,6 +13,7 @@ const STATUS_STEPS = ['Initiated', 'In Progress', 'Completed', 'Receipted'];
 const Projects = () => {
   const { userId } = useLogin();
   const [projects, setProjects] = useState([]);
+  const [projectCards, setProjectCards] = useState({});
   const [mySpheres, setMySpheres] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -47,6 +48,19 @@ const Projects = () => {
           statusButtons: STATUS_STEPS.map((s) => ({ status: s, label: s })),
         }));
       setProjects(fetched);
+
+      // Pull each project's value cards in parallel so the cards can show
+      // value-card chips instead of hashtags.
+      const results = await Promise.all(
+        fetched.map((p) =>
+          api.get(`/api/value_cards/${p.id}`)
+            .then((r) => ({ id: p.id, cards: r.data || [] }))
+            .catch(() => ({ id: p.id, cards: [] }))
+        )
+      );
+      const cardMap = {};
+      results.forEach((r) => { cardMap[r.id] = r.cards; });
+      setProjectCards(cardMap);
     } catch (error) {
       console.error('Error fetching projects:', error);
     }
@@ -100,7 +114,7 @@ const Projects = () => {
         ) : (
           <div className="projects-grid">
             {projects.map((project) => (
-              <ProjectCard key={project.id} {...project} currentUserId={userId} onJoin={handleJoin} onLike={() => {}} />
+              <ProjectCard key={project.id} {...project} valueCards={projectCards[project.id] || []} currentUserId={userId} onJoin={handleJoin} onLike={() => {}} />
             ))}
           </div>
         )}

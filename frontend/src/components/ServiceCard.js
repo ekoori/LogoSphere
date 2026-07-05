@@ -196,17 +196,6 @@ function ServiceCard({
                     onClick={(e) => e.stopPropagation()}
                 />
                 <p className="description">{description}</p>
-                <div className="service-project">
-                    {project
-                        ? (
-                            <>
-                                <span className="muted">Part of</span>
-                                <br />
-                                <span className="service-project-name">{project}</span>
-                            </>
-                        )
-                        : <span className="muted">Standalone gift</span>}
-                </div>
             </div>
 
             <StatusProgression steps={steps} currentIndex={idx} cancelled={cancelled} />

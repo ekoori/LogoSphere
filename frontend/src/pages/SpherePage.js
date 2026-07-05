@@ -23,7 +23,7 @@ function SpherePage() {
     const [params] = useSearchParams();
     const id = params.get('id');
     const name = params.get('name');
-    const { userId } = useLogin();
+    const { userId, isPlatformAdmin, authChecked } = useLogin();
     const { entityHref } = useEntityIndex();
     const [sphere, setSphere] = useState(null);
     const [openings, setOpenings] = useState([]);
@@ -34,7 +34,25 @@ function SpherePage() {
     const [showNewOpening, setShowNewOpening] = useState(false);
 
     const fetchSphere = useCallback(async () => {
+        // Wait until the session check resolves so a logged-in user doesn't
+        // briefly fetch through the anonymous (public-only) path.
+        if (!authChecked) return;
         try {
+            // Logged-out visitor: only a sphere flagged `is_public` is viewable,
+            // via a dedicated no-auth endpoint that bundles its activity.
+            if (!userId) {
+                if (!id) { setSphere(null); return; }
+                try {
+                    const res = await api.get(`/api/public/spheres/${id}`);
+                    const pub = res.data;
+                    setSphere(pub);
+                    setOpenings((pub.openings || []).map(mapService));
+                } catch (_) {
+                    setSphere(null); // private sphere → nothing to show
+                }
+                return;
+            }
+
             const res = await api.get('/api/spheres');
             const list = res.data || [];
             const found = list.find((s) =>
@@ -79,7 +97,7 @@ function SpherePage() {
         } finally {
             setLoading(false);
         }
-    }, [id, name, userId]);
+    }, [id, name, userId, authChecked]);
 
     useEffect(() => { fetchSphere(); }, [fetchSphere]);
 
@@ -94,8 +112,12 @@ function SpherePage() {
     const alliances = sphere.alliances || [];
     const projects = sphere.projects || [];
     const isMember = !!userId && participants.some(p => (p.id || p) === userId);
-    const isAdmin = !!userId && userId === sphere.admin1;
-    const canManage = !!userId && (participants.length === 0 || isMember);
+    const isAdmin = (!!userId && userId === sphere.admin1) || isPlatformAdmin;
+    const canManage = (!!userId && (participants.length === 0 || isMember)) || isPlatformAdmin;
+    // A public sphere's activity is visible to logged-out visitors (who reached
+    // this page through the no-auth public endpoint); members and platform
+    // admins always see it.
+    const canViewActivity = isMember || isPlatformAdmin || (!userId && !!sphere.is_public);
 
     const actingAs = { id: sphere.sphere_id, name: sphere.name, sphereId: sphere.sphere_id, sphereName: sphere.name };
 
@@ -138,7 +160,7 @@ function SpherePage() {
                 )}
             </EntityBanner>
 
-            {!isMember ? (
+            {!canViewActivity ? (
                 <p className="ep-empty" style={{ padding: '0 0.5rem' }}>
                     {userId
                         ? "Join this sphere to see its meaning trail, openings, alliances, and projects."

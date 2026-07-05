@@ -54,6 +54,9 @@ class User(UserMixin):
 
 
     def to_dict(self):
+        # Local import avoids any module load-order coupling with the
+        # permissions helper (which reads the credentials table).
+        from app.utils.permissions import is_platform_admin
         return {
             'name': self.name,
             'user_id': str(self.user_id),
@@ -61,6 +64,7 @@ class User(UserMixin):
             'session_id': str(self.session_id) if self.session_id else None,
             'surname': self.surname,
             'location': self.location,
+            'is_platform_admin': is_platform_admin(self.user_id),
             'profile_picture': base64.b64encode(self.profile_picture).decode('utf-8') if self.profile_picture else None
         }
 

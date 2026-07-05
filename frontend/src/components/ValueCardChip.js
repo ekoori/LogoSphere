@@ -53,7 +53,7 @@ function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = nul
             <button
                 className="vc-chip"
                 style={{ '--chip-accent': accent }}
-                onClick={() => setOpen(true)}
+                onClick={(e) => { e.stopPropagation(); setOpen(true); }}
                 title={`${card.title} — click to expand`}
             >
                 <span className="vc-chip-glyph" aria-hidden="true">{glyph}</span>

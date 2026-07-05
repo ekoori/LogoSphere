@@ -5,7 +5,7 @@ from app.models.openings import Service
 from app.models.user import User
 from app.models.meaning_trail import MeaningTrail
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids
+from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
@@ -41,6 +41,14 @@ def _enrich_service(s, viewer, include_exchanges=False):
     d['activity'] = Service.activity_summary(sid, s.provider_id) if s.cadence == 'perpetual' else None
     if include_exchanges:
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
+        # Previous versions of this opening (each frozen because it had a
+        # related exchange), with the exchange(s) that linked to them.
+        history = []
+        for hv in Service.get_history(sid):
+            hd = hv.to_dict(include_image=False)
+            hd['exchanges'] = Service.acceptances(hv.service_id, status='confirmed')
+            history.append(hd)
+        d['history'] = history
     return d
 
 
@@ -85,14 +93,73 @@ def create_service(user_id=None):
 
 
 @validate_session
+def edit_opening(service_id, user_id=None):
+    """Edit an opening's title/description/values.
+
+    If the opening already has a related exchange, the current version is frozen
+    and a new current version is branched (so the exchange keeps linking to the
+    exact version it was created from). Otherwise the opening is edited in place.
+    A frozen (historical) version can never be edited directly.
+    """
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        service_uuid = uuid.UUID(service_id)
+        service = Service.get_by_id(service_uuid)
+        if not service:
+            return jsonify({'message': 'Opening not found'}), 404
+        if not _is_provider_or_manager(service, user_id):
+            return jsonify({'message': 'Only the provider can edit this opening'}), 403
+        if not service.is_current:
+            return jsonify({'message': 'This is a past version and can no longer be edited'}), 409
+
+        data = request.get_json(silent=True) or {}
+        edits = {}
+        if 'title' in data:
+            title = (data.get('title') or '').strip()
+            if not title:
+                return jsonify({'message': 'Title cannot be empty'}), 400
+            edits['title'] = title
+        if 'description' in data:
+            edits['description'] = data.get('description') or ''
+        if 'values' in data and isinstance(data['values'], list):
+            edits['values'] = data['values']
+        if not edits:
+            return jsonify({'message': 'No editable fields provided'}), 400
+
+        if Service.has_related_exchange(service_uuid):
+            # An exchange has started from this version — freeze it and branch a
+            # new current version rather than mutating what the exchange links to.
+            new_service = Service.create_version(service, edits)
+            return jsonify({'message': 'A new version of the opening was created',
+                            'versioned': True,
+                            'service': new_service.to_dict(include_image=False)}), 200
+
+        Service.update_in_place(service_uuid, edits)
+        updated = Service.get_by_id(service_uuid)
+        return jsonify({'message': 'Opening updated', 'versioned': False,
+                        'service': updated.to_dict(include_image=False)}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid opening id'}), 400
+    except Exception as e:
+        logger.error(f"Error in edit_opening: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def get_services(user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
         viewer = uuid.UUID(str(user_id)) if user_id else None
         joined_spheres = Sphere.member_sphere_ids(viewer)
+        see_all = is_platform_admin(viewer)
         services = []
         for s in Service.get_all():
+            # Frozen historical versions (superseded by a newer edit) never
+            # appear in the marketplace — only the current version does.
+            if not s.is_current:
+                continue
             is_provider = viewer is not None and _is_provider_or_manager(s, viewer)
 
             # A single opening disappears from the marketplace once it has been
@@ -103,8 +170,8 @@ def get_services(user_id=None):
 
             # Sphere-scoped openings are only visible to that sphere's members
             # (a member sees their own opening regardless). Standalone openings
-            # (no sphere_id) remain visible to everyone.
-            if s.sphere_id and s.sphere_id not in joined_spheres and not is_provider:
+            # (no sphere_id) remain visible to everyone. Platform admins see all.
+            if not see_all and s.sphere_id and s.sphere_id not in joined_spheres and not is_provider:
                 continue
 
             services.append(_enrich_service(s, viewer))
@@ -130,7 +197,7 @@ def get_service(service_id, user_id=None):
 
         viewer = uuid.UUID(str(user_id))
         is_provider = _is_provider_or_manager(service, viewer)
-        if service.sphere_id and not is_provider:
+        if service.sphere_id and not is_provider and not is_platform_admin(viewer):
             joined_spheres = Sphere.member_sphere_ids(viewer)
             if service.sphere_id not in joined_spheres:
                 return jsonify({'message': 'Not authorized to view this opening'}), 403

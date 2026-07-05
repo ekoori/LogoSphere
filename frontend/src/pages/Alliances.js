@@ -8,6 +8,7 @@ import { useLogin } from '../App';
 const Alliances = () => {
   const { userId } = useLogin();
   const [alliances, setAlliances] = useState([]);
+  const [allianceCards, setAllianceCards] = useState({});
   const [mySpheres, setMySpheres] = useState([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -37,6 +38,19 @@ const Alliances = () => {
         values: a.values || [],
       }));
       setAlliances(fetched);
+
+      // Pull each alliance's value cards in parallel so the cards can show
+      // value-card chips instead of hashtags.
+      const results = await Promise.all(
+        fetched.map((a) =>
+          api.get(`/api/value_cards/${a.id}`)
+            .then((r) => ({ id: a.id, cards: r.data || [] }))
+            .catch(() => ({ id: a.id, cards: [] }))
+        )
+      );
+      const cardMap = {};
+      results.forEach((r) => { cardMap[r.id] = r.cards; });
+      setAllianceCards(cardMap);
     } catch (error) {
       console.error('Error fetching alliances:', error);
     }
@@ -54,6 +68,7 @@ const Alliances = () => {
     fd.append('location', data.location || '');
     fd.append('sphere_id', data.sphere_id || '');
     fd.append('sphere_name', data.sphere_name || '');
+    fd.append('join_policy', data.join_policy || 'open');
     if (data.image) fd.append('image', data.image);
     await api.post('/api/alliances', fd);
     setIsFormVisible(false);
@@ -90,7 +105,7 @@ const Alliances = () => {
         ) : (
           <div className="alliances-grid">
             {alliances.map((alliance) => (
-              <AllianceCard key={alliance.id} {...alliance} currentUserId={userId} onJoin={handleJoin} />
+              <AllianceCard key={alliance.id} {...alliance} valueCards={allianceCards[alliance.id] || []} currentUserId={userId} onJoin={handleJoin} />
             ))}
           </div>
         )}

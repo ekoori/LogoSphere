@@ -22,7 +22,7 @@ const UserLogin = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const { setIsLoggedIn, setUserId } = useLogin();
+    const { setIsLoggedIn, setUserId, setUserName, setIsPlatformAdmin } = useLogin();
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -40,6 +40,8 @@ const UserLogin = () => {
             if (response.status === 200 && response.data.data) {
                 setIsLoggedIn(true);
                 setUserId(response.data.data.user_id);
+                setUserName((response.data.data.name || '').trim());
+                setIsPlatformAdmin(!!response.data.data.is_platform_admin);
                 navigate('/profile');
             }
         } catch (error) {
