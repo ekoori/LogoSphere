@@ -30,10 +30,11 @@ function Openings({ services, newServiceVisible, onServiceAdded, currentUserId, 
   }, [newServiceVisible]);
 
   // Step 1: recipient signals acceptance. No exchange yet — the provider must
-  // confirm. Refetch so the card reflects the pending state.
-  const handleAccept = async (serviceId) => {
+  // confirm. `actingAsId` (optional) accepts on behalf of an alliance/project.
+  // Refetch so the card reflects the pending state.
+  const handleAccept = async (serviceId, actingAsId = null) => {
       try {
-          await api.post(`/api/openings/${serviceId}/accept`);
+          await api.post(`/api/openings/${serviceId}/accept`, actingAsId ? { acting_as_id: actingAsId } : {});
           if (onServiceAdded) onServiceAdded();
       } catch (e) {
           console.error('Failed to accept opening:', e);
@@ -75,7 +76,7 @@ function Openings({ services, newServiceVisible, onServiceAdded, currentUserId, 
                       key={service.id}
                       {...service}
                       currentUserId={currentUserId}
-                      onAccept={() => handleAccept(service.id)}
+                      onAccept={(actingAsId) => handleAccept(service.id, actingAsId)}
                       onConfirm={(accepterId) => handleConfirm(service.id, accepterId)}
                       onReject={(accepterId) => handleReject(service.id, accepterId)}
                   />

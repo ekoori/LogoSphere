@@ -40,6 +40,37 @@ def can_manage_entity(entity_id, user_id):
     return False
 
 
+def entity_sphere_ids(entity_id):
+    """The set of sphere ids (as str) an entity belongs to, for enforcing that
+    an entity acting in an opening is within that opening's sphere. A sphere is
+    'in' itself; an alliance or project is in its single `sphere_id`. Returns an
+    empty set if the entity isn't found or has no sphere."""
+    try:
+        eid = uuid.UUID(str(entity_id))
+    except (ValueError, TypeError):
+        return set()
+
+    row = cassandra_session.execute(
+        "SELECT sphere_id FROM spheres WHERE sphere_id = %s", [eid]
+    ).one()
+    if row:
+        return {str(eid)}
+
+    row = cassandra_session.execute(
+        "SELECT sphere_id FROM alliances WHERE alliance_id = %s", [eid]
+    ).one()
+    if row:
+        return {str(row.sphere_id)} if row.sphere_id else set()
+
+    row = cassandra_session.execute(
+        "SELECT sphere_id FROM projects WHERE project_id = %s", [eid]
+    ).one()
+    if row:
+        return {str(row.sphere_id)} if row.sphere_id else set()
+
+    return set()
+
+
 def get_entity_info(entity_id):
     """Return {'kind': 'sphere'|'alliance'|'project', 'name': str} for an
     entity id, or None if it doesn't identify a sphere/alliance/project."""

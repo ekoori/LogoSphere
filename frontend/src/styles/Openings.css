@@ -151,6 +151,34 @@
 .service-accept-btn:hover:not(:disabled) { background: var(--moss); transform: translateY(-1px); }
 .service-accept-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* "Accept as" picker — choose to respond personally or on behalf of an
+   alliance/project you manage that's in the opening's sphere. */
+.service-accept-as {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.6em;
+}
+.service-accept-as-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-faint);
+    white-space: nowrap;
+}
+.service-accept-as select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.45em 0.6em;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+.service-pending-via { color: var(--ink-faint); font-weight: 500; }
+
 /* Recipient waiting on the provider, or a single opening taken by someone else */
 .service-awaiting {
     display: block;

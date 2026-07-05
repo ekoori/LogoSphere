@@ -190,50 +190,73 @@ class Service:
             )
 
     # ── Acceptances (two-step: accept → provider confirms → exchange) ──────────
+    @staticmethod
+    def _acceptance_dict(r):
+        return {
+            'accepter_id': str(r.accepter_id),
+            'accepter_name': r.accepter_name,
+            'status': r.status,
+            'exchange_id': str(r.exchange_id) if r.exchange_id else None,
+            'created_at': r.created_at,
+            # Set when the accepter is an entity (alliance/project) and a human
+            # accepted on its behalf — "Joe on behalf of <Entity>".
+            'acting_user_id': str(r.acting_user_id) if getattr(r, 'acting_user_id', None) else None,
+            'acting_user_name': getattr(r, 'acting_user_name', None),
+        }
+
     @classmethod
-    def record_acceptance(cls, service_id, accepter_id, accepter_name):
-        """Register a pending acceptance. Idempotent per (service, accepter)."""
+    def record_acceptance(cls, service_id, accepter_id, accepter_name,
+                          acting_user_id=None, acting_user_name=None):
+        """Register a pending acceptance. Idempotent per (service, accepter).
+        When accepting on behalf of an entity, `accepter_id` is the entity and
+        `acting_user_*` name the human who acted."""
         cassandra_session.execute(
             "INSERT INTO opening_acceptances "
-            "(service_id, accepter_id, accepter_name, status, created_at) "
-            "VALUES (%s, %s, %s, 'pending', %s)",
-            [service_id, accepter_id, accepter_name, datetime.utcnow()]
+            "(service_id, accepter_id, accepter_name, status, created_at, "
+            "acting_user_id, acting_user_name) "
+            "VALUES (%s, %s, %s, 'pending', %s, %s, %s)",
+            [service_id, accepter_id, accepter_name, datetime.utcnow(),
+             acting_user_id, acting_user_name]
         )
+
+    _ACC_COLS = ("accepter_id, accepter_name, status, exchange_id, created_at, "
+                 "acting_user_id, acting_user_name")
 
     @classmethod
     def get_acceptance(cls, service_id, accepter_id):
         row = cassandra_session.execute(
-            "SELECT accepter_id, accepter_name, status, exchange_id, created_at "
-            "FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s",
+            f"SELECT {cls._ACC_COLS} FROM opening_acceptances "
+            "WHERE service_id = %s AND accepter_id = %s",
             [service_id, accepter_id]
         ).one()
-        if not row:
-            return None
-        return {
-            'accepter_id': str(row.accepter_id),
-            'accepter_name': row.accepter_name,
-            'status': row.status,
-            'exchange_id': str(row.exchange_id) if row.exchange_id else None,
-            'created_at': row.created_at,
-        }
+        return cls._acceptance_dict(row) if row else None
+
+    @classmethod
+    def acceptance_for_actor(cls, service_id, user_id):
+        """The acceptance a human is party to on this opening — either accepted
+        personally (accepter_id == user) or on an entity's behalf
+        (acting_user_id == user). Used for the accepter's own 'my acceptance'
+        view, which must resolve even when the entity, not the human, is the
+        row's accepter."""
+        direct = cls.get_acceptance(service_id, user_id)
+        if direct:
+            return direct
+        for a in cls.acceptances(service_id):
+            if a.get('acting_user_id') and str(a['acting_user_id']) == str(user_id):
+                return a
+        return None
 
     @classmethod
     def acceptances(cls, service_id, status=None):
         rows = cassandra_session.execute(
-            "SELECT accepter_id, accepter_name, status, exchange_id, created_at "
-            "FROM opening_acceptances WHERE service_id = %s", [service_id]
+            f"SELECT {cls._ACC_COLS} FROM opening_acceptances WHERE service_id = %s",
+            [service_id]
         )
         out = []
         for r in rows:
             if status and r.status != status:
                 continue
-            out.append({
-                'accepter_id': str(r.accepter_id),
-                'accepter_name': r.accepter_name,
-                'status': r.status,
-                'exchange_id': str(r.exchange_id) if r.exchange_id else None,
-                'created_at': r.created_at,
-            })
+            out.append(cls._acceptance_dict(r))
         return out
 
     @classmethod

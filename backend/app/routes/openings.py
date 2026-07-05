@@ -5,7 +5,7 @@ from app.models.openings import Service
 from app.models.user import User
 from app.models.meaning_trail import MeaningTrail
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity, get_entity_info
+from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
@@ -33,7 +33,9 @@ def _enrich_service(s, viewer, include_exchanges=False):
     d['likes'] = Service.like_count(sid)
     d['liked_by_current_user'] = Service.is_liked_by(sid, viewer) if viewer else False
     d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
-    d['my_acceptance'] = Service.get_acceptance(sid, viewer) if viewer else None
+    # Resolve the viewer's own acceptance even when they accepted on behalf of
+    # an entity (the row is keyed by the entity, not the human).
+    d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer) if viewer else None
     d['activity'] = Service.activity_summary(sid, s.provider_id) if s.cadence == 'perpetual' else None
     if include_exchanges:
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
@@ -142,7 +144,13 @@ def get_service(service_id, user_id=None):
 @validate_session
 def accept_service(service_id, user_id=None):
     """Step 1 of two — the recipient signals acceptance. This records a pending
-    acceptance; the exchange is only created once the provider confirms."""
+    acceptance; the exchange is only created once the provider confirms.
+
+    A human may accept on behalf of an alliance or project they manage by
+    passing `acting_as_id`: the entity becomes the accepter (and the party in
+    the resulting exchange), with the human recorded as having acted for it.
+    The acting entity must belong to the opening's sphere when the opening is
+    sphere-scoped — an entity can only act inside spheres it's part of."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
@@ -154,24 +162,50 @@ def accept_service(service_id, user_id=None):
             return jsonify({'message': 'You cannot accept your own opening'}), 400
         if service.status in ('Completed', 'Cancelled'):
             return jsonify({'message': 'This opening is no longer open'}), 409
+
+        # Optionally accept "as" an alliance/project the caller manages.
+        data = request.get_json(silent=True) or {}
+        acting_as_id = data.get('acting_as_id')
+        acting_user_id = None
+        acting_user_name = None
+        if acting_as_id:
+            info = get_entity_info(acting_as_id)
+            if not info or info['kind'] not in ('alliance', 'project'):
+                return jsonify({'message': 'You can only accept as an alliance or project'}), 400
+            if str(acting_as_id) == str(service.provider_id):
+                return jsonify({'message': 'This entity posted the opening — it can\'t accept it'}), 400
+            if not can_manage_entity(acting_as_id, user_id):
+                return jsonify({'message': 'Not authorized to accept on behalf of this entity'}), 403
+            # The entity must be within the opening's sphere (if it has one).
+            if service.sphere_id and str(service.sphere_id) not in entity_sphere_ids(acting_as_id):
+                return jsonify({'message': f"This {info['kind']} isn't part of the opening's sphere"}), 400
+            accepter_uuid = uuid.UUID(str(acting_as_id))
+            accepter_name = info['name']
+            acting_user_id = uuid.UUID(str(user_id))
+            actor = User.get(str(user_id))
+            if actor:
+                acting_user_name = f"{actor.name or ''} {actor.surname or ''}".strip() or actor.email
+        else:
+            accepter_uuid = uuid.UUID(str(user_id))
+            accepter = User.get(str(user_id))
+            if not accepter:
+                return jsonify({'message': 'User not found'}), 404
+            accepter_name = f"{accepter.name or ''} {accepter.surname or ''}".strip() or accepter.email
+
         # A single opening can only be locked to one accepter.
         if service.cadence != 'perpetual' and service.status == 'Accepted' \
-                and str(getattr(service, 'accepted_by', '')) != str(user_id):
+                and str(getattr(service, 'accepted_by', '')) != str(accepter_uuid):
             return jsonify({'message': 'This opening has already been accepted'}), 409
 
-        existing = Service.get_acceptance(service_uuid, uuid.UUID(str(user_id)))
+        existing = Service.acceptance_for_actor(service_uuid, uuid.UUID(str(user_id)))
         if existing:
             msg = 'Already confirmed' if existing['status'] == 'confirmed' else 'Awaiting confirmation'
             return jsonify({'message': msg, 'acceptance': existing}), 200
 
-        accepter = User.get(str(user_id))
-        if not accepter:
-            return jsonify({'message': 'User not found'}), 404
-        accepter_name = f"{accepter.name or ''} {accepter.surname or ''}".strip() or accepter.email
-
-        Service.record_acceptance(service_uuid, uuid.UUID(str(user_id)), accepter_name)
+        Service.record_acceptance(service_uuid, accepter_uuid, accepter_name,
+                                  acting_user_id=acting_user_id, acting_user_name=acting_user_name)
         if service.cadence != 'perpetual':
-            Service.mark_accepted(service_uuid, uuid.UUID(str(user_id)), accepter_name)
+            Service.mark_accepted(service_uuid, accepter_uuid, accepter_name)
 
         # Notify whoever can actually read a notification: for an opening
         # posted as an entity, that's the human who acted on its behalf
@@ -184,7 +218,7 @@ def accept_service(service_id, user_id=None):
             link=f'/opening?id={service_id}',
         )
 
-        logger.info(f"Opening {service_id} accepted (pending) by {user_id}")
+        logger.info(f"Opening {service_id} accepted (pending) by {user_id} as {accepter_uuid}")
         return jsonify({
             'message': 'Acceptance recorded — awaiting the provider\'s confirmation',
             'status': 'pending',
@@ -233,6 +267,10 @@ def confirm_service(service_id, user_id=None):
             acting_user_name=getattr(service, 'acting_user_name', None),
             long_description=getattr(service, 'description', None),
             image=getattr(service, 'image', None),
+            # When the opening was accepted on behalf of an entity, carry the
+            # human who accepted through to the exchange's recipient side.
+            recipient_acting_user_id=acceptance.get('acting_user_id'),
+            recipient_acting_user_name=acceptance.get('acting_user_name'),
         )
         if not exchange_id:
             return jsonify({'message': 'Failed to create exchange'}), 500
@@ -244,8 +282,11 @@ def confirm_service(service_id, user_id=None):
 
         confirmer = User.get(str(user_id))
         confirmer_name = (f"{confirmer.name or ''} {confirmer.surname or ''}".strip() or confirmer.email) if confirmer else service.provider_name
+        # Notify the human on the accepter side — the one who acted for the
+        # entity if it was an entity acceptance, else the accepter directly.
+        notify_accepter = acceptance.get('acting_user_id') or accepter_uuid
         Notification.create(
-            user_id=accepter_uuid, actor_id=user_id, actor_name=confirmer_name,
+            user_id=notify_accepter, actor_id=user_id, actor_name=confirmer_name,
             type_='opening_confirmed',
             message=f'Your acceptance of "{service.title}" was confirmed — the exchange has started',
             link=f'/exchange?id={exchange_id}',

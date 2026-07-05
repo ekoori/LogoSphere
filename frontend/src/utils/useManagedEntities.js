@@ -22,19 +22,22 @@ function hasRole(members, userId, roles) {
 
 function buildManaged([spheres, alliances, projects], userId) {
     const out = [];
+    // sphere_id lets callers scope entities to a given sphere (e.g. accepting an
+    // opening as an entity that must belong to that opening's sphere). A sphere
+    // is "in" itself; an alliance/project carries its own sphere_id.
     (spheres || []).forEach((s) => {
         if (hasRole(s.members, userId)) {
-            out.push({ id: s.sphere_id, name: s.name, kind: 'sphere' });
+            out.push({ id: s.sphere_id, name: s.name, kind: 'sphere', sphere_id: s.sphere_id });
         }
     });
     (alliances || []).forEach((a) => {
         if (hasRole(a.members, userId, ['admin', 'steward'])) {
-            out.push({ id: a.alliance_id || a.id, name: a.name, kind: 'alliance' });
+            out.push({ id: a.alliance_id || a.id, name: a.name, kind: 'alliance', sphere_id: a.sphere_id });
         }
     });
     (projects || []).forEach((p) => {
         if (hasRole(p.members, userId, ['manager', 'steward'])) {
-            out.push({ id: p.project_id || p.id, name: p.name, kind: 'project' });
+            out.push({ id: p.project_id || p.id, name: p.name, kind: 'project', sphere_id: p.sphere_id });
         }
     });
     return out;

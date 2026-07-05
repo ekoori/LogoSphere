@@ -13,6 +13,7 @@ import EntityBanner from '../components/EntityBanner';
 import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { buildOpeningProgress } from '../utils/openingProgress';
+import { useManagedEntities } from '../utils/useManagedEntities';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
@@ -32,6 +33,8 @@ function OpeningPage() {
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState(0);
     const [busy, setBusy] = useState(false);
+    const [acceptAs, setAcceptAs] = useState('');
+    const managed = useManagedEntities(userId);
 
     const fetchService = useCallback(async () => {
         if (!openingId) { setFetchError('No opening ID provided.'); setLoading(false); return; }
@@ -72,7 +75,7 @@ function OpeningPage() {
         if (busy) return;
         setBusy(true);
         try {
-            await api.post(`/api/openings/${openingId}/accept`);
+            await api.post(`/api/openings/${openingId}/accept`, acceptAs ? { acting_as_id: acceptAs } : {});
             await fetchService();
         } catch (e) {
             alert(e.response?.data?.message || 'Could not accept this opening.');
@@ -116,6 +119,11 @@ function OpeningPage() {
     const lockedToOther = service.status === 'Accepted' && !isPerpetual && !service.myAcceptance;
     const canAccept = userId && !isOwnOpening && !service.myAcceptance && !lockedToOther
         && service.status !== 'Cancelled' && service.status !== 'Completed';
+    // Alliances/projects the viewer manages that may accept this opening: only
+    // those within the opening's sphere (or any, if the opening is standalone).
+    const acceptAsOptions = managed.filter(
+        (m) => m.kind !== 'sphere' && (!service.sphereId || String(m.sphere_id) === String(service.sphereId))
+    );
 
     const { steps, currentIndex: stepIdx } = buildOpeningProgress({
         status: service.status,
@@ -200,7 +208,18 @@ function OpeningPage() {
                                 {service.pendingAcceptances.map((p) => (
                                     <div key={p.accepter_id} className="service-pending-row">
                                         <span className="service-pending-name">
-                                            👤 <Link to={`/user?id=${p.accepter_id}`}>{p.accepter_name}</Link>
+                                            👤{' '}
+                                            {p.acting_user_id ? (
+                                                <>
+                                                    {p.accepter_name}
+                                                    <span className="service-pending-via">
+                                                        {' · via '}
+                                                        <Link to={`/user?id=${p.acting_user_id}`}>{p.acting_user_name}</Link>
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <Link to={`/user?id=${p.accepter_id}`}>{p.accepter_name}</Link>
+                                            )}
                                         </span>
                                         <span className="service-pending-actions">
                                             <button className="service-confirm-btn" disabled={busy} onClick={() => handleConfirm(p.accepter_id)}>✓ Confirm</button>
@@ -218,6 +237,17 @@ function OpeningPage() {
                     <div className="xc-sidebar-card">
                         <p className="xc-sidebar-heading">Actions</p>
                         <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} time="" onLike={handleLike} />
+                        {canAccept && acceptAsOptions.length > 0 && (
+                            <label className="service-accept-as" style={{ marginTop: '0.8em' }}>
+                                <span className="service-accept-as-label">Accept as</span>
+                                <select value={acceptAs} onChange={(e) => setAcceptAs(e.target.value)} disabled={busy}>
+                                    <option value="">Myself</option>
+                                    {acceptAsOptions.map((m) => (
+                                        <option key={m.id} value={m.id}>{m.name} ({m.kind})</option>
+                                    ))}
+                                </select>
+                            </label>
+                        )}
                         {canAccept && (
                             <button className="xc-action-btn xc-action-advance" style={{ marginTop: '0.8em' }} disabled={busy} onClick={handleAccept}>
                                 {service.type === 'offer' ? '✓ Accept this Offer' : '✓ Fulfil this Need'}

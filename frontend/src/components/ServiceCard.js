@@ -10,6 +10,7 @@ import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
 import Avatar from './Avatar';
 import { buildOpeningProgress } from '../utils/openingProgress';
+import { useManagedEntities } from '../utils/useManagedEntities';
 import '../styles/Openings.css';
 
 // Spheres may be strings or {id, name} pairs — prefer UUID link when available.
@@ -21,7 +22,7 @@ const sHref = (s) => {
 
 function ServiceCard({
     id,
-    type, title, spheres, provider, providerId, actingUser, actingUserId,
+    type, title, spheres, sphereId, provider, providerId, actingUser, actingUserId,
     description, project, projectId,
     imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
@@ -35,6 +36,15 @@ function ServiceCard({
     const [accepting, setAccepting] = useState(false);
     const [confirmingId, setConfirmingId] = useState(null);
     const [rejectingId, setRejectingId] = useState(null);
+    // Entities (alliances/projects) the viewer manages that may accept this
+    // opening: only those within the opening's sphere (or any, if it's
+    // standalone). Spheres themselves can't be an accepter — you act as a
+    // group inside a sphere, not as the sphere.
+    const managed = useManagedEntities(currentUserId);
+    const acceptAsOptions = managed.filter(
+        (m) => m.kind !== 'sphere' && (!sphereId || String(m.sphere_id) === String(sphereId))
+    );
+    const [acceptAs, setAcceptAs] = useState('');
 
     // Toggle the like on this opening. Optimistic, rolled back on error.
     const handleLike = async (e) => {
@@ -65,7 +75,8 @@ function ServiceCard({
         if (accepting || !onAccept) return;
         setAccepting(true);
         try {
-            await onAccept();
+            // Empty select value = accept as myself; otherwise as the entity.
+            await onAccept(acceptAs || null);
         } finally {
             setAccepting(false);
         }
@@ -208,9 +219,21 @@ function ServiceCard({
                         <div key={p.accepter_id} className="service-pending-row">
                             <span className="service-pending-name">
                                 👤{' '}
-                                <a href={`/user?id=${p.accepter_id}`} onClick={(e) => e.stopPropagation()}>
-                                    {p.accepter_name}
-                                </a>
+                                {p.acting_user_id ? (
+                                    <>
+                                        {p.accepter_name}
+                                        <span className="service-pending-via">
+                                            {' · via '}
+                                            <a href={`/user?id=${p.acting_user_id}`} onClick={(e) => e.stopPropagation()}>
+                                                {p.acting_user_name}
+                                            </a>
+                                        </span>
+                                    </>
+                                ) : (
+                                    <a href={`/user?id=${p.accepter_id}`} onClick={(e) => e.stopPropagation()}>
+                                        {p.accepter_name}
+                                    </a>
+                                )}
                             </span>
                             <span className="service-pending-actions">
                                 <button
@@ -252,6 +275,21 @@ function ServiceCard({
 
             {canAccept && (
                 <div className="service-accept-cta">
+                    {acceptAsOptions.length > 0 && (
+                        <label className="service-accept-as" onClick={(e) => e.stopPropagation()}>
+                            <span className="service-accept-as-label">Accept as</span>
+                            <select
+                                value={acceptAs}
+                                onChange={(e) => setAcceptAs(e.target.value)}
+                                disabled={accepting}
+                            >
+                                <option value="">Myself</option>
+                                {acceptAsOptions.map((m) => (
+                                    <option key={m.id} value={m.id}>{m.name} ({m.kind})</option>
+                                ))}
+                            </select>
+                        </label>
+                    )}
                     <button
                         className="service-accept-btn"
                         onClick={handleAccept}
@@ -274,6 +312,7 @@ ServiceCard.propTypes = {
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     spheres: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,
+    sphereId: PropTypes.string,
     provider: PropTypes.string.isRequired,
     providerId: PropTypes.string,
     actingUser: PropTypes.string,

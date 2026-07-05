@@ -32,6 +32,9 @@ export function mapService(s) {
         type: s.type || 'offer',
         title: s.title,
         spheres,
+        // The opening's sphere id (if scoped) — used to offer only entities that
+        // belong to that sphere when accepting on behalf of one.
+        sphereId: s.sphere_id || null,
         provider: s.provider || 'A member',
         providerId: s.provider_id || null,
         // When posted on behalf of an entity, the human who acted.
@@ -124,12 +127,18 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     const initiatorLabel = initiatorActing ? `${initiatorActing} on behalf of ${initiatorName}` : initiatorName;
     const initiatorLinkId = initiatorActing ? (row.initiator_acting_user_id || null) : (row.initiator_id || null);
 
+    // Symmetric for the recipient: an opening accepted on behalf of an
+    // alliance/project shows "Joe on behalf of <Entity>" and links to the human.
+    const recipientActing = row.recipient_acting_user_name || null;
+    const recipientLabel = recipientActing ? `${recipientActing} on behalf of ${recipientName}` : recipientName;
+    const recipientLinkId = recipientActing ? (row.recipient_acting_user_id || null) : (row.other_user_id || null);
+
     const receipts = [];
     if (row.gratitude_comment) {
         // The receipt (gratitude) is always authored by the recipient.
         receipts.push({
-            author: iAmInitiator ? recipientName : ownerLabel,
-            authorId: iAmInitiator ? (row.other_user_id || null) : (ownerId || null),
+            author: iAmInitiator ? recipientLabel : ownerLabel,
+            authorId: iAmInitiator ? recipientLinkId : (ownerId || null),
             text: row.gratitude_comment,
             time: fmtDate(row.gratitude_comment_timestamp),
             commentType: 'gratitude', ...likeOf('gratitude'), imageUrl: null,
@@ -169,7 +178,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         participants: iAmInitiator
             ? [
                 { name: ownerLabel, id: ownerId },
-                ...(row.other_user_name ? [{ name: recipientName, id: row.other_user_id }] : []),
+                ...(row.other_user_name ? [{ name: recipientLabel, id: recipientLinkId }] : []),
             ]
             : [
                 { name: initiatorLabel, id: initiatorLinkId },

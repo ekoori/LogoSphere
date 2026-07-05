@@ -159,8 +159,11 @@ for col in ["ADD likes int", "ADD project_name text", "ADD image_key text",
         print(f"[WARN] services: {col} — {r}")
 
 # meaning_trail: acting-user columns for entity-initiated exchanges, plus
-# editable-exchange (long description + image) and receipt context.
+# editable-exchange (long description + image) and receipt context. The
+# recipient_acting_* pair mirrors initiator_acting_* for the accepter side —
+# an opening accepted on behalf of an alliance/project the human manages.
 for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name text",
+            "ADD recipient_acting_user_id uuid", "ADD recipient_acting_user_name text",
             "ADD exchange_long_description text", "ADD exchange_image blob",
             "ADD gratitude_comment_context text"]:
     r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
@@ -170,6 +173,17 @@ for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name
         print(f"[SKIP] meaning_trail: {col} (already exists)")
     else:
         print(f"[WARN] meaning_trail: {col} — {r}")
+
+# opening_acceptances: acting-user columns so an opening can be accepted "as"
+# an alliance/project — the entity is the accepter, the human is recorded here.
+for col in ["ADD acting_user_id uuid", "ADD acting_user_name text"]:
+    r = run(f"ALTER TABLE logosphere.opening_acceptances {col}")
+    if r is True:
+        print(f"[OK]   opening_acceptances: {col}")
+    elif "already exists" in str(r).lower() or "duplicate" in str(r).lower():
+        print(f"[SKIP] opening_acceptances: {col} (already exists)")
+    else:
+        print(f"[WARN] opening_acceptances: {col} — {r}")
 
 # spheres: member_roles map (promote members to admin).
 r = run("ALTER TABLE logosphere.spheres ADD member_roles map<uuid, text>")

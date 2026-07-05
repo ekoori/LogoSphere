@@ -149,6 +149,10 @@ class MeaningTrail(Model):
     # acted on its behalf — "Joe on behalf of <Entity>".
     initiator_acting_user_id = columns.UUID()
     initiator_acting_user_name = columns.Text()
+    # Symmetric pair for the recipient side: when an opening was accepted on
+    # behalf of an alliance/project, the human who accepted for it.
+    recipient_acting_user_id = columns.UUID()
+    recipient_acting_user_name = columns.Text()
     # Editable details (inherited from the opening, changeable until finished).
     exchange_long_description = columns.Text()
     exchange_image = columns.Blob()
@@ -170,11 +174,13 @@ class MeaningTrail(Model):
     @classmethod
     def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
                            project_name=None, acting_user_id=None, acting_user_name=None,
-                           long_description=None, image=None):
+                           long_description=None, image=None,
+                           recipient_acting_user_id=None, recipient_acting_user_name=None):
         """Create a fully-populated Exchange row when an Opening is accepted.
         initiator_id is the opening's provider; other_user_id is the accepter.
-        acting_user_* names the human when the provider is an entity. The
-        exchange inherits the opening's long description and banner image."""
+        acting_user_* names the human when the provider is an entity;
+        recipient_acting_user_* names the human when the accepter is an entity.
+        The exchange inherits the opening's long description and banner image."""
         try:
             exchange_id = uuid.uuid4()
             cls.create(
@@ -190,10 +196,13 @@ class MeaningTrail(Model):
                 project_start_timestamp=datetime.utcnow(),
                 initiator_acting_user_id=UUID(str(acting_user_id)) if acting_user_id else None,
                 initiator_acting_user_name=acting_user_name,
+                recipient_acting_user_id=UUID(str(recipient_acting_user_id)) if recipient_acting_user_id else None,
+                recipient_acting_user_name=recipient_acting_user_name,
             )
             return exchange_id
         except Exception as e:
-            print(f"Error creating exchange from opening: {e}")
+            import logging as _logging
+            _logging.getLogger(__name__).exception(f"Error creating exchange from opening: {e}")
             return None
 
     def to_dict(self):
@@ -241,6 +250,8 @@ class MeaningTrail(Model):
             'recipient_comment_timestamp': _dt(self.recipient_comment_timestamp),
             'initiator_acting_user_id': _uuid(self.initiator_acting_user_id),
             'initiator_acting_user_name': self.initiator_acting_user_name,
+            'recipient_acting_user_id': _uuid(self.recipient_acting_user_id),
+            'recipient_acting_user_name': self.recipient_acting_user_name,
             'exchange_long_description': self.exchange_long_description,
             'gratitude_comment_context': self.gratitude_comment_context,
             # Image bytes are served separately via /api/exchange/<id>/image to
@@ -334,6 +345,22 @@ class MeaningTrail(Model):
             print(f"Error fetching exchanges by project: {e}")
             return []
 
+    @staticmethod
+    def _viewer_on_side(side_id, acting_user_id, viewer_id):
+        """Whether `viewer_id` counts as a given side of an exchange. True if
+        they are that side directly, the human who acted for it when the side
+        is an entity, or a current manager of that entity — so acting on behalf
+        of an alliance/project (posting or accepting) grants the human the
+        participant powers (receipts, notes) for that side."""
+        if side_id is None:
+            return False
+        if str(side_id) == str(viewer_id):
+            return True
+        if acting_user_id and str(acting_user_id) == str(viewer_id):
+            return True
+        from app.utils.permissions import can_manage_entity
+        return can_manage_entity(side_id, viewer_id)
+
     @classmethod
     def get_for_view(cls, exchange_id, viewer_id):
         """Return (exchange_dict, is_initiator, is_other) for ANY authenticated
@@ -347,8 +374,8 @@ class MeaningTrail(Model):
             row = rows[0]
             names = cls._name_map()
             d = cls._enrich(row, viewer_id, viewer_id, names)
-            is_initiator = str(row.user_id) == str(viewer_id)
-            is_other = row.other_user_id is not None and str(row.other_user_id) == str(viewer_id)
+            is_initiator = cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, viewer_id)
+            is_other = cls._viewer_on_side(row.other_user_id, row.recipient_acting_user_id, viewer_id)
             return d, is_initiator, is_other
         except Exception as e:
             print(f"Error getting exchange for view: {e}")
@@ -401,11 +428,15 @@ class MeaningTrail(Model):
                 d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
                 return d, True
 
-            # Fallback: current user is the other participant.
+            # Fallback: current user is (or acts for / manages) either side.
             # exchange_id is a clustering key so we need allow_filtering to query without partition key.
             all_rows = list(cls.objects.filter(exchange_id=tx_uuid).allow_filtering())
             for row in all_rows:
-                if row.other_user_id == user_uuid:
+                if cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, user_uuid):
+                    d = row.to_dict()
+                    d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
+                    return d, True
+                if cls._viewer_on_side(row.other_user_id, row.recipient_acting_user_id, user_uuid):
                     d = row.to_dict()
                     d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
                     return d, False
