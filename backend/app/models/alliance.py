@@ -33,7 +33,7 @@ class Alliance:
         self.image = image
         self.member_roles = member_roles or {}
 
-    def to_dict(self):
+    def to_dict(self, include_image=True):
         def _role(mid):
             # An explicit role wins; otherwise the alliance admin (admin1) is the admin.
             if self.member_roles and self.member_roles.get(mid):
@@ -63,7 +63,8 @@ class Alliance:
             'projects': self.projects or [],
             'values': self.values or [],
             'meaning_graph': self.meaning_graph,
-            'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
+            'has_image': bool(self.image),
+            'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
 
     @classmethod
@@ -116,6 +117,15 @@ class Alliance:
             "UPDATE alliances SET image = %s WHERE alliance_id = %s",
             [image_bytes, alliance_id]
         )
+
+    @classmethod
+    def get_image(cls, alliance_id):
+        """Just the image bytes for one alliance (served via a dedicated GET so
+        the alliances list needn't carry every banner blob)."""
+        row = cassandra_session.execute(
+            "SELECT image FROM alliances WHERE alliance_id = %s", [alliance_id]
+        ).one()
+        return row.image if row and row.image else None
 
     @classmethod
     def set_role(cls, alliance_id, target_uuid, role):

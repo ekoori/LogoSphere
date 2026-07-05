@@ -1,14 +1,26 @@
 import logging
 import uuid
-from flask import request, jsonify, current_app as app
+from flask import request, jsonify, current_app as app, Response
 from app.models.project import Project
 from app.models.user import User
 from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity
-from app.utils.validation import is_supported_image
+from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+def get_project_image(project_id):
+    """Serve a project's banner for <img src> — public + cacheable, keeping the
+    blob out of the projects list JSON (loaded lazily per card)."""
+    try:
+        return entity_image_response(Project.get_image(uuid.UUID(project_id)))
+    except (ValueError, TypeError):
+        return ('', 404)
+    except Exception as e:
+        logger.error(f"Error in get_project_image: {e}")
+        return ('', 404)
 
 
 @validate_session
@@ -57,7 +69,8 @@ def get_projects(user_id=None):
             is_participant = viewer in (p.participants or [])
             if p.sphere_id and p.sphere_id not in joined_spheres and not is_participant:
                 continue
-            projects.append(p.to_dict())
+            # Image served via GET /api/projects/<id>/image (see has_image).
+            projects.append(p.to_dict(include_image=False))
         logger.info(f"Retrieved {len(projects)} projects")
         return jsonify(projects), 200
     except Exception as e:

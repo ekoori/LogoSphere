@@ -93,7 +93,7 @@ function ProjectPage() {
 
     return (
         <div className="ep-page ep-page--project">
-            <EntityBanner kind="project" image={project.image}>
+            <EntityBanner kind="project" imageUrl={project.has_image ? `/api/projects/${pid}/image` : undefined}>
                 <div className="ep-meta-row">
                     <span className="ep-eyebrow">Project</span>
                     <span className={`ep-status-badge ${statusInfo.cls}`}>{statusInfo.label}</span>

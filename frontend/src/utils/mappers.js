@@ -42,10 +42,11 @@ export function mapService(s) {
         actingUserId: s.acting_user_id || null,
         description: s.description || '',
         project: s.project_name || null,
-        // A real uploaded photo always wins over the bundled keyword-matched fallback.
-        imageUrl: s.image ? `data:image/jpeg;base64,${s.image}` : imageForService(s.image_key, s.title),
-        // Raw base64 (no data-URI prefix) for EntityBanner, which builds its own.
-        rawImage: s.image || null,
+        // A real uploaded photo (served lazily from the opening's /image
+        // endpoint) always wins over the bundled keyword-matched fallback.
+        imageUrl: s.has_image ? `/api/openings/${s.service_id}/image` : imageForService(s.image_key, s.title),
+        // Whether the opening has a real uploaded banner (vs the fallback).
+        hasImage: !!s.has_image,
         time: fmtDate(s.created_at) || 'recently',
         status: s.status || 'Posted',
         likesCount: s.likes || 0,

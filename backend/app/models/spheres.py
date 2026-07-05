@@ -52,14 +52,15 @@ class Sphere:
             out.append({'id': str(pid), 'name': names.get(pid, 'Member'), 'role': role})
         return out
 
-    def to_dict(self, include_members=False):
+    def to_dict(self, include_members=False, include_image=True):
         d = {
             'sphere_id': str(self.sphere_id),
             'name': self.name,
             'description': self.description,
             'meaning_graph': self.meaning_graph,
             'location': self.location,
-            'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
+            'has_image': bool(self.image),
+            'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'admin1': str(self.admin1),
             'participants': self.participants,
             'alliances': self.alliances,
@@ -98,6 +99,15 @@ class Sphere:
             "UPDATE spheres SET image = %s WHERE sphere_id = %s",
             [image_bytes, sphere_id]
         )
+
+    @classmethod
+    def get_image(cls, sphere_id):
+        """Just the image bytes for one sphere (served via a dedicated GET so
+        the spheres list needn't carry every banner blob)."""
+        row = cassandra_session.execute(
+            "SELECT image FROM spheres WHERE sphere_id = %s", [sphere_id]
+        ).one()
+        return row.image if row and row.image else None
 
     @classmethod
     def set_role(cls, sphere_id, target_uuid, role):

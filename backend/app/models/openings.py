@@ -47,7 +47,11 @@ class Service:
         self.acting_user_id = acting_user_id
         self.acting_user_name = acting_user_name
 
-    def to_dict(self):
+    def to_dict(self, include_image=True):
+        # `include_image=False` (used by the openings LIST) omits the base64
+        # blob — clients load it lazily from GET /api/openings/<id>/image
+        # instead. Shipping every opening's banner inline made the list
+        # response multi-megabyte and pressured the DB/app under load.
         def _iso(v):
             return v.isoformat() if v else None
         return {
@@ -72,7 +76,8 @@ class Service:
             'accepted_at': _iso(self.accepted_at),
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
-            'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
+            'has_image': bool(self.image),
+            'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
             'acting_user': self.acting_user_name,
         }
@@ -162,6 +167,15 @@ class Service:
             "UPDATE services SET image = %s WHERE service_id = %s",
             [image_bytes, service_id]
         )
+
+    @classmethod
+    def get_image(cls, service_id):
+        """Just the image bytes for one opening — a single-partition read that
+        keeps the (potentially large) blob out of the openings list payload."""
+        row = cassandra_session.execute(
+            "SELECT image FROM services WHERE service_id = %s", [service_id]
+        ).one()
+        return row.image if row and row.image else None
 
     @classmethod
     def mark_accepted(cls, service_id, accepter_id, accepter_name):

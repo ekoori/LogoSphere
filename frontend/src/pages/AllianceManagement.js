@@ -28,6 +28,7 @@ const AllianceManagement = () => {
   const [activeTab, setActiveTab] = useState('delegation');
   const [joinPolicy, setJoinPolicy] = useState('open');
   const [savingPolicy, setSavingPolicy] = useState(false);
+  const [imgVersion, setImgVersion] = useState(0);
 
   const fetchAlliance = useCallback(async () => {
     if (!allianceId) return;
@@ -35,7 +36,7 @@ const AllianceManagement = () => {
       const r = await api.get('/api/alliances');
       const found = (r.data || []).find((a) => a.alliance_id === allianceId || a.id === allianceId);
       if (found) {
-        setAlliance({ name: found.name, description: found.description || '', image: found.image || null });
+        setAlliance({ name: found.name, description: found.description || '', has_image: !!found.has_image });
         const me = (found.members || []).find((m) => (m.id || m) === userId);
         setCanManage(me?.role === 'admin' || me?.role === 'steward');
       }
@@ -49,6 +50,7 @@ const AllianceManagement = () => {
     fd.append('image', file);
     await api.post(`/api/alliances/${allianceId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     await fetchAlliance();
+    setImgVersion((v) => v + 1);
   };
 
   const saveName = (e) => {
@@ -66,7 +68,7 @@ const AllianceManagement = () => {
   return (
     <>
     <div className="ep-page-banner">
-      <EntityBanner kind="alliance" image={alliance.image} onUpload={canManage ? handleImageUpload : undefined}>
+      <EntityBanner kind="alliance" imageUrl={alliance.has_image ? `/api/alliances/${allianceId}/image?v=${imgVersion}` : undefined} onUpload={canManage ? handleImageUpload : undefined}>
         <span className="ep-eyebrow">Alliance Management</span>
         <h1 className="ep-title">{alliance.name || 'Alliance'}</h1>
         {alliance.description && <p className="ep-description">{alliance.description}</p>}

@@ -2,11 +2,23 @@ import logging
 from flask import request, jsonify, current_app as app
 from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity
-from app.utils.validation import is_supported_image
+from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 import uuid
 
 logger = logging.getLogger(__name__)
+
+
+def get_sphere_image(sphere_id):
+    """Serve a sphere's banner for <img src> — public + cacheable, keeping the
+    blob out of the spheres list JSON (loaded lazily per page)."""
+    try:
+        return entity_image_response(Sphere.get_image(uuid.UUID(sphere_id)))
+    except (ValueError, TypeError):
+        return ('', 404)
+    except Exception as e:
+        logger.error(f"Error in get_sphere_image: {e}")
+        return ('', 404)
 
 @validate_session
 def create_sphere(user_id=None):
@@ -99,7 +111,9 @@ def get_spheres(user_id=None):
                 projects=row.projects,
                 values=row.values
             )
-            sphere_dict = sphere.to_dict()
+            # Banner images are served separately via GET /api/spheres/<id>/image
+            # (see has_image) — keeping the base64 blob out of the list response.
+            sphere_dict = sphere.to_dict(include_image=False)
             # Resolve participant UUIDs to display names, and provide {id,name,role}
             # pairs so the frontend can link each member to their profile and show
             # their role. admin1 is 'admin'; an explicit member_roles entry wins.

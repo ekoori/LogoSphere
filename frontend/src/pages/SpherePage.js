@@ -114,7 +114,7 @@ function SpherePage() {
 
     return (
         <div className="ep-page ep-page--sphere">
-            <EntityBanner kind="sphere" image={sphere.image}>
+            <EntityBanner kind="sphere" imageUrl={sphere.has_image ? `/api/spheres/${sphere.sphere_id}/image` : undefined}>
                 <div className="ep-meta-row">
                     <span className="ep-eyebrow">Sphere</span>
                     {sphere.location && <span className="ep-location-chip">{sphere.location}</span>}

@@ -94,7 +94,7 @@ function AlliancePage() {
 
     return (
         <div className="ep-page ep-page--alliance">
-            <EntityBanner kind="alliance" image={alliance.image}>
+            <EntityBanner kind="alliance" imageUrl={alliance.has_image ? `/api/alliances/${aid}/image` : undefined}>
                 <div className="ep-meta-row">
                     <span className="ep-eyebrow">Alliance</span>
                     {alliance.sphere_name && (

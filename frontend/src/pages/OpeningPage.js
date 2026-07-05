@@ -34,6 +34,7 @@ function OpeningPage() {
     const [likes, setLikes] = useState(0);
     const [busy, setBusy] = useState(false);
     const [acceptAs, setAcceptAs] = useState('');
+    const [imgVersion, setImgVersion] = useState(0);
     const managed = useManagedEntities(userId);
 
     const fetchService = useCallback(async () => {
@@ -144,12 +145,13 @@ function OpeningPage() {
         fd.append('image', file);
         await api.post(`/api/openings/${openingId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         await fetchService();
+        setImgVersion((v) => v + 1);
     };
 
     return (
         <div className="xc-page xc-page--banner">
             {/* ── Banner ───────────────────────────────────────────────── */}
-            <EntityBanner kind="opening" image={service.rawImage} onUpload={isOwnOpening ? handleImageUpload : undefined}>
+            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={isOwnOpening ? handleImageUpload : undefined}>
                 <div className="xc-page-breadcrumb">
                     <Link to="/openings">Openings</Link>
                     <span>›</span>

@@ -6,7 +6,7 @@ from app.models.user import User
 from app.models.meaning_trail import MeaningTrail
 from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids
-from app.utils.validation import is_supported_image
+from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 
@@ -29,7 +29,9 @@ def _enrich_service(s, viewer, include_exchanges=False):
     it's an extra per-opening query we don't want in the marketplace list)."""
     sid = s.service_id
     is_provider = viewer is not None and _is_provider_or_manager(s, viewer)
-    d = s.to_dict()
+    # The banner image is served separately via GET /api/openings/<id>/image
+    # (see has_image) so it never bloats the list/detail JSON.
+    d = s.to_dict(include_image=False)
     d['likes'] = Service.like_count(sid)
     d['liked_by_current_user'] = Service.is_liked_by(sid, viewer) if viewer else False
     d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
@@ -356,6 +358,18 @@ def like_service(service_id, user_id=None):
     except Exception as e:
         logger.error(f"Error in like_service: {e}")
         return jsonify({'message': 'Internal server error'}), 500
+
+
+def get_service_image(service_id):
+    """Serve an opening's banner image for <img src>. Public + cacheable —
+    keeps the blob out of the openings list JSON (loaded lazily per card)."""
+    try:
+        return entity_image_response(Service.get_image(uuid.UUID(service_id)))
+    except (ValueError, TypeError):
+        return ('', 404)
+    except Exception as e:
+        logger.error(f"Error in get_service_image: {e}")
+        return ('', 404)
 
 
 @validate_session

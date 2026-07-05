@@ -29,6 +29,7 @@ const ProjectManagement = () => {
   const [activeTab, setActiveTab] = useState('governance');
   const [joinPolicy, setJoinPolicy] = useState('open');
   const [savingPolicy, setSavingPolicy] = useState(false);
+  const [imgVersion, setImgVersion] = useState(0);
 
   const fetchProject = useCallback(async () => {
     if (!projectId) { setLoading(false); return; }
@@ -75,6 +76,7 @@ const ProjectManagement = () => {
     fd.append('image', file);
     await api.post(`/api/projects/${pid}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     await fetchProject();
+    setImgVersion((v) => v + 1);
   };
 
   const saveName = (e) => {
@@ -92,7 +94,7 @@ const ProjectManagement = () => {
   return (
     <>
     <div className="ep-page-banner">
-      <EntityBanner kind="project" image={project.image} onUpload={handleImageUpload}>
+      <EntityBanner kind="project" imageUrl={project.has_image ? `/api/projects/${pid}/image?v=${imgVersion}` : undefined} onUpload={handleImageUpload}>
         <span className="ep-eyebrow">Project Management</span>
         <h1 className="ep-title">{project.name}</h1>
         {project.description && <p className="ep-description">{project.description}</p>}

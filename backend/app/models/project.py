@@ -33,7 +33,7 @@ class Project:
         self.participant_roles = participant_roles or {}
         self.image = image
 
-    def to_dict(self):
+    def to_dict(self, include_image=True):
         members_with_roles = [
             {
                 'id': str(pid),
@@ -55,7 +55,8 @@ class Project:
             'participants': self.participant_names or [],
             'members': members_with_roles,
             'values': self.values or [],
-            'image': base64.b64encode(self.image).decode('utf-8') if self.image else None,
+            'has_image': bool(self.image),
+            'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
 
     @classmethod
@@ -117,6 +118,15 @@ class Project:
             "UPDATE projects SET image = %s WHERE project_id = %s",
             [image_bytes, project_id]
         )
+
+    @classmethod
+    def get_image(cls, project_id):
+        """Just the image bytes for one project (served via a dedicated GET so
+        the projects list needn't carry every banner blob)."""
+        row = cassandra_session.execute(
+            "SELECT image FROM projects WHERE project_id = %s", [project_id]
+        ).one()
+        return row.image if row and row.image else None
 
     @classmethod
     def set_role(cls, project_id, target_uuid, role):

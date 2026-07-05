@@ -5,10 +5,22 @@ from app.models.alliance import Alliance
 from app.models.user import User
 from app.models.spheres import Sphere
 from app.utils.permissions import can_manage_entity
-from app.utils.validation import is_supported_image
+from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+def get_alliance_image(alliance_id):
+    """Serve an alliance's banner for <img src> — public + cacheable, keeping
+    the blob out of the alliances list JSON (loaded lazily per page)."""
+    try:
+        return entity_image_response(Alliance.get_image(uuid.UUID(alliance_id)))
+    except (ValueError, TypeError):
+        return ('', 404)
+    except Exception as e:
+        logger.error(f"Error in get_alliance_image: {e}")
+        return ('', 404)
 
 
 @validate_session
@@ -57,7 +69,8 @@ def get_alliances(user_id=None):
             is_member = viewer in (a.members or [])
             if a.sphere_id and a.sphere_id not in joined_spheres and not is_member:
                 continue
-            alliances.append(a.to_dict())
+            # Image served via GET /api/alliances/<id>/image (see has_image).
+            alliances.append(a.to_dict(include_image=False))
         logger.info(f"Retrieved {len(alliances)} alliances")
         return jsonify(alliances), 200
     except Exception as e:

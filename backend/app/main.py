@@ -26,10 +26,10 @@ from app.routes.profile import get_user, get_profile, update_user, get_public_us
 from app.routes.registration import register
 from app.routes.meaning_trail import get_meaning_trail, get_meaning_trail_by_project, add_exchange, get_exchange, update_xc_status, add_xc_comment, like_exchange, edit_exchange, get_exchange_image, upload_receipt_photos, get_receipt_photo
 from app.models.user import User
-from app.routes.spheres import create_sphere, get_spheres, join_sphere, update_sphere_image, set_sphere_role
-from app.routes.alliances import create_alliance, get_alliances, join_alliance, update_alliance_image, set_alliance_role
-from app.routes.projects import create_project, get_projects, join_project, update_project_image, set_project_role
-from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image
+from app.routes.spheres import create_sphere, get_spheres, join_sphere, update_sphere_image, get_sphere_image, set_sphere_role
+from app.routes.alliances import create_alliance, get_alliances, join_alliance, update_alliance_image, get_alliance_image, set_alliance_role
+from app.routes.projects import create_project, get_projects, join_project, update_project_image, get_project_image, set_project_role
+from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card
 from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
 
@@ -147,16 +147,19 @@ app.add_url_rule('/api/spheres', view_func=create_sphere, methods=['POST', 'OPTI
 app.add_url_rule('/api/spheres', view_func=get_spheres, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/spheres/<sphere_id>/join', view_func=join_sphere, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/spheres/<sphere_id>/image', view_func=update_sphere_image, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/spheres/<sphere_id>/image', view_func=get_sphere_image, methods=['GET'])
 app.add_url_rule('/api/spheres/<sphere_id>/members/<target_id>/role', view_func=set_sphere_role, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/alliances', view_func=create_alliance, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/alliances', view_func=get_alliances, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/alliances/<alliance_id>/join', view_func=join_alliance, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/alliances/<alliance_id>/image', view_func=update_alliance_image, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/alliances/<alliance_id>/image', view_func=get_alliance_image, methods=['GET'])
 app.add_url_rule('/api/alliances/<alliance_id>/members/<target_id>/role', view_func=set_alliance_role, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=create_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects', view_func=get_projects, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/projects/<project_id>/join', view_func=join_project, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/projects/<project_id>/image', view_func=update_project_image, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/projects/<project_id>/image', view_func=get_project_image, methods=['GET'])
 app.add_url_rule('/api/projects/<project_id>/members/<target_id>/role', view_func=set_project_role, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])
@@ -166,6 +169,7 @@ app.add_url_rule('/api/openings/<service_id>/confirm', view_func=confirm_service
 app.add_url_rule('/api/openings/<service_id>/reject', view_func=reject_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/like', view_func=like_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/image', view_func=update_service_image, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/image', view_func=get_service_image, methods=['GET'])
 app.add_url_rule('/api/value_cards/clone', view_func=clone_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])

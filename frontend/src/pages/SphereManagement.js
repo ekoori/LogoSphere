@@ -28,6 +28,7 @@ const SphereManagement = () => {
   const [activeTab, setActiveTab] = useState('governance');
   const [joinPolicy, setJoinPolicy] = useState('open');
   const [savingPolicy, setSavingPolicy] = useState(false);
+  const [imgVersion, setImgVersion] = useState(0);
 
   const fetchSphere = useCallback(async () => {
     if (!sphereId) { setLoading(false); return; }
@@ -49,6 +50,7 @@ const SphereManagement = () => {
     fd.append('image', file);
     await api.post(`/api/spheres/${sphereId}/image`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     await fetchSphere();
+    setImgVersion((v) => v + 1); // bust the cached banner so the new image shows
   };
 
   if (loading) return <div className="ep-loading">Loading…</div>;
@@ -89,7 +91,7 @@ const SphereManagement = () => {
   return (
     <>
     <div className="ep-page-banner">
-      <EntityBanner kind="sphere" image={sphere.image} onUpload={handleImageUpload}>
+      <EntityBanner kind="sphere" imageUrl={sphere.has_image ? `/api/spheres/${sphereId}/image?v=${imgVersion}` : undefined} onUpload={handleImageUpload}>
         <span className="ep-eyebrow">Sphere Management</span>
         <h1 className="ep-title">{sphere.name}</h1>
         {sphere.description && <p className="ep-description">{sphere.description}</p>}

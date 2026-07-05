@@ -10,10 +10,16 @@ import '../styles/EntityBanner.css';
 
 const GLYPH = { sphere: '✦', alliance: '◈', project: '◻', opening: '◍' };
 
-function EntityBanner({ kind, image, onUpload, children }) {
+function EntityBanner({ kind, image, imageUrl, onUpload, children }) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
+    const [imgFailed, setImgFailed] = useState(false);
     const fileInputRef = useRef(null);
+
+    // Prefer an image URL (served lazily from the entity's /image endpoint) over
+    // an inline base64 blob; either counts as "has an image" for the button label.
+    const src = imageUrl || (image ? `data:image/jpeg;base64,${image}` : null);
+    const hasImage = !!src && !imgFailed;
 
     const handleFileChange = async (e) => {
         const file = e.target.files?.[0];
@@ -32,8 +38,8 @@ function EntityBanner({ kind, image, onUpload, children }) {
 
     return (
         <header className={`ep-banner ep-banner--${kind}`}>
-            {image ? (
-                <img src={`data:image/jpeg;base64,${image}`} alt="" className="ep-banner-img" />
+            {hasImage ? (
+                <img src={src} alt="" className="ep-banner-img" onError={() => setImgFailed(true)} />
             ) : (
                 <div className="ep-banner-fallback" aria-hidden="true">
                     <span className="ep-banner-glyph">{GLYPH[kind] || '◻'}</span>
@@ -50,7 +56,7 @@ function EntityBanner({ kind, image, onUpload, children }) {
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
                     >
-                        {uploading ? 'Uploading…' : (image ? '↻ Change image' : '+ Set image…')}
+                        {uploading ? 'Uploading…' : (hasImage ? '↻ Change image' : '+ Set image…')}
                     </button>
                     <input
                         ref={fileInputRef}
@@ -69,6 +75,7 @@ function EntityBanner({ kind, image, onUpload, children }) {
 EntityBanner.propTypes = {
     kind: PropTypes.oneOf(['sphere', 'alliance', 'project', 'opening']).isRequired,
     image: PropTypes.string,
+    imageUrl: PropTypes.string,
     onUpload: PropTypes.func,
     children: PropTypes.node,
 };
