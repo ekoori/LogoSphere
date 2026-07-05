@@ -109,11 +109,18 @@ function ProjectPage() {
                     )}
                 </div>
                 <h1 className="ep-title">{project.name}</h1>
-                {project.owner_alliance && (
+                {project.owner_alliance ? (
                     <p className="ep-lead-alliance">
                         Led by{' '}
                         <Link to={`/alliance?name=${encodeURIComponent(project.owner_alliance)}`} className="ep-alliance-link">
                             {project.owner_alliance}
+                        </Link>
+                    </p>
+                ) : project.owner_name && (
+                    <p className="ep-lead-alliance">
+                        by{' '}
+                        <Link to={project.owner_id ? `/user?id=${project.owner_id}` : '/user'} className="ep-alliance-link">
+                            {project.owner_name}
                         </Link>
                     </p>
                 )}

@@ -4,7 +4,7 @@ from flask import request, jsonify, current_app as app, Response
 from app.models.project import Project
 from app.models.user import User
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity
+from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
@@ -44,8 +44,28 @@ def create_project(user_id=None):
             return jsonify({'message': 'A sphere is required'}), 400
         # Record the founder's display name so they aren't shown as a generic member.
         creator = User.get(str(user_id))
+        creator_name = None
         if creator:
-            data['participant_names'] = [f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email]
+            creator_name = f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email
+            data['participant_names'] = [creator_name]
+        # Optionally run the project on behalf of an alliance the founder manages
+        # (must be an alliance within the project's sphere). Stored as the
+        # alliance name (like the seed data) so the card can link to it.
+        alliance_id = data.get('owner_alliance_id')
+        if alliance_id:
+            info = get_entity_info(alliance_id)
+            if not info or info['kind'] != 'alliance':
+                return jsonify({'message': 'That is not an alliance'}), 400
+            if not can_manage_entity(alliance_id, user_id):
+                return jsonify({'message': 'Not authorized to act on behalf of this alliance'}), 403
+            if str(data['sphere_id']) not in entity_sphere_ids(alliance_id):
+                return jsonify({'message': "That alliance isn't part of the project's sphere"}), 400
+            data['owner_alliance'] = info['name']
+        else:
+            data['owner_alliance'] = ''
+        # Owner text = the founder's name (display); linking uses owner_id from
+        # the manager member in to_dict.
+        data['owner'] = creator_name or str(user_id)
         new_project = Project.create(data=data, owner_id=uuid.UUID(str(user_id)))
         logger.info(f"Created project {new_project.project_id}")
         return jsonify(new_project.to_dict()), 201

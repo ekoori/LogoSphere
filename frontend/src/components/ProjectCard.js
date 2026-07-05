@@ -8,7 +8,7 @@ const pHref = (p) => (typeof p === 'string' || !p.id ? '/user' : `/user?id=${p.i
 
 const ROLE_LABEL = { manager: 'Manager', contributor: 'Contributor', observer: 'Observer' };
 
-const ProjectCard = ({ id, name, sphere_id, sphere_name, owner, owner_alliance, participants, description, values, currentUserId, onJoin, onLike }) => {
+const ProjectCard = ({ id, name, sphere_id, sphere_name, owner_alliance, owner_name, owner_id, participants, description, values, currentUserId, onJoin, onLike }) => {
   const navigate = useNavigate();
   const { entityHref } = useEntityIndex();
   const projectHref = id ? `/project?id=${id}` : '/project';
@@ -35,12 +35,23 @@ const ProjectCard = ({ id, name, sphere_id, sphere_name, owner, owner_alliance, 
               <a href={entityHref('sphere', sphere_name, sphere_id)} onClick={(e) => e.stopPropagation()}>
                 {sphere_name}
               </a>
-              {(owner_alliance || (owner && owner !== 'Independent')) && (
+              {owner_alliance ? (
+                // Run on behalf of an alliance → link to the alliance's page.
                 <>
                   <span className="breadcrumb-pipe"> | </span>
-                  <a href={entityHref('alliance', owner_alliance || owner)} onClick={(e) => e.stopPropagation()}>
-                    {owner_alliance || owner}
+                  <a href={entityHref('alliance', owner_alliance)} onClick={(e) => e.stopPropagation()}>
+                    {owner_alliance}
                   </a>
+                </>
+              ) : owner_name && (
+                // Otherwise it's a personal project → "by <person>".
+                <>
+                  <span className="breadcrumb-pipe"> | </span>
+                  <span className="project-by">by{' '}
+                    <a href={owner_id ? `/user?id=${owner_id}` : '/user'} onClick={(e) => e.stopPropagation()}>
+                      {owner_name}
+                    </a>
+                  </span>
                 </>
               )}
             </div>

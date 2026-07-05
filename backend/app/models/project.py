@@ -43,12 +43,19 @@ class Project:
             }
             for i, pid in enumerate(self.participants or [])
         ]
+        # The project's manager is its creator/owner — expose their id + name so
+        # a card can show "by <person>" (and link to them) when the project
+        # isn't run on behalf of an alliance.
+        mgr = next((m for m in members_with_roles if m['role'] == 'manager'), None) \
+            or (members_with_roles[0] if members_with_roles else None)
         return {
             'project_id': str(self.project_id),
             'id': str(self.project_id),
             'name': self.name,
             'description': self.description,
             'owner': self.owner,
+            'owner_id': mgr['id'] if mgr else None,
+            'owner_name': mgr['name'] if mgr else (self.owner or None),
             'owner_alliance': self.owner_alliance,
             'status': self.status,
             'sphere_id': str(self.sphere_id) if self.sphere_id else None,

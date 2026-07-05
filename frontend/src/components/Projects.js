@@ -40,7 +40,6 @@ const Projects = () => {
         .map((p) => ({
           ...p,
           id: p.project_id,
-          owner: p.owner_alliance || p.owner || 'Independent',
           participants: p.members || [],
           values: p.values || [],
           exchanges: [],
@@ -65,6 +64,7 @@ const Projects = () => {
     fd.append('location', data.location || '');
     fd.append('sphere_id', data.sphere_id || '');
     fd.append('sphere_name', data.sphere_name || '');
+    if (data.owner_alliance_id) fd.append('owner_alliance_id', data.owner_alliance_id);
     if (data.image) fd.append('image', data.image);
     await api.post('/api/projects', fd);
     setIsFormVisible(false);
