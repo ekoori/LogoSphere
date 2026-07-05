@@ -41,6 +41,37 @@ const AuthorTag = ({ name, id }) => {
 const TYPE_LABEL = { completed: 'Completed', offer: 'Offer', need: 'Need' };
 const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', need: 'pill-honey' };
 
+// Link a participant to their page — a person to /user, a group to its own page.
+const ENTITY_PATH = { sphere: 'sphere', alliance: 'alliance', project: 'project' };
+const partHref = (kind, id) => {
+    if (!id) return null;
+    return ENTITY_PATH[kind] ? `/${ENTITY_PATH[kind]}?id=${id}` : `/user?id=${id}`;
+};
+const KIND_GLYPH = { sphere: '✦', alliance: '◈', project: '◻' };
+
+// One participant row: differentiates a person from a group, shows "You" only
+// for the viewer when they're a person, and "· via <human>" when a person acted
+// on a group's behalf.
+const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou }) => {
+    const isEntity = kind && kind !== 'user';
+    const href = partHref(kind, id);
+    return (
+        <div className="xc-participant">
+            <span>{isEntity ? (KIND_GLYPH[kind] || '◻') : '👤'}</span>
+            {isYou
+                ? <a href="/profile" className="xc-participant-you">You</a>
+                : (href ? <a href={href}>{name}</a> : <span>{name}</span>)}
+            {isEntity && actingName && (
+                <span className="xc-participant-via">
+                    {' · via '}
+                    {actingId ? <a href={`/user?id=${actingId}`}>{actingName}</a> : actingName}
+                </span>
+            )}
+            <span className="xc-participant-role">{role}</span>
+        </div>
+    );
+};
+
 function ExchangePage() {
     const [searchParams] = useSearchParams();
     const xcId = searchParams.get('id');
@@ -48,6 +79,7 @@ function ExchangePage() {
 
     const [xc, setXc] = useState(null);
     const [isInitiator, setIsInitiator] = useState(false);
+    const [isOther, setIsOther] = useState(false);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(null);
 
@@ -130,6 +162,7 @@ function ExchangePage() {
             const res = await api.get(`/api/exchange/${xcId}`);
             setXc(res.data.exchange);
             setIsInitiator(res.data.is_initiator);
+            setIsOther(res.data.is_other);
         } catch (e) {
             setFetchError(
                 e.response?.status === 404
@@ -146,7 +179,9 @@ function ExchangePage() {
     if (loading) return <div className="xc-loading">Loading exchange…</div>;
     if (fetchError || !xc) return <div className="xc-error-state">{fetchError || 'Exchange not found.'}</div>;
 
-    const isOtherUser = String(xc.other_user_id) === String(userId);
+    // Use the backend's flag (not a raw id match) so a human acting for an
+    // entity recipient is recognised as the "other" side and can add the receipt.
+    const isOtherUser = isOther;
     const canModify = isInitiator || isOtherUser;
     // Both sides have receipted → the receipt affordance becomes a lighter comment.
     const bothReceipted = !!(xc.gratitude_comment && xc.user_comment);
@@ -163,7 +198,16 @@ function ExchangePage() {
     // present it's the terminal state.
     const hasFollowup = !!(xc.initiator_comment || xc.recipient_comment) || xc.exchange_status === XC_FOLLOWUP_STATUS;
     const stepLabels = hasFollowup ? [...XC_STEPS, XC_FOLLOWUP_STEP] : XC_STEPS;
-    const steps = stepLabels.map((label) => ({ label, time: '' }));
+    // Each stage shows the date it was reached (Initiated = when the exchange
+    // was created; the rest from the per-stage transition timestamps).
+    const STAGE_TIME = {
+        'Initiated': xc.project_start_timestamp,
+        'In Progress': xc.in_progress_at,
+        'Finished': xc.finished_at,
+        'Receipted': xc.receipted_at,
+        [XC_FOLLOWUP_STEP]: xc.initiator_comment_timestamp || xc.recipient_comment_timestamp,
+    };
+    const steps = stepLabels.map((label) => ({ label, time: fmtDate(STAGE_TIME[label]) }));
     const progressIdx = hasFollowup ? stepLabels.length - 1 : currentIdx;
 
     const handleAdvanceStatus = async () => {
@@ -573,23 +617,25 @@ function ExchangePage() {
                     <div className="xc-sidebar-card">
                         <p className="xc-sidebar-heading">Participants</p>
                         <div className="xc-participants-list">
-                            <div className="xc-participant">
-                                <span>👤</span>
-                                {isInitiator
-                                    ? <span className="xc-participant-you">You</span>
-                                    : <a href={`/user?id=${xc.user_id}`}>{xc.initiator_name || 'Initiator'}</a>
-                                }
-                                <span className="xc-participant-role">Initiator</span>
-                            </div>
+                            <ParticipantRow
+                                kind={xc.initiator_kind}
+                                id={xc.user_id}
+                                name={xc.initiator_name || 'Initiator'}
+                                actingId={xc.initiator_acting_user_id}
+                                actingName={xc.initiator_acting_user_name}
+                                role="Initiator"
+                                isYou={xc.initiator_kind === 'user' && String(xc.user_id) === String(userId)}
+                            />
                             {xc.other_user_id && (
-                                <div className="xc-participant">
-                                    <span>👤</span>
-                                    {isOtherUser
-                                        ? <span className="xc-participant-you">You</span>
-                                        : <a href={`/user?id=${xc.other_user_id}`}>{xc.other_user_name || 'Recipient'}</a>
-                                    }
-                                    <span className="xc-participant-role">Recipient</span>
-                                </div>
+                                <ParticipantRow
+                                    kind={xc.other_kind}
+                                    id={xc.other_user_id}
+                                    name={xc.other_user_name || 'Recipient'}
+                                    actingId={xc.recipient_acting_user_id}
+                                    actingName={xc.recipient_acting_user_name}
+                                    role="Recipient"
+                                    isYou={xc.other_kind === 'user' && String(xc.other_user_id) === String(userId)}
+                                />
                             )}
                         </div>
                     </div>
@@ -617,6 +663,14 @@ function ExchangePage() {
                                     <span className="xc-detail-label">Initiated</span>
                                     <span className="xc-detail-value">
                                         {fmtDate(xc.project_start_timestamp)}
+                                    </span>
+                                </div>
+                            )}
+                            {xc.source_service_id && (
+                                <div className="xc-detail-row">
+                                    <span className="xc-detail-label">From opening</span>
+                                    <span className="xc-detail-value">
+                                        <a href={`/opening?id=${xc.source_service_id}`}>View opening →</a>
                                     </span>
                                 </div>
                             )}

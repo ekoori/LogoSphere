@@ -121,18 +121,30 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     const iAmInitiator = row.viewer_is_initiator !== false;
     const initiatorName = row.initiator_name || 'Initiator';
     const recipientName = row.other_user_name || 'A neighbour';
+    // Each side may be a person or a group (alliance/project) — link accordingly.
+    const initiatorKind = row.initiator_kind || 'user';
+    const recipientKind = row.other_kind || 'user';
 
     // When the initiator is an entity acted for by a human, show
-    // "Joe on behalf of <Entity>" and link to the human.
+    // "Joe on behalf of <Entity>". The chip links to the entity's own page when
+    // it's a group, else to the person.
     const initiatorActing = row.initiator_acting_user_name || null;
     const initiatorLabel = initiatorActing ? `${initiatorActing} on behalf of ${initiatorName}` : initiatorName;
-    const initiatorLinkId = initiatorActing ? (row.initiator_acting_user_id || null) : (row.initiator_id || null);
+    const initiatorLinkId = initiatorKind !== 'user' ? (row.initiator_id || null)
+        : (initiatorActing ? (row.initiator_acting_user_id || null) : (row.initiator_id || null));
 
-    // Symmetric for the recipient: an opening accepted on behalf of an
-    // alliance/project shows "Joe on behalf of <Entity>" and links to the human.
+    // Symmetric for the recipient.
     const recipientActing = row.recipient_acting_user_name || null;
     const recipientLabel = recipientActing ? `${recipientActing} on behalf of ${recipientName}` : recipientName;
-    const recipientLinkId = recipientActing ? (row.recipient_acting_user_id || null) : (row.other_user_id || null);
+    const recipientLinkId = recipientKind !== 'user' ? (row.other_user_id || null)
+        : (recipientActing ? (row.recipient_acting_user_id || null) : (row.other_user_id || null));
+
+    // The trail-owner side's kind: "You" (a person) unless it's actually a group
+    // whose trail this is (an entity page), in which case link to the group.
+    const ownerKind = ownerLabel === 'You' ? 'user' : (iAmInitiator ? initiatorKind : recipientKind);
+    const ownerLinkId = (ownerKind !== 'user' && ownerLabel !== 'You')
+        ? (iAmInitiator ? (row.initiator_id || null) : (row.other_user_id || null))
+        : ownerId;
 
     const receipts = [];
     if (row.gratitude_comment) {
@@ -178,12 +190,12 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         spheres: [],
         participants: iAmInitiator
             ? [
-                { name: ownerLabel, id: ownerId },
-                ...(row.other_user_name ? [{ name: recipientLabel, id: recipientLinkId }] : []),
+                { name: ownerLabel, id: ownerLinkId, kind: ownerKind },
+                ...(row.other_user_name ? [{ name: recipientLabel, id: recipientLinkId, kind: recipientKind }] : []),
             ]
             : [
-                { name: initiatorLabel, id: initiatorLinkId },
-                { name: ownerLabel, id: ownerId },
+                { name: initiatorLabel, id: initiatorLinkId, kind: initiatorKind },
+                { name: ownerLabel, id: ownerLinkId, kind: ownerKind },
             ],
         description: row.project_name
             ? `An act of giving within the "${row.project_name}" project.`

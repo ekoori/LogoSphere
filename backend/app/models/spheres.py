@@ -10,6 +10,7 @@ import base64
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
 cassandra_session = cluster.connect('logosphere')
+cassandra_session.default_timeout = 30
 
 def _resolve_user_names(ids):
     """{user_id: display name} for a list of user UUIDs (single IN query)."""

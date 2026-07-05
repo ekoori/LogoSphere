@@ -34,10 +34,18 @@ from datetime import datetime
 # Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 connection.setup(CASSANDRA_HOSTS, 'logosphere')
+# Raise the per-request timeout above the 10s default so a slow read/write
+# (e.g. a large banner-image blob under memory pressure) waits rather than
+# 500-ing — this is what made an exchange-image upload fail on the first try.
+try:
+    connection.get_session().default_timeout = 30
+except Exception:
+    pass
 
 # Dedicated raw session (keyspace-bound) for cross-table reads like resolving
 # user display names — mirrors the other models, avoids get_session() keyspace quirks.
 _raw_session = Cluster(CASSANDRA_HOSTS).connect('logosphere')
+_raw_session.default_timeout = 30
 
 # Short-lived cache of the {user_id: display name} map. Every meaning-trail read
 # needs it to resolve counterparts, and it changes only when a user registers or
@@ -45,6 +53,9 @@ _raw_session = Cluster(CASSANDRA_HOSTS).connect('logosphere')
 # staying fresh enough (a newly registered user shows within TTL seconds).
 _NAME_MAP_TTL = 30.0
 _name_map_cache = {'data': None, 'ts': 0.0}
+# Parallel {entity_id: 'sphere'|'alliance'|'project'} map so the exchange view
+# can tell whether a participant is a person or a group (and link accordingly).
+_kind_map_cache = {'data': None, 'ts': 0.0}
 
 
 # Comment types that can be liked on an exchange. 'exchange' is the card itself;
@@ -158,6 +169,12 @@ class MeaningTrail(Model):
     exchange_image = columns.Blob()
     # Structured context on the recipient's receipt (Time / Effort / Care / ...).
     gratitude_comment_context = columns.Text()
+    # The opening this exchange was created from (for a "created from" link).
+    source_service_id = columns.UUID()
+    # Per-stage transition timestamps (Initiated = project_start_timestamp).
+    in_progress_at = columns.DateTime()
+    finished_at = columns.DateTime()
+    receipted_at = columns.DateTime()
 
     @classmethod
     def add_exchange(cls, user_id, other_user_id, project_id):
@@ -175,12 +192,14 @@ class MeaningTrail(Model):
     def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
                            project_name=None, acting_user_id=None, acting_user_name=None,
                            long_description=None, image=None,
-                           recipient_acting_user_id=None, recipient_acting_user_name=None):
+                           recipient_acting_user_id=None, recipient_acting_user_name=None,
+                           source_service_id=None):
         """Create a fully-populated Exchange row when an Opening is accepted.
         initiator_id is the opening's provider; other_user_id is the accepter.
         acting_user_* names the human when the provider is an entity;
         recipient_acting_user_* names the human when the accepter is an entity.
-        The exchange inherits the opening's long description and banner image."""
+        source_service_id links back to the opening. The exchange inherits the
+        opening's long description and banner image."""
         try:
             exchange_id = uuid.uuid4()
             cls.create(
@@ -198,6 +217,7 @@ class MeaningTrail(Model):
                 initiator_acting_user_name=acting_user_name,
                 recipient_acting_user_id=UUID(str(recipient_acting_user_id)) if recipient_acting_user_id else None,
                 recipient_acting_user_name=recipient_acting_user_name,
+                source_service_id=UUID(str(source_service_id)) if source_service_id else None,
             )
             return exchange_id
         except Exception as e:
@@ -252,6 +272,10 @@ class MeaningTrail(Model):
             'initiator_acting_user_name': self.initiator_acting_user_name,
             'recipient_acting_user_id': _uuid(self.recipient_acting_user_id),
             'recipient_acting_user_name': self.recipient_acting_user_name,
+            'source_service_id': _uuid(self.source_service_id),
+            'in_progress_at': _dt(self.in_progress_at),
+            'finished_at': _dt(self.finished_at),
+            'receipted_at': _dt(self.receipted_at),
             'exchange_long_description': self.exchange_long_description,
             'gratitude_comment_context': self.gratitude_comment_context,
             # Image bytes are served separately via /api/exchange/<id>/image to
@@ -290,8 +314,39 @@ class MeaningTrail(Model):
             print(f"Error building name map: {e}")
             return _name_map_cache['data'] or {}
 
+    @staticmethod
+    def _kind_map():
+        """{entity_id: 'sphere'|'alliance'|'project'} — anything not present is a
+        person. Lets the exchange view link a participant to the right page and
+        show whether the counterpart is a group. Cached like _name_map."""
+        now = time.time()
+        if _kind_map_cache['data'] is not None and (now - _kind_map_cache['ts']) < _NAME_MAP_TTL:
+            return _kind_map_cache['data']
+        try:
+            out = {}
+            for s in _raw_session.execute("SELECT sphere_id FROM spheres"):
+                out[s.sphere_id] = 'sphere'
+            for a in _raw_session.execute("SELECT alliance_id FROM alliances"):
+                out[a.alliance_id] = 'alliance'
+            for p in _raw_session.execute("SELECT project_id FROM projects"):
+                out[p.project_id] = 'project'
+            _kind_map_cache['data'] = out
+            _kind_map_cache['ts'] = now
+            return out
+        except Exception as e:
+            print(f"Error building kind map: {e}")
+            return _kind_map_cache['data'] or {}
+
+    @staticmethod
+    def _add_kinds(d, kmap):
+        """Tag each side of the exchange with the counterpart's kind
+        (user/sphere/alliance/project) so the client links to the right page."""
+        d['initiator_kind'] = kmap.get(UUID(d['user_id']), 'user') if d.get('user_id') else 'user'
+        d['other_kind'] = kmap.get(UUID(d['other_user_id']), 'user') if d.get('other_user_id') else 'user'
+        return d
+
     @classmethod
-    def _enrich(cls, row, target_id, viewer_id, names):
+    def _enrich(cls, row, target_id, viewer_id, names, kinds=None):
         """Row → dict with like summary and both-sides perspective fields."""
         d = row.to_dict()
         d['likes'] = Likes.summary_for_exchange(row.exchange_id, viewer_id)
@@ -299,6 +354,8 @@ class MeaningTrail(Model):
         d['initiator_name'] = names.get(row.user_id, 'A member')
         # Perspective is relative to whose trail this is (target_id).
         d['viewer_is_initiator'] = str(row.user_id) == str(target_id)
+        if kinds is not None:
+            cls._add_kinds(d, kinds)
         return d
 
     @classmethod
@@ -308,7 +365,7 @@ class MeaningTrail(Model):
         parties' trails. `viewer_id` drives the "liked by me" flags."""
         try:
             target = UUID(str(user_id))
-            names = cls._name_map()
+            names, kinds = cls._name_map(), cls._kind_map()
             seen, meaning_trail = set(), []
             # Rows where the user is the initiator (efficient — partition key).
             owned = list(cls.objects(user_id=target))
@@ -318,7 +375,7 @@ class MeaningTrail(Model):
                 if row.exchange_id in seen:
                     continue
                 seen.add(row.exchange_id)
-                meaning_trail.append(cls._enrich(row, user_id, viewer_id, names))
+                meaning_trail.append(cls._enrich(row, user_id, viewer_id, names, kinds))
             return meaning_trail
         except Exception as e:
             print(f"Error occurred while fetching trust trail: {str(e)}")
@@ -339,8 +396,8 @@ class MeaningTrail(Model):
         try:
             pid = UUID(str(project_id))
             rows = list(cls.objects.filter(project_id=pid).allow_filtering())
-            names = cls._name_map()
-            return [cls._enrich(row, row.user_id, viewer_id, names) for row in rows]
+            names, kinds = cls._name_map(), cls._kind_map()
+            return [cls._enrich(row, row.user_id, viewer_id, names, kinds) for row in rows]
         except Exception as e:
             print(f"Error fetching exchanges by project: {e}")
             return []
@@ -373,7 +430,7 @@ class MeaningTrail(Model):
                 return None, False, False
             row = rows[0]
             names = cls._name_map()
-            d = cls._enrich(row, viewer_id, viewer_id, names)
+            d = cls._enrich(row, viewer_id, viewer_id, names, cls._kind_map())
             is_initiator = cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, viewer_id)
             is_other = cls._viewer_on_side(row.other_user_id, row.recipient_acting_user_id, viewer_id)
             return d, is_initiator, is_other
@@ -409,7 +466,14 @@ class MeaningTrail(Model):
     def set_status(cls, exchange_id, status):
         try:
             exchange = cls.objects(exchange_id=exchange_id).get()
-            exchange.update(exchange_status=status)
+            fields = {'exchange_status': status}
+            # Stamp when each tracked stage was reached, so the progress bar can
+            # show the transition date. Only set the first time each is reached.
+            col = {'In Progress': 'in_progress_at', 'Finished': 'finished_at',
+                   'Receipted': 'receipted_at'}.get(status)
+            if col and getattr(exchange, col, None) is None:
+                fields[col] = datetime.utcnow()
+            exchange.update(**fields)
         except Exception as e:
             print(f"Error occurred while setting the exchange status: {e}")
 
@@ -421,25 +485,20 @@ class MeaningTrail(Model):
             tx_uuid = UUID(str(exchange_id))
             user_uuid = UUID(str(current_user_id))
 
+            names, kinds = cls._name_map(), cls._kind_map()
             # Efficient path: current user is the initiator (full PK lookup)
             rows = list(cls.objects(user_id=user_uuid, exchange_id=tx_uuid))
             if rows:
-                d = rows[0].to_dict()
-                d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
-                return d, True
+                return cls._enrich(rows[0], user_uuid, user_uuid, names, kinds), True
 
             # Fallback: current user is (or acts for / manages) either side.
             # exchange_id is a clustering key so we need allow_filtering to query without partition key.
             all_rows = list(cls.objects.filter(exchange_id=tx_uuid).allow_filtering())
             for row in all_rows:
                 if cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, user_uuid):
-                    d = row.to_dict()
-                    d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
-                    return d, True
+                    return cls._enrich(row, user_uuid, user_uuid, names, kinds), True
                 if cls._viewer_on_side(row.other_user_id, row.recipient_acting_user_id, user_uuid):
-                    d = row.to_dict()
-                    d['likes'] = Likes.summary_for_exchange(tx_uuid, user_uuid)
-                    return d, False
+                    return cls._enrich(row, user_uuid, user_uuid, names, kinds), False
 
             return None, None
         except Exception as e:
@@ -577,14 +636,22 @@ class MeaningTrail(Model):
 
     @classmethod
     def set_status_for(cls, initiator_user_id, exchange_id, status):
-        """Update status using the full PK (initiator_user_id + exchange_id)."""
+        """Update status using the full PK (initiator_user_id + exchange_id),
+        stamping the per-stage transition timestamp the first time each tracked
+        stage is reached (so the progress bar can show when it happened)."""
         try:
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
                 exchange_id=UUID(str(exchange_id))
             ))
             if rows:
-                rows[0].update(exchange_status=status)
+                row = rows[0]
+                fields = {'exchange_status': status}
+                col = {'In Progress': 'in_progress_at', 'Finished': 'finished_at',
+                       'Receipted': 'receipted_at'}.get(status)
+                if col and getattr(row, col, None) is None:
+                    fields[col] = datetime.utcnow()
+                row.update(**fields)
                 return True
             return False
         except Exception as e:

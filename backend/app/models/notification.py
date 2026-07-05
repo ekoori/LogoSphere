@@ -12,6 +12,7 @@ from datetime import datetime
 CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
 cluster = Cluster(CASSANDRA_HOSTS)
 cassandra_session = cluster.connect('logosphere')
+cassandra_session.default_timeout = 30
 
 # A personal inbox is naturally small and bounded, so list/unread-count both
 # work off one bounded fetch rather than a separate COUNT query.

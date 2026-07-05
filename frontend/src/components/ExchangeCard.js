@@ -44,13 +44,17 @@ const xcIndex = (steps, status) => {
     return i >= 0 ? i : 0;
 };
 
-// participants may be plain names or {id, name} pairs; "You" links to own profile.
+// participants may be plain names or {id, name, kind} pairs; "You" links to own
+// profile, a group (alliance/project) to its own page, a person to /user.
+const P_PATH = { sphere: 'sphere', alliance: 'alliance', project: 'project' };
 const pName = (p) => (typeof p === 'string' ? p : p.name);
 const pHref = (p) => {
     const name = pName(p);
     if (name === 'You') return '/profile';
     const id = typeof p === 'string' ? null : p.id;
-    return id ? `/user?id=${id}` : '/user';
+    const kind = typeof p === 'string' ? null : p.kind;
+    if (!id) return '/user';
+    return P_PATH[kind] ? `/${P_PATH[kind]}?id=${id}` : `/user?id=${id}`;
 };
 
 // spheres may be strings or {id, name} pairs — prefer UUID link when available.

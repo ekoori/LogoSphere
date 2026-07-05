@@ -165,7 +165,11 @@ for col in ["ADD likes int", "ADD project_name text", "ADD image_key text",
 for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name text",
             "ADD recipient_acting_user_id uuid", "ADD recipient_acting_user_name text",
             "ADD exchange_long_description text", "ADD exchange_image blob",
-            "ADD gratitude_comment_context text"]:
+            "ADD gratitude_comment_context text",
+            # The opening this exchange was created from, and per-stage
+            # transition timestamps for the progress bar.
+            "ADD source_service_id uuid", "ADD in_progress_at timestamp",
+            "ADD finished_at timestamp", "ADD receipted_at timestamp"]:
     r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
     if r is True:
         print(f"[OK]   meaning_trail: {col}")

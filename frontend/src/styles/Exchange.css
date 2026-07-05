@@ -216,6 +216,8 @@
 }
 .xc-participant a:hover { text-decoration: underline; }
 .xc-participant-you { color: var(--moss-deep); font-weight: 700; }
+.xc-participant-via { color: var(--ink-faint); font-size: 0.85em; }
+.xc-participant-via a { color: var(--ink-soft); }
 .xc-participant-role {
     font-size: 0.68rem;
     font-family: ui-monospace, 'SF Mono', Menlo, monospace;

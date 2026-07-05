@@ -162,7 +162,11 @@ def accept_service(service_id, user_id=None):
             return jsonify({'message': 'Opening not found'}), 404
         if _is_provider_or_manager(service, user_id):
             return jsonify({'message': 'You cannot accept your own opening'}), 400
-        if service.status in ('Completed', 'Cancelled'):
+        # A single opening stays open to everyone until the provider confirms one
+        # acceptance (which moves it to 'In Progress' and out of the marketplace);
+        # only then — or if completed/cancelled — is it closed to new accepters.
+        if service.status in ('Completed', 'Cancelled') or \
+                (service.cadence != 'perpetual' and service.status == 'In Progress'):
             return jsonify({'message': 'This opening is no longer open'}), 409
 
         # Optionally accept "as" an alliance/project the caller manages.
@@ -194,11 +198,9 @@ def accept_service(service_id, user_id=None):
                 return jsonify({'message': 'User not found'}), 404
             accepter_name = f"{accepter.name or ''} {accepter.surname or ''}".strip() or accepter.email
 
-        # A single opening can only be locked to one accepter.
-        if service.cadence != 'perpetual' and service.status == 'Accepted' \
-                and str(getattr(service, 'accepted_by', '')) != str(accepter_uuid):
-            return jsonify({'message': 'This opening has already been accepted'}), 409
-
+        # One acceptance per actor. The opening is NOT locked here — it stays
+        # available to others until the provider confirms one of the pending
+        # acceptances (see confirm_service).
         existing = Service.acceptance_for_actor(service_uuid, uuid.UUID(str(user_id)))
         if existing:
             msg = 'Already confirmed' if existing['status'] == 'confirmed' else 'Awaiting confirmation'
@@ -206,8 +208,6 @@ def accept_service(service_id, user_id=None):
 
         Service.record_acceptance(service_uuid, accepter_uuid, accepter_name,
                                   acting_user_id=acting_user_id, acting_user_name=acting_user_name)
-        if service.cadence != 'perpetual':
-            Service.mark_accepted(service_uuid, accepter_uuid, accepter_name)
 
         # Notify whoever can actually read a notification: for an opening
         # posted as an entity, that's the human who acted on its behalf
@@ -273,6 +273,7 @@ def confirm_service(service_id, user_id=None):
             # human who accepted through to the exchange's recipient side.
             recipient_acting_user_id=acceptance.get('acting_user_id'),
             recipient_acting_user_name=acceptance.get('acting_user_name'),
+            source_service_id=service_uuid,
         )
         if not exchange_id:
             return jsonify({'message': 'Failed to create exchange'}), 500
