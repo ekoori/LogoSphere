@@ -15,7 +15,8 @@ from app.utils.names import resolve_user_names, dedupe
 
 class Alliance:
     def __init__(self, alliance_id, name, description, admin1, sphere_id, sphere_name,
-                 members, member_names, projects, values, meaning_graph, image, member_roles=None):
+                 members, member_names, projects, values, meaning_graph, image, member_roles=None,
+                 join_policy=None, has_image=None):
         self.alliance_id = alliance_id
         self.name = name
         self.description = description
@@ -29,6 +30,8 @@ class Alliance:
         self.meaning_graph = meaning_graph
         self.image = image
         self.member_roles = member_roles or {}
+        self.join_policy = join_policy or 'open'
+        self._has_image = has_image
 
     def to_dict(self, include_image=True):
         def _role(mid):
@@ -60,7 +63,8 @@ class Alliance:
             'projects': self.projects or [],
             'values': self.values or [],
             'meaning_graph': self.meaning_graph,
-            'has_image': bool(self.image),
+            'join_policy': self.join_policy,
+            'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
 
@@ -92,13 +96,25 @@ class Alliance:
             alliance_id, name, description, admin1, sphere_id, sphere_name,
             datetime.utcnow(), members, member_names, projects, values, meaning_graph, image
         ))
+        if image:
+            cassandra_session.execute("UPDATE alliances SET has_image = true WHERE alliance_id = %s", [alliance_id])
         return cls(alliance_id, name, description, admin1, sphere_id, sphere_name,
-                   members, member_names, projects, values, meaning_graph, image)
+                   members, member_names, projects, values, meaning_graph, image, has_image=bool(image))
+
+    _COLS = ("alliance_id, name, description, admin1, sphere_id, sphere_name, members, "
+             "member_names, projects, values, meaning_graph, member_roles, join_policy, has_image")
 
     @classmethod
     def get_all(cls):
-        rows = cassandra_session.execute("SELECT * FROM alliances")
+        """All alliances without their banner blobs (see has_image)."""
+        rows = cassandra_session.execute(f"SELECT {cls._COLS} FROM alliances")
         return [cls._from_row(r) for r in rows]
+
+    @classmethod
+    def list_for_sphere(cls, sphere_id):
+        """[{id, name}] of the alliances inside a sphere."""
+        rows = cassandra_session.execute("SELECT alliance_id, name, sphere_id FROM alliances")
+        return [{'id': str(r.alliance_id), 'name': r.name} for r in rows if r.sphere_id == sphere_id]
 
     @classmethod
     def get_by_id(cls, alliance_id):
@@ -107,7 +123,7 @@ class Alliance:
             aid = alliance_id if isinstance(alliance_id, uuid.UUID) else uuid.UUID(str(alliance_id))
         except (ValueError, TypeError):
             return None
-        r = cassandra_session.execute("SELECT * FROM alliances WHERE alliance_id = %s", [aid]).one()
+        r = cassandra_session.execute(f"SELECT {cls._COLS} FROM alliances WHERE alliance_id = %s", [aid]).one()
         return cls._from_row(r) if r else None
 
     @classmethod
@@ -115,14 +131,16 @@ class Alliance:
         return cls(
             r.alliance_id, r.name, r.description, r.admin1, r.sphere_id,
             getattr(r, 'sphere_name', None), r.members, getattr(r, 'member_names', None),
-            r.projects, r.values, r.meaning_graph, r.image,
+            r.projects, r.values, r.meaning_graph, getattr(r, 'image', None),
             getattr(r, 'member_roles', None),
+            join_policy=getattr(r, 'join_policy', None),
+            has_image=getattr(r, 'has_image', None),
         )
 
     @classmethod
     def set_image(cls, alliance_id, image_bytes):
         cassandra_session.execute(
-            "UPDATE alliances SET image = %s WHERE alliance_id = %s",
+            "UPDATE alliances SET image = %s, has_image = true WHERE alliance_id = %s",
             [image_bytes, alliance_id]
         )
 

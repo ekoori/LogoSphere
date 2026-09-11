@@ -208,6 +208,22 @@ print(f"[OK]   users: is_platform_admin" if r is True else f"[SKIP/WARN] users.i
 r = run("ALTER TABLE logosphere.spheres ADD member_roles map<uuid, text>")
 print(f"[OK]   spheres: member_roles" if r is True else f"[SKIP/WARN] spheres.member_roles: {r}")
 
+# has_image flags (lists skip the blob column) + join policy on every entity.
+for t in ('spheres', 'alliances', 'projects'):
+    for col in ("ADD has_image boolean", "ADD join_policy text"):
+        r = run(f"ALTER TABLE logosphere.{t} {col}")
+        print(f"[OK]   {t}: {col}" if r is True else f"[SKIP/WARN] {t} {col}: {r}")
+r = run("ALTER TABLE logosphere.services ADD has_image boolean")
+print(f"[OK]   services: has_image" if r is True else f"[SKIP/WARN] services.has_image: {r}")
+# value cards: review cadence + reflective endorsement; receipts name the cards
+# (and the kind of meaning) they expressed.
+for col in ("ADD reviewed_at timestamp", "ADD endorsed_at timestamp"):
+    r = run(f"ALTER TABLE logosphere.value_cards {col}")
+    print(f"[OK]   value_cards: {col}" if r is True else f"[SKIP/WARN] value_cards {col}: {r}")
+for col in ("ADD gratitude_card_ids list<uuid>", "ADD gratitude_frankl_mode text"):
+    r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
+    print(f"[OK]   meaning_trail: {col}" if r is True else f"[SKIP/WARN] meaning_trail {col}: {r}")
+
 # spheres: governance flags — sandbox (auto-enroll every new user) and public
 # (logged-out visitors can view the sphere's activity).
 for col in ["ADD is_sandbox boolean", "ADD is_public boolean"]:

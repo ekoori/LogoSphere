@@ -1,6 +1,7 @@
 import logging
 from flask import request, jsonify, current_app as app
 from app.models.spheres import Sphere
+from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
@@ -8,17 +9,6 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-
-def get_sphere_image(sphere_id):
-    """Serve a sphere's banner for <img src> — public + cacheable, keeping the
-    blob out of the spheres list JSON (loaded lazily per page)."""
-    try:
-        return entity_image_response(Sphere.get_image(uuid.UUID(sphere_id)))
-    except (ValueError, TypeError):
-        return ('', 404)
-    except Exception as e:
-        logger.error(f"Error in get_sphere_image: {e}")
-        return ('', 404)
 
 @validate_session
 def create_sphere(user_id=None):
@@ -75,144 +65,22 @@ def create_sphere(user_id=None):
 
 @validate_session
 def get_spheres(user_id=None):
-    if request.method == 'OPTIONS':
-        response = app.make_default_options_response()
-        return response, 200
-
-    try:
-        logger.info(f"Fetching spheres for user_id: {user_id}")
-
-        session = app.session_interface.cassandra_session
-
-        # Build a {user_id: name} map once so participant UUIDs render as names.
-        name_by_id = {}
-        for u in session.execute("SELECT user_id, name FROM users"):
-            name_by_id[u.user_id] = u.name
-
-        rows = session.execute("SELECT * FROM spheres")
-
-        spheres = []
-        sphere_ids = set()
-        for row in rows:
-            if row.sphere_id in sphere_ids:
-                logger.warning(f"Duplicate sphere_id found: {row.sphere_id}")
-                continue
-            sphere_ids.add(row.sphere_id)
-            sphere = Sphere(
-                sphere_id=row.sphere_id,
-                name=row.name,
-                description=row.description,
-                meaning_graph=row.meaning_graph,
-                location=row.location,
-                image=row.image,
-                admin1=row.admin1,
-                participants=row.participants,
-                alliances=row.alliances,
-                projects=row.projects,
-                values=row.values,
-                member_roles=getattr(row, 'member_roles', None),
-                is_sandbox=getattr(row, 'is_sandbox', False),
-                is_public=getattr(row, 'is_public', False)
-            )
-            # Banner images are served separately via GET /api/spheres/<id>/image
-            # (see has_image) — keeping the base64 blob out of the list response.
-            sphere_dict = sphere.to_dict(include_image=False)
-            # Resolve participant UUIDs to display names, and provide {id,name,role}
-            # pairs so the frontend can link each member to their profile and show
-            # their role. admin1 is 'admin'; an explicit member_roles entry wins.
-            roles = getattr(row, 'member_roles', None) or {}
-            sphere_dict['participant_names'] = [
-                name_by_id.get(pid, 'Member') for pid in (row.participants or [])
-            ]
-            sphere_dict['members'] = [
-                {'id': str(pid), 'name': name_by_id.get(pid, 'Member'),
-                 'role': roles.get(pid) or ('admin' if row.admin1 and pid == row.admin1 else 'member')}
-                for pid in (row.participants or [])
-            ]
-            spheres.append(sphere_dict)
-
-        logger.info(f"Successfully retrieved {len(spheres)} spheres")
-        response = jsonify(spheres)
-        return response, 200
-
-    except Exception as e:
-        logger.error(f"Error in get_spheres: {str(e)}")
-        response = jsonify({'message': 'Internal server error'})
-        return response, 500
-
-
-@validate_session
-def join_sphere(sphere_id, user_id=None):
-    if request.method == 'OPTIONS':
-        response = app.make_default_options_response()
-        return response, 200
-    try:
-        sphere_uuid = uuid.UUID(sphere_id)
-        user_uuid = uuid.UUID(str(user_id))
-        # A Cassandra UPDATE is an upsert: joining a non-existent id would
-        # otherwise create a phantom sphere row. Verify it exists first.
-        if not Sphere.get_by_id(sphere_uuid):
-            return jsonify({'message': 'Sphere not found'}), 404
-        already_member = Sphere.join(sphere_uuid, user_uuid)
-        return jsonify({
-            'message': 'Already a member' if already_member else 'Joined successfully',
-            'already_member': already_member,
-        }), 200
-    except ValueError:
-        return jsonify({'message': 'Invalid sphere id'}), 400
-    except Exception as e:
-        logger.error(f"Error in join_sphere: {str(e)}")
-        return jsonify({'message': 'Internal server error'}), 500
-
-
-@validate_session
-def set_sphere_role(sphere_id, target_id, user_id=None):
-    """A sphere admin promotes/demotes another member (role: 'admin' | 'member')."""
+    """Every sphere (they're discoverable so people can join), with members
+    and current value cards embedded - no per-card follow-up requests."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        sid = uuid.UUID(sphere_id)
-        tid = uuid.UUID(target_id)
-        if uuid.UUID(str(user_id)) not in Sphere.admin_ids(sid):
-            return jsonify({'message': 'Only a sphere admin can change roles'}), 403
-        role = (request.get_json() or {}).get('role')
-        if role not in ('admin', 'member'):
-            return jsonify({'message': 'Invalid role'}), 400
-        sphere = Sphere.get_by_id(sid)
-        if not sphere:
-            return jsonify({'message': 'Sphere not found'}), 404
-        if tid not in (sphere.participants or []):
-            return jsonify({'message': 'That user is not a member of this sphere'}), 404
-        Sphere.set_role(sid, tid, role)
-        return jsonify({'message': 'Role updated', 'role': role}), 200
-    except ValueError:
-        return jsonify({'message': 'Invalid id'}), 400
+        spheres = Sphere.get_all()
+        cards = ValueCard.get_for_users([s.sphere_id for s in spheres])
+        out = []
+        for sp in spheres:
+            d = sp.to_dict(include_members=True, include_image=False)
+            d['participant_names'] = [m['name'] for m in d['members']]
+            d['value_cards'] = [c.to_dict() for c in cards.get(sp.sphere_id, [])]
+            out.append(d)
+        return jsonify(out), 200
     except Exception as e:
-        logger.error(f"Error in set_sphere_role: {e}")
-        return jsonify({'message': 'Internal server error'}), 500
-
-
-@validate_session
-def update_sphere_image(sphere_id, user_id=None):
-    """Set the sphere's banner image — from its management page."""
-    if request.method == 'OPTIONS':
-        return app.make_default_options_response(), 200
-    try:
-        sphere_uuid = uuid.UUID(sphere_id)
-        if not can_manage_entity(sphere_uuid, user_id):
-            return jsonify({'message': 'Not authorized to manage this sphere'}), 403
-        image_file = request.files.get('image')
-        if not image_file:
-            return jsonify({'message': 'image file is required'}), 400
-        image_bytes = image_file.read()
-        if not is_supported_image(image_bytes):
-            return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
-        Sphere.set_image(sphere_uuid, image_bytes)
-        return jsonify({'message': 'Image updated'}), 200
-    except ValueError:
-        return jsonify({'message': 'Invalid sphere id'}), 400
-    except Exception as e:
-        logger.error(f"Error in update_sphere_image: {str(e)}")
+        logger.error(f"Error in get_spheres: {e}")
         return jsonify({'message': 'Internal server error'}), 500
 
 

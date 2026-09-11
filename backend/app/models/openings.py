@@ -18,7 +18,7 @@ class Service:
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
                  acting_user_id=None, acting_user_name=None,
                  version=1, is_current=True, replaces_service_id=None,
-                 image_ref_service_id=None):
+                 image_ref_service_id=None, has_image=None):
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -53,6 +53,7 @@ class Service:
         # A branched version doesn't copy the (large) banner blob; it points at
         # the row that holds it. get_image() follows the reference.
         self.image_ref_service_id = image_ref_service_id
+        self._has_image = has_image
 
     def to_dict(self, include_image=True):
         # `include_image=False` (used by the openings LIST) omits the base64
@@ -83,7 +84,7 @@ class Service:
             'accepted_at': _iso(self.accepted_at),
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
-            'has_image': bool(self.image or self.image_ref_service_id),
+            'has_image': bool(self.image or self.image_ref_service_id) if self._has_image is None else bool(self._has_image or self.image_ref_service_id),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
             'acting_user': self.acting_user_name,
@@ -161,11 +162,20 @@ class Service:
             is_current=getattr(r, 'is_current', None),
             replaces_service_id=getattr(r, 'replaces_service_id', None),
             image_ref_service_id=getattr(r, 'image_ref_service_id', None),
+            has_image=getattr(r, 'has_image', None),
         )
+
+    # Every column except the banner blob - the marketplace list never needs it.
+    _LIST_COLS = ("service_id, type, title, description, provider_id, provider_name, sphere_id, "
+                  "sphere_name, status, values, likes, project_name, image_key, cadence, accepted_by, "
+                  "accepted_by_name, created_at, accepted_at, in_progress_at, completed_at, "
+                  "acting_user_id, acting_user_name, version, is_current, replaces_service_id, "
+                  "image_ref_service_id, has_image")
 
     @classmethod
     def get_all(cls):
-        rows = cassandra_session.execute("SELECT * FROM services")
+        """All openings without their banner blobs (has_image is a stored flag)."""
+        rows = cassandra_session.execute(f"SELECT {cls._LIST_COLS} FROM services")
         return [cls._from_row(r) for r in rows]
 
     @classmethod
@@ -178,7 +188,7 @@ class Service:
     @classmethod
     def set_image(cls, service_id, image_bytes):
         cassandra_session.execute(
-            "UPDATE services SET image = %s WHERE service_id = %s",
+            "UPDATE services SET image = %s, has_image = true WHERE service_id = %s",
             [image_bytes, service_id]
         )
 

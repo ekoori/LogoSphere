@@ -134,6 +134,28 @@ class ValueCard:
         return cards
 
     @classmethod
+    def get_for_users(cls, user_ids):
+        """{user_id: [current cards]} for many owners in one IN query (used by
+        the list endpoints so every card on a page shares one round-trip)."""
+        ids = []
+        for u in user_ids or []:
+            try:
+                ids.append(u if isinstance(u, uuid.UUID) else uuid.UUID(str(u)))
+            except (ValueError, TypeError):
+                pass
+        out = {u: [] for u in ids}
+        if not ids:
+            return out
+        placeholders = ', '.join(['%s'] * len(ids))
+        rows = cassandra_session.execute(
+            f"SELECT * FROM value_cards WHERE user_id IN ({placeholders})", ids)
+        for r in rows:
+            c = cls._row_to_card(r)
+            if c.is_current:
+                out.setdefault(c.user_id, []).append(c)
+        return out
+
+    @classmethod
     def update(cls, user_id, card_id, data):
         """Edit a card without ever mutating its stored history: writes the
         edit as a brand-new row (new card_id, replaces_card_id=old id) and

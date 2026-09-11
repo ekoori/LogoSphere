@@ -15,7 +15,7 @@ from app.utils.names import resolve_user_names, dedupe
 class Project:
     def __init__(self, project_id, name, description, owner, owner_alliance, status,
                  sphere_id, sphere_name, participants, participant_names, values,
-                 participant_roles=None, image=None):
+                 participant_roles=None, image=None, join_policy=None, has_image=None):
         self.project_id = project_id
         self.name = name
         self.description = description
@@ -29,6 +29,8 @@ class Project:
         self.values = values
         self.participant_roles = participant_roles or {}
         self.image = image
+        self.join_policy = join_policy or 'open'
+        self._has_image = has_image
 
     def to_dict(self, include_image=True):
         # Names come from `users` at read time (the stored participant_names
@@ -63,7 +65,8 @@ class Project:
             'participants': [m['name'] for m in members_with_roles],
             'members': members_with_roles,
             'values': self.values or [],
-            'has_image': bool(self.image),
+            'join_policy': self.join_policy,
+            'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
 
@@ -100,14 +103,26 @@ class Project:
             sphere_id, sphere_name, datetime.utcnow(), participants, participant_names,
             participant_roles, values, image
         ))
+        if image:
+            cassandra_session.execute("UPDATE projects SET has_image = true WHERE project_id = %s", [project_id])
         return cls(project_id, name, description, owner, owner_alliance, status,
                    sphere_id, sphere_name, participants, participant_names, values,
-                   participant_roles=participant_roles, image=image)
+                   participant_roles=participant_roles, image=image, has_image=bool(image))
+
+    _COLS = ("project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, "
+             "participants, participant_names, values, participant_roles, join_policy, has_image")
 
     @classmethod
     def get_all(cls):
-        rows = cassandra_session.execute("SELECT * FROM projects")
+        """All projects without their banner blobs (see has_image)."""
+        rows = cassandra_session.execute(f"SELECT {cls._COLS} FROM projects")
         return [cls._from_row(r) for r in rows]
+
+    @classmethod
+    def list_for_sphere(cls, sphere_id):
+        """[{id, name}] of the projects inside a sphere."""
+        rows = cassandra_session.execute("SELECT project_id, name, sphere_id FROM projects")
+        return [{'id': str(r.project_id), 'name': r.name} for r in rows if r.sphere_id == sphere_id]
 
     @classmethod
     def get_by_id(cls, project_id):
@@ -116,7 +131,7 @@ class Project:
             pid = project_id if isinstance(project_id, uuid.UUID) else uuid.UUID(str(project_id))
         except (ValueError, TypeError):
             return None
-        r = cassandra_session.execute("SELECT * FROM projects WHERE project_id = %s", [pid]).one()
+        r = cassandra_session.execute(f"SELECT {cls._COLS} FROM projects WHERE project_id = %s", [pid]).one()
         return cls._from_row(r) if r else None
 
     @classmethod
@@ -129,12 +144,14 @@ class Project:
             getattr(r, 'values', None),
             getattr(r, 'participant_roles', None),
             getattr(r, 'image', None),
+            join_policy=getattr(r, 'join_policy', None),
+            has_image=getattr(r, 'has_image', None),
         )
 
     @classmethod
     def set_image(cls, project_id, image_bytes):
         cassandra_session.execute(
-            "UPDATE projects SET image = %s WHERE project_id = %s",
+            "UPDATE projects SET image = %s, has_image = true WHERE project_id = %s",
             [image_bytes, project_id]
         )
 
