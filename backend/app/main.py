@@ -20,6 +20,16 @@ import logging
 import os
 from datetime import timedelta
 
+# Configured before any app module is imported: app.db opens the Cassandra
+# connection at import time and logs it, and without a root handler yet in
+# place Python's last-resort handler would drop everything below WARNING.
+# Logging: INFO by default (DEBUG used to be the default, which also logged
+# request bodies and bearer tokens). Override with LOG_LEVEL=DEBUG locally.
+logging.basicConfig(level=getattr(logging, os.environ.get('LOG_LEVEL', 'INFO').upper(), logging.INFO))
+# The driver is very chatty at DEBUG; keep it at WARNING unless asked for.
+logging.getLogger('cassandra').setLevel(os.environ.get('CASSANDRA_LOG_LEVEL', 'WARNING').upper())
+logger = logging.getLogger(__name__)
+
 from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
 from app.routes.profile import get_user, get_profile, update_user, get_public_user, get_user_avatar, toggle_follow, get_following
@@ -35,13 +45,6 @@ from app.routes.projects import create_project, get_projects
 from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image, edit_opening
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card, endorse_value_card, review_value_card, endorse_entity_value_card, review_entity_value_card
 from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
-
-# Logging: INFO by default (DEBUG used to be the default, which also logged
-# request bodies and bearer tokens). Override with LOG_LEVEL=DEBUG locally.
-logging.basicConfig(level=getattr(logging, os.environ.get('LOG_LEVEL', 'INFO').upper(), logging.INFO))
-# The driver is very chatty at DEBUG; keep it at WARNING unless asked for.
-logging.getLogger('cassandra').setLevel(os.environ.get('CASSANDRA_LOG_LEVEL', 'WARNING').upper())
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 # The secret key must come from the environment. A dev fallback is only allowed
