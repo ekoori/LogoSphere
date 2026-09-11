@@ -92,9 +92,12 @@ class _Backend:
             orm.row_factory = dict_factory
         except Exception:
             # Leave the previous (possibly dead) connection in place; the next
-            # failing query will try again once the cooldown has passed.
+            # failing query will try again once the cooldown has passed
+            # (counted from the end of this attempt, which may have taken the
+            # full connect timeout).
             for c in (raw_cluster, orm_cluster):
                 c.shutdown()
+            self.attempted_at = time.time()
             raise
 
         old = (self.raw_cluster, self.orm_cluster)
@@ -132,15 +135,24 @@ def _ensure():
 
 
 def rebuild(reason, failed_generation):
-    """Rebuild the connection after a dead-connection error, unless a
-    concurrent request already did (or one was attempted a moment ago)."""
-    with _lock:
+    """Rebuild the connection after a dead-connection error. Returns True when
+    the caller should retry its query on a fresh connection (either this call
+    rebuilt it, or a concurrent request already had). Returns False - without
+    waiting - when a rebuild is in progress on another request or one was
+    attempted a moment ago: while Cassandra itself is unresponsive, every
+    request must fail fast rather than queue up behind 10-second connects."""
+    if not _lock.acquire(blocking=False):
+        return False
+    try:
         if _backend.generation != failed_generation:
-            return
+            return True
         if time.time() - _backend.attempted_at < _REBUILD_COOLDOWN:
-            return
+            return False
         logger.warning('Cassandra connection unusable (%s) - rebuilding', reason)
         _backend.build()
+        return True
+    finally:
+        _lock.release()
 
 
 class ResilientSession:
@@ -159,7 +171,8 @@ class ResilientSession:
         try:
             return getattr(backend, self._which).execute(*args, **kwargs)
         except _DEAD as e:
-            rebuild(e, generation)
+            if not rebuild(e, generation):
+                raise
             return getattr(_ensure(), self._which).execute(*args, **kwargs)
 
     def execute_async(self, *args, **kwargs):
