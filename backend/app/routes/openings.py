@@ -16,10 +16,38 @@ logger = logging.getLogger(__name__)
 def _is_provider_or_manager(service, user_id):
     """True if `user_id` is the opening's provider, or — when the opening was
     posted on behalf of a sphere/alliance/project (provider_id is the entity's
-    own id) — a human who manages that entity."""
+    own id) — a human who manages that entity. For an alliance, its
+    confirm_policy widens or narrows who may act: 'lead' (Lead only),
+    'board' (Lead + Board, the default), 'any-member'."""
     if str(service.provider_id) == str(user_id):
         return True
+    from app.models.alliance import Alliance
+    alliance = Alliance.get_by_id(service.provider_id)
+    if alliance:
+        uid = uuid.UUID(str(user_id))
+        policy = getattr(alliance, 'confirm_policy', None) or 'board'
+        if is_platform_admin(uid) or alliance.admin1 == uid:
+            return True
+        role = (alliance.member_roles or {}).get(uid)
+        if policy == 'lead':
+            return False
+        if policy == 'any-member':
+            return uid in (alliance.members or [])
+        return role in ('admin', 'steward')
     return can_manage_entity(service.provider_id, user_id)
+
+
+def _project_is_closed(name=None, project_id=None):
+    """A closed (archived) project takes no new openings."""
+    from app.models.project import Project
+    if project_id:
+        p = Project.get_by_id(project_id)
+        return bool(p and getattr(p, 'phase', 'ongoing') == 'closed')
+    if name:
+        for p in Project.get_all():
+            if p.name == name:
+                return getattr(p, 'phase', 'ongoing') == 'closed'
+    return False
 
 
 def _enrich_service(s, viewer, include_exchanges=False):
@@ -67,12 +95,16 @@ def create_service(user_id=None):
         # opening (and any exchange it spawns) lives under the entity's own
         # identity rather than the manager's personal profile.
         acting_as_id = data.get('acting_as_id')
+        if data.get('project_name') and _project_is_closed(name=data.get('project_name')):
+            return jsonify({'message': 'That project is closed and takes no new openings'}), 409
         if acting_as_id:
             if not can_manage_entity(acting_as_id, user_id):
                 return jsonify({'message': 'Not authorized to post on behalf of this entity'}), 403
             info = get_entity_info(acting_as_id)
             if not info:
                 return jsonify({'message': 'Unknown entity'}), 400
+            if info['kind'] == 'project' and _project_is_closed(project_id=acting_as_id):
+                return jsonify({'message': 'This project is closed and takes no new openings'}), 409
             provider_id = uuid.UUID(str(acting_as_id))
             # Record which human posted on the entity's behalf → "Joe on behalf
             # of <Entity>" — the entity is the provider, but the act is attributed.

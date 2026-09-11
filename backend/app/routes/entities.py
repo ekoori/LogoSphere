@@ -29,6 +29,15 @@ from app.middleware.session_middleware import validate_session
 logger = logging.getLogger(__name__)
 
 JOIN_POLICIES = ('open', 'approval')
+# Editable policy fields per kind (managers may set these directly; members may
+# also put them to a vote - see routes/governance.py).
+POLICY_FIELDS = {
+    'sphere':   {'join_policy': JOIN_POLICIES, 'decision_policy': ('majority', 'supermajority', 'consensus')},
+    'alliance': {'join_policy': JOIN_POLICIES, 'decision_policy': ('majority', 'supermajority', 'consensus'),
+                 'pm_policy': ('single-pm', 'board'), 'confirm_policy': ('lead', 'board', 'any-member')},
+    'project':  {'join_policy': JOIN_POLICIES, 'decision_policy': ('majority', 'supermajority', 'consensus'),
+                 'phase': ('ongoing', 'closed')},
+}
 
 KINDS = {
     'sphere': dict(
@@ -148,10 +157,11 @@ def patch_entity(kind, entity_id, user_id=None):
             sets.append('name = %s'); params.append(name)
         if 'description' in data:
             sets.append('description = %s'); params.append((data.get('description') or '').strip())
-        if 'join_policy' in data:
-            if data['join_policy'] not in JOIN_POLICIES:
-                return jsonify({'message': 'join_policy must be "open" or "approval"'}), 400
-            sets.append('join_policy = %s'); params.append(data['join_policy'])
+        for field, allowed in POLICY_FIELDS[kind].items():
+            if field in data:
+                if data[field] not in allowed:
+                    return jsonify({'message': f'{field} must be one of: {", ".join(allowed)}'}), 400
+                sets.append(f'{field} = %s'); params.append(data[field])
         if not sets:
             return jsonify({'message': 'Nothing to update'}), 400
         params.append(eid)

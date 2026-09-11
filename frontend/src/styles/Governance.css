@@ -1,0 +1,63 @@
+/* GovernancePanel — proposals, votes, delegation (liquid democracy) */
+.gov { display: flex; flex-direction: column; gap: 1.6rem; }
+.gov-section {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    padding: 1.2rem 1.4rem;
+    box-shadow: var(--shadow-sm);
+}
+.gov-section-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.6rem; }
+.gov-h { margin: 0 0 0.6rem; font-family: var(--font-body); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); }
+.gov-section-head .gov-h { margin: 0; }
+.gov-lead { margin: 0 0 0.9rem; color: var(--ink-soft); line-height: 1.6; font-size: 0.93rem; }
+.gov-faint { font-size: 0.82rem; color: var(--ink-faint); margin: 0.6rem 0 0; }
+.gov-error { color: var(--terracotta-deep, #a5502f); font-size: 0.85rem; margin: 0.5rem 0 0; }
+
+.gov-policies { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; margin: 0; }
+.gov-policy { background: var(--paper); border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 0.6rem 0.8rem; }
+.gov-policy dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+.gov-policy dd { margin: 0.15rem 0 0; font-weight: 700; color: var(--moss-deep); }
+
+.gov-delegation { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 0.92rem; }
+.gov-delegation select { padding: 0.35em 0.6em; }
+.gov-delegate-chip { display: inline-flex; align-items: center; gap: 0.4em; font-size: 0.85rem; color: var(--ink-soft); }
+
+.gov-proposal { border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 0.9rem 1rem; margin-top: 0.8rem; background: var(--paper); }
+.gov-proposal--closed { opacity: 0.85; }
+.gov-proposal-head { display: flex; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+.gov-status { display: inline-block; padding: 0.15em 0.6em; border-radius: var(--r-pill); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid var(--border-soft); margin-right: 0.5em; }
+.gov-status--open { color: var(--leaf); border-color: var(--leaf); background: rgba(111,138,79,0.08); }
+.gov-status--passed { color: var(--moss-deep); border-color: var(--moss); background: rgba(70,88,58,0.1); }
+.gov-status--rejected { color: var(--terracotta-deep); border-color: var(--terracotta); background: rgba(165,80,47,0.08); }
+.gov-status--withdrawn { color: var(--ink-faint); }
+.gov-kind { font-size: 0.78rem; color: var(--ink-faint); }
+.gov-meta { font-size: 0.78rem; color: var(--ink-faint); }
+.gov-proposal-title { margin: 0.5rem 0 0.2rem; font-size: 1.05rem; }
+.gov-proposal-policy { margin: 0 0 0.3rem; font-size: 0.9rem; color: var(--ink-soft); }
+.gov-proposal-desc { margin: 0 0 0.5rem; color: var(--ink-soft); font-size: 0.9rem; white-space: pre-wrap; }
+
+.gov-tally { margin: 0.6rem 0 0.2rem; }
+.gov-tally-bar { display: flex; height: 10px; border-radius: var(--r-pill); overflow: hidden; background: var(--surface-2); border: 1px solid var(--border-soft); }
+.gov-tally-yes { background: var(--leaf); }
+.gov-tally-no { background: var(--terracotta); }
+.gov-tally-abstain { background: var(--honey); opacity: 0.7; }
+.gov-tally-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.35rem; }
+.gov-tally-faint { color: var(--ink-faint); }
+
+.gov-proposal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.7rem; }
+.gov-vote-btn { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-pill); padding: 0.35em 0.9em; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-transform: capitalize; }
+.gov-vote-btn--yes.is-mine { background: var(--leaf); color: #f7f4e8; border-color: var(--leaf); }
+.gov-vote-btn--no.is-mine { background: var(--terracotta); color: #fff7ef; border-color: var(--terracotta); }
+.gov-vote-btn--abstain.is-mine { background: var(--honey); color: #2b2417; border-color: var(--honey); }
+.gov-vote-btn:hover:not(:disabled) { border-color: var(--moss); }
+.gov-would { font-size: 0.8rem; color: var(--ink-faint); margin-left: auto; }
+.gov-link-btn { background: transparent; border: none; color: var(--moss-deep); text-decoration: underline; cursor: pointer; font-size: 0.82rem; padding: 0.2em 0.4em; }
+
+.gov-propose { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border: 1px dashed var(--border); border-radius: var(--r-md); margin: 0.6rem 0 1rem; background: var(--paper); }
+.gov-propose-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; }
+.gov-propose-row label { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.9rem; }
+.gov-propose input[type="text"], .gov-propose textarea, .gov-propose select { width: 100%; box-sizing: border-box; padding: 0.5em 0.7em; border: 1px solid var(--border-soft); border-radius: var(--r-md); font: inherit; background: var(--surface); }
+.gov-propose-row select { width: auto; flex: 1 1 200px; }
+.gov-propose input[type="number"] { width: 4.5em; padding: 0.3em 0.4em; }
+.gov-propose-foot { justify-content: space-between; }

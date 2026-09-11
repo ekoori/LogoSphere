@@ -15,7 +15,8 @@ from app.utils.names import resolve_user_names, dedupe
 class Project:
     def __init__(self, project_id, name, description, owner, owner_alliance, status,
                  sphere_id, sphere_name, participants, participant_names, values,
-                 participant_roles=None, image=None, join_policy=None, has_image=None):
+                 participant_roles=None, image=None, join_policy=None, has_image=None,
+                 decision_policy=None, phase=None):
         self.project_id = project_id
         self.name = name
         self.description = description
@@ -30,6 +31,9 @@ class Project:
         self.participant_roles = participant_roles or {}
         self.image = image
         self.join_policy = join_policy or 'open'
+        self.decision_policy = decision_policy or 'majority'
+        # 'ongoing' | 'closed' - a closed (archived) project takes no new openings.
+        self.phase = phase or 'ongoing'
         self._has_image = has_image
 
     def to_dict(self, include_image=True):
@@ -66,6 +70,8 @@ class Project:
             'members': members_with_roles,
             'values': self.values or [],
             'join_policy': self.join_policy,
+            'decision_policy': self.decision_policy,
+            'phase': self.phase,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
@@ -110,7 +116,7 @@ class Project:
                    participant_roles=participant_roles, image=image, has_image=bool(image))
 
     _COLS = ("project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, "
-             "participants, participant_names, values, participant_roles, join_policy, has_image")
+             "participants, participant_names, values, participant_roles, join_policy, has_image, decision_policy, phase")
 
     @classmethod
     def get_all(cls):
@@ -146,6 +152,8 @@ class Project:
             getattr(r, 'image', None),
             join_policy=getattr(r, 'join_policy', None),
             has_image=getattr(r, 'has_image', None),
+            decision_policy=getattr(r, 'decision_policy', None),
+            phase=getattr(r, 'phase', None),
         )
 
     @classmethod

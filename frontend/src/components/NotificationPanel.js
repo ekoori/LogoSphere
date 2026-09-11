@@ -1,11 +1,19 @@
 // NotificationPanel — dropdown on desktop, full-width sheet under the header
-// on mobile (see .notification-scrim in App.css, same pattern as the nav
-// drawer). Renders real backend notifications: click an item to mark it read
-// and jump to what it's about; "Mark all read" clears the unread badge.
-import React, { useEffect, useRef } from 'react';
+// on mobile. Renders real backend notifications: click an item to mark it
+// read and jump to what it's about; "Mark all read" clears the unread badge.
+//
+// The panel is rendered through a portal onto <body> with fixed positioning
+// computed from the bell's position. Living inside the sticky header used to
+// tie its stacking (and, because the header has a backdrop-filter, its
+// containing block) to the header — on some browsers/pages the panel ended
+// up painted beneath the page banner. On <body> with its own z-index it can't.
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Avatar from './Avatar';
+
+const MOBILE_QUERY = '(max-width: 900px)';
 
 function timeAgo(iso) {
     if (!iso) return '';
@@ -20,15 +28,42 @@ function timeAgo(iso) {
     return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// Where to put the panel: under the bell on desktop, a sheet under the header on mobile.
+function computePlacement() {
+    const bell = document.getElementById('notification-bell');
+    const header = document.querySelector('header');
+    const headerBottom = header ? header.getBoundingClientRect().bottom : 64;
+    if (window.matchMedia(MOBILE_QUERY).matches || !bell) {
+        return { position: 'fixed', top: headerBottom + 6, left: 8, right: 8, width: 'auto',
+                 maxHeight: `calc(100vh - ${headerBottom + 6}px - 1rem)`, zIndex: 2001 };
+    }
+    const r = bell.getBoundingClientRect();
+    return { position: 'fixed', top: r.bottom + 10, right: Math.max(8, window.innerWidth - r.right), left: 'auto',
+             maxHeight: `calc(100vh - ${r.bottom + 10}px - 1rem)`, zIndex: 2001 };
+}
+
 const NotificationPanel = ({ notifications, isVisible, onClose, onItemClick, onMarkAllRead }) => {
     const panelRef = useRef(null);
     const navigate = useNavigate();
+    const [placement, setPlacement] = useState(() => (typeof window === 'undefined' ? {} : computePlacement()));
+
+    useEffect(() => {
+        if (!isVisible) return undefined;
+        const update = () => setPlacement(computePlacement());
+        update();
+        window.addEventListener('resize', update);
+        window.addEventListener('scroll', update, true);
+        return () => {
+            window.removeEventListener('resize', update);
+            window.removeEventListener('scroll', update, true);
+        };
+    }, [isVisible]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (panelRef.current && !panelRef.current.contains(event.target)) {
-                onClose();
-            }
+            const bell = document.getElementById('notification-bell');
+            if (bell && bell.contains(event.target)) return; // the bell toggles it itself
+            if (panelRef.current && !panelRef.current.contains(event.target)) onClose();
         };
         if (isVisible) document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -36,7 +71,8 @@ const NotificationPanel = ({ notifications, isVisible, onClose, onItemClick, onM
 
     // Lock body scroll while the mobile sheet is open (mirrors the nav drawer).
     useEffect(() => {
-        document.body.classList.toggle('notification-panel-open', isVisible);
+        const mobile = typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches;
+        document.body.classList.toggle('notification-panel-open', isVisible && mobile);
         return () => document.body.classList.remove('notification-panel-open');
     }, [isVisible]);
 
@@ -44,11 +80,11 @@ const NotificationPanel = ({ notifications, isVisible, onClose, onItemClick, onM
 
     const hasUnread = notifications.some((n) => !n.is_read);
 
-    return (
+    return createPortal(
         <>
             {/* Scrim — tap outside (or the whole backdrop on mobile) to close. */}
-            <div className="notification-scrim" onClick={onClose} aria-hidden="true" />
-            <div ref={panelRef} id="notification-panel" className="notification-panel">
+            <div className="notification-scrim" onClick={onClose} aria-hidden="true" style={{ zIndex: 2000 }} />
+            <div ref={panelRef} id="notification-panel" className="notification-panel" style={placement} role="dialog" aria-label="Notifications">
                 <div className="notification-panel-head">
                     <h4>Notifications</h4>
                     <div className="notification-head-actions">
@@ -85,7 +121,8 @@ const NotificationPanel = ({ notifications, isVisible, onClose, onItemClick, onM
                     </ul>
                 )}
             </div>
-        </>
+        </>,
+        document.body
     );
 };
 

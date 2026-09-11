@@ -34,6 +34,10 @@ export default function EntityManagement({ kind }) {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [joinPolicy, setJoinPolicy] = useState('open');
+    const [decisionPolicy, setDecisionPolicy] = useState('majority');
+    const [pmPolicy, setPmPolicy] = useState('single-pm');
+    const [confirmPolicy, setConfirmPolicy] = useState('board');
+    const [phase, setPhase] = useState('ongoing');
     const [isSandbox, setIsSandbox] = useState(false);
     const [isPublic, setIsPublic] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -46,6 +50,10 @@ export default function EntityManagement({ kind }) {
         setName(entity.name || '');
         setDescription(entity.description || '');
         setJoinPolicy(entity.join_policy || 'open');
+        setDecisionPolicy(entity.decision_policy || 'majority');
+        setPmPolicy(entity.pm_policy || 'single-pm');
+        setConfirmPolicy(entity.confirm_policy || 'board');
+        setPhase(entity.phase || 'ongoing');
         setIsSandbox(!!entity.is_sandbox);
         setIsPublic(!!entity.is_public);
     }, [entity]);
@@ -76,6 +84,10 @@ export default function EntityManagement({ kind }) {
             if (name.trim() !== entity.name) body.name = name.trim();
             if ((description || '').trim() !== (entity.description || '')) body.description = description.trim();
             if (joinPolicy !== (entity.join_policy || 'open')) body.join_policy = joinPolicy;
+            if (decisionPolicy !== (entity.decision_policy || 'majority')) body.decision_policy = decisionPolicy;
+            if (kind === 'alliance' && pmPolicy !== (entity.pm_policy || 'single-pm')) body.pm_policy = pmPolicy;
+            if (kind === 'alliance' && confirmPolicy !== (entity.confirm_policy || 'board')) body.confirm_policy = confirmPolicy;
+            if (kind === 'project' && phase !== (entity.phase || 'ongoing')) body.phase = phase;
             if (Object.keys(body).length) await api.patch(`/api/${path}/${eid}`, body);
             if (kind === 'sphere') {
                 const gov = { is_public: isPublic };
@@ -146,6 +158,50 @@ export default function EntityManagement({ kind }) {
                                 <option value="approval">Approval required — {MANAGER_WORD[kind]} must approve</option>
                             </select>
                         </div>
+
+                        <div className="form-group">
+                            <label htmlFor="decision-policy">How decisions pass</label>
+                            <select id="decision-policy" value={decisionPolicy} onChange={(e) => setDecisionPolicy(e.target.value)}>
+                                <option value="majority">Simple majority — more weighted yes than no</option>
+                                <option value="supermajority">Two-thirds supermajority</option>
+                                <option value="consensus">Consensus — no weighted no votes</option>
+                            </select>
+                        </div>
+                        <p className="management-section-sub">
+                            Members vote on proposals from the {kind} page's Governance tab (liquid democracy: anyone can
+                            delegate their vote to a member they trust, and a direct vote always overrides it). A policy
+                            change that passes is applied automatically.
+                        </p>
+
+                        {kind === 'alliance' && (
+                            <>
+                                <div className="form-group">
+                                    <label htmlFor="pm-policy">Projects managed by</label>
+                                    <select id="pm-policy" value={pmPolicy} onChange={(e) => setPmPolicy(e.target.value)}>
+                                        <option value="single-pm">Each project's own manager</option>
+                                        <option value="board">The Lead and Board members too</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="confirm-policy">Acceptances of the alliance's openings confirmed by</label>
+                                    <select id="confirm-policy" value={confirmPolicy} onChange={(e) => setConfirmPolicy(e.target.value)}>
+                                        <option value="lead">The Lead only</option>
+                                        <option value="board">The Lead and Board members</option>
+                                        <option value="any-member">Any member</option>
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        {kind === 'project' && (
+                            <div className="form-group">
+                                <label htmlFor="phase">Project phase</label>
+                                <select id="phase" value={phase} onChange={(e) => setPhase(e.target.value)}>
+                                    <option value="ongoing">Ongoing — taking openings and contributors</option>
+                                    <option value="closed">Closed — archived; no new openings</option>
+                                </select>
+                            </div>
+                        )}
 
                         {kind === 'sphere' && (
                             <>

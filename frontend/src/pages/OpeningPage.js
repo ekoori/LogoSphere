@@ -363,10 +363,10 @@ function OpeningPage() {
                     </div>
 
                     <div className="xc-sidebar-card">
-                        <p className="xc-sidebar-heading">Provided by</p>
+                        <p className="xc-sidebar-heading">{service.type === 'need' ? 'Requested by' : 'Provided by'}</p>
                         <div className="xc-participants-list">
                             <div className="xc-participant">
-                                <span>👤</span>
+                                <Avatar userId={service.actingUserId || service.providerId} name={service.actingUser || service.provider} size={32} />
                                 {service.actingUser ? (
                                     <span>
                                         <Link to={service.actingUserId ? `/user?id=${service.actingUserId}` : '/user'}>{service.actingUser}</Link>

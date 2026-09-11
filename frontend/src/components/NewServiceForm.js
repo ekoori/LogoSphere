@@ -24,7 +24,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     useEffect(() => {
         if (!isVisible) return;
         api.get('/api/spheres').then((r) => setSpheres(r.data || [])).catch(() => {});
-        api.get('/api/projects').then((r) => setProjects(r.data || [])).catch(() => {});
+        // Closed (archived) projects take no new openings.
+        api.get('/api/projects').then((r) => setProjects((r.data || []).filter((p) => p.phase !== 'closed'))).catch(() => {});
     }, [isVisible]);
 
     const handleChange = (e) => {

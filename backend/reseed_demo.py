@@ -224,6 +224,26 @@ for col in ("ADD gratitude_card_ids list<uuid>", "ADD gratitude_frankl_mode text
     r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
     print(f"[OK]   meaning_trail: {col}" if r is True else f"[SKIP/WARN] meaning_trail {col}: {r}")
 
+# Governance policies (votable via liquid democracy) + project phase.
+for t, cols in (('spheres', ("ADD decision_policy text",)),
+                ('alliances', ("ADD decision_policy text", "ADD pm_policy text", "ADD confirm_policy text")),
+                ('projects', ("ADD decision_policy text", "ADD phase text"))):
+    for col in cols:
+        r = run(f"ALTER TABLE logosphere.{t} {col}")
+        print(f"[OK]   {t}: {col}" if r is True else f"[SKIP/WARN] {t} {col}: {r}")
+run("""CREATE TABLE IF NOT EXISTS logosphere.governance_proposals (
+    entity_id uuid, proposal_id uuid, kind text, title text, description text,
+    policy_key text, policy_value text, status text, created_by uuid,
+    created_at timestamp, closes_at timestamp, closed_at timestamp,
+    decision_policy text, result text, PRIMARY KEY (entity_id, proposal_id))""")
+run("""CREATE TABLE IF NOT EXISTS logosphere.governance_votes (
+    proposal_id uuid, user_id uuid, choice text, created_at timestamp,
+    PRIMARY KEY (proposal_id, user_id))""")
+run("""CREATE TABLE IF NOT EXISTS logosphere.governance_delegations (
+    entity_id uuid, delegator_id uuid, delegate_id uuid, created_at timestamp,
+    PRIMARY KEY (entity_id, delegator_id))""")
+print("[OK]   governance tables")
+
 # spheres: governance flags — sandbox (auto-enroll every new user) and public
 # (logged-out visitors can view the sphere's activity).
 for col in ["ADD is_sandbox boolean", "ADD is_public boolean"]:

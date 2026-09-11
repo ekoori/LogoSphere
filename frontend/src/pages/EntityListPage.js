@@ -71,11 +71,23 @@ export default function EntityListPage({ kind }) {
                 ) : rows.length === 0 ? (
                     <p className="empty-state">{search ? `Nothing matches “${search}”.` : copy.empty}</p>
                 ) : (
-                    <div className="entity-grid">
-                        {rows.map((e) => (
-                            <EntityCard key={e[ID_KEY[kind]] || e.id} kind={kind} entity={e} onJoin={handleJoin} />
-                        ))}
-                    </div>
+                    <>
+                        <div className="entity-grid">
+                            {rows.filter((e) => !(kind === 'project' && e.phase === 'closed')).map((e) => (
+                                <EntityCard key={e[ID_KEY[kind]] || e.id} kind={kind} entity={e} onJoin={handleJoin} />
+                            ))}
+                        </div>
+                        {kind === 'project' && rows.some((e) => e.phase === 'closed') && (
+                            <details className="entity-archive">
+                                <summary>Closed &amp; archived ({rows.filter((e) => e.phase === 'closed').length})</summary>
+                                <div className="entity-grid">
+                                    {rows.filter((e) => e.phase === 'closed').map((e) => (
+                                        <EntityCard key={e[ID_KEY[kind]] || e.id} kind={kind} entity={e} onJoin={handleJoin} />
+                                    ))}
+                                </div>
+                            </details>
+                        )}
+                    </>
                 )}
             </main>
         </div>

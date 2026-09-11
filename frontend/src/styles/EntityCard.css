@@ -163,3 +163,9 @@
 .entity-card-breadcrumb a { color: var(--moss, #6b7a5e); text-decoration: none; }
 .entity-card-breadcrumb a:hover { text-decoration: underline; }
 .entity-card-breadcrumb .breadcrumb-pipe { color: var(--border-soft, #cbd2c0); margin: 0 0.3em; font-weight: 400; }
+
+/* Closed / archived project */
+.entity-card-phase { display: inline-block; margin-left: 0.6em; vertical-align: middle; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 0.15em 0.6em; }
+.entity-card--closed { opacity: 0.82; }
+.entity-archive { margin-top: 1.5rem; }
+.entity-archive summary { cursor: pointer; font-weight: 700; color: var(--ink-faint); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.4rem 0; }

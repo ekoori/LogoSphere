@@ -25,6 +25,8 @@
 
 /* ── Page scaffold ────────────────────────────────────────────────────────── */
 .ep-page {
+    width: 100%;
+    box-sizing: border-box;
     max-width: 1000px;
     margin: 0 auto;
     padding: 0 clamp(1rem, 3vw, 2rem) 5rem;
@@ -197,6 +199,7 @@
     display: flex;
     gap: var(--sp-6, 2rem);
     align-items: flex-start;
+    width: 100%;
 }
 
 .ep-aside {
@@ -221,8 +224,9 @@
 }
 
 .ep-main {
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     min-width: 0;
+    width: 100%;
     /* Backstop: even if some tab's content can't shrink, clip it to the column
        rather than let it push the page to full viewport width. clip (not hidden)
        leaves the vertical axis visible, so sticky/expand behaviour is unaffected. */
@@ -234,8 +238,9 @@
 }
 
 @media (max-width: 860px) {
-    .ep-layout { flex-direction: column; }
+    .ep-layout { flex-direction: column; align-items: stretch; }
     .ep-aside { position: static; width: 100%; max-width: none; flex: 1 1 auto; }
+    .ep-main { width: 100%; }
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */

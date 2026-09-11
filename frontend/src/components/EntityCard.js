@@ -79,7 +79,10 @@ export default function EntityCard({ kind, entity, onJoin }) {
             <div className="entity-card-header">
                 <div className="entity-card-left">
                     {breadcrumb}
-                    <h3><Link to={href} className="entity-card-title-link">{entity.name}</Link></h3>
+                    <h3>
+                        <Link to={href} className="entity-card-title-link">{entity.name}</Link>
+                        {kind === 'project' && entity.phase === 'closed' && <span className="entity-card-phase">Closed</span>}
+                    </h3>
                     {alliances.length > 0 && (
                         <div className="entity-card-meta">
                             🔗 {alliances.map((a, i) => (

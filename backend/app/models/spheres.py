@@ -10,7 +10,8 @@ from app.utils.names import resolve_user_names as _resolve_user_names, dedupe as
 
 
 class Sphere:
-    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False, join_policy=None, has_image=None):
+    def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False, join_policy=None, has_image=None,
+                 decision_policy=None):
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -28,6 +29,8 @@ class Sphere:
         self.is_sandbox = bool(is_sandbox)
         self.is_public = bool(is_public)
         self.join_policy = join_policy or 'open'
+        # How proposals pass in this sphere's liquid-democracy votes.
+        self.decision_policy = decision_policy or 'majority'
         # has_image is a stored flag so list endpoints can skip the blob column
         # entirely (Cassandra can't test blob presence without reading it).
         self._has_image = has_image
@@ -61,6 +64,7 @@ class Sphere:
             'is_sandbox': self.is_sandbox,
             'is_public': self.is_public,
             'join_policy': self.join_policy,
+            'decision_policy': self.decision_policy,
         }
         if include_members:
             d['members'] = self.members_list()
@@ -179,7 +183,7 @@ class Sphere:
 
     # Every column except the banner blob - lists and detail never need it.
     _COLS = ("sphere_id, name, description, meaning_graph, location, admin1, participants, "
-             "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image")
+             "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image, decision_policy")
 
     @classmethod
     def _from_row(cls, row):
@@ -192,7 +196,8 @@ class Sphere:
             is_sandbox=getattr(row, 'is_sandbox', False),
             is_public=getattr(row, 'is_public', False),
             join_policy=getattr(row, 'join_policy', None),
-            has_image=getattr(row, 'has_image', None))
+            has_image=getattr(row, 'has_image', None),
+            decision_policy=getattr(row, 'decision_policy', None))
 
     @classmethod
     def get_all(cls):

@@ -16,7 +16,8 @@ from app.utils.names import resolve_user_names, dedupe
 class Alliance:
     def __init__(self, alliance_id, name, description, admin1, sphere_id, sphere_name,
                  members, member_names, projects, values, meaning_graph, image, member_roles=None,
-                 join_policy=None, has_image=None):
+                 join_policy=None, has_image=None,
+                 decision_policy=None, pm_policy=None, confirm_policy=None):
         self.alliance_id = alliance_id
         self.name = name
         self.description = description
@@ -31,6 +32,13 @@ class Alliance:
         self.image = image
         self.member_roles = member_roles or {}
         self.join_policy = join_policy or 'open'
+        # Governance policies (all votable through liquid democracy):
+        #   decision_policy  how proposals pass
+        #   pm_policy        'single-pm' (each project's manager) | 'board' (Lead + Board manage the alliance's projects too)
+        #   confirm_policy   who may confirm acceptances of openings the alliance posted: 'lead' | 'board' | 'any-member'
+        self.decision_policy = decision_policy or 'majority'
+        self.pm_policy = pm_policy or 'single-pm'
+        self.confirm_policy = confirm_policy or 'board'
         self._has_image = has_image
 
     def to_dict(self, include_image=True):
@@ -64,6 +72,9 @@ class Alliance:
             'values': self.values or [],
             'meaning_graph': self.meaning_graph,
             'join_policy': self.join_policy,
+            'decision_policy': self.decision_policy,
+            'pm_policy': self.pm_policy,
+            'confirm_policy': self.confirm_policy,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
@@ -102,7 +113,8 @@ class Alliance:
                    members, member_names, projects, values, meaning_graph, image, has_image=bool(image))
 
     _COLS = ("alliance_id, name, description, admin1, sphere_id, sphere_name, members, "
-             "member_names, projects, values, meaning_graph, member_roles, join_policy, has_image")
+             "member_names, projects, values, meaning_graph, member_roles, join_policy, has_image, "
+             "decision_policy, pm_policy, confirm_policy")
 
     @classmethod
     def get_all(cls):
@@ -135,6 +147,9 @@ class Alliance:
             getattr(r, 'member_roles', None),
             join_policy=getattr(r, 'join_policy', None),
             has_image=getattr(r, 'has_image', None),
+            decision_policy=getattr(r, 'decision_policy', None),
+            pm_policy=getattr(r, 'pm_policy', None),
+            confirm_policy=getattr(r, 'confirm_policy', None),
         )
 
     @classmethod

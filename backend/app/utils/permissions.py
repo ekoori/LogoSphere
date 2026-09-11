@@ -76,14 +76,45 @@ def can_manage_entity(entity_id, user_id):
         return roles.get(uid) in ('admin', 'steward')
 
     row = cassandra_session.execute(
-        "SELECT owner, participant_roles FROM projects WHERE project_id = %s", [eid]
+        "SELECT owner, owner_alliance, participant_roles FROM projects WHERE project_id = %s", [eid]
     ).one()
     if row:
         # Stewards act on behalf of the project manager, so they can manage too.
         roles = row.participant_roles or {}
-        return roles.get(uid) in ('manager', 'steward') or str(row.owner) == str(uid)
+        if roles.get(uid) in ('manager', 'steward') or str(row.owner) == str(uid):
+            return True
+        # An alliance whose pm_policy is 'board' manages its projects collectively:
+        # its Lead and Board members can act for any project it runs.
+        if getattr(row, 'owner_alliance', None):
+            return alliance_board_manages(row.owner_alliance, uid)
+        return False
 
     return False
+
+
+_alliance_by_name_cache = {}   # name -> (row-ish dict, ts)
+
+
+def alliance_board_manages(alliance_name, uid):
+    """True if the named alliance runs its projects by board (pm_policy='board')
+    and `uid` is its Lead or a Board member. Projects store the owning alliance
+    by NAME, so this is a small cached scan."""
+    now = time.time()
+    hit = _alliance_by_name_cache.get(alliance_name)
+    if not hit or now - hit[1] > 30:
+        found = None
+        for r in cassandra_session.execute(
+                "SELECT name, admin1, member_roles, pm_policy FROM alliances"):
+            if r.name == alliance_name:
+                found = {'admin1': r.admin1, 'roles': dict(r.member_roles or {}),
+                         'pm_policy': getattr(r, 'pm_policy', None) or 'single-pm'}
+                break
+        _alliance_by_name_cache[alliance_name] = (found, now)
+        hit = (found, now)
+    a = hit[0]
+    if not a or a['pm_policy'] != 'board':
+        return False
+    return a['admin1'] == uid or a['roles'].get(uid) in ('admin', 'steward')
 
 
 def entity_sphere_ids(entity_id):

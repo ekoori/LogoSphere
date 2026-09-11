@@ -4,6 +4,8 @@
    ============================================================================ */
 
 .xc-page {
+    width: 100%;
+    box-sizing: border-box;
     max-width: 1000px;
     margin: 0 auto;
     padding: 2em clamp(1rem, 3vw, 2rem) 4em;

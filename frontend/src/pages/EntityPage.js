@@ -20,6 +20,7 @@ import Openings from '../components/Openings';
 import MeaningTrail from '../components/MeaningTrail';
 import TabSelector from '../components/TabSelector';
 import MembersList from '../components/MembersList';
+import GovernancePanel from '../components/GovernancePanel';
 import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
@@ -80,7 +81,7 @@ export default function EntityPage({ kind }) {
 
     const openings = useOpenings({ enabled: !!userId && canViewActivity });
     const [trail, setTrail] = useState([]);
-    const [activeTab, setActiveTab] = useState('meaning_trail');
+    const [activeTab, setActiveTab] = useState(params.get('tab') || 'meaning_trail');
     const [showNewOpening, setShowNewOpening] = useState(false);
     const [joining, setJoining] = useState(false);
     const [joinNote, setJoinNote] = useState(null);
@@ -130,7 +131,10 @@ export default function EntityPage({ kind }) {
         ).map(mapService);
 
     const members = entity.members || [];
-    const statusInfo = kind === 'project' ? (STATUS_META[entity.status] || { cls: 'status--initiated', label: entity.status || 'Active' }) : null;
+    const isClosed = kind === 'project' && entity.phase === 'closed';
+    const statusInfo = kind !== 'project' ? null
+        : isClosed ? { cls: 'status--paused', label: 'Closed' }
+            : (STATUS_META[entity.status] || { cls: 'status--in-progress', label: 'Ongoing' });
     const actingAs = {
         id: eid, name: entity.name,
         sphereId: kind === 'sphere' ? eid : entity.sphere_id,
@@ -257,10 +261,15 @@ export default function EntityPage({ kind }) {
                                 { key: 'meaning_trail', label: 'Meaning Trail' },
                                 { key: 'offers-needs', label: 'Offers & Needs' },
                                 { key: 'members', label: `People (${members.length})` },
+                                ...(userId ? [{ key: 'governance', label: 'Governance' }] : []),
                             ]}
                             active={activeTab}
                             onChange={setActiveTab}
                         />
+
+                        {activeTab === 'governance' && (
+                            <GovernancePanel kind={kind} entityId={eid} canManage={perms.canManage} />
+                        )}
 
                         {activeTab === 'members' && (
                             <MembersList
@@ -282,7 +291,10 @@ export default function EntityPage({ kind }) {
 
                         {activeTab === 'offers-needs' && (
                             <>
-                                {perms.canManage && (
+                                {isClosed && (
+                                    <p className="ep-empty">This project is closed — it takes no new openings.</p>
+                                )}
+                                {perms.canManage && !isClosed && (
                                     <div className="ep-manage-form-toggle">
                                         <button className="btn btn-accent" onClick={() => setShowNewOpening((v) => !v)}>
                                             {showNewOpening ? 'Cancel' : `+ Post an Opening as ${entity.name}`}
