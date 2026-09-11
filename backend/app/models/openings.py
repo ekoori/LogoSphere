@@ -2,18 +2,13 @@
 # Description: Openings service model — offers and requests in the gift economy.
 # Class: Service — create() and get_all() backed by the logosphere.services table.
 
-from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
 import base64
 from datetime import datetime
 
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
 
 class Service:
@@ -22,7 +17,8 @@ class Service:
                  cadence='single', accepted_by=None, accepted_by_name=None, created_at=None,
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
                  acting_user_id=None, acting_user_name=None,
-                 version=1, is_current=True, replaces_service_id=None):
+                 version=1, is_current=True, replaces_service_id=None,
+                 image_ref_service_id=None):
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -54,6 +50,9 @@ class Service:
         self.version = version or 1
         self.is_current = True if is_current is None else bool(is_current)
         self.replaces_service_id = replaces_service_id
+        # A branched version doesn't copy the (large) banner blob; it points at
+        # the row that holds it. get_image() follows the reference.
+        self.image_ref_service_id = image_ref_service_id
 
     def to_dict(self, include_image=True):
         # `include_image=False` (used by the openings LIST) omits the base64
@@ -84,7 +83,7 @@ class Service:
             'accepted_at': _iso(self.accepted_at),
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
-            'has_image': bool(self.image),
+            'has_image': bool(self.image or self.image_ref_service_id),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
             'acting_user': self.acting_user_name,
@@ -161,6 +160,7 @@ class Service:
             version=getattr(r, 'version', None) or 1,
             is_current=getattr(r, 'is_current', None),
             replaces_service_id=getattr(r, 'replaces_service_id', None),
+            image_ref_service_id=getattr(r, 'image_ref_service_id', None),
         )
 
     @classmethod
@@ -187,9 +187,16 @@ class Service:
         """Just the image bytes for one opening — a single-partition read that
         keeps the (potentially large) blob out of the openings list payload."""
         row = cassandra_session.execute(
-            "SELECT image FROM services WHERE service_id = %s", [service_id]
+            "SELECT image, image_ref_service_id FROM services WHERE service_id = %s", [service_id]
         ).one()
-        return row.image if row and row.image else None
+        if not row:
+            return None
+        if row.image:
+            return row.image
+        ref = getattr(row, 'image_ref_service_id', None)
+        if ref and ref != service_id:
+            return cls.get_image(ref)
+        return None
 
     @classmethod
     def mark_accepted(cls, service_id, accepter_id, accepter_name):
@@ -252,19 +259,34 @@ class Service:
         description = edits.get('description', old.description)
         values = edits.get('values', old.values)
         created_at = datetime.utcnow()
+        # Point at whichever row actually holds the banner bytes (the root of
+        # the chain) instead of duplicating the blob per version.
+        image_ref = old.image_ref_service_id if old.image_ref_service_id else (old.service_id if old.image else None)
         cassandra_session.execute(
             """INSERT INTO services (service_id, type, title, description, provider_id,
                provider_name, sphere_id, sphere_name, status, created_at, values, likes,
                project_name, image_key, cadence, acting_user_id, acting_user_name,
-               image, version, is_current, replaces_service_id)
+               version, is_current, replaces_service_id, image_ref_service_id)
                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             [new_id, old.type, title, description, old.provider_id, old.provider_name,
              old.sphere_id, old.sphere_name, 'Posted', created_at, values or [], 0,
              old.project_name, old.image_key, old.cadence, old.acting_user_id,
-             old.acting_user_name, old.image, (old.version or 1) + 1, True, old.service_id])
+             old.acting_user_name, (old.version or 1) + 1, True, old.service_id, image_ref])
         # Freeze the previous version so it no longer appears as the live opening.
         cassandra_session.execute(
             "UPDATE services SET is_current = false WHERE service_id = %s", [old.service_id])
+        # Pending (unconfirmed) acceptances belong to the live opening: carry
+        # them forward so the provider can still confirm them on the new version.
+        for a in cls.acceptances(old.service_id, status='pending'):
+            cassandra_session.execute(
+                "INSERT INTO opening_acceptances (service_id, accepter_id, accepter_name, status, "
+                "created_at, acting_user_id, acting_user_name) VALUES (%s,%s,%s,'pending',%s,%s,%s)",
+                [new_id, uuid.UUID(a['accepter_id']), a['accepter_name'], a['created_at'],
+                 uuid.UUID(a['acting_user_id']) if a.get('acting_user_id') else None,
+                 a.get('acting_user_name')])
+            cassandra_session.execute(
+                "DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s",
+                [old.service_id, uuid.UUID(a['accepter_id'])])
         return cls.get_by_id(new_id)
 
     @classmethod
@@ -391,12 +413,45 @@ class Service:
         }
 
     @classmethod
+    def claim_confirmation(cls, service_id, accepter_id):
+        """Atomically move a pending acceptance to 'confirmed' (lightweight
+        transaction). Returns True if this call won the claim, False if it was
+        already confirmed/removed by a concurrent request."""
+        row = cassandra_session.execute(
+            "UPDATE opening_acceptances SET status = 'confirmed' "
+            "WHERE service_id = %s AND accepter_id = %s IF status = 'pending'",
+            [service_id, accepter_id]
+        ).one()
+        return bool(row and row.applied)
+
+    @classmethod
+    def release_confirmation(cls, service_id, accepter_id):
+        """Undo claim_confirmation when the exchange couldn't be created."""
+        cassandra_session.execute(
+            "UPDATE opening_acceptances SET status = 'pending' "
+            "WHERE service_id = %s AND accepter_id = %s IF status = 'confirmed'",
+            [service_id, accepter_id]
+        )
+
+    @classmethod
     def mark_confirmed(cls, service_id, accepter_id, exchange_id):
         cassandra_session.execute(
             "UPDATE opening_acceptances SET status = 'confirmed', exchange_id = %s "
             "WHERE service_id = %s AND accepter_id = %s",
             [exchange_id, service_id, accepter_id]
         )
+
+    @classmethod
+    def claim_single(cls, service_id):
+        """For a single-cadence opening: atomically move it to 'In Progress'
+        (taking it off the marketplace). Returns False if another confirm got
+        there first, or it was already completed/cancelled."""
+        row = cassandra_session.execute(
+            "UPDATE services SET status = 'In Progress', in_progress_at = %s "
+            "WHERE service_id = %s IF status IN ('Posted', 'Open', 'Accepted')",
+            [datetime.utcnow(), service_id]
+        ).one()
+        return bool(row and row.applied)
 
     @classmethod
     def remove_acceptance(cls, service_id, accepter_id):
@@ -429,6 +484,20 @@ class Service:
             [service_id, user_id]
         ).one()
         return row is not None
+
+    @classmethod
+    def set_like(cls, service_id, user_id, liked):
+        """Idempotently set the like to the requested state (a repeated request
+        is a no-op rather than a flip). Returns (liked, count)."""
+        if liked:
+            cassandra_session.execute(
+                "INSERT INTO opening_likes (service_id, user_id) VALUES (%s, %s)",
+                [service_id, user_id])
+        else:
+            cassandra_session.execute(
+                "DELETE FROM opening_likes WHERE service_id = %s AND user_id = %s",
+                [service_id, user_id])
+        return bool(liked), cls.like_count(service_id)
 
     @classmethod
     def toggle_like(cls, service_id, user_id):

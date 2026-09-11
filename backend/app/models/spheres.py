@@ -1,30 +1,12 @@
-from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
 from datetime import datetime
 import base64
 
-# Set up Cassandra session
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
-def _resolve_user_names(ids):
-    """{user_id: display name} for a list of user UUIDs (single IN query)."""
-    ids = [i for i in (ids or [])]
-    if not ids:
-        return {}
-    try:
-        rows = cassandra_session.execute(
-            "SELECT user_id, name, surname FROM users WHERE user_id IN %s", (tuple(ids),))
-        return {r.user_id: (f"{r.name or ''} {getattr(r, 'surname', '') or ''}".strip() or 'Member')
-                for r in rows}
-    except Exception as e:
-        logging.error(f'Error resolving user names: {e}')
-        return {}
+from app.utils.names import resolve_user_names as _resolve_user_names, dedupe as _dedupe
 
 
 class Sphere:
@@ -49,10 +31,11 @@ class Sphere:
     def members_list(self):
         """[{id, name, role}] for the sphere — participants are stored as bare
         UUIDs, so names are resolved from the users table. admin1 is 'admin'."""
-        names = _resolve_user_names(self.participants or [])
+        pids = _dedupe(self.participants or [])
+        names = _resolve_user_names(pids)
         roles = self.member_roles or {}
         out = []
-        for pid in (self.participants or []):
+        for pid in pids:
             role = roles.get(pid) or ('admin' if self.admin1 and pid == self.admin1 else 'member')
             out.append({'id': str(pid), 'name': names.get(pid, 'Member'), 'role': role})
         return out

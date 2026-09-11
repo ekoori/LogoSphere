@@ -45,10 +45,10 @@ def validate_session(f):
             return f(*args, **kwargs)
 
         session_id = get_session_token()
-        logger.debug(f'Validating session: {session_id}')
+        logger.debug('Validating session (token %s)', 'present' if session_id else 'absent')
 
         if not session_id:
-            logger.error("No session_id found in cookies or headers")
+            logger.debug("No session token on request")
             response = jsonify({'message': 'No session found'})
             response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
             response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -67,7 +67,7 @@ def validate_session(f):
                 kwargs['user_id'] = result.user_id
                 return f(*args, **kwargs)
             else:
-                logger.error("Invalid or expired session")
+                logger.info("Invalid or expired session")
                 response = jsonify({'message': 'Invalid or expired session'})
                 response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
                 response.headers.add('Access-Control-Allow-Credentials', 'true')

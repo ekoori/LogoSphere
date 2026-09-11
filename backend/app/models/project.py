@@ -2,18 +2,14 @@
 # Description: Project model. Projects are mission-driven collaborations within a Sphere.
 # Class: Project — create() and get_all() backed by the logosphere.projects table.
 
-from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
 import base64
 from datetime import datetime
 
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
+from app.utils.names import resolve_user_names, dedupe
 
 
 class Project:
@@ -35,13 +31,17 @@ class Project:
         self.image = image
 
     def to_dict(self, include_image=True):
+        # Names come from `users` at read time (the stored participant_names
+        # list was positionally aligned to participants and drifted on rename).
+        pids = dedupe(self.participants or [])
+        names = resolve_user_names(pids)
         members_with_roles = [
             {
                 'id': str(pid),
-                'name': (self.participant_names[i] if self.participant_names and i < len(self.participant_names) else 'Member'),
+                'name': names.get(pid, 'Member'),
                 'role': self.participant_roles.get(pid, 'contributor') if self.participant_roles else 'contributor',
             }
-            for i, pid in enumerate(self.participants or [])
+            for pid in pids
         ]
         # The project's manager is its creator/owner — expose their id + name so
         # a card can show "by <person>" (and link to them) when the project
@@ -60,7 +60,7 @@ class Project:
             'status': self.status,
             'sphere_id': str(self.sphere_id) if self.sphere_id else None,
             'sphere_name': self.sphere_name,
-            'participants': self.participant_names or [],
+            'participants': [m['name'] for m in members_with_roles],
             'members': members_with_roles,
             'values': self.values or [],
             'has_image': bool(self.image),
@@ -107,18 +107,29 @@ class Project:
     @classmethod
     def get_all(cls):
         rows = cassandra_session.execute("SELECT * FROM projects")
-        projects = []
-        for r in rows:
-            projects.append(cls(
-                r.project_id, r.name, getattr(r, 'description', None), r.owner,
-                getattr(r, 'owner_alliance', None), getattr(r, 'status', None),
-                getattr(r, 'sphere_id', None), getattr(r, 'sphere_name', None),
-                getattr(r, 'participants', None), getattr(r, 'participant_names', None),
-                getattr(r, 'values', None),
-                getattr(r, 'participant_roles', None),
-                getattr(r, 'image', None),
-            ))
-        return projects
+        return [cls._from_row(r) for r in rows]
+
+    @classmethod
+    def get_by_id(cls, project_id):
+        """One project by id (point read), or None."""
+        try:
+            pid = project_id if isinstance(project_id, uuid.UUID) else uuid.UUID(str(project_id))
+        except (ValueError, TypeError):
+            return None
+        r = cassandra_session.execute("SELECT * FROM projects WHERE project_id = %s", [pid]).one()
+        return cls._from_row(r) if r else None
+
+    @classmethod
+    def _from_row(cls, r):
+        return cls(
+            r.project_id, r.name, getattr(r, 'description', None), r.owner,
+            getattr(r, 'owner_alliance', None), getattr(r, 'status', None),
+            getattr(r, 'sphere_id', None), getattr(r, 'sphere_name', None),
+            getattr(r, 'participants', None), getattr(r, 'participant_names', None),
+            getattr(r, 'values', None),
+            getattr(r, 'participant_roles', None),
+            getattr(r, 'image', None),
+        )
 
     @classmethod
     def set_image(cls, project_id, image_bytes):

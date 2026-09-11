@@ -1,16 +1,12 @@
 # Follow model — a directed "follows" edge between users, backed by the
 # logosphere.follows table (PK (follower_id, followee_id)). Lets a user follow
 # others and drives the "Following" feed on Home.
-from cassandra.cluster import Cluster
 import uuid
 import os
 import logging
 from datetime import datetime
 
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
 
 class Follow:

@@ -17,7 +17,6 @@
 #    [-] User can grade other user's exchanges (trust scores, feedbacks etc.) in form of entries in their MeaningTrail.
 #    [-] Users can receive trust/gratitude entries from other users in the form of textual comments.
 
-from cassandra.cluster import Cluster
 from cassandra.cqlengine import columns
 from cassandra.cqlengine.models import Model
 from cassandra.cqlengine import connection
@@ -29,23 +28,9 @@ import time
 from uuid import UUID
 from datetime import datetime
 
-#cluster = Cluster(['143.42.34.42'])  # provide your Cassandra host here
-#cassandra_session = cluster.connect()
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-connection.setup(CASSANDRA_HOSTS, 'logosphere')
-# Raise the per-request timeout above the 10s default so a slow read/write
-# (e.g. a large banner-image blob under memory pressure) waits rather than
-# 500-ing — this is what made an exchange-image upload fail on the first try.
-try:
-    connection.get_session().default_timeout = 30
-except Exception:
-    pass
-
-# Dedicated raw session (keyspace-bound) for cross-table reads like resolving
-# user display names — mirrors the other models, avoids get_session() keyspace quirks.
-_raw_session = Cluster(CASSANDRA_HOSTS).connect('logosphere')
-_raw_session.default_timeout = 30
+# One shared driver session for the whole app (see app/db.py); cqlengine is
+# registered against it there too.
+from app.db import session as _raw_session
 
 # Short-lived cache of the {user_id: display name} map. Every meaning-trail read
 # needs it to resolve counterparts, and it changes only when a user registers or

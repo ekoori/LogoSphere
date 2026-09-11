@@ -90,9 +90,18 @@ def join_alliance(alliance_id, user_id=None):
         if not user:
             return jsonify({'message': 'User not found'}), 404
         user_name = f"{user.name or ''} {user.surname or ''}".strip() or user.email
+        alliance = Alliance.get_by_id(alliance_uuid)
+        if not alliance:
+            return jsonify({'message': 'Alliance not found'}), 404
+        # An alliance lives inside a sphere: you must belong to that sphere first.
+        if alliance.sphere_id and alliance.sphere_id not in Sphere.member_sphere_ids(user_uuid) \
+                and not is_platform_admin(user_uuid):
+            return jsonify({'message': "Join the alliance's sphere first"}), 403
         already_member = Alliance.join(alliance_uuid, user_uuid, user_name)
         return jsonify({'message': 'Already a member' if already_member else 'Joined successfully',
                         'already_member': already_member}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid alliance id'}), 400
     except Exception as e:
         logger.error(f"Error in join_alliance: {e}")
         return jsonify({'message': 'Internal server error'}), 500
@@ -110,8 +119,14 @@ def set_alliance_role(alliance_id, target_id, user_id=None):
         if uuid.UUID(str(user_id)) not in Alliance.lead_ids(aid):
             return jsonify({'message': 'Only a Lead can change roles'}), 403
         role = (request.get_json() or {}).get('role')
-        if role not in ('steward', 'member', 'admin'):
+        # Lead ('admin') is the founder and isn't assignable here.
+        if role not in ('steward', 'member'):
             return jsonify({'message': 'Invalid role'}), 400
+        alliance = Alliance.get_by_id(aid)
+        if not alliance:
+            return jsonify({'message': 'Alliance not found'}), 404
+        if tid not in (alliance.members or []):
+            return jsonify({'message': 'That user is not a member of this alliance'}), 404
         Alliance.set_role(aid, tid, role)
         return jsonify({'message': 'Role updated', 'role': role}), 200
     except ValueError:

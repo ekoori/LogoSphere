@@ -326,6 +326,16 @@ def confirm_service(service_id, user_id=None):
             return jsonify({'message': 'Already confirmed',
                             'exchange_id': acceptance['exchange_id']}), 200
 
+        # Two concurrent confirms must not both create an exchange: a single
+        # opening is claimed atomically (LWT) before anything else happens, and
+        # the acceptance itself is claimed the same way.
+        if service.cadence != 'perpetual' and not Service.claim_single(service_uuid):
+            return jsonify({'message': 'This opening has already been confirmed for someone else'}), 409
+        if not Service.claim_confirmation(service_uuid, accepter_uuid):
+            if service.cadence != 'perpetual':
+                Service.reopen(service_uuid)
+            return jsonify({'message': 'This acceptance was already handled'}), 409
+
         exchange_id = MeaningTrail.create_for_opening(
             initiator_id=service.provider_id,
             other_user_id=accepter_uuid,
@@ -343,12 +353,13 @@ def confirm_service(service_id, user_id=None):
             source_service_id=service_uuid,
         )
         if not exchange_id:
+            # Roll the claims back so the provider can retry.
+            Service.release_confirmation(service_uuid, accepter_uuid)
+            if service.cadence != 'perpetual':
+                Service.reopen(service_uuid)
             return jsonify({'message': 'Failed to create exchange'}), 500
 
         Service.mark_confirmed(service_uuid, accepter_uuid, exchange_id)
-        # A single opening is now spoken for and leaves the marketplace.
-        if service.cadence != 'perpetual':
-            Service.set_status(service_uuid, 'In Progress')
 
         confirmer = User.get(str(user_id))
         confirmer_name = (f"{confirmer.name or ''} {confirmer.surname or ''}".strip() or confirmer.email) if confirmer else service.provider_name
@@ -419,7 +430,13 @@ def like_service(service_id, user_id=None):
         service_uuid = uuid.UUID(service_id)
         if not Service.get_by_id(service_uuid):
             return jsonify({'message': 'Opening not found'}), 404
-        liked, count = Service.toggle_like(service_uuid, uuid.UUID(str(user_id)))
+        # Prefer an explicit target state ({"liked": true|false}) so a retried
+        # request is idempotent; fall back to toggling for older clients.
+        data = request.get_json(silent=True) or {}
+        if isinstance(data.get('liked'), bool):
+            liked, count = Service.set_like(service_uuid, uuid.UUID(str(user_id)), data['liked'])
+        else:
+            liked, count = Service.toggle_like(service_uuid, uuid.UUID(str(user_id)))
         return jsonify({'liked': liked, 'likes': count}), 200
     except ValueError:
         return jsonify({'message': 'Invalid opening id'}), 400

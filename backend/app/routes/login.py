@@ -40,7 +40,7 @@ def login():
 
     try:
         data = request.get_json()
-        logger.debug(f'Login data received: {data}')
+        logger.debug('Login attempt for %s', (data or {}).get('email'))
         
         # Authenticate user
         user = User.login(data)
@@ -112,7 +112,7 @@ def login():
 
     except Exception as e:
         logger.error(f'Login error: {str(e)}')
-        response = jsonify({'error': 'Internal server error during login'})
+        response = jsonify({'message': 'Internal server error during login'})
         return response, 500
 
 def check_session():
@@ -161,7 +161,7 @@ def check_session():
 
     except Exception as e:
         logger.error(f'Session check error: {str(e)}')
-        response = jsonify({'error': 'Internal server error during session check'})
+        response = jsonify({'message': 'Internal server error during session check'})
         return response, 500
 
 def logout():
@@ -176,7 +176,7 @@ def logout():
 
         if not session_id or not is_valid_uuid(session_id):
             logger.error(f'Invalid or missing session_id for logout: {session_id}')
-            response = jsonify({'error': 'Invalid session_id'})
+            response = jsonify({'message': 'Invalid session_id'})
             return response, 400
 
         # Call the logout function to delete the session from the database
@@ -192,7 +192,7 @@ def logout():
         return response, 200
     except Exception as e:
         logger.error(f'Error during logout: {e}')
-        response = jsonify({'error': 'Logout failed due to an internal error'})
+        response = jsonify({'message': 'Logout failed due to an internal error'})
         return response, 500
  
 

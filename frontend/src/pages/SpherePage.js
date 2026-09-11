@@ -113,7 +113,7 @@ function SpherePage() {
     const projects = sphere.projects || [];
     const isMember = !!userId && participants.some(p => (p.id || p) === userId);
     const isAdmin = (!!userId && userId === sphere.admin1) || isPlatformAdmin;
-    const canManage = (!!userId && (participants.length === 0 || isMember)) || isPlatformAdmin;
+    const canManage = isAdmin;
     // A public sphere's activity is visible to logged-out visitors (who reached
     // this page through the no-auth public endpoint); members and platform
     // admins always see it.

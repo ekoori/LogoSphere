@@ -20,7 +20,6 @@
 #    [+] get(user_id): Fetches the user with the given user_id from the database.
 #    [+] update(user_id, name, surname, location, profile_picture): Updates the user profile data in the database.
 
-from cassandra.cluster import Cluster
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import uuid
@@ -35,12 +34,7 @@ import base64
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 _MIN_PASSWORD_LEN = 8
 
-# Set up Cassandra session
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
 class User(UserMixin):
     def __init__(self, name, email, user_id, session_id=None):

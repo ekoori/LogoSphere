@@ -9,7 +9,7 @@
 #        [+] save_session(app, session, response) - Saves session data in Cassandra and manages session cookies.
 
 from flask.sessions import SessionInterface, SessionMixin
-from cassandra.cluster import Cluster
+from app.db import session as _shared_session
 from flask import request, current_app as app
 import uuid
 from datetime import datetime, timedelta
@@ -26,9 +26,9 @@ class CassandraSession(dict, SessionMixin):
 
 class CassandraSessionInterface(SessionInterface):
     """Interface for storing sessions in Cassandra"""
-    def __init__(self, cluster_nodes, keyspace, session_lifetime):
-        self.cluster = Cluster(cluster_nodes)
-        self.cassandra_session = self.cluster.connect(keyspace)
+    def __init__(self, session_lifetime):
+        # Reuse the app-wide session rather than opening a second cluster.
+        self.cassandra_session = _shared_session
         self.session_lifetime = session_lifetime
 
         # Prepare statements for better performance

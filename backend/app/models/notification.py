@@ -3,16 +3,12 @@
 # Backed by logosphere.notifications: PRIMARY KEY (user_id, created_at,
 # notification_id) with created_at DESC, so a user's own feed is always a
 # fast single-partition read, already newest-first.
-from cassandra.cluster import Cluster
 import uuid
 import os
 import logging
 from datetime import datetime
 
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
 # A personal inbox is naturally small and bounded, so list/unread-count both
 # work off one bounded fetch rather than a separate COUNT query.

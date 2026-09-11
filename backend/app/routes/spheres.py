@@ -149,6 +149,10 @@ def join_sphere(sphere_id, user_id=None):
     try:
         sphere_uuid = uuid.UUID(sphere_id)
         user_uuid = uuid.UUID(str(user_id))
+        # A Cassandra UPDATE is an upsert: joining a non-existent id would
+        # otherwise create a phantom sphere row. Verify it exists first.
+        if not Sphere.get_by_id(sphere_uuid):
+            return jsonify({'message': 'Sphere not found'}), 404
         already_member = Sphere.join(sphere_uuid, user_uuid)
         return jsonify({
             'message': 'Already a member' if already_member else 'Joined successfully',
@@ -174,6 +178,11 @@ def set_sphere_role(sphere_id, target_id, user_id=None):
         role = (request.get_json() or {}).get('role')
         if role not in ('admin', 'member'):
             return jsonify({'message': 'Invalid role'}), 400
+        sphere = Sphere.get_by_id(sid)
+        if not sphere:
+            return jsonify({'message': 'Sphere not found'}), 404
+        if tid not in (sphere.participants or []):
+            return jsonify({'message': 'That user is not a member of this sphere'}), 404
         Sphere.set_role(sid, tid, role)
         return jsonify({'message': 'Role updated', 'role': role}), 200
     except ValueError:

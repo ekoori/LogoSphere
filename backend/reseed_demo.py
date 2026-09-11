@@ -191,7 +191,7 @@ for col in ["ADD acting_user_id uuid", "ADD acting_user_name text"]:
 
 # services: versioning columns — editing an opening that already has a related
 # exchange freezes the current version and branches a new one (Phase 6).
-for col in ["ADD version int", "ADD is_current boolean", "ADD replaces_service_id uuid"]:
+for col in ["ADD version int", "ADD is_current boolean", "ADD replaces_service_id uuid", "ADD image_ref_service_id uuid"]:
     r = run(f"ALTER TABLE logosphere.services {col}")
     if r is True:
         print(f"[OK]   services: {col}")
@@ -199,6 +199,10 @@ for col in ["ADD version int", "ADD is_current boolean", "ADD replaces_service_i
         print(f"[SKIP] services: {col} (already exists)")
     else:
         print(f"[WARN] services: {col} — {r}")
+
+# users: platform-admin flag (granted only via grant_platform_admin.py).
+r = run("ALTER TABLE logosphere.users ADD is_platform_admin boolean")
+print(f"[OK]   users: is_platform_admin" if r is True else f"[SKIP/WARN] users.is_platform_admin: {r}")
 
 # spheres: member_roles map (promote members to admin).
 r = run("ALTER TABLE logosphere.spheres ADD member_roles map<uuid, text>")

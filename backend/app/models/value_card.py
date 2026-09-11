@@ -3,16 +3,12 @@
 # what it looks like in practice, what drift signals look like, and more.
 # Stored in Cassandra with (user_id, card_id) as the composite primary key.
 
-from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
 from datetime import datetime
 
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
 
 FRANKL_MODES = ('creative', 'experiential', 'attitudinal')
 COLOR_KEYS = ('honey', 'leaf', 'terracotta', 'sage', 'moss')

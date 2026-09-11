@@ -9,13 +9,73 @@ Methods:
 """
 
 import logging
+import uuid
 from flask import request, jsonify, current_app as app, Response
 from app.models.meaning_trail import MeaningTrail, Likes, LIKE_TYPES
 from app.models.notification import Notification
 from app.utils.validation import is_supported_image
 from app.middleware.session_middleware import validate_session
+from app.models.spheres import Sphere
+from app.utils.permissions import is_platform_admin
 
 logger = logging.getLogger(__name__)
+
+
+# ── Visibility ──────────────────────────────────────────────────────────────
+# An exchange has no sphere column of its own; it inherits one from the opening
+# it came from, or from its project. Participants (and platform admins) always
+# see it; anyone else must belong to that sphere. Exchanges with no resolvable
+# sphere (legacy/direct ones) stay visible to any signed-in member.
+def _exchange_sphere_id(tx_dict):
+    from app.models.openings import Service
+    from app.models.project import Project
+    sid = tx_dict.get('source_service_id')
+    if sid:
+        svc = Service.get_by_id(uuid.UUID(str(sid)))
+        if svc and svc.sphere_id:
+            return svc.sphere_id
+    pid = tx_dict.get('project_id')
+    if pid:
+        prj = Project.get_by_id(pid)
+        if prj and prj.sphere_id:
+            return prj.sphere_id
+    return None
+
+
+def _can_view_exchange(tx_dict, is_participant, viewer_id):
+    if is_participant or is_platform_admin(viewer_id):
+        return True
+    sphere_id = _exchange_sphere_id(tx_dict)
+    if sphere_id is None:
+        return True
+    return sphere_id in Sphere.member_sphere_ids(viewer_id)
+
+
+def _load_visible_exchange(exchange_id, viewer_id):
+    """(tx_dict, is_initiator, is_other) if the viewer may see the exchange,
+    else (None, ..) - callers return 404 rather than reveal existence."""
+    tx_dict, is_initiator, is_other = MeaningTrail.get_for_view(exchange_id, viewer_id)
+    if tx_dict is None or not _can_view_exchange(tx_dict, is_initiator or is_other, viewer_id):
+        return None, False, False
+    return tx_dict, is_initiator, is_other
+
+
+# Serving images for <img src>: the browser sends the session cookie, so these
+# can be gated like the exchange itself.
+def _image_response(data):
+    if not data:
+        return ('', 404)
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        ctype = 'image/png'
+    elif data[:6] in (b'GIF87a', b'GIF89a'):
+        ctype = 'image/gif'
+    elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        ctype = 'image/webp'
+    else:
+        ctype = 'image/jpeg'
+    resp = Response(data, mimetype=ctype)
+    resp.headers['Cache-Control'] = 'private, no-cache'
+    return resp
 
 
 @validate_session
@@ -60,24 +120,15 @@ def edit_exchange(exchange_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
-def get_exchange_image(exchange_id):
-    """Serve an exchange's banner image for <img src>. Public + cacheable (an
-    exchange is viewable by anyone, mirroring get_exchange)."""
+@validate_session
+def get_exchange_image(exchange_id, user_id=None):
+    """Serve an exchange's banner image for <img src> - visible to whoever can
+    see the exchange (participants, sphere members, platform admins)."""
     try:
-        data = MeaningTrail.get_image(exchange_id)
-        if not data:
+        tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
+        if tx_dict is None:
             return ('', 404)
-        if data[:8] == b'\x89PNG\r\n\x1a\n':
-            ctype = 'image/png'
-        elif data[:6] in (b'GIF87a', b'GIF89a'):
-            ctype = 'image/gif'
-        elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-            ctype = 'image/webp'
-        else:
-            ctype = 'image/jpeg'
-        resp = Response(data, mimetype=ctype)
-        resp.headers['Cache-Control'] = 'no-cache'
-        return resp
+        return _image_response(MeaningTrail.get_image(exchange_id))
     except Exception as e:
         logger.error(f"Error in get_exchange_image: {e}")
         return ('', 404)
@@ -90,7 +141,7 @@ def upload_receipt_photos(exchange_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        tx_dict, is_initiator, is_other = MeaningTrail.get_for_view(exchange_id, user_id)
+        tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
         if not is_other:
@@ -107,23 +158,14 @@ def upload_receipt_photos(exchange_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
-def get_receipt_photo(exchange_id, idx):
-    """Serve one receipt photo for <img src>. Public + no-cache."""
+@validate_session
+def get_receipt_photo(exchange_id, idx, user_id=None):
+    """Serve one receipt photo for <img src> - same visibility as the exchange."""
     try:
-        data = MeaningTrail.get_receipt_photo(exchange_id, idx)
-        if not data:
+        tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
+        if tx_dict is None:
             return ('', 404)
-        if data[:8] == b'\x89PNG\r\n\x1a\n':
-            ctype = 'image/png'
-        elif data[:6] in (b'GIF87a', b'GIF89a'):
-            ctype = 'image/gif'
-        elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-            ctype = 'image/webp'
-        else:
-            ctype = 'image/jpeg'
-        resp = Response(data, mimetype=ctype)
-        resp.headers['Cache-Control'] = 'no-cache'
-        return resp
+        return _image_response(MeaningTrail.get_receipt_photo(exchange_id, idx))
     except Exception as e:
         logger.error(f"Error in get_receipt_photo: {e}")
         return ('', 404)
@@ -144,7 +186,7 @@ def get_meaning_trail(user_id=None):
     trust_trail = MeaningTrail.get_meaning_trail(target_id, viewer_id=user_id)
     # get_meaning_trail returns [] for an empty trail and None on error.
     if trust_trail is None:
-        return jsonify({'error': 'MeaningTrail not found'}), 404
+        return jsonify({'message': 'Meaning trail not found'}), 404
     return jsonify(trust_trail), 200
 
 
@@ -155,6 +197,14 @@ def get_meaning_trail_by_project(project_id, user_id=None):
     feed (and by Alliance/Sphere pages, which merge several projects' worth)."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
+    from app.models.project import Project
+    project = Project.get_by_id(project_id)
+    if not project:
+        return jsonify({'message': 'Project not found'}), 404
+    viewer = uuid.UUID(str(user_id))
+    if project.sphere_id and project.sphere_id not in Sphere.member_sphere_ids(viewer) \
+            and viewer not in (project.participants or []) and not is_platform_admin(viewer):
+        return jsonify({'message': 'Project not found'}), 404
     return jsonify(MeaningTrail.get_by_project_id(project_id, viewer_id=user_id)), 200
 
 
@@ -180,9 +230,9 @@ def get_exchange(exchange_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        # Anyone may view an exchange (so they can acknowledge it); the flags tell
-        # the client what this viewer is allowed to change.
-        tx_dict, is_initiator, is_other = MeaningTrail.get_for_view(exchange_id, user_id)
+        # Viewable by participants and members of the exchange's sphere; the
+        # flags tell the client what this viewer is allowed to change.
+        tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
         tx_dict['receipt_photo_count'] = MeaningTrail.receipt_photo_count(exchange_id)
@@ -200,6 +250,16 @@ def get_exchange(exchange_id, user_id=None):
 
 _VALID_STATUSES = {'Initiated', 'In Progress', 'Finished', 'Receipted',
                    'Additional Comments Added', 'Cancelled'}
+# The only legal moves. Receipting happens through add_xc_comment (a receipt
+# is what moves an exchange to 'Receipted'), never by setting status directly.
+_TRANSITIONS = {
+    'Initiated':   {'In Progress', 'Cancelled'},
+    'In Progress': {'Finished', 'Cancelled'},
+    'Finished':    set(),
+    'Receipted':   set(),
+    'Additional Comments Added': set(),
+    'Cancelled':   set(),
+}
 
 
 @validate_session
@@ -212,14 +272,20 @@ def update_xc_status(exchange_id, user_id=None):
         if new_status not in _VALID_STATUSES:
             return jsonify({'message': 'Invalid status'}), 400
 
-        tx_dict, is_initiator, is_other = MeaningTrail.get_for_view(exchange_id, user_id)
+        tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
         if not (is_initiator or is_other):
             return jsonify({'message': 'Only participants can change the status'}), 403
 
-        MeaningTrail.set_status_for(tx_dict['user_id'], exchange_id, new_status)
-        return jsonify({'message': 'Status updated'}), 200
+        current = tx_dict.get('exchange_status') or 'Initiated'
+        if new_status not in _TRANSITIONS.get(current, set()):
+            return jsonify({'message': f'Cannot move an exchange from {current} to {new_status}',
+                            'status': current}), 409
+
+        if not MeaningTrail.set_status_for(tx_dict['user_id'], exchange_id, new_status):
+            return jsonify({'message': 'Failed to update status'}), 500
+        return jsonify({'message': 'Status updated', 'status': new_status}), 200
     except Exception as e:
         logger.error(f"Error in update_xc_status: {e}")
         return jsonify({'message': 'Internal server error'}), 500
@@ -237,7 +303,7 @@ def add_xc_comment(exchange_id, user_id=None):
         if not text or comment_type not in ('gratitude', 'user', 'other', 'comment'):
             return jsonify({'message': 'Invalid comment data'}), 400
 
-        tx_dict, is_initiator, is_other = MeaningTrail.get_for_view(exchange_id, user_id)
+        tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
 
@@ -269,6 +335,9 @@ def add_xc_comment(exchange_id, user_id=None):
             return jsonify({'message': 'A receipt has already been added for this side'}), 409
         if comment_type == 'user' and tx_dict.get('user_comment'):
             return jsonify({'message': 'A note has already been added for this side'}), 409
+        # The single acknowledgement slot is first-come: never overwrite it.
+        if comment_type == 'other' and tx_dict.get('other_comment'):
+            return jsonify({'message': 'This exchange already has an acknowledgement'}), 409
 
         author_name = None
         if comment_type in ('other', 'gratitude'):
@@ -316,7 +385,8 @@ def like_exchange(exchange_id, user_id=None):
 
         # Any authenticated member can like an exchange they can see, but the
         # exchange must actually exist (avoids orphan like rows).
-        if not MeaningTrail.exists(exchange_id):
+        tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
+        if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
 
         liked, count = Likes.toggle(exchange_id, comment_type, user_id)

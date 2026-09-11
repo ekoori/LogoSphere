@@ -33,19 +33,24 @@ from app.routes.openings import create_service, get_services, get_service, accep
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card
 from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Logging: INFO by default (DEBUG used to be the default, which also logged
+# request bodies and bearer tokens). Override with LOG_LEVEL=DEBUG locally.
+logging.basicConfig(level=getattr(logging, os.environ.get('LOG_LEVEL', 'INFO').upper(), logging.INFO))
+# The driver is very chatty at DEBUG; keep it at WARNING unless asked for.
+logging.getLogger('cassandra').setLevel(os.environ.get('CASSANDRA_LOG_LEVEL', 'WARNING').upper())
 logger = logging.getLogger(__name__)
 
-print("Python path:")
-import sys
-for path in sys.path:
-    print(path)
-
 app = Flask(__name__)
-# Secret key must come from the environment in production; the fallback is for
-# local development only and should never be used with real sessions.
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
+# The secret key must come from the environment. A dev fallback is only allowed
+# when the app is explicitly not in production, so a misconfigured deploy fails
+# loudly instead of signing sessions with a public string.
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    if os.environ.get('LOGOSPHERE_ENV', 'development') == 'production' or             os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() == 'true':
+        raise RuntimeError('SECRET_KEY must be set in production')
+    logger.warning('SECRET_KEY not set - using an insecure development default')
+    _secret = 'dev-secret-change-me'
+app.config['SECRET_KEY'] = _secret
 app.config['SESSION_COOKIE_NAME'] = 'session_id'
 
 
@@ -62,54 +67,24 @@ app.config.update(
 
 
 # Initialize session interface
-session_interface = CassandraSessionInterface(
-    cluster_nodes=os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(','),
-    keyspace='logosphere',
-    session_lifetime=timedelta(days=30)
-)
+session_interface = CassandraSessionInterface(session_lifetime=timedelta(days=30))
 app.session_interface = session_interface   
 
 
-# Enable CORS for all routes before defining any routes.
-# `Authorization` (standard `Bearer <session_id>`) is the documented header for
-# API auth; the browser SPA instead relies on the httpOnly session cookie sent
-# automatically via credentials. There's no other custom auth header — a
-# non-standard header carrying a bearer credential is itself a smell (tooling,
-# proxies, and log redaction all expect `Authorization`).
+# CORS - one source of truth. In production the SPA is served same-origin by
+# nginx (so CORS never applies); in development CRA proxies /api, so this only
+# matters for non-proxied clients. Origins come from CORS_ORIGINS (comma-sep).
+# `Authorization` (standard `Bearer <session_id>`) is the documented API auth
+# header; the browser SPA relies on the httpOnly session cookie instead.
+CORS_ORIGINS = [o.strip() for o in os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',') if o.strip()]
 CORS(app, resources={r"/api/*": {
-    "origins": ["http://localhost:3000"],
+    "origins": CORS_ORIGINS,
     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
     "expose_headers": ["Content-Type", "Authorization"],
     "supports_credentials": True,
-    "allow_credentials": True,
-    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "max_age": 3600,
 }})
-
-
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = app.make_default_options_response()
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers.add('Access-Control-Max-Age', '3600')
-        origin = request.headers.get('Origin')
-        if origin in ['http://localhost:3000']:
-            response.headers['Access-Control-Allow-Origin'] = origin
-        return response
-
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    if origin in ['http://localhost:3000']:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        response.headers.add('Access-Control-Expose-Headers', 'Content-Type, Authorization')
-    return response
-
 
 
 login_manager = LoginManager()
@@ -185,18 +160,25 @@ app.add_url_rule('/api/notifications/read_all', view_func=mark_all_notifications
 app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=delete_entity_value_card, methods=['DELETE', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=edit_entity_value_card, methods=['PATCH', 'OPTIONS'])
 
+# Uniform JSON error envelope: every error the API emits is {"message": ...}.
+@app.errorhandler(404)
+def not_found(error):
+    if request.path.startswith('/api/'):
+        return jsonify({'message': 'Not found'}), 404
+    return error, 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({'message': 'Method not allowed'}), 405
+
+
 @app.errorhandler(500)
 def internal_error(error):
-    response = jsonify({"error": "Internal Server Error"})
-    response.status_code = 500
-    origin = request.headers.get('Origin')
-    if origin in ['http://localhost:3000']:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+    logger.exception('Unhandled error')
+    return jsonify({'message': 'Internal server error'}), 500
+
 
 if __name__ == '__main__':
-    context = ('/home/igor/LogoSphere/backend/app/localhost.crt', '/home/igor/LogoSphere/backend/app/localhost.key') 
-    with app.app_context():
-        #app.run(debug=True, ssl_context=context, host="0.0.0.0")
-        app.run(debug=True, host="0.0.0.0")
+    # Development only - production runs under gunicorn (see run_local.py).
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true', host='0.0.0.0')

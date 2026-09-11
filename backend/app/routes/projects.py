@@ -110,9 +110,18 @@ def join_project(project_id, user_id=None):
         if not user:
             return jsonify({'message': 'User not found'}), 404
         user_name = f"{user.name or ''} {user.surname or ''}".strip() or user.email
+        project = Project.get_by_id(project_uuid)
+        if not project:
+            return jsonify({'message': 'Project not found'}), 404
+        # A project lives inside a sphere: you must belong to that sphere first.
+        if project.sphere_id and project.sphere_id not in Sphere.member_sphere_ids(user_uuid) \
+                and not is_platform_admin(user_uuid):
+            return jsonify({'message': "Join the project's sphere first"}), 403
         already_member = Project.join(project_uuid, user_uuid, user_name)
         return jsonify({'message': 'Already a contributor' if already_member else 'Joined successfully',
                         'already_member': already_member}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid project id'}), 400
     except Exception as e:
         logger.error(f"Error in join_project: {e}")
         return jsonify({'message': 'Internal server error'}), 500
@@ -132,6 +141,11 @@ def set_project_role(project_id, target_id, user_id=None):
         role = (request.get_json() or {}).get('role')
         if role not in ('steward', 'contributor', 'manager'):
             return jsonify({'message': 'Invalid role'}), 400
+        project = Project.get_by_id(pid)
+        if not project:
+            return jsonify({'message': 'Project not found'}), 404
+        if tid not in (project.participants or []):
+            return jsonify({'message': 'That user is not a contributor to this project'}), 404
         Project.set_role(pid, tid, role)
         return jsonify({'message': 'Role updated', 'role': role}), 200
     except ValueError:

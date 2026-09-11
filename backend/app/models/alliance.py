@@ -3,18 +3,14 @@
 # spheres — groups of users, usually nested in a Sphere.
 # Class: Alliance — create() and get_all() backed by the logosphere.alliances table.
 
-from cassandra.cluster import Cluster
 import uuid
 import logging
 import os
 from datetime import datetime
 import base64
 
-# Host(s) configurable via CASSANDRA_HOST (comma-separated), defaults to localhost.
-CASSANDRA_HOSTS = os.environ.get('CASSANDRA_HOST', '127.0.0.1').split(',')
-cluster = Cluster(CASSANDRA_HOSTS)
-cassandra_session = cluster.connect('logosphere')
-cassandra_session.default_timeout = 30
+from app.db import session as cassandra_session
+from app.utils.names import resolve_user_names, dedupe
 
 
 class Alliance:
@@ -43,13 +39,13 @@ class Alliance:
                 return 'admin'
             return 'member'
 
+        # Names come from `users` at read time (member_names was positionally
+        # aligned to members and drifted on rename).
+        mids = dedupe(self.members or [])
+        names = resolve_user_names(mids)
         members_with_roles = [
-            {
-                'id': str(mid),
-                'name': (self.member_names[i] if self.member_names and i < len(self.member_names) else 'Member'),
-                'role': _role(mid),
-            }
-            for i, mid in enumerate(self.members or [])
+            {'id': str(mid), 'name': names.get(mid, 'Member'), 'role': _role(mid)}
+            for mid in mids
         ]
         return {
             'alliance_id': str(self.alliance_id),
@@ -59,7 +55,7 @@ class Alliance:
             'admin1': str(self.admin1) if self.admin1 else None,
             'sphere_id': str(self.sphere_id) if self.sphere_id else None,
             'sphere_name': self.sphere_name,
-            'participants': self.member_names or [],
+            'participants': [m['name'] for m in members_with_roles],
             'members': members_with_roles,
             'projects': self.projects or [],
             'values': self.values or [],
@@ -102,15 +98,26 @@ class Alliance:
     @classmethod
     def get_all(cls):
         rows = cassandra_session.execute("SELECT * FROM alliances")
-        alliances = []
-        for r in rows:
-            alliances.append(cls(
-                r.alliance_id, r.name, r.description, r.admin1, r.sphere_id,
-                getattr(r, 'sphere_name', None), r.members, getattr(r, 'member_names', None),
-                r.projects, r.values, r.meaning_graph, r.image,
-                getattr(r, 'member_roles', None),
-            ))
-        return alliances
+        return [cls._from_row(r) for r in rows]
+
+    @classmethod
+    def get_by_id(cls, alliance_id):
+        """One alliance by id (point read), or None."""
+        try:
+            aid = alliance_id if isinstance(alliance_id, uuid.UUID) else uuid.UUID(str(alliance_id))
+        except (ValueError, TypeError):
+            return None
+        r = cassandra_session.execute("SELECT * FROM alliances WHERE alliance_id = %s", [aid]).one()
+        return cls._from_row(r) if r else None
+
+    @classmethod
+    def _from_row(cls, r):
+        return cls(
+            r.alliance_id, r.name, r.description, r.admin1, r.sphere_id,
+            getattr(r, 'sphere_name', None), r.members, getattr(r, 'member_names', None),
+            r.projects, r.values, r.meaning_graph, r.image,
+            getattr(r, 'member_roles', None),
+        )
 
     @classmethod
     def set_image(cls, alliance_id, image_bytes):
