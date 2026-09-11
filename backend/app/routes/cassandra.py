@@ -1,21 +1,28 @@
 # File: ./backend/app/routes/cassandra.py
-# Description: This file implements session management using Cassandra as the backend for storing session data.
+# Description: Flask session interface backed by the Cassandra `sessions` table.
 # Classes/Methods:
 #    [+] CassandraSession - A custom session object that holds session data.
-#        [+] __init__(session_id, initial=None) - Initializes the session with a given session_id and optional initial data.
-#    [+] CassandraSessionInterface - The session interface responsible for interacting with the Cassandra database.
-#        [+] __init__(cluster_nodes, keyspace, session_lifetime) - Initializes the session interface.
+#    [+] CassandraSessionInterface - Reads/writes sessions through the app's shared connection.
 #        [+] open_session(app, request) - Retrieves session data from Cassandra based on the session_id.
 #        [+] save_session(app, session, response) - Saves session data in Cassandra and manages session cookies.
+#
+# Queries are plain parameterised statements rather than prepared ones: a
+# prepared statement is bound to the cluster connection it was prepared on,
+# and the shared connection can be rebuilt at runtime (see app/db.py).
 
 from flask.sessions import SessionInterface, SessionMixin
 from app.db import session as _shared_session
-from flask import request, current_app as app
+from flask import request
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
+
+_SELECT = "SELECT session_id, user_email, user_id, data, expire_at FROM sessions WHERE session_id = %s"
+_INSERT = ("INSERT INTO sessions (session_id, user_email, user_id, creation_time, "
+           "last_access_time, expire_at, data) VALUES (%s, %s, %s, %s, %s, %s, %s)")
+
 
 class CassandraSession(dict, SessionMixin):
     """Custom session object for storing session data"""
@@ -24,35 +31,22 @@ class CassandraSession(dict, SessionMixin):
         self.session_id = session_id
         self.modified = False
 
+
 class CassandraSessionInterface(SessionInterface):
     """Interface for storing sessions in Cassandra"""
     def __init__(self, session_lifetime):
-        # Reuse the app-wide session rather than opening a second cluster.
+        # Reuse the app-wide (self-healing) session rather than opening a second cluster.
         self.cassandra_session = _shared_session
         self.session_lifetime = session_lifetime
-
-        # Prepare statements for better performance
-        self.select_session = self.cassandra_session.prepare(
-            "SELECT session_id, user_email, user_id, data, expire_at FROM sessions WHERE session_id = ?"
-        )
-        self.insert_session = self.cassandra_session.prepare("""
-            INSERT INTO sessions (
-                session_id, user_email, user_id, creation_time, 
-                last_access_time, expire_at, data
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        """)
 
     def open_session(self, app, request):
         """Retrieve or create a new session"""
         session_cookie = request.cookies.get(app.config.get('SESSION_COOKIE_NAME', 'session_id'))
-        
+
         if session_cookie:
             try:
                 session_uuid = uuid.UUID(session_cookie)
-                result = self.cassandra_session.execute(
-                    self.select_session, 
-                    [session_uuid]
-                ).one()
+                result = self.cassandra_session.execute(_SELECT, [session_uuid]).one()
 
                 if result and result.user_email and result.user_id and \
                         (result.expire_at is None or result.expire_at > datetime.utcnow()):
@@ -63,7 +57,7 @@ class CassandraSessionInterface(SessionInterface):
                     }
                     if result.data:
                         session_data.update(result.data)
-                    
+
                     logger.debug(f'Retrieved existing session: {session_cookie}')
                     return CassandraSession(str(session_uuid), initial=session_data)
 
@@ -89,11 +83,8 @@ class CassandraSessionInterface(SessionInterface):
             return
 
         try:
-            # Convert session_id to UUID if it's a string
             if isinstance(session_id, str):
                 session_id = uuid.UUID(session_id)
-            
-            # Convert user_id to UUID if it's a string
             if isinstance(user_id, str):
                 user_id = uuid.UUID(user_id)
 
@@ -101,22 +92,11 @@ class CassandraSessionInterface(SessionInterface):
             expire_at = now + self.session_lifetime
 
             # Extract additional data, excluding standard fields
-            session_data = {k: v for k, v in dict(session).items() 
-                          if k not in ['session_id', 'user_email', 'user_id']}
+            session_data = {k: v for k, v in dict(session).items()
+                            if k not in ['session_id', 'user_email', 'user_id']}
 
-            # Save session to Cassandra
             self.cassandra_session.execute(
-                self.insert_session,
-                (
-                    session_id,
-                    user_email,
-                    user_id,
-                    now,
-                    now,
-                    expire_at,
-                    session_data
-                )
-            )
+                _INSERT, (session_id, user_email, user_id, now, now, expire_at, session_data))
 
             # Set cookie if not already present
             if 'Set-Cookie' not in response.headers:
@@ -135,11 +115,12 @@ class CassandraSessionInterface(SessionInterface):
         except Exception as e:
             logger.error(f"Error saving session: {e}")
 
+
 def create_fresh_session(user_email, user_id):
     """Create a new fresh session for the given user"""
     if isinstance(user_id, str):
         user_id = uuid.UUID(user_id)
-    
+
     session_id = str(uuid.uuid4())
     session_data = {
         'session_id': session_id,
