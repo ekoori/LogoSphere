@@ -101,6 +101,8 @@ function ExchangePage() {
     // Receipt context (Time/Effort/Care/...) + up to 3 photos.
     const [gratitudeContext, setGratitudeContext] = useState('');
     const [gratitudePhotos, setGratitudePhotos] = useState([]);
+    // Two-step cancel: first click asks, second confirms (no modal dialogs).
+    const [confirmCancel, setConfirmCancel] = useState(false);
 
     // Exchange edit (title / description / image), allowed until finished.
     const [editing, setEditing] = useState(false);
@@ -223,8 +225,6 @@ function ExchangePage() {
         }
     };
 
-    // Two-step cancel: first click asks, second confirms (no modal dialogs).
-    const [confirmCancel, setConfirmCancel] = useState(false);
     const handleCancel = async () => {
         if (!confirmCancel) { setConfirmCancel(true); return; }
         setConfirmCancel(false);
