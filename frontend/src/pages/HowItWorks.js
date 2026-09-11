@@ -76,7 +76,7 @@ const FAQ = [
     },
     {
         q: 'Is any of this visible outside our group?',
-        a: 'No. A Sphere is private to the people in it. Nothing you post is searchable by strangers on the open internet.',
+        a: 'Not unless your group chooses it. A Sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet — unless the sphere’s admin explicitly switches on “public activity”, in which case its projects, alliances and openings become viewable by anyone.',
     },
     {
         q: 'What if I just want to watch for now?',

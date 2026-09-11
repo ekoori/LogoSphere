@@ -346,11 +346,24 @@ def add_xc_comment(exchange_id, user_id=None):
             if u:
                 author_name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
 
+        # A receipt may name the value card(s) it expressed (by id, so it pins
+        # the exact version) and the kind of meaning it was.
+        card_ids = []
+        for c in (data.get('card_ids') or []):
+            try:
+                card_ids.append(str(uuid.UUID(str(c))))
+            except (ValueError, TypeError):
+                pass
+        frankl_mode = data.get('frankl_mode')
+        if frankl_mode not in ('creative', 'experiential', 'attitudinal'):
+            frankl_mode = None
         ok = MeaningTrail.add_comment_for(
             tx_dict['user_id'], exchange_id, comment_type, text,
             author_id=str(user_id), author_name=author_name,
             cards=cards if cards else None,
             context=(data.get('context') or None),
+            card_ids=card_ids if comment_type == 'gratitude' else None,
+            frankl_mode=frankl_mode if comment_type == 'gratitude' else None,
         )
         if ok:
             if comment_type == 'gratitude':
@@ -390,7 +403,8 @@ def like_exchange(exchange_id, user_id=None):
             return jsonify({'message': 'Exchange not found'}), 404
 
         liked, count = Likes.toggle(exchange_id, comment_type, user_id)
-        return jsonify({'liked': liked, 'count': count, 'comment_type': comment_type}), 200
+        return jsonify({'liked': liked, 'count': count, 'comment_type': comment_type,
+                        'by': Likes.likers(exchange_id, comment_type)}), 200
     except Exception as e:
         logger.error(f"Error in like_exchange: {e}")
         return jsonify({'message': 'Internal server error'}), 500

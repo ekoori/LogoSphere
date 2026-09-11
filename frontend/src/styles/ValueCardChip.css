@@ -328,3 +328,17 @@
     from { opacity: 0; transform: translateY(4px) scale(0.94); }
     to   { opacity: 1; transform: translateY(0)  scale(1);    }
 }
+
+/* Picker groups (own values vs the other party's) */
+.vc-picker-group { margin-top: 0.4rem; }
+.vc-picker-group-label { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint, #7a7362); margin: 0.2rem 0; }
+
+/* Endorsement / review state on a card */
+.vc-state-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.8rem; font-size: 0.8rem; }
+.vc-state { padding: 0.2em 0.6em; border-radius: var(--r-pill, 999px); border: 1px solid var(--border-soft, #d8d2c4); color: var(--ink-faint, #7a7362); }
+.vc-state--endorsed { color: var(--moss-deep, #3a4a2f); border-color: rgba(90, 107, 69, 0.4); background: rgba(90, 107, 69, 0.08); }
+.vc-state--review { color: var(--terracotta-deep, #a5502f); border-color: rgba(165, 80, 47, 0.35); background: rgba(165, 80, 47, 0.06); }
+.vc-state-btn { background: transparent; border: 1px solid var(--moss, #5a6b45); color: var(--moss-deep, #3a4a2f); border-radius: var(--r-pill, 999px); padding: 0.25em 0.8em; font-size: 0.8rem; cursor: pointer; }
+.vc-state-btn:hover:not(:disabled) { background: var(--paper, #f5f1e8); }
+.vc-state-btn:disabled { opacity: 0.6; cursor: default; }
+.vc-receipt-mode { display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.78rem; color: var(--ink-faint, #7a7362); margin-right: 0.6em; }

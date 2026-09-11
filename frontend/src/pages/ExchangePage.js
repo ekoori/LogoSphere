@@ -33,7 +33,7 @@ const AuthorTag = ({ name, id }) => {
     return (
         <span className="tf-author">
             <Avatar userId={id} name={name === 'You' ? '' : name} size={20} />
-            {href ? <a href={href}><strong>{name}</strong></a> : <strong>{name}</strong>}
+            {href ? <Link to={href}><strong>{name}</strong></Link> : <strong>{name}</strong>}
         </span>
     );
 };
@@ -59,12 +59,12 @@ const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou }) =
         <div className="xc-participant">
             <span>{isEntity ? (KIND_GLYPH[kind] || '◻') : '👤'}</span>
             {isYou
-                ? <a href="/profile" className="xc-participant-you">You</a>
-                : (href ? <a href={href}>{name}</a> : <span>{name}</span>)}
+                ? <Link to="/profile" className="xc-participant-you">You</Link>
+                : (href ? <Link to={href}>{name}</Link> : <span>{name}</span>)}
             {isEntity && actingName && (
                 <span className="xc-participant-via">
                     {' · via '}
-                    {actingId ? <a href={`/user?id=${actingId}`}>{actingName}</a> : actingName}
+                    {actingId ? <Link to={`/user?id=${actingId}`}>{actingName}</Link> : actingName}
                 </span>
             )}
             <span className="xc-participant-role">{role}</span>
@@ -91,6 +91,8 @@ function ExchangePage() {
 
     const [gratitudeCardIds, setGratitudeCardIds] = useState([]);
     const [gratitudeCards, setGratitudeCards] = useState([]);
+    // Which of Frankl's three kinds of meaning the receipt records.
+    const [gratitudeMode, setGratitudeMode] = useState('');
     const [userNoteCardIds, setUserNoteCardIds] = useState([]);
     const [userNoteCards, setUserNoteCards] = useState([]);
     const [ackCardIds, setAckCardIds] = useState([]);
@@ -139,6 +141,7 @@ function ExchangePage() {
             await api.post(`/api/exchange/${xcId}/comment`, {
                 type: 'gratitude', text: gratitudeText.trim(),
                 card_ids: gratitudeCardIds, cards: gratitudeCards,
+                frankl_mode: gratitudeMode || null,
                 context: gratitudeContext.trim() || null,
             });
             if (gratitudePhotos.length > 0) {
@@ -147,7 +150,7 @@ function ExchangePage() {
                 await api.post(`/api/exchange/${xcId}/receipt_photos`, fd);
             }
             setGratitudeText(''); setGratitudeContext(''); setGratitudePhotos([]);
-            setGratitudeCardIds([]); setGratitudeCards([]);
+            setGratitudeCardIds([]); setGratitudeCards([]); setGratitudeMode('');
             await fetchXc();
         } catch (err) {
             console.error('Failed to add receipt:', err);
@@ -355,6 +358,11 @@ function ExchangePage() {
                                 <div className="tf-content">
                                     <p className="tf-author-line">
                                         <AuthorTag name={xc.other_user_name || 'Other party'} id={xc.other_user_id} />{' '}
+                                        {xc.gratitude_frankl_mode && (
+                                            <span className="vc-receipt-mode" title={`${xc.gratitude_frankl_mode} meaning`}>
+                                                {{ creative: '✶', experiential: '❍', attitudinal: '△' }[xc.gratitude_frankl_mode]} {xc.gratitude_frankl_mode}
+                                            </span>
+                                        )}
                                         {xc.gratitude_comment}
                                     </p>
                                     {xc.gratitude_comment_cards?.length > 0 && (
@@ -375,7 +383,7 @@ function ExchangePage() {
                                         <div className="xc-receipt-photos">
                                             {Array.from({ length: xc.receipt_photo_count }).map((_, i) => (
                                                 <a key={i} href={`/api/exchange/${xcId}/receipt_photo/${i}`} target="_blank" rel="noreferrer">
-                                                    <img src={`/api/exchange/${xcId}/receipt_photo/${i}`} alt={`Receipt photo ${i + 1}`} className="xc-receipt-photo" />
+                                                    <img src={`/api/exchange/${xcId}/receipt_photo/${i}`} alt={`Receipt ${i + 1}`} className="xc-receipt-photo" />
                                                 </a>
                                             ))}
                                         </div>
@@ -427,9 +435,25 @@ function ExchangePage() {
                                     value={gratitudeText}
                                     onChange={e => setGratitudeText(e.target.value)}
                                 />
+                                <div className="vc-picker">
+                                    <span className="vc-picker-label">What kind of meaning was this?</span>
+                                    <div className="vc-picker-chips">
+                                        {[['creative', '✶', 'Creative', 'something was made or given'],
+                                          ['experiential', '❍', 'Experiential', 'something was received or shared'],
+                                          ['attitudinal', '△', 'Attitudinal', 'a stance taken under constraint']].map(([k, g, l, t]) => (
+                                            <button key={k} type="button" title={t}
+                                                    className={`vc-picker-chip${gratitudeMode === k ? ' vc-picker-chip--on' : ''}`}
+                                                    onClick={() => setGratitudeMode(gratitudeMode === k ? '' : k)}>
+                                                <span className="vc-chip-glyph">{g}</span>
+                                                <span className="vc-chip-title">{l}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 <ValueCardPicker
                                     selectedIds={gratitudeCardIds}
                                     onChange={(ids, cards) => { setGratitudeCardIds(ids); setGratitudeCards(cards); }}
+                                    counterparts={(xc.initiator_id || xc.user_id) ? [{ id: xc.initiator_id || xc.user_id, label: `${xc.initiator_name || 'Their'} values` }] : []}
                                 />
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Context (optional)</label>
                                 <textarea
@@ -654,7 +678,7 @@ function ExchangePage() {
                                 <div className="xc-detail-row">
                                     <span className="xc-detail-label">Project</span>
                                     <span className="xc-detail-value">
-                                        <a href={`/project?id=${xc.project_id}`}>{xc.project_name}</a>
+                                        <Link to={`/project?id=${xc.project_id}`}>{xc.project_name}</Link>
                                     </span>
                                 </div>
                             )}
@@ -670,7 +694,7 @@ function ExchangePage() {
                                 <div className="xc-detail-row">
                                     <span className="xc-detail-label">From opening</span>
                                     <span className="xc-detail-value">
-                                        <a href={`/opening?id=${xc.source_service_id}`}>View opening →</a>
+                                        <Link to={`/opening?id=${xc.source_service_id}`}>View opening →</Link>
                                     </span>
                                 </div>
                             )}

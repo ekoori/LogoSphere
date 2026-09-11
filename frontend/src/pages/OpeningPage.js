@@ -32,7 +32,9 @@ function OpeningPage() {
     const [fetchError, setFetchError] = useState(null);
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState(0);
+    const [likedBy, setLikedBy] = useState([]);
     const [busy, setBusy] = useState(false);
+    const [actionError, setActionError] = useState('');
     const [acceptAs, setAcceptAs] = useState('');
     const [imgVersion, setImgVersion] = useState(0);
     const [editing, setEditing] = useState(false);
@@ -50,6 +52,7 @@ function OpeningPage() {
             setService(mapped);
             setLiked(mapped.likedByCurrentUser);
             setLikes(mapped.likesCount);
+            setLikedBy(mapped.likedBy || []);
         } catch (e) {
             setFetchError(
                 e.response?.status === 404 ? 'Opening not found.'
@@ -65,12 +68,15 @@ function OpeningPage() {
 
     const handleLike = async () => {
         const prevLiked = liked, prevLikes = likes;
-        setLiked((v) => !v);
-        setLikes((n) => (liked ? n - 1 : n + 1));
+        const want = !liked;
+        setLiked(want);
+        setLikes((n) => (want ? n + 1 : n - 1));
         try {
-            const res = await api.post(`/api/openings/${openingId}/like`);
+            // Explicit target state - a retried request is a no-op, not a flip.
+            const res = await api.post(`/api/openings/${openingId}/like`, { liked: want });
             setLiked(res.data.liked);
             setLikes(res.data.likes);
+            setLikedBy(res.data.liked_by || []);
         } catch (e) {
             setLiked(prevLiked);
             setLikes(prevLikes);
@@ -80,11 +86,12 @@ function OpeningPage() {
     const handleAccept = async () => {
         if (busy) return;
         setBusy(true);
+        setActionError('');
         try {
             await api.post(`/api/openings/${openingId}/accept`, acceptAs ? { acting_as_id: acceptAs } : {});
             await fetchService();
         } catch (e) {
-            alert(e.response?.data?.message || 'Could not accept this opening.');
+            setActionError(e.response?.data?.message || 'Could not accept this opening.');
         } finally {
             setBusy(false);
         }
@@ -93,12 +100,13 @@ function OpeningPage() {
     const handleConfirm = async (accepterId) => {
         if (busy) return;
         setBusy(true);
+        setActionError('');
         try {
             const res = await api.post(`/api/openings/${openingId}/confirm`, { accepter_id: accepterId });
             if (res.data?.exchange_id) navigate(`/exchange?id=${res.data.exchange_id}`);
             else await fetchService();
         } catch (e) {
-            alert(e.response?.data?.message || 'Could not confirm this acceptance.');
+            setActionError(e.response?.data?.message || 'Could not confirm this acceptance.');
         } finally {
             setBusy(false);
         }
@@ -139,11 +147,12 @@ function OpeningPage() {
     const handleReject = async (accepterId) => {
         if (busy) return;
         setBusy(true);
+        setActionError('');
         try {
             await api.post(`/api/openings/${openingId}/reject`, { accepter_id: accepterId });
             await fetchService();
         } catch (e) {
-            alert(e.response?.data?.message || 'Could not decline this acceptance.');
+            setActionError(e.response?.data?.message || 'Could not decline this acceptance.');
         } finally {
             setBusy(false);
         }
@@ -319,7 +328,8 @@ function OpeningPage() {
                 <div className="xc-page-sidebar">
                     <div className="xc-sidebar-card">
                         <p className="xc-sidebar-heading">Actions</p>
-                        <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} time="" onLike={handleLike} />
+                        {actionError && <p className="xc-edit-err">{actionError}</p>}
+                        <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} likedBy={likedBy} time="" onLike={handleLike} />
                         {canAccept && acceptAsOptions.length > 0 && (
                             <label className="service-accept-as" style={{ marginTop: '0.8em' }}>
                                 <span className="service-accept-as-label">Accept as</span>

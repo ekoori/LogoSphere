@@ -98,12 +98,27 @@ class Likes(Model):
         return liked, cls.count(ex, comment_type)
 
     @classmethod
+    def likers(cls, exchange_id, comment_type, limit=50):
+        """Who appreciated this - as people, not a number (a bare count is the
+        kind of thin proxy the platform argues against)."""
+        try:
+            ids = [r.user_id for r in cls.objects(exchange_id=UUID(str(exchange_id)),
+                                                  comment_type=comment_type).limit(limit)]
+        except Exception as e:
+            print(f"Error listing likers: {e}")
+            return []
+        from app.utils.names import resolve_user_names
+        names = resolve_user_names(ids)
+        return [{'id': str(i), 'name': names.get(i, 'Member')} for i in ids]
+
+    @classmethod
     def summary_for_exchange(cls, exchange_id, user_id=None):
-        """Return {comment_type: {'count': n, 'liked': bool}} for all like types."""
+        """Return {comment_type: {'count': n, 'liked': bool, 'by': [{id,name}]}}."""
         out = {}
         for ct in LIKE_TYPES:
             liked = cls.is_liked_by(exchange_id, ct, user_id) if user_id else False
-            out[ct] = {'count': cls.count(exchange_id, ct), 'liked': liked}
+            by = cls.likers(exchange_id, ct)
+            out[ct] = {'count': len(by), 'liked': liked, 'by': by}
         return out
 
 
@@ -160,6 +175,11 @@ class MeaningTrail(Model):
     in_progress_at = columns.DateTime()
     finished_at = columns.DateTime()
     receipted_at = columns.DateTime()
+    # The receipt names the value card(s) it expressed - by id, so it points at
+    # the exact (versioned) wording - and which of Frankl's three kinds of
+    # meaning it was. gratitude_comment_cards keeps the display snapshot.
+    gratitude_card_ids = columns.List(columns.UUID)
+    gratitude_frankl_mode = columns.Text()
 
     @classmethod
     def add_exchange(cls, user_id, other_user_id, project_id):
@@ -239,6 +259,8 @@ class MeaningTrail(Model):
             'gratitude_comment_id': _uuid(self.gratitude_comment_id),
             'gratitude_comment_timestamp': _dt(self.gratitude_comment_timestamp),
             'gratitude_comment_cards': _cards(self.gratitude_comment_cards),
+            'gratitude_card_ids': [str(c) for c in (self.gratitude_card_ids or [])],
+            'gratitude_frankl_mode': self.gratitude_frankl_mode,
             'user_comment': self.user_comment,
             'user_comment_id': _uuid(self.user_comment_id),
             'user_comment_timestamp': _dt(self.user_comment_timestamp),
@@ -677,7 +699,8 @@ class MeaningTrail(Model):
 
     @classmethod
     def add_comment_for(cls, initiator_user_id, exchange_id, comment_type, text,
-                        author_id=None, author_name=None, cards=None, context=None):
+                        author_id=None, author_name=None, cards=None, context=None,
+                        card_ids=None, frankl_mode=None):
         """comment_type: 'gratitude' | 'user' | 'other'. `context` (the
         Time/Effort/Care/... note) is only stored on a gratitude receipt."""
         try:
@@ -697,6 +720,8 @@ class MeaningTrail(Model):
                     gratitude_comment_timestamp=now,
                     gratitude_comment_cards=cards_json,
                     gratitude_comment_context=(context or None),
+                    gratitude_card_ids=[UUID(str(c)) for c in (card_ids or [])] or None,
+                    gratitude_frankl_mode=(frankl_mode or None),
                 )
             elif comment_type == 'user':
                 row.update(

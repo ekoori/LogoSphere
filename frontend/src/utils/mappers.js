@@ -51,6 +51,7 @@ export function mapService(s) {
         time: fmtDate(s.created_at) || 'recently',
         status: s.status || 'Posted',
         likesCount: s.likes || 0,
+        likedBy: s.liked_by || [],
         likedByCurrentUser: s.liked_by_current_user || false,
         canModify: false,
         cadence: s.cadence || 'single',
@@ -130,6 +131,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
     const likes = row.likes || {};
     const likeOf = (ct) => ({
         likesCount: likes[ct]?.count || 0,
+        likedBy: likes[ct]?.by || [],
         likedByCurrentUser: likes[ct]?.liked || false,
     });
 

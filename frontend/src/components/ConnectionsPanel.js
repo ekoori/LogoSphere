@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import '../styles/Profile.css';
 import api from '../api';
 
@@ -68,7 +69,7 @@ function ConnectionsPanel({ ownerId, viewerId }) {
                     <ul className="pf-conn-list">
                         {spheres.map((s) => (
                             <li key={s.sphere_id}>
-                                <a href={`/sphere?id=${s.sphere_id}`} className="pf-conn-pill">{s.name}</a>
+                                <Link to={`/sphere?id=${s.sphere_id}`} className="pf-conn-pill">{s.name}</Link>
                             </li>
                         ))}
                     </ul>
@@ -80,7 +81,7 @@ function ConnectionsPanel({ ownerId, viewerId }) {
                     <ul className="pf-conn-list">
                         {alliances.map((a) => (
                             <li key={a.alliance_id}>
-                                <a href={`/alliance?id=${a.alliance_id}`} className="pf-conn-pill">{a.name}</a>
+                                <Link to={`/alliance?id=${a.alliance_id}`} className="pf-conn-pill">{a.name}</Link>
                             </li>
                         ))}
                     </ul>
@@ -92,7 +93,7 @@ function ConnectionsPanel({ ownerId, viewerId }) {
                     <ul className="pf-conn-list">
                         {projects.map((p) => (
                             <li key={p.project_id}>
-                                <a href={`/project?id=${p.project_id}`} className="pf-conn-pill">{p.name}</a>
+                                <Link to={`/project?id=${p.project_id}`} className="pf-conn-pill">{p.name}</Link>
                             </li>
                         ))}
                     </ul>

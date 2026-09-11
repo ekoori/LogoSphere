@@ -47,12 +47,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     response => response,
     error => {
-        if (error.response?.status === 401) {
-            // Clear cached auth flag. We intentionally do NOT hard-redirect to
-            // /login here: route guards are currently disabled in App.js, and a
-            // forced redirect on any background 401 caused navigation loops.
-            localStorage.removeItem('isLoggedIn');
-        }
+        // 401s are left to the caller: ProtectedRoute (App.js) redirects to
+        // /login once the session check resolves, and a hard redirect from a
+        // background poll here used to cause navigation loops.
         return Promise.reject(error);
     }
 );

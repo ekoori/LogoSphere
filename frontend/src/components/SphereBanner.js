@@ -20,7 +20,7 @@ const SphereBanner = ({ previewUrl, onImageChange }) => {
         accept="image/*"
         onChange={handleImageChange}
       />
-      {previewUrl && <img id="preview-image" src={previewUrl} alt="Image Preview" className="banner-image" />}
+      {previewUrl && <img id="preview-image" src={previewUrl} alt="Banner preview" className="banner-image" />}
     </div>
   );
 };

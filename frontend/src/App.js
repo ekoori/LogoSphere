@@ -23,14 +23,9 @@ import About from './pages/About';
 import HowItWorks from './pages/HowItWorks';
 import Home from './pages/Home';
 import ProfilePage from './pages/ProfilePage';
-import Spheres from './pages/Spheres';
-import SpherePage from './pages/SpherePage';
-import SphereManagement from './pages/SphereManagement';
-import Alliances from './pages/Alliances';
-import AlliancePage from './pages/AlliancePage';
-import AllianceManagement from './pages/AllianceManagement';
-import ProjectPage from './pages/ProjectPage';
-import ProjectManagement from './pages/ProjectManagement';
+import EntityListPage from './pages/EntityListPage';
+import EntityPage from './pages/EntityPage';
+import EntityManagement from './pages/EntityManagement';
 import UserPage from './pages/UserPage';
 import OpeningsPage from './pages/OpeningsPage';
 import OpeningPage from './pages/OpeningPage';
@@ -42,7 +37,6 @@ import Privacy from './pages/Privacy';
 import TOS from './pages/TOS';
 
 // Component Imports
-import Projects from './components/Projects';
 import UserRegistration from './components/UserRegistration';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -90,17 +84,19 @@ function AppContent() {
         {/* Protected Routes — gated by ProtectedRoute (redirects to /login) */}
         <Route path="/profile" element={<ErrorBoundary><ProtectedRoute><ProfilePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/settings" element={<ErrorBoundary><ProtectedRoute><SettingsPage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/projects" element={<ErrorBoundary><ProtectedRoute><Projects/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/project" element={<ErrorBoundary><ProtectedRoute><ProjectPage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/project-management" element={<ErrorBoundary><ProtectedRoute><ProjectManagement/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/spheres" element={<ErrorBoundary><ProtectedRoute><Spheres/></ProtectedRoute></ErrorBoundary>} />
+        {/* Spheres / alliances / projects share one list, one detail and one
+            management page, parameterised by kind. */}
+        <Route path="/spheres" element={<ErrorBoundary><ProtectedRoute><EntityListPage kind="sphere"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/alliances" element={<ErrorBoundary><ProtectedRoute><EntityListPage kind="alliance"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/projects" element={<ErrorBoundary><ProtectedRoute><EntityListPage kind="project"/></ProtectedRoute></ErrorBoundary>} />
         {/* Public: a sphere flagged "public activity" is viewable without an
-            account; SpherePage itself gates private spheres. */}
-        <Route path="/sphere" element={<ErrorBoundary><SpherePage/></ErrorBoundary>} />
-        <Route path="/sphere-management" element={<ErrorBoundary><ProtectedRoute><SphereManagement/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/alliances" element={<ErrorBoundary><ProtectedRoute><Alliances/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><AlliancePage/></ProtectedRoute></ErrorBoundary>} />
-        <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><AllianceManagement/></ProtectedRoute></ErrorBoundary>} />
+            account; EntityPage itself gates private spheres. */}
+        <Route path="/sphere" element={<ErrorBoundary><EntityPage kind="sphere"/></ErrorBoundary>} />
+        <Route path="/alliance" element={<ErrorBoundary><ProtectedRoute><EntityPage kind="alliance"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/project" element={<ErrorBoundary><ProtectedRoute><EntityPage kind="project"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/sphere-management" element={<ErrorBoundary><ProtectedRoute><EntityManagement kind="sphere"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/alliance-management" element={<ErrorBoundary><ProtectedRoute><EntityManagement kind="alliance"/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/project-management" element={<ErrorBoundary><ProtectedRoute><EntityManagement kind="project"/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/openings" element={<ErrorBoundary><ProtectedRoute><OpeningsPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
@@ -152,7 +148,10 @@ function LoginProvider({ children }) {
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      alert('Error during logout: ' + error.message);
+      // Best effort: clear local auth state even if the server call failed.
+      setIsLoggedIn(false);
+      setUserId(null);
+      navigate('/login', { replace: true });
     }
   };
 

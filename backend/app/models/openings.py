@@ -488,6 +488,16 @@ class Service:
         return int(row.n) if row else 0
 
     @classmethod
+    def likers(cls, service_id, limit=50):
+        """Who appreciated this opening - [{id, name}], not just a number."""
+        rows = cassandra_session.execute(
+            f"SELECT user_id FROM opening_likes WHERE service_id = %s LIMIT {int(limit)}", [service_id])
+        ids = [r.user_id for r in rows]
+        from app.utils.names import resolve_user_names
+        names = resolve_user_names(ids)
+        return [{'id': str(i), 'name': names.get(i, 'Member')} for i in ids]
+
+    @classmethod
     def is_liked_by(cls, service_id, user_id):
         row = cassandra_session.execute(
             "SELECT user_id FROM opening_likes WHERE service_id = %s AND user_id = %s",

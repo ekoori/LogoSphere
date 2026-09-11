@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
@@ -24,7 +24,7 @@ function ServiceCard({
     id,
     type, title, spheres, sphereId, provider, providerId, actingUser, actingUserId,
     description, project, projectId,
-    imageUrl, time, status, likesCount, likedByCurrentUser, cadence, acceptedByName,
+    imageUrl, time, status, likesCount, likedByCurrentUser, likedBy: likedByInitial = [], cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
     currentUserId, onAccept, onConfirm, onReject,
@@ -32,6 +32,7 @@ function ServiceCard({
     const navigate = useNavigate();
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
+    const [likedBy, setLikedBy] = useState(likedByInitial);
     const [img, setImg] = useState(imageUrl);
     const [accepting, setAccepting] = useState(false);
     const [confirmingId, setConfirmingId] = useState(null);
@@ -51,12 +52,15 @@ function ServiceCard({
         e.stopPropagation();
         if (!id) return;
         const prevLiked = liked, prevLikes = likes;
-        setLiked((v) => !v);
-        setLikes((n) => (liked ? n - 1 : n + 1));
+        const want = !liked;
+        setLiked(want);
+        setLikes((n) => (want ? n + 1 : n - 1));
         try {
-            const res = await api.post(`/api/openings/${id}/like`);
+            // Explicit target state - a retried request is a no-op, not a flip.
+            const res = await api.post(`/api/openings/${id}/like`, { liked: want });
             setLiked(res.data.liked);
             setLikes(res.data.likes);
+            setLikedBy(res.data.liked_by || []);
         } catch (err) {
             setLiked(prevLiked);
             setLikes(prevLikes);
@@ -115,32 +119,32 @@ function ServiceCard({
                     <small>
                         {spheres.map((sphere, index) => (
                             <React.Fragment key={index}>
-                                <a href={sHref(sphere)} onClick={(e) => e.stopPropagation()}>
+                                <Link to={sHref(sphere)} onClick={(e) => e.stopPropagation()}>
                                     {sName(sphere)}
-                                </a>
+                                </Link>
                                 {index < spheres.length - 1 && ', '}
                             </React.Fragment>
                         ))}
                         {project && (
                             <>
                                 <span className="service-header-pipe"> | </span>
-                                <a
-                                    href={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}
+                                <Link
+                                    to={projectId ? `/project?id=${projectId}` : `/project?name=${encodeURIComponent(project)}`}
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {project}
-                                </a>
+                                </Link>
                             </>
                         )}
                     </small>
                     <h3>
-                        <a
+                        <Link
                             className="service-title-link"
-                            href={id ? `/opening?id=${id}` : '#'}
+                            to={id ? `/opening?id=${id}` : '#'}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (id) navigate(`/opening?id=${id}`); }}
                         >
                             {title}
-                        </a>
+                        </Link>
                         {cadence === 'perpetual' && (
                             <span className="cadence-badge cadence-badge--perpetual" title="Ongoing — can be accepted repeatedly">
                                 ↻ Ongoing
@@ -155,24 +159,24 @@ function ServiceCard({
                             // Posted on behalf of an entity — attribute the human.
                             <span className="provider-line">
                                 <Avatar userId={actingUserId} name={actingUser} size={20} />
-                                <a
-                                    href={actingUserId ? `/user?id=${actingUserId}` : '/user'}
+                                <Link
+                                    to={actingUserId ? `/user?id=${actingUserId}` : '/user'}
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {actingUser}
-                                </a>
+                                </Link>
                                 <span className="on-behalf-of"> on behalf of </span>
                                 <strong>{provider}</strong>
                             </span>
                         ) : (
                             <span className="provider-line">
                                 <Avatar userId={providerId} name={provider} size={20} />
-                                <a
-                                    href={providerId ? `/user?id=${providerId}` : '/user'}
+                                <Link
+                                    to={providerId ? `/user?id=${providerId}` : '/user'}
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {provider}
-                                </a>
+                                </Link>
                             </span>
                         )}
                     </div>
@@ -181,6 +185,7 @@ function ServiceCard({
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
+                        likedBy={likedBy}
                         time={time}
                         onLike={handleLike}
                     />
@@ -213,15 +218,15 @@ function ServiceCard({
                                         {p.accepter_name}
                                         <span className="service-pending-via">
                                             {' · via '}
-                                            <a href={`/user?id=${p.acting_user_id}`} onClick={(e) => e.stopPropagation()}>
+                                            <Link to={`/user?id=${p.acting_user_id}`} onClick={(e) => e.stopPropagation()}>
                                                 {p.acting_user_name}
-                                            </a>
+                                            </Link>
                                         </span>
                                     </>
                                 ) : (
-                                    <a href={`/user?id=${p.accepter_id}`} onClick={(e) => e.stopPropagation()}>
+                                    <Link to={`/user?id=${p.accepter_id}`} onClick={(e) => e.stopPropagation()}>
                                         {p.accepter_name}
-                                    </a>
+                                    </Link>
                                 )}
                             </span>
                             <span className="service-pending-actions">
@@ -313,6 +318,7 @@ ServiceCard.propTypes = {
     time: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,
+    likedBy: PropTypes.array,
     likedByCurrentUser: PropTypes.bool.isRequired,
     cadence: PropTypes.string,
     acceptedByName: PropTypes.string,

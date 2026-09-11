@@ -779,3 +779,7 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
 }
 .following-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .following-name { font-weight: 600; color: var(--moss-deep); }
+
+/* "Appreciated by A, B and 2 others" - names instead of a like count */
+.likes-by { font-size: 0.8rem; color: var(--ink-faint, #7a7362); margin: 0 0.6em 0 0.35em; }
+.likes-by a { color: var(--terracotta-deep, #a5502f); font-weight: 600; }

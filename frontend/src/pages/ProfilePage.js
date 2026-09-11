@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
 import api from '../api';
 import ConnectionsPanel from '../components/ConnectionsPanel';
+import ValueCardState from '../components/ValueCardState';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -25,7 +26,7 @@ const COLOR_CSS = {
 };
 
 // ── Inline Value Card display ─────────────────────────────────────────────
-function ValueCardDisplay({ card, onDelete, onEdit, canDelete, idx }) {
+function ValueCardDisplay({ card, onDelete, onEdit, onUpdated, canDelete, idx }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -113,6 +114,12 @@ function ValueCardDisplay({ card, onDelete, onEdit, canDelete, idx }) {
                     )}
                 </>
             )}
+
+            <ValueCardState
+                card={card}
+                endpoints={canDelete ? { endorse: `/api/value_cards/${card.card_id}/endorse`, review: `/api/value_cards/${card.card_id}/review` } : null}
+                onUpdated={onUpdated}
+            />
 
             <button className="vc-toggle" aria-label={expanded ? 'Collapse' : 'Expand'}>
                 {expanded ? '▲ Less' : '▼ More'}
@@ -438,6 +445,7 @@ const ProfilePage = () => {
                                     canDelete={true}
                                     onDelete={handleCardDelete}
                                     onEdit={setEditingCard}
+                                    onUpdated={(c) => setValueCards(prev => prev.map(x => x.card_id === c.card_id ? c : x))}
                                 />
                             ))}
                         </div>

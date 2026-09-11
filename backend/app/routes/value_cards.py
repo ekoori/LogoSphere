@@ -173,3 +173,65 @@ def clone_value_card(user_id=None):
     except Exception as e:
         logger.error(f'Error cloning value card: {e}')
         return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def endorse_value_card(card_id, user_id=None):
+    """Owner endorses their own card on reflection (also marks it reviewed)."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        card = ValueCard.endorse(user_id, card_id)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error endorsing value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def review_value_card(card_id, user_id=None):
+    """Owner re-read the card and keeps it - resets the review cadence."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        card = ValueCard.mark_reviewed(user_id, card_id)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error reviewing value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def endorse_entity_value_card(entity_id, card_id, user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        if not _can_manage_entity(entity_id, user_id):
+            return jsonify({'message': 'Not authorized to manage this entity'}), 403
+        card = ValueCard.endorse(entity_id, card_id)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error endorsing entity value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def review_entity_value_card(entity_id, card_id, user_id=None):
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        if not _can_manage_entity(entity_id, user_id):
+            return jsonify({'message': 'Not authorized to manage this entity'}), 403
+        card = ValueCard.mark_reviewed(entity_id, card_id)
+        if not card:
+            return jsonify({'message': 'Value card not found'}), 404
+        return jsonify(card.to_dict()), 200
+    except Exception as e:
+        logger.error(f'Error reviewing entity value card: {e}')
+        return jsonify({'message': 'Internal server error'}), 500

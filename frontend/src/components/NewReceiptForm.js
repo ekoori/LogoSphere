@@ -1,12 +1,23 @@
+// NewReceiptForm — the receiver's thank-you for an exchange. A receipt is the
+// load-bearing record here (see About): it names the value card(s) the act
+// expressed and which of Frankl's three kinds of meaning it was, alongside
+// the words themselves.
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import ValueCardPicker from './ValueCardPicker';
 
-const NewReceiptForm = ({ onSave, onCancel }) => {
+const MODES = [
+    { key: 'creative', glyph: '✶', label: 'Creative', gloss: 'something was made or given' },
+    { key: 'experiential', glyph: '❍', label: 'Experiential', gloss: 'something was received or shared' },
+    { key: 'attitudinal', glyph: '△', label: 'Attitudinal', gloss: 'a stance taken under constraint' },
+];
+
+const NewReceiptForm = ({ onSave, onCancel, counterparts = [] }) => {
     const [text, setText] = useState('');
     const [error, setError] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
     const [selectedCards, setSelectedCards] = useState([]);
+    const [franklMode, setFranklMode] = useState('');
 
     const handlePickerChange = (ids, cards) => {
         setSelectedIds(ids);
@@ -19,13 +30,13 @@ const NewReceiptForm = ({ onSave, onCancel }) => {
             setError(true);
             return;
         }
-        onSave({ text: text.trim(), cardIds: selectedIds, cards: selectedCards });
+        onSave({ text: text.trim(), cardIds: selectedIds, cards: selectedCards, franklMode: franklMode || null });
     };
 
     return (
         <div id="receipt-entry">
             <textarea
-                placeholder="How did this exchange feel? What did it mean to you?"
+                placeholder="What happened, and what did it mean to you?"
                 value={text}
                 onChange={(e) => { setText(e.target.value); setError(false); }}
                 rows={3}
@@ -39,7 +50,26 @@ const NewReceiptForm = ({ onSave, onCancel }) => {
                 }}
             />
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.8rem', margin: '0 0 0.4em' }}>Please write something first.</p>}
-            <ValueCardPicker selectedIds={selectedIds} onChange={handlePickerChange} />
+
+            <div className="vc-picker">
+                <span className="vc-picker-label">What kind of meaning was this?</span>
+                <div className="vc-picker-chips">
+                    {MODES.map((m) => (
+                        <button
+                            key={m.key}
+                            type="button"
+                            className={`vc-picker-chip${franklMode === m.key ? ' vc-picker-chip--on' : ''}`}
+                            onClick={() => setFranklMode(franklMode === m.key ? '' : m.key)}
+                            title={m.gloss}
+                        >
+                            <span className="vc-chip-glyph">{m.glyph}</span>
+                            <span className="vc-chip-title">{m.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <ValueCardPicker selectedIds={selectedIds} onChange={handlePickerChange} counterparts={counterparts} />
             <div style={{ display: 'flex', gap: '0.5em', marginTop: '0.6em' }}>
                 <button id="save-receipt-btn" onClick={handleSubmit}>Save</button>
                 <button id="cancel-receipt-btn" onClick={onCancel}>Cancel</button>
@@ -51,6 +81,7 @@ const NewReceiptForm = ({ onSave, onCancel }) => {
 NewReceiptForm.propTypes = {
     onSave: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
+    counterparts: PropTypes.array,
 };
 
 export default NewReceiptForm;

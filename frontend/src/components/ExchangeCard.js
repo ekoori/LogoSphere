@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
@@ -24,7 +24,7 @@ function CommentAuthor({ author, authorId }) {
     return (
         <span className="tf-author">
             <Avatar userId={authorId} name={author === 'You' ? '' : author} size={20} />
-            {href ? <a href={href}><strong>{author}</strong></a> : <strong>{author}</strong>}
+            {href ? <Link to={href}><strong>{author}</strong></Link> : <strong>{author}</strong>}
         </span>
     );
 }
@@ -71,7 +71,7 @@ function ExchangeCard({
     id,
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
-    likesCount, likedByCurrentUser,
+    likesCount, likedByCurrentUser, likedBy: likedByInitial = [],
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
     receipts, acknowledgements,
@@ -82,6 +82,7 @@ function ExchangeCard({
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
+    const [likedBy, setLikedBy] = useState(likedByInitial);
     const [showAcknowledgementForm, setShowAcknowledgementForm] = useState(false);
     const [showReceiptForm, setShowReceiptForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
@@ -100,6 +101,7 @@ function ExchangeCard({
             const res = await api.post(`/api/exchange/${id}/like`, { comment_type: 'exchange' });
             setLiked(res.data.liked);
             setLikes(res.data.count);
+            setLikedBy(res.data.by || []);
         } catch (err) {
             setLiked(prevLiked);
             setLikes(prevLikes);
@@ -122,7 +124,7 @@ function ExchangeCard({
         }));
         try {
             const res = await api.post(`/api/exchange/${id}/like`, { comment_type: commentType });
-            apply((it) => ({ ...it, likedByCurrentUser: res.data.liked, likesCount: res.data.count }));
+            apply((it) => ({ ...it, likedByCurrentUser: res.data.liked, likesCount: res.data.count, likedBy: res.data.by || [] }));
         } catch (err) {
             apply((it) => ({
                 ...it,
@@ -149,7 +151,7 @@ function ExchangeCard({
         try {
             // onAddReceipt persists it; if the server rejects (e.g. a receipt
             // already exists for this side) it throws and we roll the entry back.
-            await onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [] });
+            await onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [], franklMode: receipt.franklMode || null });
         } catch (e) {
             setLocalReceipts((prev) => prev.filter((r) => r !== entry));
         }
@@ -194,14 +196,14 @@ function ExchangeCard({
 
                 <div className="xc-title-col">
                     {isExpanded ? (
-                        <a
+                        <Link
                             className="xc-title xc-title-link"
-                            href={id ? `/exchange?id=${id}` : '#'}
+                            to={id ? `/exchange?id=${id}` : '#'}
                             onClick={handleTitleClick}
                             title="View full exchange"
                         >
                             {title}
-                        </a>
+                        </Link>
                     ) : (
                         <span className="xc-title">{title}</span>
                     )}
@@ -209,7 +211,7 @@ function ExchangeCard({
                         <span className="xc-participants-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
-                                    <a href={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</a>
+                                    <Link to={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</Link>
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </React.Fragment>
                             ))}
@@ -222,6 +224,7 @@ function ExchangeCard({
                     <LikeTimestamp
                         likedByCurrentUser={liked}
                         likesCount={likes}
+                        likedBy={likedBy}
                         time=""
                         onLike={handleLike}
                     />
@@ -244,7 +247,7 @@ function ExchangeCard({
                         <div className="participants">
                             {participants.map((p, i) => (
                                 <span key={i}>
-                                    <a href={pHref(p)}>{pName(p)}</a>
+                                    <Link to={pHref(p)}>{pName(p)}</Link>
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </span>
                             ))}
@@ -252,18 +255,18 @@ function ExchangeCard({
                         {spheres.length > 0 && (
                             <div className="xc-spheres">
                                 {spheres.map((s, i) => (
-                                    <a key={i} href={sHref(s)} className="pill pill-leaf xc-sphere-pill">
+                                    <Link key={i} to={sHref(s)} className="pill pill-leaf xc-sphere-pill">
                                         {sName(s)}
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
                         )}
                         {project && (
                             <div className="xc-project-ref">
                                 <span className="muted">Part of</span>{' '}
-                                <a href={entityHref('project', project, projectId)}>
+                                <Link to={entityHref('project', project, projectId)}>
                                     {project}
-                                </a>
+                                </Link>
                             </div>
                         )}
                     </div>
@@ -312,6 +315,7 @@ function ExchangeCard({
                                         <LikeTimestamp
                                             likedByCurrentUser={tf.likedByCurrentUser}
                                             likesCount={tf.likesCount}
+                                            likedBy={tf.likedBy}
                                             time={tf.time}
                                             onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType, true); }}
                                         />
@@ -332,6 +336,9 @@ function ExchangeCard({
                             <NewReceiptForm
                                 onSave={handleAddReceipt}
                                 onCancel={() => setShowReceiptForm(false)}
+                                counterparts={(participants || [])
+                                    .filter((p) => p && typeof p === 'object' && p.id && p.name !== 'You')
+                                    .map((p) => ({ id: p.id, label: `${p.name}'s values` }))}
                             />
                         )}
                     </div>
@@ -360,6 +367,7 @@ function ExchangeCard({
                                         <LikeTimestamp
                                             likedByCurrentUser={s.likedByCurrentUser}
                                             likesCount={s.likesCount}
+                                            likedBy={s.likedBy}
                                             time={s.time}
                                             onLike={(e) => { e.stopPropagation(); handleCommentLike(s.commentType, false); }}
                                         />

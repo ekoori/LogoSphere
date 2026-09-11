@@ -31,7 +31,7 @@ from app.routes import entities as entity_routes
 from app.routes.alliances import create_alliance, get_alliances
 from app.routes.projects import create_project, get_projects
 from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image, edit_opening
-from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card
+from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card, endorse_value_card, review_value_card, endorse_entity_value_card, review_entity_value_card
 from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
 
 # Logging: INFO by default (DEBUG used to be the default, which also logged
@@ -144,12 +144,16 @@ app.add_url_rule('/api/value_cards/<target_user_id>', view_func=get_value_cards,
 app.add_url_rule('/api/value_cards', view_func=create_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<card_id>', view_func=delete_value_card, methods=['DELETE', 'OPTIONS'])
 app.add_url_rule('/api/value_cards/<card_id>', view_func=edit_value_card, methods=['PATCH', 'OPTIONS'])
+app.add_url_rule('/api/value_cards/<card_id>/endorse', view_func=endorse_value_card, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/value_cards/<card_id>/review', view_func=review_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>', view_func=create_entity_value_card, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/notifications', view_func=get_notifications, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/notifications/read', view_func=mark_notification_read, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/notifications/read_all', view_func=mark_all_notifications_read, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=delete_entity_value_card, methods=['DELETE', 'OPTIONS'])
 app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>', view_func=edit_entity_value_card, methods=['PATCH', 'OPTIONS'])
+app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>/endorse', view_func=endorse_entity_value_card, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/entity_value_cards/<entity_id>/<card_id>/review', view_func=review_entity_value_card, methods=['POST', 'OPTIONS'])
 
 # Uniform JSON error envelope: every error the API emits is {"message": ...}.
 @app.errorhandler(404)

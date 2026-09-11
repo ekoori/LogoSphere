@@ -32,8 +32,9 @@ def _enrich_service(s, viewer, include_exchanges=False):
     # The banner image is served separately via GET /api/openings/<id>/image
     # (see has_image) so it never bloats the list/detail JSON.
     d = s.to_dict(include_image=False)
-    d['likes'] = Service.like_count(sid)
-    d['liked_by_current_user'] = Service.is_liked_by(sid, viewer) if viewer else False
+    d['liked_by'] = Service.likers(sid)
+    d['likes'] = len(d['liked_by'])
+    d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False
     d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
     # Resolve the viewer's own acceptance even when they accepted on behalf of
     # an entity (the row is keyed by the entity, not the human).
@@ -437,7 +438,7 @@ def like_service(service_id, user_id=None):
             liked, count = Service.set_like(service_uuid, uuid.UUID(str(user_id)), data['liked'])
         else:
             liked, count = Service.toggle_like(service_uuid, uuid.UUID(str(user_id)))
-        return jsonify({'liked': liked, 'likes': count}), 200
+        return jsonify({'liked': liked, 'likes': count, 'liked_by': Service.likers(service_uuid)}), 200
     except ValueError:
         return jsonify({'message': 'Invalid opening id'}), 400
     except Exception as e:

@@ -57,3 +57,10 @@
     .member-row { flex-wrap: wrap; }
     .member-actions { width: 100%; justify-content: flex-start; }
 }
+
+/* Pending join requests + remove action */
+.members-pending { margin-bottom: 1rem; padding: 0.6rem 0.8rem; background: var(--paper, #f5f1e8); border: 1px dashed var(--border, #d8d2c4); border-radius: var(--r-md, 10px); }
+.members-pending-title { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint, #7a7362); }
+.member-role.role--pending { background: rgba(217, 162, 63, 0.16); color: var(--honey-deep, #8a5a12); }
+.member-role-btn--danger { color: var(--terracotta-deep, #a5502f); border-color: rgba(165, 80, 47, 0.35); }
+.member-role-btn--danger:hover:not(:disabled) { background: rgba(165, 80, 47, 0.08); }

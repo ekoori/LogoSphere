@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import api from '../api';
 import { useManagedEntities } from '../utils/useManagedEntities';
+import ValueCardState from './ValueCardState';
 import '../styles/ValueCardChip.css';
 
 const COLOR_MAP = {
@@ -89,6 +90,7 @@ function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = nul
                         </div>
 
                         <h3 className="vc-title">{card.title}</h3>
+                        {('endorsed' in card) && <ValueCardState card={card} />}
 
                         {card.care_about && (
                             <div className="vc-field">

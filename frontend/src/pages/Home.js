@@ -85,14 +85,6 @@ function Home() {
                 <button className="btn-orange" onClick={() => setIsFormVisible((v) => !v)}>
                     {isFormVisible ? 'Hide New Opening Form' : 'New Opening'}
                 </button>
-                <h3>Meaning Trail</h3>
-                <div className="filters">
-                    <button>Show All</button>
-                    <button>Only Active</button>
-                    <button>Only Past</button>
-                    <button>Only Acknowledgements</button>
-                    <button>Only Receipts</button>
-                </div>
                 <ConnectionsPanel ownerId={userId} viewerId={userId} />
             </aside>
             <main>

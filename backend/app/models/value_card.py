@@ -18,7 +18,8 @@ class ValueCard:
     def __init__(self, card_id, user_id, title, care_about, because,
                  looks_like, drift_looks_like, in_conflict, never_do,
                  frankl_mode, color_key, created_at=None,
-                 is_current=True, replaces_card_id=None):
+                 is_current=True, replaces_card_id=None,
+                 reviewed_at=None, endorsed_at=None):
         self.card_id = card_id
         self.user_id = user_id
         self.title = title
@@ -35,6 +36,11 @@ class ValueCard:
         # treated as current (they've never been superseded by an edit).
         self.is_current = is_current is not False
         self.replaces_card_id = replaces_card_id
+        # CLEAR's "R": a card is meant to be revisited on a cadence. reviewed_at
+        # is the last time its owner re-read it and kept it; endorsed_at marks
+        # a deliberate, reflective "yes, this is mine" separate from creation.
+        self.reviewed_at = reviewed_at
+        self.endorsed_at = endorsed_at
 
     def to_dict(self):
         return {
@@ -52,7 +58,21 @@ class ValueCard:
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'is_current': self.is_current,
             'replaces_card_id': str(self.replaces_card_id) if self.replaces_card_id else None,
+            'reviewed_at': self.reviewed_at.isoformat() if self.reviewed_at else None,
+            'endorsed_at': self.endorsed_at.isoformat() if self.endorsed_at else None,
+            'endorsed': bool(self.endorsed_at),
+            'needs_review': self.needs_review(),
         }
+
+    REVIEW_EVERY_DAYS = 90
+
+    def needs_review(self):
+        """True when the card hasn't been reviewed (or created) within the
+        review cadence - a gentle nudge, never a lock."""
+        last = self.reviewed_at or self.created_at
+        if not last:
+            return False
+        return (datetime.utcnow() - last).days >= self.REVIEW_EVERY_DAYS
 
     @classmethod
     def _row_to_card(cls, r):
@@ -71,6 +91,8 @@ class ValueCard:
             created_at=getattr(r, 'created_at', None),
             is_current=getattr(r, 'is_current', True),
             replaces_card_id=getattr(r, 'replaces_card_id', None),
+            reviewed_at=getattr(r, 'reviewed_at', None),
+            endorsed_at=getattr(r, 'endorsed_at', None),
         )
 
     @classmethod
@@ -186,6 +208,53 @@ class ValueCard:
             [False, old.user_id, old.card_id]
         )
         return new_card
+
+    @classmethod
+    def mark_reviewed(cls, user_id, card_id):
+        """Owner re-read the card and kept it as is."""
+        card = cls.get_one(user_id, card_id)
+        if not card:
+            return None
+        cassandra_session.execute(
+            "UPDATE value_cards SET reviewed_at = %s WHERE user_id = %s AND card_id = %s",
+            [datetime.utcnow(), card.user_id, card.card_id])
+        return cls.get_one(user_id, card_id)
+
+    @classmethod
+    def endorse(cls, user_id, card_id):
+        """A deliberate, reflective endorsement - distinct from having written
+        the card. Also counts as a review."""
+        card = cls.get_one(user_id, card_id)
+        if not card:
+            return None
+        now = datetime.utcnow()
+        cassandra_session.execute(
+            "UPDATE value_cards SET endorsed_at = %s, reviewed_at = %s WHERE user_id = %s AND card_id = %s",
+            [now, now, card.user_id, card.card_id])
+        return cls.get_one(user_id, card_id)
+
+    @classmethod
+    def get_many(cls, refs):
+        """Resolve [(owner_id, card_id)] pairs to cards (any version, so a
+        receipt keeps pointing at the wording it named). Missing ones are skipped."""
+        out = []
+        for owner, cid in refs:
+            c = cls.get_one(owner, cid)
+            if c:
+                out.append(c)
+        return out
+
+    @classmethod
+    def find_by_id(cls, card_id, owner_hints=()):
+        """Find a card by id, trying the hinted owners first (cheap point reads),
+        else None. Cards are partitioned by owner, so a bare id needs a hint."""
+        for owner in owner_hints:
+            if not owner:
+                continue
+            c = cls.get_one(owner, card_id)
+            if c:
+                return c
+        return None
 
     @classmethod
     def delete(cls, user_id, card_id):

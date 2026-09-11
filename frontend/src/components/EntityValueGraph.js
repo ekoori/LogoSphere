@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import api from '../api';
+import ValueCardState from './ValueCardState';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -22,7 +23,7 @@ const COLOR_CSS = {
     sage: '--sage', moss: '--moss',
 };
 
-function EntityValueCard({ card, idx, canDelete, onDelete, onEdit }) {
+function EntityValueCard({ card, idx, canDelete, onDelete, onEdit, entityId, onUpdated }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -60,6 +61,11 @@ function EntityValueCard({ card, idx, canDelete, onDelete, onEdit }) {
                 <span className="evc-label">We care about</span>
                 <p>{card.care_about}</p>
             </div>
+            <ValueCardState
+                card={card}
+                endpoints={canDelete ? { endorse: `/api/entity_value_cards/${entityId}/${card.card_id}/endorse`, review: `/api/entity_value_cards/${entityId}/${card.card_id}/review` } : null}
+                onUpdated={onUpdated}
+            />
             {expanded && (
                 <>
                     {card.because && (
@@ -216,8 +222,9 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
                 <div className="ep-cards-grid">
                     {cards.map((card, i) => (
                         <EntityValueCard
-                            key={card.card_id} card={card} idx={i}
+                            key={card.card_id} card={card} idx={i} entityId={entityId}
                             canDelete={canManage} onDelete={handleCardDelete} onEdit={setEditingCard}
+                            onUpdated={(c) => setCards(prev => prev.map(x => x.card_id === c.card_id ? c : x))}
                         />
                     ))}
                 </div>

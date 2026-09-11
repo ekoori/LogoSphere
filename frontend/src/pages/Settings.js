@@ -84,56 +84,12 @@ const SettingsPage = () => {
             </form>
           </section>
 
-          <section id="user-experience">
-            <h3>User Experience</h3>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="form-group">
-                <label htmlFor="theme">Theme</label>
-                <select id="theme" name="theme" value={fields.theme} onChange={handleChange}>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark (coming soon)</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="language">Language</label>
-                <select id="language" name="language" value={fields.language} onChange={handleChange}>
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                </select>
-              </div>
-              <button type="submit" className="btn-orange">Save Changes</button>
-            </form>
-          </section>
-
-          <section id="notifications">
-            <h3>Notifications</h3>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="form-group">
-                <label htmlFor="emailNotifications">Email Notifications</label>
-                <input type="checkbox" id="emailNotifications" name="emailNotifications" checked={fields.emailNotifications} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="smsNotifications">SMS Notifications</label>
-                <input type="checkbox" id="smsNotifications" name="smsNotifications" checked={fields.smsNotifications} onChange={handleChange} />
-              </div>
-              <button type="submit" className="btn-orange">Save Changes</button>
-            </form>
-          </section>
-
-          <section id="privacy-security">
-            <h3>Privacy &amp; Security</h3>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="form-group">
-                <label htmlFor="twoFactorAuth">Two-Factor Authentication</label>
-                <input type="checkbox" id="twoFactorAuth" name="twoFactorAuth" checked={fields.twoFactorAuth} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="publicProfile">Public Profile</label>
-                <input type="checkbox" id="publicProfile" name="publicProfile" checked={fields.publicProfile} onChange={handleChange} />
-              </div>
-              <button type="submit" className="btn-orange">Save Changes</button>
-            </form>
+          <section id="coming-soon" className="settings-coming-soon">
+            <h3>Preferences &amp; Notifications</h3>
+            <p style={{ color: 'var(--ink-faint)', fontSize: '0.9rem' }}>
+              Theme, language, notification and privacy preferences aren't configurable yet. They'll
+              appear here once they actually do something; nothing set here would be saved today.
+            </p>
           </section>
         </div>
       </div>
