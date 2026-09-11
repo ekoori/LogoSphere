@@ -14,9 +14,10 @@ import axios from 'axios';
 
 const api = axios.create({
     // Relative by default so dev requests are same-origin and proxied to the
-    // backend via package.json "proxy" (keeps the session cookie first-party).
-    // In production set REACT_APP_API_URL to the backend's absolute URL.
-    baseURL: process.env.REACT_APP_API_URL || '',
+    // backend by the Vite dev server (keeps the session cookie first-party).
+    // Production serves the SPA same-origin too; set VITE_API_URL only if the
+    // API ever lives on another host.
+    baseURL: import.meta.env.VITE_API_URL || '',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'

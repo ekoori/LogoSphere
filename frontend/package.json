@@ -1,42 +1,29 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "proxy": "http://localhost:5000",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 3000",
+    "lint": "eslint src --ext .js,.jsx"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "assert": "^2.1.0",
     "axios": "^1.4.0",
-    "browserify-zlib": "^0.2.0",
-    "https-browserify": "^1.0.0",
-    "localforage": "^1.10.0",
-    "match-sorter": "^6.3.1",
+    "prop-types": "^15.8.1",
     "react": "18.3",
     "react-dom": "18.3",
-    "react-hook-form": "^7.45.1",
-    "react-router-dom": "^6.14.1",
-    "react-scripts": "5.0.1",
-    "sort-by": "^1.2.0",
-    "stream-browserify": "^3.0.0",
-    "stream-http": "^3.2.0",
-    "url": "^0.11.4",
-    "util": "^0.12.5",
-    "web-vitals": "^2.1.4"
+    "react-router-dom": "^6.14.1"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "vite": "^5.4.19"
   },
   "browserslist": {
     "production": [
