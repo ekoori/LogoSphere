@@ -223,8 +223,11 @@ function ExchangePage() {
         }
     };
 
+    // Two-step cancel: first click asks, second confirms (no modal dialogs).
+    const [confirmCancel, setConfirmCancel] = useState(false);
     const handleCancel = async () => {
-        if (!window.confirm('Cancel this exchange? This cannot be undone.')) return;
+        if (!confirmCancel) { setConfirmCancel(true); return; }
+        setConfirmCancel(false);
         try {
             await api.post(`/api/exchange/${xcId}/status`, { status: 'Cancelled' });
             fetchXc();
@@ -625,9 +628,16 @@ function ExchangePage() {
                                 </button>
                             )}
                             {isInitiator && (
-                                <button className="xc-action-btn xc-action-secondary" onClick={handleCancel}>
-                                    Cancel exchange
-                                </button>
+                                <>
+                                    {confirmCancel && (
+                                        <button type="button" className="xc-action-btn" onClick={() => setConfirmCancel(false)}>
+                                            Keep it
+                                        </button>
+                                    )}
+                                    <button className="xc-action-btn xc-action-secondary" onClick={handleCancel}>
+                                        {confirmCancel ? 'Yes, cancel this exchange' : 'Cancel exchange'}
+                                    </button>
+                                </>
                             )}
                             {!nextStatus && (
                                 <p style={{ fontSize: '0.82rem', color: 'var(--ink-faint)', margin: 0, fontStyle: 'italic' }}>
