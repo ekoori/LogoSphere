@@ -91,6 +91,10 @@ class Api:
         r = self.client.patch(path, headers=self._hdr(who), json=json)
         return r.status_code, r.get_json(silent=True)
 
+    def delete(self, path, who=None):
+        r = self.client.delete(path, headers=self._hdr(who))
+        return r.status_code, r.get_json(silent=True)
+
     def uid(self, who):
         self.login(who)
         return self.ids[who]

@@ -783,3 +783,34 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
 /* "Appreciated by A, B and 2 others" - names instead of a like count */
 .likes-by { font-size: 0.8rem; color: var(--ink-faint, #7a7362); margin: 0 0.6em 0 0.35em; }
 .likes-by a { color: var(--terracotta-deep, #a5502f); font-weight: 600; }
+
+/* ── Global search box (top bar on desktop, drawer on mobile) ──────────── */
+.nav-search {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.15em 0.6em 0.15em 0.7em;
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.nav-search:focus-within { border-color: var(--moss); box-shadow: var(--ring); }
+.nav-search-icon { color: var(--ink-faint); font-size: 1.05rem; line-height: 1; }
+.nav-search input {
+    border: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--ink);
+    padding: 0.35em 0;
+    width: 15rem;
+    min-width: 0;
+}
+.nav-search input:focus { outline: none; }
+.nav-search input::placeholder { color: var(--ink-faint); }
+.nav-search--compact input { width: 12.5rem; }
+@media (max-width: 1100px) { .nav-search--compact input { width: 8.5rem; } }
+.nav-drawer-search { padding: 0.4em 0 0.6em; }
+.nav-drawer-search .nav-search { width: 100%; box-sizing: border-box; }
+.nav-drawer-search .nav-search input { width: 100%; }

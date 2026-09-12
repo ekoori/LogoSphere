@@ -323,3 +323,6 @@
 
 /* Provider row with inline avatar */
 .provider-line { display: inline-flex; align-items: center; gap: 0.4em; flex-wrap: wrap; }
+
+/* An action's failure, shown on the card it came from. */
+.service-action-error { margin: 0.6em 0 0; font-size: 0.85rem; }

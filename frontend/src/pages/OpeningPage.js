@@ -42,6 +42,8 @@ function OpeningPage() {
     const [editDesc, setEditDesc] = useState('');
     const [savingEdit, setSavingEdit] = useState(false);
     const [editNote, setEditNote] = useState(null);
+    // Two-step cancel: first click asks, second confirms (no modal dialogs).
+    const [confirmCancel, setConfirmCancel] = useState(false);
     const managed = useManagedEntities(userId);
 
     const fetchService = useCallback(async () => {
@@ -158,14 +160,40 @@ function OpeningPage() {
         }
     };
 
+    // Withdraw the opening: it leaves the marketplace and pending accepters are told.
+    const handleCancel = async () => {
+        if (busy) return;
+        if (!confirmCancel) { setConfirmCancel(true); return; }
+        setConfirmCancel(false);
+        setBusy(true);
+        setActionError('');
+        try {
+            await api.post(`/api/openings/${openingId}/cancel`, {});
+            await fetchService();
+        } catch (e) {
+            setActionError(e.response?.data?.message || 'Could not cancel this opening.');
+        } finally {
+            setBusy(false);
+        }
+    };
+
     if (loading) return <div className="xc-loading">Loading opening…</div>;
     if (fetchError || !service) return <div className="xc-error-state">{fetchError || 'Opening not found.'}</div>;
 
     const isPerpetual = service.cadence === 'perpetual';
-    const isOwnOpening = userId && service.providerId && userId === service.providerId;
+    // "Mine": the API says so (provider, the human who posted for an entity, or
+    // a manager of the providing entity), or the provider id is simply me. A
+    // platform admin may MANAGE any opening without it being their own.
+    const isOwnOpening = service.isProvider || !!(userId && service.providerId && userId === service.providerId);
+    const canManage = service.canManage || isOwnOpening;
+    const isCancelled = service.status === 'Cancelled';
     const lockedToOther = service.status === 'Accepted' && !isPerpetual && !service.myAcceptance;
     const canAccept = userId && !isOwnOpening && !service.myAcceptance && !lockedToOther
-        && service.status !== 'Cancelled' && service.status !== 'Completed';
+        && !isCancelled && service.status !== 'Completed';
+    // Cancellable until an exchange has started from it (a perpetual opening
+    // can always be closed to new acceptances).
+    const canCancel = canManage && service.isCurrent && !isCancelled && service.status !== 'Completed'
+        && !(service.status === 'In Progress' && !isPerpetual);
     // Alliances/projects the viewer manages that may accept this opening: only
     // those within the opening's sphere (or any, if the opening is standalone).
     const acceptAsOptions = managed.filter(
@@ -197,7 +225,7 @@ function OpeningPage() {
     return (
         <div className="xc-page xc-page--banner">
             {/* ── Banner ───────────────────────────────────────────────── */}
-            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={isOwnOpening ? handleImageUpload : undefined}>
+            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={canManage && !isCancelled ? handleImageUpload : undefined}>
                 <div className="xc-page-breadcrumb">
                     <Link to="/openings">Openings</Link>
                     <span>›</span>
@@ -212,6 +240,7 @@ function OpeningPage() {
                         </span>
                     )}
                     <h1 className="xc-page-title">{service.title}</h1>
+                    {isCancelled && <span className="pill pill-clay">Withdrawn</span>}
                 </div>
 
                 <div className="xc-page-meta">
@@ -237,7 +266,12 @@ function OpeningPage() {
 
             {/* ── Status timeline ───────────────────────────────────────── */}
             <div className="xc-page-timeline">
-                <StatusProgression steps={steps} currentIndex={stepIdx} cancelled={service.status === 'Cancelled'} />
+                {isCancelled && (
+                    <div className="xc-cancelled-banner">
+                        This opening was withdrawn{service.type === 'need' ? ' by the requester' : ' by the provider'}. It no longer appears in the marketplace.
+                    </div>
+                )}
+                <StatusProgression steps={steps} currentIndex={stepIdx} cancelled={isCancelled} />
             </div>
 
             {/* ── Body ─────────────────────────────────────────────────── */}
@@ -246,7 +280,7 @@ function OpeningPage() {
                     <div className="xc-page-section">
                         <div className="xc-section-head-row">
                             <p className="xc-page-section-heading">About this opening</p>
-                            {isOwnOpening && service.isCurrent && !editing && (
+                            {canManage && service.isCurrent && !isCancelled && !editing && (
                                 <button className="xc-inline-edit-btn" onClick={startEditing}>✎ Edit</button>
                             )}
                         </div>
@@ -293,7 +327,7 @@ function OpeningPage() {
                     </div>
 
                     {/* Provider view: pending acceptances awaiting confirmation. */}
-                    {isOwnOpening && service.pendingAcceptances?.length > 0 && (
+                    {canManage && !isCancelled && service.pendingAcceptances?.length > 0 && (
                         <div className="xc-page-section">
                             <p className="xc-page-section-heading">Awaiting your confirmation</p>
                             <div className="service-pending" style={{ marginTop: 0 }}>
@@ -359,6 +393,30 @@ function OpeningPage() {
                             >
                                 → View your exchange
                             </button>
+                        )}
+                        {isCancelled && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', marginTop: '0.8em' }}>
+                                This opening was withdrawn and can no longer be accepted.
+                            </p>
+                        )}
+                        {canCancel && (
+                            <div className="xc-cancel-row">
+                                {confirmCancel && (
+                                    <button type="button" className="xc-action-btn" disabled={busy} onClick={() => setConfirmCancel(false)}>
+                                        Keep it
+                                    </button>
+                                )}
+                                <button type="button" className="xc-action-btn xc-action-secondary" disabled={busy} onClick={handleCancel}>
+                                    {confirmCancel ? 'Yes, withdraw this opening' : (service.type === 'need' ? 'Withdraw this need' : 'Withdraw this offer')}
+                                </button>
+                                {confirmCancel && (
+                                    <p className="xc-cancel-hint">
+                                        {service.pendingAcceptances?.length > 0
+                                            ? `${service.pendingAcceptances.length} pending acceptance${service.pendingAcceptances.length > 1 ? 's' : ''} will be declined and those people notified.`
+                                            : 'It leaves the marketplace; the page stays reachable by link.'}
+                                    </p>
+                                )}
+                            </div>
                         )}
                     </div>
 

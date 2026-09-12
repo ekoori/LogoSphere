@@ -13,20 +13,28 @@ from app.models.notification import Notification
 logger = logging.getLogger(__name__)
 
 
-def _is_provider_or_manager(service, user_id):
-    """True if `user_id` is the opening's provider, or — when the opening was
-    posted on behalf of a sphere/alliance/project (provider_id is the entity's
-    own id) — a human who manages that entity. For an alliance, its
-    confirm_policy widens or narrows who may act: 'lead' (Lead only),
-    'board' (Lead + Board, the default), 'any-member'."""
+def _is_party(service, user_id):
+    """True if `user_id` is on the providing side of the opening: the provider
+    themself, the human who posted it on an entity's behalf, or — when the
+    provider is a sphere/alliance/project — a human who manages that entity.
+    For an alliance, its confirm_policy widens or narrows who may act: 'lead'
+    (Lead only), 'board' (Lead + Board, the default), 'any-member'.
+
+    Deliberately NOT true for platform admins as such: an admin may manage any
+    opening (see _can_manage) but is not a party to it, so they can still
+    accept other people's openings and don't see every opening as their own."""
+    if not user_id:
+        return False
     if str(service.provider_id) == str(user_id):
+        return True
+    if getattr(service, 'acting_user_id', None) and str(service.acting_user_id) == str(user_id):
         return True
     from app.models.alliance import Alliance
     alliance = Alliance.get_by_id(service.provider_id)
     if alliance:
         uid = uuid.UUID(str(user_id))
         policy = getattr(alliance, 'confirm_policy', None) or 'board'
-        if is_platform_admin(uid) or alliance.admin1 == uid:
+        if alliance.admin1 == uid:
             return True
         role = (alliance.member_roles or {}).get(uid)
         if policy == 'lead':
@@ -34,7 +42,17 @@ def _is_provider_or_manager(service, user_id):
         if policy == 'any-member':
             return uid in (alliance.members or [])
         return role in ('admin', 'steward')
-    return can_manage_entity(service.provider_id, user_id)
+    return can_manage_entity(service.provider_id, user_id, include_platform_admin=False)
+
+
+def _can_manage(service, user_id):
+    """Who may edit / confirm / decline / cancel an opening: its party, or a
+    platform administrator."""
+    return _is_party(service, user_id) or is_platform_admin(user_id)
+
+
+# Kept for callers outside this module (older name).
+_is_provider_or_manager = _can_manage
 
 
 def _project_is_closed(name=None, project_id=None):
@@ -56,14 +74,19 @@ def _enrich_service(s, viewer, include_exchanges=False):
     confirmed exchanges spawned from this opening (single-opening page only —
     it's an extra per-opening query we don't want in the marketplace list)."""
     sid = s.service_id
-    is_provider = viewer is not None and _is_provider_or_manager(s, viewer)
+    is_party = viewer is not None and _is_party(s, viewer)
+    can_manage = is_party or (viewer is not None and is_platform_admin(viewer))
     # The banner image is served separately via GET /api/openings/<id>/image
     # (see has_image) so it never bloats the list/detail JSON.
     d = s.to_dict(include_image=False)
+    # Viewer-relative: "this is (one of) mine" vs "I may manage it" (a platform
+    # admin can manage anyone's opening without being a party to it).
+    d['is_provider'] = is_party
+    d['can_manage'] = can_manage
     d['liked_by'] = Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False
-    d['pending_acceptances'] = Service.acceptances(sid, status='pending') if is_provider else []
+    d['pending_acceptances'] = Service.acceptances(sid, status='pending') if can_manage else []
     # Resolve the viewer's own acceptance even when they accepted on behalf of
     # an entity (the row is keyed by the entity, not the human).
     d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer) if viewer else None
@@ -193,11 +216,15 @@ def get_services(user_id=None):
             # appear in the marketplace — only the current version does.
             if not s.is_current:
                 continue
-            is_provider = viewer is not None and _is_provider_or_manager(s, viewer)
+            is_provider = viewer is not None and _is_party(s, viewer)
 
             # A single opening disappears from the marketplace once it has been
             # confirmed (status advanced past Accepted). Its participants still
-            # reach the exchange from their meaning trail.
+            # reach the exchange from their meaning trail. A cancelled opening
+            # is withdrawn from the marketplace for everyone (its page stays
+            # reachable by link).
+            if s.status == 'Cancelled':
+                continue
             if s.cadence != 'perpetual' and s.status in ('In Progress', 'Completed'):
                 continue
 
@@ -229,7 +256,7 @@ def get_service(service_id, user_id=None):
             return jsonify({'message': 'Opening not found'}), 404
 
         viewer = uuid.UUID(str(user_id))
-        is_provider = _is_provider_or_manager(service, viewer)
+        is_provider = _is_party(service, viewer)
         if service.sphere_id and not is_provider and not is_platform_admin(viewer):
             joined_spheres = Sphere.member_sphere_ids(viewer)
             if service.sphere_id not in joined_spheres:
@@ -260,7 +287,7 @@ def accept_service(service_id, user_id=None):
         service = Service.get_by_id(service_uuid)
         if not service:
             return jsonify({'message': 'Opening not found'}), 404
-        if _is_provider_or_manager(service, user_id):
+        if _is_party(service, user_id):
             return jsonify({'message': 'You cannot accept your own opening'}), 400
         # A single opening stays open to everyone until the provider confirms one
         # acceptance (which moves it to 'In Progress' and out of the marketplace);
@@ -451,6 +478,54 @@ def reject_service(service_id, user_id=None):
         return jsonify({'message': 'Invalid id'}), 400
     except Exception as e:
         logger.error(f"Error in reject_service: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def cancel_service(service_id, user_id=None):
+    """Withdraw an opening. The provider (or a manager of the providing entity,
+    or a platform admin) may cancel a current opening that hasn't been taken
+    into an exchange yet: it leaves the marketplace, anyone with a pending
+    acceptance is told, and a single opening cannot be confirmed any more. A
+    perpetual opening that already spawned exchanges can still be closed to
+    new acceptances this way; those exchanges are untouched."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        service_uuid = uuid.UUID(service_id)
+        service = Service.get_by_id(service_uuid)
+        if not service:
+            return jsonify({'message': 'Opening not found'}), 404
+        if not _can_manage(service, user_id):
+            return jsonify({'message': 'Only the provider can cancel this opening'}), 403
+        if not service.is_current:
+            return jsonify({'message': 'This is a past version and cannot be cancelled'}), 409
+        if service.status == 'Cancelled':
+            return jsonify({'message': 'Already cancelled', 'status': 'Cancelled'}), 200
+        if service.status == 'Completed' or (service.cadence != 'perpetual' and service.status == 'In Progress'):
+            return jsonify({'message': 'This opening is already in an exchange — cancel the exchange instead'}), 409
+
+        if not Service.cancel(service_uuid):
+            return jsonify({'message': 'This opening was just confirmed for someone and can no longer be cancelled'}), 409
+
+        canceller = User.get(str(user_id))
+        canceller_name = (f"{canceller.name or ''} {canceller.surname or ''}".strip() or canceller.email) if canceller else service.provider_name
+        # Pending accepters are waiting on a confirmation that will never come.
+        for a in Service.acceptances(service_uuid, status='pending'):
+            Service.remove_acceptance(service_uuid, uuid.UUID(a['accepter_id']))
+            notify = a.get('acting_user_id') or a['accepter_id']
+            Notification.create(
+                user_id=notify, actor_id=user_id, actor_name=canceller_name,
+                type_='opening_cancelled',
+                message=f'The opening "{service.title}" you accepted was withdrawn',
+                link=f'/opening?id={service_id}',
+            )
+        logger.info(f"Opening {service_id} cancelled by {user_id}")
+        return jsonify({'message': 'Opening cancelled', 'status': 'Cancelled'}), 200
+    except ValueError:
+        return jsonify({'message': 'Invalid opening id'}), 400
+    except Exception as e:
+        logger.error(f"Error in cancel_service: {e}")
         return jsonify({'message': 'Internal server error'}), 500
 
 

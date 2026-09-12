@@ -464,6 +464,18 @@ class Service:
         return bool(row and row.applied)
 
     @classmethod
+    def cancel(cls, service_id):
+        """Withdraw an opening (LWT so it can't race a concurrent confirm that
+        is moving a single opening into an exchange). Returns False if the
+        opening was no longer in a cancellable state."""
+        row = cassandra_session.execute(
+            "UPDATE services SET status = 'Cancelled', accepted_by = null, accepted_by_name = null "
+            "WHERE service_id = %s IF status IN ('Posted', 'Open', 'Accepted', 'In Progress')",
+            [service_id]
+        ).one()
+        return bool(row and row.applied)
+
+    @classmethod
     def remove_acceptance(cls, service_id, accepter_id):
         cassandra_session.execute(
             "DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s",

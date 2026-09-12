@@ -59,6 +59,13 @@ export function mapService(s) {
         acceptedByName: s.accepted_by_name || null,
         pendingAcceptances: s.pending_acceptances || [],
         myAcceptance: s.my_acceptance || null,
+        // Viewer-relative flags from the API: "one of mine" (provider, the
+        // human who posted for an entity, or a manager of the providing
+        // entity) vs "may manage" (also platform admins). A platform admin can
+        // manage any opening without it being their own — so they can still
+        // accept it.
+        isProvider: !!s.is_provider,
+        canManage: !!s.can_manage,
         // Confirmed exchanges spawned from this opening (single-opening page).
         exchanges: (s.exchanges || []).map((x) => ({
             exchangeId: x.exchange_id,

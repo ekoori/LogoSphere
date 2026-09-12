@@ -483,3 +483,8 @@
 .xc-version-title { font-weight: 600; font-size: 0.88rem; color: var(--moss-deep, #3a4a2f); }
 .xc-version-exchanges { display: flex; flex-direction: column; gap: 0.15rem; margin-top: 0.3rem; }
 .xc-version-exchange-link { font-size: 0.8rem; color: var(--terracotta-deep, #a5502f); }
+
+/* ── Withdrawing an opening (two-step, on the opening page) ─────────────── */
+.xc-cancel-row { margin-top: 1em; padding-top: 0.9em; border-top: 1px dashed var(--border-soft); }
+.xc-cancel-row .xc-action-btn { margin-bottom: 0.5em; }
+.xc-cancel-hint { font-size: 0.8rem; color: var(--ink-faint); margin: 0.2em 0 0; line-height: 1.4; }

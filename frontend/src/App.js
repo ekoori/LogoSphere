@@ -31,6 +31,7 @@ import OpeningsPage from './pages/OpeningsPage';
 import OpeningPage from './pages/OpeningPage';
 import ExchangePage from './pages/ExchangePage';
 import SettingsPage from './pages/Settings';
+import SearchPage from './pages/SearchPage';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
 import Privacy from './pages/Privacy';
@@ -102,6 +103,7 @@ function AppContent() {
         <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/search" element={<ErrorBoundary><ProtectedRoute><SearchPage/></ProtectedRoute></ErrorBoundary>} />
         <Route 
           path="/contribute" 
           element={<div className='container'><Contribute/></div>}

@@ -2,11 +2,37 @@
 // Description: Fixed top navigation and branding for LogoSphere.
 // Class: Header — brand wordmark, primary nav, notifications, and account menu.
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 import { useLogin } from '../App';  // Import the useLogin hook from App.js
 import NotificationPanel from './NotificationPanel';
 import api from '../api';
+
+// The search box in the top bar (and in the mobile drawer). Submitting goes to
+// the search page, which does the actual searching.
+const SearchForm = ({ onSubmitted, compact = false }) => {
+    const navigate = useNavigate();
+    const [q, setQ] = useState('');
+    const submit = (e) => {
+        e.preventDefault();
+        const term = q.trim();
+        if (!term) { navigate('/search'); } else { navigate(`/search?q=${encodeURIComponent(term)}`); }
+        setQ('');
+        if (onSubmitted) onSubmitted();
+    };
+    return (
+        <form className={`nav-search ${compact ? 'nav-search--compact' : ''}`} role="search" onSubmit={submit}>
+            <span className="nav-search-icon" aria-hidden="true">⌕</span>
+            <input
+                type="search"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search people, spheres, openings…"
+                aria-label="Search"
+            />
+        </form>
+    );
+};
 
 // Hand-drawn sun/leaf brand mark — sits beside the wordmark.
 const BrandMark = () => (
@@ -20,7 +46,7 @@ const BrandMark = () => (
 );
 
 const Header = () => {
-    const { isLoggedIn, userName, handleLogout } = useLogin();
+    const { isLoggedIn, userName, handleLogout, isPlatformAdmin } = useLogin();
     // Show the user's first name on the account button when signed in.
     const accountLabel = (isLoggedIn && userName) ? userName.split(/\s+/)[0] : 'Account';
     const [notificationsVisible, setNotificationsVisible] = useState(false);
@@ -110,6 +136,7 @@ const Header = () => {
                     <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
                         drawer on mobile. */}
+                    {isLoggedIn && <li className="nav-drawer-only nav-drawer-search"><SearchForm onSubmitted={closeMenu} /></li>}
                     <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
                     <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
                     <li className="nav-drawer-only"><Link to="/how-it-works" onClick={closeMenu}>How it Works</Link></li>
@@ -119,6 +146,7 @@ const Header = () => {
             </nav>
 
             <div className="nav-actions">
+                {isLoggedIn && <div className="nav-bar-only nav-search-slot"><SearchForm compact /></div>}
                 <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>
 
                 <div className="notification-icon">
@@ -152,7 +180,7 @@ const Header = () => {
                         <div className="account-menu" role="menu">
                             <Link to="/profile" onClick={() => setAccountOpen(false)}>Profile</Link>
                             <Link to="/settings" onClick={() => setAccountOpen(false)}>Settings</Link>
-                            <Link to="/admin" onClick={() => setAccountOpen(false)}>Admin</Link>
+                            {isPlatformAdmin && <Link to="/admin" onClick={() => setAccountOpen(false)}>Platform admin</Link>}
                             <Link to="/how-it-works" onClick={() => setAccountOpen(false)}>How it Works</Link>
                             <Link to="/about" onClick={() => setAccountOpen(false)}>About</Link>
                             <div className="menu-divider" />

@@ -112,3 +112,69 @@ def test_edit_without_exchange_updates_in_place(api, db):
 def test_only_the_provider_edits(api):
     status, _ = api.patch(f'/api/openings/{OPENING}', who='marie', json={'title': 'x'})
     assert status == 403
+
+
+# ── Platform admins are not parties to other people's openings ──────────────
+def test_platform_admin_can_accept_someone_elses_opening(api, db):
+    """Regression: an admin used to get 'You cannot accept your own opening'
+    on EVERY opening, because the manage-anything override was also used to
+    decide who the provider is."""
+    _, items = api.get('/api/openings', who='joe')
+    theirs = next(o for o in items if o['provider_id'] != api.uid('joe') and o['cadence'] == 'perpetual')
+    assert theirs['is_provider'] is False and theirs['can_manage'] is True
+    mine = next(o for o in items if o['id'] == OPENING)
+    assert mine['is_provider'] is True and mine['can_manage'] is True
+    status, body = api.post(f"/api/openings/{theirs['id']}/accept", who='joe', json={})
+    assert status == 200, body
+    db.execute('DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s',
+               [uuid.UUID(theirs['id']), uuid.UUID(api.uid('joe'))])
+
+
+# ── Cancelling an opening ───────────────────────────────────────────────────
+@pytest.fixture
+def davids_opening(api, db):
+    status, body = api.post('/api/openings', who='david', json={
+        'type': 'need', 'title': 'Cancel me', 'description': 'temporary',
+        'sphere_id': '11111111-1111-1111-1111-111111111111'})
+    assert status == 201, body
+    sid = body['service_id']
+    yield sid
+    db.execute('DELETE FROM services WHERE service_id = %s', [uuid.UUID(sid)])
+    db.execute('DELETE FROM opening_acceptances WHERE service_id = %s', [uuid.UUID(sid)])
+
+
+def test_provider_cancels_an_unconfirmed_opening(api, davids_opening):
+    sid = davids_opening
+    status, _ = api.post(f'/api/openings/{sid}/accept', who='marie', json={})
+    assert status == 200
+    # someone else can't cancel it; a platform admin (Joe) can, and so can David
+    status, _ = api.post(f'/api/openings/{sid}/cancel', who='elon', json={})
+    assert status == 403
+    status, body = api.post(f'/api/openings/{sid}/cancel', who='joe', json={})
+    assert status == 200 and body['status'] == 'Cancelled'
+    status, body = api.post(f'/api/openings/{sid}/cancel', who='david', json={})
+    assert status == 200 and body['status'] == 'Cancelled'      # idempotent
+    # gone from the marketplace, pending acceptance dropped, page still reachable, no new accepts
+    _, items = api.get('/api/openings', who='marie')
+    assert all(o['id'] != sid for o in items)
+    _, page = api.get(f'/api/openings/{sid}', who='marie')
+    assert page['status'] == 'Cancelled' and page['my_acceptance'] is None
+    status, body = api.post(f'/api/openings/{sid}/accept', who='marie', json={})
+    assert status == 409
+
+
+def test_confirmed_opening_cannot_be_cancelled(api, davids_opening):
+    sid = davids_opening
+    status, _ = api.post(f'/api/openings/{sid}/accept', who='marie', json={})
+    assert status == 200
+    status, body = api.post(f'/api/openings/{sid}/confirm', who='david', json={'accepter_id': api.uid('marie')})
+    assert status == 200 and body['exchange_id']
+    xid = uuid.UUID(body['exchange_id'])
+    try:
+        status, body = api.post(f'/api/openings/{sid}/cancel', who='joe', json={})
+        assert status == 409 and 'exchange' in body['message']
+    finally:
+        from app.db import session as db
+        for who in ('david', 'marie'):
+            db.execute('DELETE FROM meaning_trail WHERE user_id = %s AND exchange_id = %s',
+                       [uuid.UUID(api.uid(who)), xid])

@@ -44,11 +44,14 @@ def forget_admin_flag(user_id=None):
         _admin_flag_cache.pop(uuid.UUID(str(user_id)), None)
 
 
-def can_manage_entity(entity_id, user_id):
+def can_manage_entity(entity_id, user_id, include_platform_admin=True):
     """True if `user_id` is allowed to act on behalf of the sphere, alliance,
     or project identified by `entity_id`: sphere admin, alliance admin/steward,
-    or project manager/steward/owner. Platform admins can manage anything."""
-    if is_platform_admin(user_id):
+    or project manager/steward/owner. Platform admins can manage anything -
+    pass include_platform_admin=False to ask only about the entity's own
+    managers (e.g. "is this person a party to the opening?", where an admin's
+    override must not make every opening look like their own)."""
+    if include_platform_admin and is_platform_admin(user_id):
         return True
     try:
         eid = uuid.UUID(str(entity_id))

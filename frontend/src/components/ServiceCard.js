@@ -27,6 +27,7 @@ function ServiceCard({
     imageUrl, time, status, likesCount, likedByCurrentUser, likedBy: likedByInitial = [], cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
+    isProvider = false, canManage = false, actionError = null,
     currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
@@ -67,12 +68,17 @@ function ServiceCard({
         }
     };
 
-    const isOwnOpening = currentUserId && providerId && currentUserId === providerId;
+    // "Mine": the API says so (provider, the human who posted for an entity,
+    // or a manager of the providing entity), or the provider id is simply me.
+    const isOwnOpening = isProvider || !!(currentUserId && providerId && currentUserId === providerId);
+    // Who sees the confirm/decline controls: the party, or a platform admin.
+    const mayManage = canManage || isOwnOpening;
+    const isCancelled = status === 'Cancelled';
     // A recipient who already acted can't accept again; a single opening locked
     // to someone else can't be accepted by others either.
     const lockedToOther = status === 'Accepted' && cadence !== 'perpetual' && !myAcceptance;
     const canAccept = currentUserId && !isOwnOpening && !myAcceptance && !lockedToOther
-        && status !== 'Cancelled' && status !== 'Completed';
+        && !isCancelled && status !== 'Completed';
 
     const handleAccept = async (e) => {
         e.stopPropagation();
@@ -205,8 +211,14 @@ function ServiceCard({
 
             <StatusProgression steps={steps} currentIndex={idx} cancelled={cancelled} />
 
+            {isCancelled && (
+                <div className="service-accept-cta">
+                    <span className="service-awaiting">This opening was withdrawn.</span>
+                </div>
+            )}
+
             {/* Provider view: pending acceptances awaiting confirmation. */}
-            {isOwnOpening && pendingAcceptances.length > 0 && (
+            {mayManage && !isCancelled && pendingAcceptances.length > 0 && (
                 <div className="service-pending">
                     <span className="service-pending-label">Awaiting your confirmation</span>
                     {pendingAcceptances.map((p) => (
@@ -293,10 +305,16 @@ function ServiceCard({
                     </button>
                 </div>
             )}
-            {!isOwnOpening && !myAcceptance && lockedToOther && (
+            {!isOwnOpening && !myAcceptance && lockedToOther && !isCancelled && (
                 <div className="service-accept-cta">
                     <span className="service-awaiting">Already accepted{acceptedByName ? ` by ${acceptedByName}` : ''}</span>
                 </div>
+            )}
+            {/* The failure of an action taken on THIS card, shown right here. */}
+            {actionError && (
+                <p className="form-error service-action-error" role="alert" onClick={(e) => e.stopPropagation()}>
+                    {actionError}
+                </p>
             )}
         </div>
     );
@@ -329,6 +347,9 @@ ServiceCard.propTypes = {
     activity: PropTypes.object,
     pendingAcceptances: PropTypes.arrayOf(PropTypes.object),
     myAcceptance: PropTypes.object,
+    isProvider: PropTypes.bool,
+    canManage: PropTypes.bool,
+    actionError: PropTypes.string,
     currentUserId: PropTypes.string,
     onAccept: PropTypes.func,
     onConfirm: PropTypes.func,

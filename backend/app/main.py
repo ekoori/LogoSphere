@@ -42,7 +42,9 @@ from app.routes import governance as governance_routes
 from app.models.governance import ensure_tables as ensure_governance_tables
 from app.routes.alliances import create_alliance, get_alliances
 from app.routes.projects import create_project, get_projects
-from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image, edit_opening
+from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image, edit_opening, cancel_service
+from app.routes import admin as admin_routes
+from app.routes.search import search, search_vicinity
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card, endorse_value_card, review_value_card, endorse_entity_value_card, review_entity_value_card
 from app.routes.notifications import get_notifications, mark_notification_read, mark_all_notifications_read
 
@@ -144,6 +146,11 @@ app.add_url_rule('/api/openings/<service_id>', view_func=edit_opening, methods=[
 app.add_url_rule('/api/openings/<service_id>/accept', view_func=accept_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/confirm', view_func=confirm_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/reject', view_func=reject_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/cancel', view_func=cancel_service, methods=['POST', 'OPTIONS'])
+# Platform administration (platform admins only) and search.
+admin_routes.register(app)
+app.add_url_rule('/api/search', view_func=search, methods=['GET', 'OPTIONS'])
+app.add_url_rule('/api/search/vicinity', view_func=search_vicinity, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/like', view_func=like_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/image', view_func=update_service_image, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/image', view_func=get_service_image, methods=['GET'])
