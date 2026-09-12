@@ -97,7 +97,7 @@
 /* ============================================================================
    Header
    ========================================================================== */
-header {
+header.site-header {
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -676,7 +676,7 @@ footer ul li a:hover { color: var(--honey); }
     main { max-width: none; }
 
     /* Header collapses to a hamburger + slide-down drawer. */
-    header { gap: 0.5em; }
+    header.site-header { gap: 0.5em; }
     .nav-toggle { display: inline-flex; }
     .nav-bar-only { display: none; }               /* donate + login live in the drawer */
     .account-label, .account-caret { display: none; } /* compact the account button to its avatar */
@@ -814,3 +814,47 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
 .nav-drawer-search { padding: 0.4em 0 0.6em; }
 .nav-drawer-search .nav-search { width: 100%; box-sizing: border-box; }
 .nav-drawer-search .nav-search input { width: 100%; }
+
+/* ── Phone: sidebar filters become a row of chips, and the sphere picker sits
+   beside its label, so the openings list is one scroll away instead of a
+   whole screen of controls. ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    aside { padding: 1em 1.1em; }
+    .filters { flex-direction: row; flex-wrap: wrap; }
+    .filters button { width: auto; flex: 1 1 auto; text-align: center; padding: 0.6em 0.9em; }
+    aside .search-box { margin-bottom: 0.8em; }
+    .opening-sphere-filter { display: flex; align-items: center; gap: 0.6em; margin-top: 0.8em; }
+    .opening-sphere-filter label { margin: 0; white-space: nowrap; }
+    .opening-sphere-filter select { flex: 1 1 auto; min-width: 0; }
+}
+
+/* ── Touch: comfortable targets and no iOS zoom-on-focus. WCAG 2.5.5 asks for
+   44px targets; inputs under 16px make iOS Safari zoom the page. ─────────── */
+@media (max-width: 900px), (pointer: coarse) {
+    input[type="text"], input[type="email"], input[type="password"], input[type="search"],
+    input[type="url"], input[type="number"], select, textarea {
+        font-size: 16px;
+        min-height: 44px;
+    }
+    textarea { min-height: 88px; }
+    .service-accept-btn, .xc-action-btn, .seg-tab, .filters button, .login-form button,
+    .btn-join, .btn-github, aside .btn-orange, aside .btn-purple, .follow-btn,
+    .service-confirm-btn, .service-reject-btn, .search-go, .search-modes button,
+    .adm-tabs button, .nav-primary a, .account-menu a, .account-menu button,
+    .notification-item, .xc-add-btn, .btn, .pf-edit-actions button, .ep-join-btn, .management-sidebar .btn-orange {
+        min-height: 44px;
+    }
+    .search-scope, .adm-btn, .xc-inline-edit-btn, .cadence-badge, .pill { min-height: 0; }
+    #notification-bell, .account-toggle, .nav-toggle { min-width: 44px; min-height: 44px; }
+}
+
+/* ── Phone drawer: rows span the full width so the whole row is the tap
+   target, and the search box fills the row. ────────────────────────────── */
+@media (max-width: 900px) {
+    .nav-menu .nav-primary { width: 100%; box-sizing: border-box; margin: 0; }
+    .nav-menu .nav-primary li { width: 100%; }
+    .nav-menu .nav-primary a { width: 100%; box-sizing: border-box; }
+    .nav-drawer-search { padding: 0.4em 0.5em 0.6em; }
+    .nav-drawer-search .nav-search { width: 100%; }
+    .nav-drawer-search .nav-search input { width: 100%; flex: 1 1 auto; }
+}

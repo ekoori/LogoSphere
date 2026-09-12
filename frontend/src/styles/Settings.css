@@ -1,68 +1,81 @@
-/* Settings.css */
-
-.settings-sidebar {
-    width: 20%;
-    padding: 1em;
-    background-color: var(--surface);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.settings-sidebar h2 {
-    margin-bottom: 1em;
-}
-
-.settings-main {
-    flex: 1 1 auto;
-}
-
-.settings-list {
-    background-color: var(--surface);
-    padding: 2em;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 2em auto;
-    width: 90%;
-}
-
-.settings-list h3 {
-    margin-bottom: 1em;
-}
-
-.settings-list .form-group {
-    margin-bottom: 1em;
-}
-
-.settings-list .form-group label {
-    display: block;
-    margin-bottom: 0.5em;
-}
-
-.settings-list .form-group input[type="text"],
-.settings-list .form-group input[type="email"],
-.settings-list .form-group input[type="password"],
-.settings-list .form-group select {
+/* Settings — one column of quiet cards; the page header sits above the form
+   on every width (the old 20%-wide "sidebar" was a leftover). */
+.settings-page {
     width: 100%;
-    padding: 0.5em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    max-width: 720px;
+    margin: var(--sp-8, 2.5rem) auto var(--sp-10, 4rem);
+    padding: 0 clamp(1rem, 3vw, 2rem);
+    box-sizing: border-box;
 }
-
-.settings-list .form-group input[type="checkbox"] {
-    margin-right: 0.5em;
+.settings-head { margin-bottom: 1.2rem; }
+.settings-eyebrow {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 0.3rem;
 }
+.settings-head h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.1rem); }
+.settings-lede { margin: 0.4rem 0 0; color: var(--ink-soft); }
 
-.btn-orange {
-    background-color: var(--terracotta);
-    color: white;
+.settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    padding: clamp(1.1rem, 3vw, 1.8rem);
+    margin-bottom: 1.2rem;
+}
+.settings-card h3 { margin: 0 0 1rem; font-size: 1.2rem; }
+.settings-card .form-group { margin-bottom: 1rem; }
+.settings-card .form-group label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+}
+.settings-card .form-group input[type="text"],
+.settings-card .form-group input[type="email"],
+.settings-card .form-group input[type="password"],
+.settings-card .form-group select {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.7em 0.85em;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--ink);
+}
+.settings-card .form-group input:focus,
+.settings-card .form-group select:focus { outline: none; border-color: var(--moss); box-shadow: var(--ring); }
+.settings-card .form-group input:disabled { opacity: 0.6; }
+.settings-hint { display: block; margin-top: 0.3rem; color: var(--ink-faint); font-size: 0.78rem; }
+.settings-msg { margin: 0 0 0.8rem; font-size: 0.88rem; }
+.settings-msg--ok { color: var(--moss-deep); }
+.settings-msg--err { color: var(--danger); }
+.settings-actions { margin-top: 1.2rem; }
+.settings-card .btn-orange {
+    background: var(--terracotta);
+    color: #fff7ef;
     border: none;
-    padding: 0.5em 1em;
-    border-radius: 4px;
+    padding: 0.75em 1.4em;
+    min-height: 44px;
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.3s;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s var(--ease), transform 0.2s var(--ease);
 }
+.settings-card .btn-orange:hover:not(:disabled) { background: var(--terracotta-deep); transform: translateY(-1px); }
+.settings-card .btn-orange:disabled { opacity: 0.6; cursor: default; }
+.settings-coming-soon p { color: var(--ink-faint); font-size: 0.9rem; margin: 0; }
 
-.btn-orange:hover {
-    background-color: var(--terracotta-deep);
+@media (max-width: 640px) {
+    .settings-card .btn-orange { width: 100%; }
 }
-

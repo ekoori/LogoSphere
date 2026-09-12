@@ -147,3 +147,13 @@
     margin-bottom: 0.5em;
 }
 
+
+/* ── Phone / tablet: the sidebar is a 20%-wide column on desktop; below the
+   stacking breakpoint it becomes a full-width card above the sections. ─── */
+@media (max-width: 900px) {
+    .management-sidebar { width: 100%; box-sizing: border-box; }
+    .management-section { padding: 1.1em 1em; }
+    .management-section .form-group input[type="text"],
+    .management-section .form-group textarea,
+    .management-section .form-group select { width: 100%; box-sizing: border-box; }
+}

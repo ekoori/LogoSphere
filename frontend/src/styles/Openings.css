@@ -326,3 +326,15 @@
 
 /* An action's failure, shown on the card it came from. */
 .service-action-error { margin: 0.6em 0 0; font-size: 0.85rem; }
+
+/* ── Phone ──────────────────────────────────────────────────────────────── */
+@media (max-width: 440px) {
+    .service .description-container,
+    .service-card .description-container { gap: 0; }
+    .service .exchange-image,
+    .service-card .exchange-image { width: 84px; height: 84px; margin-right: 0.8em; }
+    .service .exchange-header .right,
+    .service-card .exchange-header .right { flex-basis: 64px; }
+    .service-pending-row { flex-wrap: wrap; gap: 0.4em; }
+    .service-pending-actions { width: 100%; justify-content: flex-end; }
+}

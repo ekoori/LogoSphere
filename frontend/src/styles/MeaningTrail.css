@@ -325,3 +325,23 @@
 .tf-author { display: inline-flex; align-items: center; gap: 0.35em; }
 .tf-author a { color: inherit; text-decoration: none; }
 .tf-author a:hover { text-decoration: underline; }
+
+/* ── Phone: the collapsed row can't fit pill + title + date + like + chevron
+   on one line, so the title gets its own full-width line (two lines max)
+   under the pill and the meta. ───────────────────────────────────────────── */
+@media (max-width: 560px) {
+    .xc-summary { flex-wrap: wrap; row-gap: 0.4em; align-items: center; }
+    .xc-summary .type-pill { order: 0; }
+    .xc-summary .xc-summary-meta { order: 1; margin-left: auto; }
+    .xc-summary .xc-expand-btn { order: 1; }
+    .xc-summary .xc-title-col { order: 2; flex: 1 1 100%; }
+    .exchange.collapsed .xc-summary .xc-title {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.3;
+    }
+    .xc-participants-inline { white-space: normal; }
+}

@@ -53,46 +53,47 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="container">
-      <div className="settings-sidebar">
-        <h2>Settings</h2>
+    <div className="settings-page">
+      <div className="settings-head">
+        <p className="settings-eyebrow">Account</p>
+        <h1>Settings</h1>
+        <p className="settings-lede">Your name and where you are. Everything else about your profile lives on your Meaning Graph.</p>
       </div>
-      <div className="settings-main">
-        <div className="settings-list">
-          <section id="account-settings">
-            <h3>Account Settings</h3>
-            <form onSubmit={handleSaveAccount}>
-              <div className="form-group">
-                <label htmlFor="name">First name</label>
-                <input type="text" id="name" name="name" value={fields.name} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="surname">Last name</label>
-                <input type="text" id="surname" name="surname" value={fields.surname} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="location">Location</label>
-                <input type="text" id="location" name="location" value={fields.location} onChange={handleChange} placeholder="City, Country" />
-              </div>
-              <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={profile?.email || ''} disabled style={{ opacity: 0.6 }} />
-                <small style={{ color: 'var(--ink-faint)', fontSize: '0.75rem' }}>Email cannot be changed here.</small>
-              </div>
-              {saveMsg && <p style={{ color: saveMsg === 'Saved.' ? 'var(--leaf)' : 'var(--danger)', fontSize: '0.85rem' }}>{saveMsg}</p>}
-              <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
-            </form>
-          </section>
 
-          <section id="coming-soon" className="settings-coming-soon">
-            <h3>Preferences &amp; Notifications</h3>
-            <p style={{ color: 'var(--ink-faint)', fontSize: '0.9rem' }}>
-              Theme, language, notification and privacy preferences aren't configurable yet. They'll
-              appear here once they actually do something; nothing set here would be saved today.
-            </p>
-          </section>
-        </div>
-      </div>
+      <section id="account-settings" className="settings-card">
+        <h3>Account Settings</h3>
+        <form onSubmit={handleSaveAccount}>
+          <div className="form-group">
+            <label htmlFor="name">First name</label>
+            <input type="text" id="name" name="name" value={fields.name} onChange={handleChange} autoComplete="given-name" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="surname">Last name</label>
+            <input type="text" id="surname" name="surname" value={fields.surname} onChange={handleChange} autoComplete="family-name" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="location">Location</label>
+            <input type="text" id="location" name="location" value={fields.location} onChange={handleChange} placeholder="City, Country" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="settings-email">Email</label>
+            <input type="email" id="settings-email" value={profile?.email || ''} disabled />
+            <small className="settings-hint">Email cannot be changed here.</small>
+          </div>
+          {saveMsg && <p className={`settings-msg ${saveMsg === 'Saved.' ? 'settings-msg--ok' : 'settings-msg--err'}`} role="status">{saveMsg}</p>}
+          <div className="settings-actions">
+            <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="coming-soon" className="settings-card settings-coming-soon">
+        <h3>Preferences &amp; Notifications</h3>
+        <p>
+          Theme, language, notification and privacy preferences aren't configurable yet. They'll
+          appear here once they actually do something; nothing set here would be saved today.
+        </p>
+      </section>
     </div>
   );
 };

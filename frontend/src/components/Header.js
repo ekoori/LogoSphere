@@ -120,7 +120,9 @@ const Header = () => {
 
     return (
         <>
-        <header>
+        {/* .site-header scopes the sticky top-bar styles: pages use their own
+            <header> elements for heroes and must not inherit this layout. */}
+        <header className="site-header">
             <div className="brand">
                 <Link to="/" onClick={closeMenu}>
                     <BrandMark />
