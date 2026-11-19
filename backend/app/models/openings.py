@@ -6,6 +6,7 @@ import uuid
 import logging
 import os
 import base64
+from app.utils.demo import is_agent
 from datetime import datetime
 
 from app.db import session as cassandra_session
@@ -333,6 +334,8 @@ class Service:
             # accepted on its behalf — "Joe on behalf of <Entity>".
             'acting_user_id': str(r.acting_user_id) if getattr(r, 'acting_user_id', None) else None,
             'acting_user_name': getattr(r, 'acting_user_name', None),
+            # The human behind the acceptance is an AI persona.
+            'is_agent': is_agent(getattr(r, 'acting_user_id', None) or r.accepter_id),
         }
 
     @classmethod

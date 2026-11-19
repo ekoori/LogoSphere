@@ -1960,6 +1960,23 @@ paths:
         '500': { $ref: '#/components/responses/InternalError' }
 
   /api/admin/spheres/{entity_id}:
+    patch:
+      summary: "Mark a sphere as demo or real (platform admins)"
+      operationId: patchAdminSphere
+      tags: [Administration]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [is_demo], properties: { is_demo: { type: boolean } } }
+      responses:
+        '200': { description: OK }
+        '400': { description: is_demo missing or not a boolean. }
+        '401': { description: 'No session, or it expired.' }
+        '404': { description: No such sphere. }
+        '500': { $ref: '#/components/responses/InternalError' }
     delete:
       summary: "Delete a sphere and what hangs off it (platform admins; destructive)"
       operationId: deleteAdminSphere
@@ -2414,6 +2431,26 @@ paths:
         - { name: card_id, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/demo:
+    get:
+      summary: "The demo spheres (AI personas play everyday neighbours there) and whether you have joined each"
+      operationId: getDemo
+      tags: [Spheres]
+      responses:
+        '200': { description: "{spheres: [{id, name, description, joined, member_count}], joined_any, joined_all}" }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/demo/join:
+    post:
+      summary: "Join every demo sphere that anyone may join, in one go (and clear the invitation)"
+      operationId: joinDemo
+      tags: [Spheres]
+      responses:
+        '200': { description: "{joined: [sphere ids newly joined], spheres: [...]}" }
         '401': { description: 'No session, or it expired.' }
         '500': { $ref: '#/components/responses/InternalError' }
 

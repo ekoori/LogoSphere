@@ -36,7 +36,7 @@ def test_public_profile_hides_email_from_other_members(api):
     # The person themself, and platform admins, still see it.
     _, own = api.get(f'/api/users/{marie}', who='marie')
     assert own['email'] == 'marie.kondo@example.com'
-    _, admin = api.get(f'/api/users/{marie}', who='joe')
+    _, admin = api.get(f'/api/users/{marie}', who='admin')
     assert admin['email'] == 'marie.kondo@example.com'
 
 
@@ -60,14 +60,14 @@ def test_unknown_api_route_is_json_404(api):
 
 
 def test_platform_admin_flag_is_a_users_column_not_an_email(api, db):
-    """Joe is flagged in users.is_platform_admin; Marie is not. Registering an
-    admin's email must never grant the flag (it isn't verified)."""
-    status, body = api.get('/api/check_session', who='joe')
+    """The test admin is flagged in users.is_platform_admin; Marie is not.
+    Registering an admin's email must never grant the flag (it isn't verified)."""
+    status, body = api.get('/api/check_session', who='admin')
     assert status == 200 and body['user_data']['is_platform_admin'] is True
     status, body = api.get('/api/check_session', who='marie')
     assert status == 200 and body['user_data']['is_platform_admin'] is False
     import uuid
-    row = db.execute('SELECT is_platform_admin FROM users WHERE user_id = %s', [uuid.UUID(api.uid('joe'))]).one()
+    row = db.execute('SELECT is_platform_admin FROM users WHERE user_id = %s', [uuid.UUID(api.uid('admin'))]).one()
     assert row.is_platform_admin is True
 
 

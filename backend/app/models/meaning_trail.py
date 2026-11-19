@@ -363,6 +363,10 @@ class MeaningTrail(Model):
         d['initiator_name'] = names.get(row.user_id, 'A member')
         # Perspective is relative to whose trail this is (target_id).
         d['viewer_is_initiator'] = str(row.user_id) == str(target_id)
+        from app.utils.demo import exchange_is_demo, is_agent
+        d['is_demo'] = exchange_is_demo(row)
+        d['initiator_is_agent'] = is_agent(getattr(row, 'initiator_acting_user_id', None) or row.user_id)
+        d['other_is_agent'] = is_agent(getattr(row, 'recipient_acting_user_id', None) or row.other_user_id)
         if kinds is not None:
             cls._add_kinds(d, kinds)
         return d

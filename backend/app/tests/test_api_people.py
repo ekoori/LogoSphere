@@ -114,21 +114,6 @@ def test_responses_never_carry_the_picture(api):
 
 
 # ── Registration ────────────────────────────────────────────────────────────
-@pytest.fixture
-def new_member(db, keep_rows):
-    """A throwaway account's email; afterwards the account, its credentials and
-    any sandbox-sphere membership registration gave it are removed again."""
-    from app.models.spheres import Sphere
-    for sid in Sphere.sandbox_ids():
-        keep_rows('spheres', sphere_id=sid)
-    email = f'test-{uuid.uuid4().hex[:12]}@example.com'
-    yield email
-    row = db.execute('SELECT user_id FROM user_credentials WHERE email = %s', [email]).one()
-    if row:
-        db.execute('DELETE FROM users WHERE user_id = %s', [row.user_id])
-        db.execute('DELETE FROM user_credentials WHERE user_id = %s', [row.user_id])
-
-
 @pytest.mark.parametrize('body', [
     {'name': 'Test', 'email': 'not-an-email', 'password': 'long-enough-1'},
     {'name': 'Test', 'email': 'someone@example.com', 'password': 'short'},

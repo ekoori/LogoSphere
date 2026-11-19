@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 import logging
 from app.models.user import User
 from app.models.spheres import Sphere
+from app.routes.demo import invite_to_demo
 
 registration = Blueprint('registration', __name__)
 
@@ -26,6 +27,7 @@ def register():
                 Sphere.join(sid, user.user_id)
         except Exception as e:
             logging.error(f'Sandbox auto-join failed for new user {user.user_id}: {e}')
+        invite_to_demo(user.user_id)
         return jsonify({'reg_success':True,'message': 'User registered successfully.', 'user_id': user.user_id}), 200
     else:
         return jsonify({'message': 'Registration failed.'}), 400

@@ -15,6 +15,7 @@
 #   GET    /api/admin/openings           DELETE /api/admin/openings/<id>
 import logging
 import uuid
+from app.utils.demo import forget as forget_demo
 from functools import wraps
 
 from flask import request, jsonify, current_app as app
@@ -54,7 +55,7 @@ def admin_only(fn):
 
 def _user_rows():
     return list(session.execute(
-        "SELECT user_id, email, name, surname, location, is_platform_admin, joined_datetime FROM users"))
+        "SELECT user_id, email, name, surname, location, is_platform_admin, is_agent, joined_datetime FROM users"))
 
 
 def _full_name(r):
@@ -108,6 +109,7 @@ def list_users(user_id=None):
             'id': str(r.user_id), 'name': r.name, 'surname': r.surname, 'full_name': _full_name(r),
             'email': r.email, 'location': r.location,
             'is_platform_admin': bool(getattr(r, 'is_platform_admin', False)),
+            'is_agent': bool(getattr(r, 'is_agent', False)),
             'joined_at': r.joined_datetime.isoformat() if getattr(r, 'joined_datetime', None) else None,
             'sphere_count': sphere_counts.get(r.user_id, 0),
             'card_count': cards.get(r.user_id, 0),
@@ -134,6 +136,9 @@ def patch_user(target_id, user_id=None):
             if not others:
                 return jsonify({'message': 'There must be at least one platform administrator'}), 400
         sets.append('is_platform_admin = %s'); params.append(want)
+    if 'is_agent' in data:
+        # An AI persona is driven by backend/agents and labelled everywhere.
+        sets.append('is_agent = %s'); params.append(bool(data['is_agent']))
     for field in ('name', 'surname', 'location'):
         if field in data:
             value = (data.get(field) or '').strip()
@@ -146,12 +151,14 @@ def patch_user(target_id, user_id=None):
     session.execute(f"UPDATE users SET {', '.join(sets)} WHERE user_id = %s", params)
     forget_admin_flag(tid)
     invalidate_index()
+    forget_demo()
     updated = session.execute(
-        "SELECT user_id, email, name, surname, location, is_platform_admin FROM users WHERE user_id = %s", [tid]).one()
+        "SELECT user_id, email, name, surname, location, is_platform_admin, is_agent FROM users WHERE user_id = %s", [tid]).one()
     return jsonify({'message': 'User updated', 'user': {
         'id': str(updated.user_id), 'name': updated.name, 'surname': updated.surname,
         'full_name': _full_name(updated), 'email': updated.email, 'location': updated.location,
         'is_platform_admin': bool(getattr(updated, 'is_platform_admin', False)),
+        'is_agent': bool(getattr(updated, 'is_agent', False)),
     }}), 200
 
 
@@ -211,6 +218,22 @@ def _entity_summary(kind, entity, k, cards):
     d.pop('participants', None)
     d.pop('meaning_graph', None)
     return d
+
+
+@admin_only
+def patch_sphere(entity_id, user_id=None):
+    """Mark a sphere as demo (its members are AI personas; it and everything
+    in it is labelled Demo) or as real."""
+    sphere = Sphere.get_by_id(entity_id)
+    if not sphere:
+        return jsonify({'message': 'Sphere not found'}), 404
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data.get('is_demo'), bool):
+        return jsonify({'message': 'Send {"is_demo": true|false}'}), 400
+    Sphere.set_governance(sphere.sphere_id, is_demo=data['is_demo'])
+    forget_demo()
+    invalidate_index()
+    return jsonify({'message': 'Sphere updated', 'is_demo': data['is_demo']}), 200
 
 
 @admin_only
@@ -320,5 +343,7 @@ def register(app_):
                           defaults={'kind': kind}, methods=['GET', 'OPTIONS'])
         app_.add_url_rule(f"/api/admin/{k['table']}/<entity_id>", endpoint=f'admin_delete_{kind}', view_func=delete_entity,
                           defaults={'kind': kind}, methods=['DELETE', 'OPTIONS'])
+    app_.add_url_rule('/api/admin/spheres/<entity_id>', endpoint='admin_patch_sphere', view_func=patch_sphere,
+                      methods=['PATCH'])
     app_.add_url_rule('/api/admin/openings', view_func=list_openings, methods=['GET', 'OPTIONS'])
     app_.add_url_rule('/api/admin/openings/<service_id>', view_func=delete_opening, methods=['DELETE', 'OPTIONS'])

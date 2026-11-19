@@ -207,3 +207,40 @@ def test_banners_are_for_managers(app, api, founded):
     r = app.test_client().get(f'/api/projects/{pid}/image')            # public, for <img src>
     assert r.status_code == 200 and r.data == PNG_1PX
     assert upload('marie', PNG_1PX, target=NIL) == 404
+
+
+# ── The demonstration ───────────────────────────────────────────────────────
+def test_demo_spheres_are_listed_and_joined_at_once(api, keep_rows, db):
+    """New members are invited to the demo spheres, then join them all in one go."""
+    import uuid as _uuid
+    from app.utils.demo import forget
+    keep_rows('spheres', sphere_id=RIVERSIDE)
+    keep_rows('spheres', sphere_id=AI_COMMONS)
+    db.execute('UPDATE spheres SET is_demo = true WHERE sphere_id IN (%s, %s)',
+               [_uuid.UUID(RIVERSIDE), _uuid.UUID(AI_COMMONS)])
+    forget()
+    status, demo = api.get('/api/demo', who='admin')
+    assert status == 200
+    ids = {s['id'] for s in demo['spheres']}
+    assert {RIVERSIDE, AI_COMMONS} <= ids and not demo['joined_all']
+    status, body = api.post('/api/demo/join', who='admin')
+    assert status == 200 and {RIVERSIDE, AI_COMMONS} <= set(body['joined'])
+    _, demo = api.get('/api/demo', who='admin')
+    assert all(s['joined'] for s in demo['spheres'] if s['id'] in (RIVERSIDE, AI_COMMONS))
+    # Labelled as demo wherever it shows.
+    _, sphere = api.get(f'/api/spheres/{RIVERSIDE}', who='admin')
+    assert sphere['is_demo'] is True
+
+
+def test_registration_invites_to_the_demo(app, new_member, db):
+    r = app.test_client().post('/api/register', json={'name': 'Test Person', 'email': new_member,
+                                                      'password': 'a-long-password'})
+    assert r.status_code == 200
+    import uuid as _uuid
+    uid = _uuid.UUID(str(r.get_json()['user_id']))
+    rows = list(db.execute('SELECT type, link FROM notifications WHERE user_id = %s', [uid]))
+    # Only when there are demo spheres to invite to.
+    from app.utils.demo import demo_sphere_ids
+    if demo_sphere_ids():
+        assert any(n.type == 'demo_invite' and n.link == '/spheres#demo' for n in rows)
+    db.execute('DELETE FROM notifications WHERE user_id = %s', [uid])

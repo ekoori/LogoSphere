@@ -7,11 +7,12 @@ import base64
 from app.db import session as cassandra_session
 
 from app.utils.names import resolve_user_names as _resolve_user_names, dedupe as _dedupe
+from app.utils.demo import agent_ids
 
 
 class Sphere:
     def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False, join_policy=None, has_image=None,
-                 decision_policy=None):
+                 decision_policy=None, is_demo=False):
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -28,6 +29,9 @@ class Sphere:
         # user; a public sphere is viewable by logged-out visitors.
         self.is_sandbox = bool(is_sandbox)
         self.is_public = bool(is_public)
+        # A demo sphere's members are AI personas (see app/utils/demo.py);
+        # everything in it is labelled Demo.
+        self.is_demo = bool(is_demo)
         self.join_policy = join_policy or 'open'
         # How proposals pass in this sphere's liquid-democracy votes.
         self.decision_policy = decision_policy or 'majority'
@@ -44,7 +48,8 @@ class Sphere:
         out = []
         for pid in pids:
             role = roles.get(pid) or ('admin' if self.admin1 and pid == self.admin1 else 'member')
-            out.append({'id': str(pid), 'name': names.get(pid, 'Member'), 'role': role})
+            out.append({'id': str(pid), 'name': names.get(pid, 'Member'), 'role': role,
+                        'is_agent': pid in agent_ids()})
         return out
 
     def to_dict(self, include_members=False, include_image=True):
@@ -63,6 +68,7 @@ class Sphere:
             'values': self.values,
             'is_sandbox': self.is_sandbox,
             'is_public': self.is_public,
+            'is_demo': self.is_demo,
             'join_policy': self.join_policy,
             'decision_policy': self.decision_policy,
         }
@@ -147,7 +153,7 @@ class Sphere:
         return False
 
     @classmethod
-    def set_governance(cls, sphere_id, is_sandbox=None, is_public=None):
+    def set_governance(cls, sphere_id, is_sandbox=None, is_public=None, is_demo=None):
         """Update a sphere's governance flags. Only the flags passed (non-None)
         are written, so callers can update sandbox/public independently."""
         sets, params = [], []
@@ -157,6 +163,9 @@ class Sphere:
         if is_public is not None:
             sets.append("is_public = %s")
             params.append(bool(is_public))
+        if is_demo is not None:
+            sets.append("is_demo = %s")
+            params.append(bool(is_demo))
         if not sets:
             return
         params.append(sphere_id)
@@ -183,7 +192,8 @@ class Sphere:
 
     # Every column except the banner blob - lists and detail never need it.
     _COLS = ("sphere_id, name, description, meaning_graph, location, admin1, participants, "
-             "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image, decision_policy")
+             "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image, decision_policy, "
+             "is_demo")
 
     @classmethod
     def _from_row(cls, row):
@@ -197,7 +207,8 @@ class Sphere:
             is_public=getattr(row, 'is_public', False),
             join_policy=getattr(row, 'join_policy', None),
             has_image=getattr(row, 'has_image', None),
-            decision_policy=getattr(row, 'decision_policy', None))
+            decision_policy=getattr(row, 'decision_policy', None),
+            is_demo=getattr(row, 'is_demo', False))
 
     @classmethod
     def get_all(cls):

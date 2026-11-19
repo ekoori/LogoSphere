@@ -19,11 +19,11 @@ def test_alliance_stewards_and_project_managers_manage(api, app):
 
 def test_platform_admin_manages_anything(api, app):
     from app.utils.permissions import can_manage_entity, is_platform_admin
-    joe = api.uid('joe')
-    assert is_platform_admin(joe) is True
+    admin = api.uid('admin')
+    assert is_platform_admin(admin) is True
     assert is_platform_admin(api.uid('marie')) is False
     assert is_platform_admin(str(uuid.uuid4())) is False
-    assert can_manage_entity(str(uuid.uuid4()), joe) is True
+    assert can_manage_entity(str(uuid.uuid4()), admin) is True
 
 
 def test_bad_ids_never_raise(app):

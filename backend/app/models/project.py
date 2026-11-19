@@ -6,6 +6,7 @@ import uuid
 import logging
 import os
 import base64
+from app.utils.demo import agent_ids, is_demo_sphere
 from datetime import datetime
 
 from app.db import session as cassandra_session
@@ -46,6 +47,7 @@ class Project:
                 'id': str(pid),
                 'name': names.get(pid, 'Member'),
                 'role': self.participant_roles.get(pid, 'contributor') if self.participant_roles else 'contributor',
+                'is_agent': pid in agent_ids(),
             }
             for pid in pids
         ]
@@ -57,6 +59,7 @@ class Project:
         return {
             'project_id': str(self.project_id),
             'id': str(self.project_id),
+            'is_demo': is_demo_sphere(self.sphere_id),
             'name': self.name,
             'description': self.description,
             'owner': self.owner,

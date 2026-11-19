@@ -51,6 +51,8 @@ class User(UserMixin):
         # read here (get_picture serves it): it went out base64-encoded in
         # every check_session and profile response - megabytes per call.
         self.has_picture = False
+        # An AI persona account (see backend/agents).
+        self.is_agent = False
         self.session_id = session_id
 
 
@@ -69,6 +71,7 @@ class User(UserMixin):
             'is_platform_admin': is_platform_admin(self.user_id),
             # The picture itself is served by /api/users/<id>/avatar.
             'has_picture': bool(self.has_picture),
+            'is_agent': bool(self.is_agent),
         }
 
 
@@ -200,7 +203,7 @@ class User(UserMixin):
         try:
             logging.info(f'user.py: Fetching user with user_id: {user_id}')
             # writetime() tells whether a picture is set without loading it.
-            query = ("SELECT user_id, email, name, surname, location, writetime(profile_picture) AS picture_wt "
+            query = ("SELECT user_id, email, name, surname, location, is_agent, writetime(profile_picture) AS picture_wt "
                      "FROM users WHERE user_id = %s")
             rows = cassandra_session.execute(query, (user_id,))
 
@@ -209,6 +212,7 @@ class User(UserMixin):
                 user.surname = row.surname
                 user.location = row.location
                 user.has_picture = row.picture_wt is not None
+                user.is_agent = bool(getattr(row, 'is_agent', False))
                 return user
 
             logging.error(f'User not found with user_id: {user_id}')

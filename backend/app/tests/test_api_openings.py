@@ -124,6 +124,12 @@ def test_platform_admin_is_not_the_other_side(api, exchange):
     # Marie still is the other side.
     _, as_marie = api.get(f'/api/exchange/{xid}', who='marie')
     assert as_marie['is_other'] is True and as_marie['is_initiator'] is False
+    # A platform admin is neither side, and can't write either side's words.
+    status, as_admin = api.get(f'/api/exchange/{xid}', who='admin')
+    assert status == 200 and as_admin['is_initiator'] is False and as_admin['is_other'] is False
+    status, _ = api.post(f'/api/exchange/{xid}/comment', who='admin',
+                         json={'type': 'gratitude', 'text': 'Not mine to write either.'})
+    assert status == 403
 
 
 def test_edit_without_exchange_updates_in_place(api, keep_rows):
@@ -162,28 +168,23 @@ def test_platform_admin_can_accept_someone_elses_opening(api, keep_rows):
     """Regression: an admin used to get 'You cannot accept your own opening'
     on EVERY opening, because the manage-anything override was also used to
     decide who the provider is."""
-    _, items = api.get('/api/openings', who='joe')
-    # Another person's own ongoing opening - not one a group provides (Joe
-    # runs some, and those ARE his to provide), whatever order the list is in.
-    groups = {g.get(key) for path, key in (('/api/alliances', 'alliance_id'), ('/api/projects', 'project_id'))
-              for g in api.get(path, who='joe')[1]}
-    theirs = next(o for o in items if o['provider_id'] not in groups | {api.uid('joe')}
-                  and o['cadence'] == 'perpetual')
+    _, items = api.get('/api/openings', who='admin')
+    theirs = next(o for o in items if o['cadence'] == 'perpetual')
     assert theirs['is_provider'] is False and theirs['can_manage'] is True
-    mine = next(o for o in items if o['id'] == OPENING)
+    _, mine = api.get(f'/api/openings/{OPENING}', who='joe')       # a provider's own
     assert mine['is_provider'] is True and mine['can_manage'] is True
-    # An acceptance Joe already had on it (demo data) survives the test.
-    joe = api.uid('joe')
-    keep_rows('opening_acceptances', service_id=theirs['id'], accepter_id=joe)
-    status, body = api.post(f"/api/openings/{theirs['id']}/accept", who='joe', json={})
+    admin = api.uid('admin')
+    keep_rows('opening_acceptances', service_id=theirs['id'], accepter_id=admin)
+    status, body = api.post(f"/api/openings/{theirs['id']}/accept", who='admin', json={})
     assert status == 200, body
-    # ...but managing it doesn't let him confirm his own acceptance: that is the
-    # provider's consent. He sees it as his own, not as one awaiting him.
-    status, body = api.post(f"/api/openings/{theirs['id']}/confirm", who='joe', json={'accepter_id': joe})
+    # ...but managing it doesn't let the admin confirm their own acceptance:
+    # that is the provider's consent. They see it as theirs, not as one
+    # awaiting them.
+    status, body = api.post(f"/api/openings/{theirs['id']}/confirm", who='admin', json={'accepter_id': admin})
     assert status == 403, body
-    _, opening = api.get(f"/api/openings/{theirs['id']}", who='joe')
+    _, opening = api.get(f"/api/openings/{theirs['id']}", who='admin')
     assert opening['my_acceptance']['status'] == 'pending'
-    assert all(p['accepter_id'] != joe for p in opening['pending_acceptances'])
+    assert all(p['accepter_id'] != admin for p in opening['pending_acceptances'])
 
 
 # ── Cancelling an opening ───────────────────────────────────────────────────
@@ -203,10 +204,10 @@ def test_provider_cancels_an_unconfirmed_opening(api, davids_opening):
     sid = davids_opening
     status, _ = api.post(f'/api/openings/{sid}/accept', who='marie', json={})
     assert status == 200
-    # someone else can't cancel it; a platform admin (Joe) can, and so can David
+    # someone else can't cancel it; a platform admin can, and so can David
     status, _ = api.post(f'/api/openings/{sid}/cancel', who='elon', json={})
     assert status == 403
-    status, body = api.post(f'/api/openings/{sid}/cancel', who='joe', json={})
+    status, body = api.post(f'/api/openings/{sid}/cancel', who='admin', json={})
     assert status == 200 and body['status'] == 'Cancelled'
     status, body = api.post(f'/api/openings/{sid}/cancel', who='david', json={})
     assert status == 200 and body['status'] == 'Cancelled'      # idempotent
@@ -227,7 +228,7 @@ def test_confirmed_opening_cannot_be_cancelled(api, davids_opening):
     assert status == 200 and body['exchange_id']
     xid = uuid.UUID(body['exchange_id'])
     try:
-        status, body = api.post(f'/api/openings/{sid}/cancel', who='joe', json={})
+        status, body = api.post(f'/api/openings/{sid}/cancel', who='admin', json={})
         assert status == 409 and 'exchange' in body['message']
     finally:
         from app.db import session as db

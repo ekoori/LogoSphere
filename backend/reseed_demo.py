@@ -247,9 +247,12 @@ print("[OK]   governance tables")
 
 # spheres: governance flags — sandbox (auto-enroll every new user) and public
 # (logged-out visitors can view the sphere's activity).
-for col in ["ADD is_sandbox boolean", "ADD is_public boolean"]:
+for col in ["ADD is_sandbox boolean", "ADD is_public boolean", "ADD is_demo boolean"]:
     r = run(f"ALTER TABLE logosphere.spheres {col}")
     print(f"[OK]   spheres: {col}" if r is True else f"[SKIP/WARN] spheres {col}: {r}")
+# users: is_agent marks AI persona accounts (driven by backend/agents).
+r = run("ALTER TABLE logosphere.users ADD is_agent boolean")
+print("[OK]   users: ADD is_agent boolean" if r is True else f"[SKIP/WARN] users is_agent: {r}")
 
 # follows + receipt_photos companion tables.
 run("""

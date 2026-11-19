@@ -6,6 +6,7 @@
 import uuid
 import logging
 import os
+from app.utils.demo import agent_ids, is_demo_sphere
 from datetime import datetime
 import base64
 
@@ -55,7 +56,7 @@ class Alliance:
         mids = dedupe(self.members or [])
         names = resolve_user_names(mids)
         members_with_roles = [
-            {'id': str(mid), 'name': names.get(mid, 'Member'), 'role': _role(mid)}
+            {'id': str(mid), 'name': names.get(mid, 'Member'), 'role': _role(mid), 'is_agent': mid in agent_ids()}
             for mid in mids
         ]
         return {
@@ -66,6 +67,7 @@ class Alliance:
             'admin1': str(self.admin1) if self.admin1 else None,
             'sphere_id': str(self.sphere_id) if self.sphere_id else None,
             'sphere_name': self.sphere_name,
+            'is_demo': is_demo_sphere(self.sphere_id),
             'participants': [m['name'] for m in members_with_roles],
             'members': members_with_roles,
             'projects': self.projects or [],

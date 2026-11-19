@@ -57,7 +57,7 @@ def test_only_the_owner_edits_their_cards(api, made_cards):
     _, card = api.post('/api/value_cards', who='marie', json=CARD)
     made_cards.append((marie, card['card_id']))
     # Someone else (even a platform admin) addresses only their own partition: not found.
-    assert api.patch(f"/api/value_cards/{card['card_id']}", who='joe', json={'title': 'hijack'})[0] == 404
+    assert api.patch(f"/api/value_cards/{card['card_id']}", who='admin', json={'title': 'hijack'})[0] == 404
     assert api.post(f"/api/value_cards/{card['card_id']}/endorse", who='david')[0] == 404
     api.delete(f"/api/value_cards/{card['card_id']}", who='david')
     _, cards = api.get(f'/api/value_cards/{marie}', who='marie')
@@ -65,41 +65,41 @@ def test_only_the_owner_edits_their_cards(api, made_cards):
 
 
 def test_clone_onto_yourself_or_a_group_you_manage(api, made_cards):
-    marie, david, joe = api.uid('marie'), api.uid('david'), api.uid('joe')
+    marie, david, admin = api.uid('marie'), api.uid('david'), api.uid('admin')
     status, mine = api.post('/api/value_cards/clone', who='marie', json={'source': CARD, 'target_id': marie})
     assert status == 201 and mine['user_id'] == marie
     made_cards.append((marie, mine['card_id']))
     # Not onto another person - and not by a platform admin either.
     assert api.post('/api/value_cards/clone', who='marie', json={'source': CARD, 'target_id': david})[0] == 403
-    assert api.post('/api/value_cards/clone', who='joe', json={'source': CARD, 'target_id': marie})[0] == 403
+    assert api.post('/api/value_cards/clone', who='admin', json={'source': CARD, 'target_id': marie})[0] == 403
     # Onto a project the caller manages.
-    status, onto_project = api.post('/api/value_cards/clone', who='joe', json={'source': CARD, 'target_id': TOOL_LIBRARY})
+    status, onto_project = api.post('/api/value_cards/clone', who='admin', json={'source': CARD, 'target_id': TOOL_LIBRARY})
     assert status == 201 and onto_project['user_id'] == TOOL_LIBRARY
     made_cards.append((TOOL_LIBRARY, onto_project['card_id']))
-    assert api.post('/api/value_cards/clone', who='joe', json={'source': {}, 'target_id': joe})[0] == 400
+    assert api.post('/api/value_cards/clone', who='admin', json={'source': {}, 'target_id': admin})[0] == 400
 
 
 def test_entity_cards_are_for_its_managers(api, made_cards):
     # David is a member of Riverside but doesn't manage the Tool Library.
     assert api.post(f'/api/entity_value_cards/{TOOL_LIBRARY}', who='david', json=CARD)[0] == 403
-    status, card = api.post(f'/api/entity_value_cards/{TOOL_LIBRARY}', who='joe', json=CARD)
+    status, card = api.post(f'/api/entity_value_cards/{TOOL_LIBRARY}', who='admin', json=CARD)
     assert status == 201 and card['user_id'] == TOOL_LIBRARY
     made_cards.append((TOOL_LIBRARY, card['card_id']))
 
-    status, edited = api.patch(f"/api/entity_value_cards/{TOOL_LIBRARY}/{card['card_id']}", who='joe',
+    status, edited = api.patch(f"/api/entity_value_cards/{TOOL_LIBRARY}/{card['card_id']}", who='admin',
                                json={'title': 'Test entity value v2'})
     assert status == 200 and edited['replaces_card_id'] == card['card_id']
     made_cards.append((TOOL_LIBRARY, edited['card_id']))
-    assert api.post(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}/endorse", who='joe')[1]['endorsed'] is True
-    assert api.post(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}/review", who='joe')[0] == 200
+    assert api.post(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}/endorse", who='admin')[1]['endorsed'] is True
+    assert api.post(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}/review", who='admin')[0] == 200
     assert api.delete(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}", who='david')[0] == 403
-    assert api.delete(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}", who='joe')[0] == 200
+    assert api.delete(f"/api/entity_value_cards/{TOOL_LIBRARY}/{edited['card_id']}", who='admin')[0] == 200
 
 
 def test_entity_card_routes_never_write_a_persons_graph(api):
     """Regression: can_manage_entity is true for a platform admin on ANY id, so
     these routes let an admin write value cards onto a person's Meaning Graph."""
     marie = api.uid('marie')
-    assert api.post(f'/api/entity_value_cards/{marie}', who='joe', json=CARD)[0] == 403
+    assert api.post(f'/api/entity_value_cards/{marie}', who='admin', json=CARD)[0] == 403
     _, cards = api.get(f'/api/value_cards/{marie}', who='marie')
     assert all(c['title'] != CARD['title'] for c in cards)

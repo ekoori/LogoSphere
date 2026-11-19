@@ -9,6 +9,7 @@ from app.utils.permissions import can_manage_entity, get_entity_info, entity_sph
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
+from app.utils.demo import is_agent, is_demo_sphere
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,8 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     # admin can manage anyone's opening without being a party to it).
     d['is_provider'] = is_party
     d['can_manage'] = can_manage
+    d['is_demo'] = is_demo_sphere(s.sphere_id)
+    d['provider_is_agent'] = is_agent(getattr(s, 'acting_user_id', None) or s.provider_id)
     d['liked_by'] = ctx.likers(sid) if ctx is not None else Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False

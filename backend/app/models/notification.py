@@ -6,6 +6,7 @@
 import uuid
 import os
 import logging
+from app.utils.demo import is_agent
 from datetime import datetime
 
 from app.db import session as cassandra_session
@@ -66,6 +67,7 @@ class Notification:
                 'created_at': r.created_at.isoformat() if r.created_at else None,
                 'actor_id': str(r.actor_id) if r.actor_id else None,
                 'actor_name': r.actor_name,
+                'actor_is_agent': is_agent(r.actor_id),
                 'type': r.type,
                 'message': r.message,
                 'link': r.link,

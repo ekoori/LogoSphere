@@ -18,6 +18,7 @@ from flask import request, jsonify, current_app as app
 from app.middleware.session_middleware import validate_session
 from app.models.spheres import Sphere
 from app.utils.permissions import is_platform_admin
+from app.utils.demo import is_agent, is_demo_sphere
 from app.utils.search_vectors import get_index, tokenize, is_uuid
 
 logger = logging.getLogger(__name__)
@@ -66,11 +67,15 @@ class _Viewer:
 
 
 def _base_result(item_id, item, score):
+    kind = item['kind']
     return {
-        'id': item_id, 'kind': item['kind'], 'name': item['name'], 'link': item['link'],
+        'id': item_id, 'kind': kind, 'name': item['name'], 'link': item['link'],
         'summary': (item.get('summary') or '')[:220],
         'sphere_id': item.get('sphere_id'), 'sphere_name': item.get('sphere_name'),
         'score': round(float(score), 4),
+        # Demo groups and openings, and AI personas, are labelled by clients.
+        'is_demo': is_demo_sphere(item_id) if kind == 'sphere' else is_demo_sphere(item.get('sphere_id')),
+        'is_agent': is_agent(item_id) if kind == 'user' else False,
     }
 
 

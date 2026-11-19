@@ -61,6 +61,48 @@ def db(app):
     return session
 
 
+@pytest.fixture(scope='session', autouse=True)
+def test_admin(app, db):
+    """A platform admin for this run only. Joe Rogan is an AI persona now and
+    no longer an admin, and no real person's account belongs in a test. The
+    account (random password, never stored) and everything registration gave
+    it are removed afterwards. While the suite runs the personas are paused,
+    so they don't react to what the tests do."""
+    import secrets
+    from datetime import datetime, timedelta
+    from app.models.spheres import Sphere
+    email = f'test-admin-{uuid.uuid4().hex[:10]}@example.com'
+    password = secrets.token_urlsafe(18)
+    sandboxes = list(Sphere.sandbox_ids())
+    r = app.test_client().post('/api/register', json={'name': 'Test Admin', 'email': email, 'password': password})
+    assert r.status_code == 200, r.get_json()
+    uid = uuid.UUID(str(r.get_json()['user_id']))
+    db.execute('UPDATE users SET is_platform_admin = true WHERE user_id = %s', [uid])
+    USERS['admin'] = (email, password)
+    _pause_personas(db, datetime.utcnow() + timedelta(minutes=30))
+    yield uid
+    _pause_personas(db, None)
+    USERS.pop('admin', None)
+    for sid in sandboxes:
+        db.execute('UPDATE spheres SET participants = participants - %s WHERE sphere_id = %s', [[uid], sid])
+    db.execute('DELETE FROM notifications WHERE user_id = %s', [uid])
+    db.execute('DELETE FROM users WHERE user_id = %s', [uid])
+    db.execute('DELETE FROM user_credentials WHERE user_id = %s', [uid])
+    from app.utils.permissions import forget_admin_flag
+    forget_admin_flag(uid)
+
+
+def _pause_personas(db, until):
+    """The agents' director checks agent_settings.paused_until before acting."""
+    try:
+        if until is None:
+            db.execute("DELETE FROM agent_settings WHERE key = 'paused_until'")
+        else:
+            db.execute("INSERT INTO agent_settings (key, value) VALUES ('paused_until', %s)", [until.isoformat()])
+    except Exception:
+        pass    # no agents installed (no table): nothing to pause
+
+
 class Api:
     """Thin wrapper over the Flask test client that speaks the API's auth
     contract (`Authorization: Bearer <session_id>`) and returns (status, json)."""
@@ -163,6 +205,22 @@ def keep_rows(db):
             db.execute(f'DELETE FROM {table} WHERE {where}', values)
         else:
             db.execute(f'INSERT INTO {table} JSON %s DEFAULT UNSET', [raw])
+
+
+@pytest.fixture
+def new_member(db, keep_rows):
+    """A throwaway account's email; afterwards the account, its credentials and
+    any sandbox-sphere membership registration gave it are removed again."""
+    from app.models.spheres import Sphere
+    for sid in Sphere.sandbox_ids():
+        keep_rows('spheres', sphere_id=sid)
+    email = f'test-{uuid.uuid4().hex[:12]}@example.com'
+    yield email
+    row = db.execute('SELECT user_id FROM user_credentials WHERE email = %s', [email]).one()
+    if row:
+        db.execute('DELETE FROM users WHERE user_id = %s', [row.user_id])
+        db.execute('DELETE FROM user_credentials WHERE user_id = %s', [row.user_id])
+        db.execute('DELETE FROM notifications WHERE user_id = %s', [row.user_id])   # the demo invitation
 
 
 _EXIT = {'status': 0}
