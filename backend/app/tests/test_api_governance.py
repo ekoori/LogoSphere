@@ -138,13 +138,13 @@ def reopen_project(keep_rows):
 
 
 def test_closed_project_takes_no_openings(api, reopen_project):
-    status, p = api.patch(f'/api/projects/{TOOL_LIBRARY}', who='joe', json={'phase': 'closed'})
+    status, p = api.patch(f'/api/projects/{TOOL_LIBRARY}', who='admin', json={'phase': 'closed'})
     assert status == 200 and p['phase'] == 'closed'
-    status, body = api.post('/api/openings', who='joe', json={
+    status, body = api.post('/api/openings', who='admin', json={
         'type': 'offer', 'title': 'x', 'project_name': 'Community Tool Library'})
     assert status == 409
-    status, body = api.post('/api/openings', who='joe', json={
+    status, body = api.post('/api/openings', who='admin', json={
         'type': 'offer', 'title': 'x', 'acting_as_id': TOOL_LIBRARY})
     assert status == 409
-    _, rows = api.get('/api/projects', who='joe')
+    _, rows = api.get('/api/projects', who='admin')
     assert next(r for r in rows if r['project_id'] == TOOL_LIBRARY)['phase'] == 'closed'

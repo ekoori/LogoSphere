@@ -74,10 +74,8 @@ def test_admin(request):
     app, db = request.getfixturevalue('app'), request.getfixturevalue('db')
     import secrets
     from datetime import datetime, timedelta
-    from app.models.spheres import Sphere
     email = f'test-admin-{uuid.uuid4().hex[:10]}@example.com'
     password = secrets.token_urlsafe(18)
-    sandboxes = list(Sphere.sandbox_ids())
     r = app.test_client().post('/api/register', json={'name': 'Test Admin', 'email': email, 'password': password})
     assert r.status_code == 200, r.get_json()
     uid = uuid.UUID(str(r.get_json()['user_id']))
@@ -87,8 +85,11 @@ def test_admin(request):
     yield uid
     _pause_personas(db, None)
     USERS.pop('admin', None)
-    for sid in sandboxes:
-        db.execute('UPDATE spheres SET participants = participants - %s WHERE sphere_id = %s', [[uid], sid])
+    # Out of every sphere it ended up in (sandboxes at registration, the demo
+    # spheres a test joined it to).
+    for row in db.execute('SELECT sphere_id, participants FROM spheres'):
+        if row.participants and uid in row.participants:
+            db.execute('UPDATE spheres SET participants = participants - %s WHERE sphere_id = %s', [[uid], row.sphere_id])
     db.execute('DELETE FROM notifications WHERE user_id = %s', [uid])
     db.execute('DELETE FROM users WHERE user_id = %s', [uid])
     db.execute('DELETE FROM user_credentials WHERE user_id = %s', [uid])

@@ -83,7 +83,7 @@ def approval_project(api, keep_rows):
     """Put Community Tool Library on join_policy=approval for one test; the
     project row (policy, members, roles) is put back exactly afterwards."""
     keep_rows('projects', project_id=TOOL_LIBRARY)
-    api.patch(f'/api/projects/{TOOL_LIBRARY}', who='joe', json={'join_policy': 'approval'})
+    api.patch(f'/api/projects/{TOOL_LIBRARY}', who='admin', json={'join_policy': 'approval'})
     yield TOOL_LIBRARY
 
 
@@ -96,7 +96,7 @@ def test_join_approval_flow(api, approval_project):
     status, body = api.post(f'/api/projects/{pid}/join', who='david')
     assert status == 200 and body['pending'] is True
     # manager sees the request; the requester does not appear as a member yet
-    _, d = api.get(f'/api/projects/{pid}', who='joe')
+    _, d = api.get(f'/api/projects/{pid}', who='admin')
     assert [p['id'] for p in d['pending_members']] == [david]
     assert all(m['id'] != david for m in d['members'])
     # the requester can't see (or approve) pending requests
@@ -104,16 +104,16 @@ def test_join_approval_flow(api, approval_project):
     assert 'pending_members' not in dd
     assert api.post(f'/api/projects/{pid}/members/{david}/role', who='david', json={'role': 'contributor'})[0] == 403
     # manager approves -> member with the default role
-    status, body = api.post(f'/api/projects/{pid}/members/{david}/role', who='joe', json={'role': 'contributor'})
+    status, body = api.post(f'/api/projects/{pid}/members/{david}/role', who='admin', json={'role': 'contributor'})
     assert status == 200
-    _, d = api.get(f'/api/projects/{pid}', who='joe')
+    _, d = api.get(f'/api/projects/{pid}', who='admin')
     assert any(m['id'] == david and m['role'] == 'contributor' for m in d['members'])
     assert d['pending_members'] == []
 
 
 def test_founder_cannot_be_removed(api):
     steve = '16f033ca-2b2c-4745-a537-82999209774c'
-    status, body = api.post(f'/api/projects/{TOOL_LIBRARY}/members/{steve}/role', who='joe', json={'role': 'remove'})
+    status, body = api.post(f'/api/projects/{TOOL_LIBRARY}/members/{steve}/role', who='admin', json={'role': 'remove'})
     assert status == 400 and 'founder' in body['message'].lower()
 
 
@@ -214,8 +214,10 @@ def test_demo_spheres_are_listed_and_joined_at_once(api, keep_rows, db):
     """New members are invited to the demo spheres, then join them all in one go."""
     import uuid as _uuid
     from app.utils.demo import forget
-    keep_rows('spheres', sphere_id=RIVERSIDE)
-    keep_rows('spheres', sphere_id=AI_COMMONS)
+    from app.utils.demo import demo_sphere_ids
+    # Joining "all demo spheres" touches every one of them: keep them all.
+    for sid in {RIVERSIDE, AI_COMMONS} | {str(s) for s in demo_sphere_ids()}:
+        keep_rows('spheres', sphere_id=sid)
     db.execute('UPDATE spheres SET is_demo = true WHERE sphere_id IN (%s, %s)',
                [_uuid.UUID(RIVERSIDE), _uuid.UUID(AI_COMMONS)])
     forget()
