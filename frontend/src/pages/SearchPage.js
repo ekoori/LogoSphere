@@ -90,14 +90,14 @@ function SearchPage() {
                         type="search"
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}
-                        placeholder={mode === 'near' ? 'Describe what matters to you — or leave empty to search around your own value graph' : 'Names, titles, descriptions, value cards…'}
+                        placeholder={mode === 'near' ? 'Describe what matters to you — or leave empty to search around your own Meaning Graph' : 'Names, titles, descriptions, value cards…'}
                         autoFocus
                     />
                     <button type="submit" className="search-go">{mode === 'near' ? 'Find' : 'Search'}</button>
                 </form>
                 <p className="search-explainer">
                     {mode === 'near'
-                        ? 'Ranks by how close each value graph is to the values you describe (or to your own cards). Similarity is cosine distance between the words on the value cards — shared cards count most.'
+                        ? 'Ranks by how close each Meaning Graph is to the values you describe (or to your own cards). Similarity is cosine distance between the words on the value cards — shared cards count most.'
                         : 'Matches words in names, titles, descriptions and value cards. Sphere-scoped openings, alliances and projects only show if you are in the sphere.'}
                 </p>
                 <div className="search-scopes">
@@ -111,7 +111,7 @@ function SearchPage() {
 
             {mode === 'near' && result?.around && !q && (
                 <p className="search-anchor">
-                    Around the value graph of <strong>{result.around.id && result.around.kind === 'user' && result.around.name === userName ? firstName : result.around.name}</strong>
+                    Around the Meaning Graph of <strong>{result.around.id && result.around.kind === 'user' && result.around.name === userName ? firstName : result.around.name}</strong>
                     {' '}({result.around.card_count} card{result.around.card_count === 1 ? '' : 's'})
                     {result.around.kind !== 'user' && <> · <Link to={result.around.link}>open {result.around.kind}</Link></>}
                 </p>

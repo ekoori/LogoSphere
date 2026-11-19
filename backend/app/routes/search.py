@@ -179,7 +179,7 @@ def search_vicinity(user_id=None):
         if not qvec:
             return jsonify({
                 'query': q, 'around': _anchor_dict(around, anchor), 'groups': [], 'total': 0,
-                'note': 'No value cards to search from yet - add a few to your value graph first.'
+                'note': 'No value cards to search from yet - add a few to your Meaning Graph first.'
                         if around else 'Nothing to search for.',
             }), 200
 

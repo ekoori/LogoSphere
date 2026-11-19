@@ -175,7 +175,7 @@ export default function EntityPage({ kind }) {
                     {entity.is_public && kind === 'sphere' && <span className="ep-location-chip">Public</span>}
                     {perms.canManage && (
                         <Link to={`/${kind}-management?id=${eid}`} className="ep-sphere-chip">
-                            ⚙ Manage {NOUN[kind]}
+                            ⚙ Manage {NOUN[kind]}{perms.managesAsAdmin && ' (admin)'}
                         </Link>
                     )}
                 </div>

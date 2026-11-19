@@ -174,7 +174,7 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }
             </div>
             <div className="vc-form-actions">
                 <button type="submit" className="btn btn-accent" disabled={saving}>
-                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Value Graph')}
+                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Meaning Graph')}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
             </div>
@@ -214,7 +214,7 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
         } catch (_) { /* keep the card if the delete was rejected */ }
     };
 
-    if (loading) return <p className="ep-empty">Loading value graph…</p>;
+    if (loading) return <p className="ep-empty">Loading Meaning Graph…</p>;
 
     return (
         <div className="evg">
@@ -236,7 +236,7 @@ function EntityValueGraph({ entityId, canManage = false, entityNoun = 'group' })
 
             {canManage && !showAddCard && !editingCard && (
                 <button className="btn btn-accent" style={{ marginTop: '1.2rem' }} onClick={() => setShowAddCard(true)}>
-                    + Add to Value Graph
+                    + Add to Meaning Graph
                 </button>
             )}
             {canManage && (showAddCard || editingCard) && (

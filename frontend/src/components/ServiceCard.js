@@ -194,6 +194,7 @@ function ServiceCard({
                         likedBy={likedBy}
                         time={time}
                         onLike={handleLike}
+                        canLike={!isOwnOpening}
                     />
                 </div>
             </div>

@@ -10,7 +10,7 @@ import '../styles/EntityBanner.css';
 
 const GLYPH = { sphere: '✦', alliance: '◈', project: '◻', opening: '◍' };
 
-function EntityBanner({ kind, image, imageUrl, onUpload, children }) {
+function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, children }) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [imgFailed, setImgFailed] = useState(false);
@@ -57,6 +57,7 @@ function EntityBanner({ kind, image, imageUrl, onUpload, children }) {
                         disabled={uploading}
                     >
                         {uploading ? 'Uploading…' : (hasImage ? '↻ Change image' : '+ Set image…')}
+                        {asAdmin && !uploading && ' (admin)'}
                     </button>
                     <input
                         ref={fileInputRef}
@@ -77,6 +78,8 @@ EntityBanner.propTypes = {
     image: PropTypes.string,
     imageUrl: PropTypes.string,
     onUpload: PropTypes.func,
+    // Uploading only through the platform-admin override: the button says so.
+    asAdmin: PropTypes.bool,
     children: PropTypes.node,
 };
 

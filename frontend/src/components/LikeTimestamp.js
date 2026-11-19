@@ -20,18 +20,21 @@ function describe(likedBy, likesCount, likedByCurrentUser) {
     return [];
 }
 
-function LikeTimestamp({ likedByCurrentUser, likesCount = 0, likedBy = null, time, onLike }) {
+function LikeTimestamp({ likedByCurrentUser, likesCount = 0, likedBy = null, time, onLike, canLike = true }) {
     const parts = describe(likedBy, likesCount, likedByCurrentUser);
+    // Your own opening isn't yours to appreciate: no button - unless an old
+    // self-like is still there to take off.
+    const showButton = canLike || likedByCurrentUser;
     return (
         <div className="like-timestamp">
-            <button
+            {showButton && <button
                 className={`like-btn ${likedByCurrentUser ? 'liked' : ''}`}
                 onClick={onLike}
                 aria-pressed={likedByCurrentUser}
                 title={likedByCurrentUser ? 'You appreciated this' : 'Appreciate this'}
             >
                 {likedByCurrentUser ? '❤️' : '🖤'}
-            </button>
+            </button>}
             {parts.length > 0 && (
                 <span className="likes-by">
                     Appreciated by{' '}
@@ -55,6 +58,7 @@ LikeTimestamp.propTypes = {
     likedBy: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.string, name: PropTypes.string })),
     time: PropTypes.string,
     onLike: PropTypes.func.isRequired,
+    canLike: PropTypes.bool,
 };
 
 export default LikeTimestamp;

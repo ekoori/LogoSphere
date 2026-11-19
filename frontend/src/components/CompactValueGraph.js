@@ -37,7 +37,7 @@ function CompactValueGraph({ entityId, cards: given, manageHref, currentUserId }
                 <p className="ep-empty">No value cards yet.</p>
             )}
             {manageHref && (
-                <Link to={manageHref} className="cvg-manage-link">Manage value graph →</Link>
+                <Link to={manageHref} className="cvg-manage-link">Manage Meaning Graph →</Link>
             )}
         </div>
     );

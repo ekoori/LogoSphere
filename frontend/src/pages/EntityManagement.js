@@ -113,7 +113,7 @@ export default function EntityManagement({ kind }) {
 
     const tabs = [
         { key: 'governance', label: 'Governance' },
-        { key: 'valuegraph', label: 'Value Graph' },
+        { key: 'valuegraph', label: 'Meaning Graph' },
         { key: 'members', label: PEOPLE_TAB[kind] },
     ];
 
@@ -234,7 +234,7 @@ export default function EntityManagement({ kind }) {
                 </section>
 
                 <section className={`management-section tab-content ${activeTab === 'valuegraph' ? '' : 'hidden'}`}>
-                    <h3>Value Graph</h3>
+                    <h3>Meaning Graph</h3>
                     <p className="management-section-sub">
                         The values this {kind} holds itself to — what it cares about, why, and what drift looks like.
                     </p>

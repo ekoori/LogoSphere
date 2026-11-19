@@ -225,7 +225,7 @@ function OpeningPage() {
     return (
         <div className="xc-page xc-page--banner">
             {/* ── Banner ───────────────────────────────────────────────── */}
-            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={canManage && !isCancelled ? handleImageUpload : undefined}>
+            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={canManage && !isCancelled ? handleImageUpload : undefined} asAdmin={!isOwnOpening}>
                 <div className="xc-page-breadcrumb">
                     <Link to="/openings">Openings</Link>
                     <span>›</span>
@@ -281,7 +281,7 @@ function OpeningPage() {
                         <div className="xc-section-head-row">
                             <p className="xc-page-section-heading">About this opening</p>
                             {canManage && service.isCurrent && !isCancelled && !editing && (
-                                <button className="xc-inline-edit-btn" onClick={startEditing}>✎ Edit</button>
+                                <button className="xc-inline-edit-btn" onClick={startEditing}>✎ Edit{!isOwnOpening && ' (admin)'}</button>
                             )}
                         </div>
                         {!service.isCurrent && (
@@ -363,7 +363,7 @@ function OpeningPage() {
                     <div className="xc-sidebar-card">
                         <p className="xc-sidebar-heading">Actions</p>
                         {actionError && <p className="xc-edit-err">{actionError}</p>}
-                        <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} likedBy={likedBy} time="" onLike={handleLike} />
+                        <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} likedBy={likedBy} time="" onLike={handleLike} canLike={!isOwnOpening} />
                         {canAccept && acceptAsOptions.length > 0 && (
                             <label className="service-accept-as" style={{ marginTop: '0.8em' }}>
                                 <span className="service-accept-as-label">Accept as</span>

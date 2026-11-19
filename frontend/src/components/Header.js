@@ -46,7 +46,10 @@ const BrandMark = () => (
 );
 
 const Header = () => {
-    const { isLoggedIn, userName, handleLogout, isPlatformAdmin } = useLogin();
+    const { isLoggedIn, userName, handleLogout, isPlatformAdmin, authChecked } = useLogin();
+    // Until the session check answers, offer neither "Log in" nor the
+    // account: a signed-in member used to see "Log in" flash on every load.
+    const signedOut = authChecked && !isLoggedIn;
     // Show the user's first name on the account button when signed in.
     const accountLabel = (isLoggedIn && userName) ? userName.split(/\s+/)[0] : 'Account';
     const [notificationsVisible, setNotificationsVisible] = useState(false);
@@ -143,7 +146,7 @@ const Header = () => {
                     <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
                     <li className="nav-drawer-only"><Link to="/how-it-works" onClick={closeMenu}>How it Works</Link></li>
                     <li className="nav-drawer-only"><Link to="/about" onClick={closeMenu}>About</Link></li>
-                    {!isLoggedIn && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
+                    {signedOut && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
                 </ul>
             </nav>
 
@@ -193,7 +196,7 @@ const Header = () => {
                     )}
                 </div>
 
-                {!isLoggedIn && <Link to="/login" className="auth-action nav-bar-only">Login</Link>}
+                {signedOut && <Link to="/login" className="auth-action nav-bar-only">Log in</Link>}
 
                 {/* Hamburger — only shown on mobile (CSS). Toggles the nav drawer. */}
                 <button

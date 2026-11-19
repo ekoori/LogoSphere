@@ -162,27 +162,27 @@ function LoginProvider({ children }) {
       const response = await api.get('/api/check_session', {
         withCredentials: true
       });
-      console.log('Check session response:', response.data);
-      
+
       if (response.data.status === 'active' && response.data.user_id) {
         setIsLoggedIn(true);
         setUserId(response.data.user_id);
         setUserName((response.data.user_data?.name || '').trim());
         setIsPlatformAdmin(!!response.data.user_data?.is_platform_admin);
       } else {
-        console.log('No active session found');
         setIsLoggedIn(false);
         setUserId(null);
         setUserName('');
         setIsPlatformAdmin(false);
       }
     } catch (error) {
-      if (error.response?.status === 500) {
-        console.error('Internal Server Error while checking session:', error);
-      } else {
-        console.info('No active session or error checking session:', error);
+      // Only the server saying "no session" signs you out. A 503 (database
+      // busy), a 500 or a dropped connection says nothing about the session:
+      // keep the current state and let the next check settle it.
+      if (error.response?.status === 401) {
         setIsLoggedIn(false);
         setUserId(null);
+      } else {
+        console.warn('Could not check the session just now:', error.message);
       }
     } finally {
       setAuthChecked(true);

@@ -23,10 +23,13 @@ export function usePermissions(kind, entity) {
     const isFounder = !!userId && (
         String(entity?.admin1 || '') === String(userId) || role === TOP_ROLES[kind]
     );
-    const canManage = isPlatformAdmin || isFounder || (!!role && (MANAGE_ROLES[kind] || []).includes(role));
+    const managesItself = isFounder || (!!role && (MANAGE_ROLES[kind] || []).includes(role));
+    const canManage = isPlatformAdmin || managesItself;
+    // Managing only through the platform-admin override: controls say so.
+    const managesAsAdmin = canManage && !managesItself;
     // Only the top role (or a platform admin) may change other members' roles.
     const canSetRoles = isPlatformAdmin || isFounder;
     // Activity (trail, openings) is members-only, except a public sphere.
     const canViewActivity = isMember || isPlatformAdmin || (kind === 'sphere' && !!entity?.is_public);
-    return { userId, isPlatformAdmin, role, isMember, isFounder, canManage, canSetRoles, canViewActivity };
+    return { userId, isPlatformAdmin, role, isMember, isFounder, canManage, managesAsAdmin, canSetRoles, canViewActivity };
 }
