@@ -112,7 +112,8 @@ class Writer:
         except (anthropic.RateLimitError, anthropic.APIConnectionError, anthropic.InternalServerError) as e:
             raise WriterError(str(e)) from e
         except anthropic.APIStatusError as e:
-            if e.status_code >= 500:
+            # Out of credit is a billing state that will pass, not a bad request.
+            if e.status_code >= 500 or 'credit balance' in str(e).lower():
                 raise WriterError(str(e)) from e
             raise
         if self.usage and getattr(response, 'usage', None):

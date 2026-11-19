@@ -442,8 +442,11 @@ class Director:
             'sphere_id': sid, 'sphere_name': sphere.get('name'), 'project_name': project})
         detail = f"posted {kind} '{text.title}'"
         if self.rng.random() < config.IMAGE_SHARE and store.usage_today()['images'] < config.DAILY_IMAGES:
-            image = self.illustrator.banner(f'{text.title}. {text.description}')
-            self.api(p.user_id).upload(f"/api/openings/{created['service_id']}/image", 'image', image)
-            self.usage['images'] += 1
-            detail += ' with a banner'
+            try:
+                image = self.illustrator.banner(f'{text.title}. {text.description}')
+                self.api(p.user_id).upload(f"/api/openings/{created['service_id']}/image", 'image', image)
+                self.usage['images'] += 1
+                detail += ' with a banner'
+            except Exception as e:      # no credit, outage: the opening stands without a picture
+                log.warning('No banner for %s: %s', text.title, e)
         return detail

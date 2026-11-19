@@ -97,3 +97,14 @@ def test_the_illustrator_asks_for_no_people_and_no_text():
     c = calls[0]
     assert c['model'] == 'gpt-image-1-mini' and c['quality'] == 'low'
     assert 'No people' in c['prompt'] and 'No text' in c['prompt'] and 'Loppers to lend' in c['prompt']
+
+
+def test_running_out_of_credit_is_retried_later_not_dropped():
+    request = SimpleNamespace(method='POST', url='https://api.anthropic.com/v1/messages')
+    response = SimpleNamespace(status_code=400, headers={}, request=request)
+    err = anthropic.BadRequestError.__new__(anthropic.BadRequestError)
+    Exception.__init__(err, 'Your credit balance is too low to access the Anthropic API.')
+    err.response, err.status_code = response, 400
+    client, _ = fake_client(error=err)
+    with pytest.raises(WriterError):
+        Writer(client=client).opening(MARIE, {'name': 'X'}, 'need')
