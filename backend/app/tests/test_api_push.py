@@ -21,9 +21,9 @@ def phones(api, db):
         return token
     yield register
     for token in made:
-        db.execute('DELETE FROM push_token_owner WHERE token = %s', [token])
+        db.execute('DELETE FROM push_token_owner WHERE device_token = %s', [token])
         for who in ('marie', 'david'):
-            db.execute('DELETE FROM push_devices WHERE user_id = %s AND token = %s', [uuid.UUID(api.uid(who)), token])
+            db.execute('DELETE FROM push_devices WHERE user_id = %s AND device_token = %s', [uuid.UUID(api.uid(who)), token])
 
 
 class Fcm:
@@ -85,7 +85,7 @@ def test_a_phone_firebase_no_longer_knows_is_dropped(api, phones, fcm):
 
 def test_a_phone_whose_session_ended_gets_nothing(api, phones, fcm, db):
     token = phones('marie')
-    db.execute('UPDATE push_devices SET session_id = %s WHERE user_id = %s AND token = %s',
+    db.execute('UPDATE push_devices SET session_id = %s WHERE user_id = %s AND device_token = %s',
                [uuid.uuid4(), uuid.UUID(api.uid('marie')), token])
     push.notify(api.uid('marie'), 'Hello')
     assert not fcm.to(token) and token not in _tokens(api, 'marie')

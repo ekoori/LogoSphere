@@ -39,10 +39,10 @@ def ensure_tables():
     so a phone that changes hands stops getting the last member's news."""
     db.execute("""
         CREATE TABLE IF NOT EXISTS push_devices (
-            user_id uuid, token text, platform text, session_id uuid, added_at timestamp,
-            PRIMARY KEY (user_id, token))""")
+            user_id uuid, device_token text, platform text, session_id uuid, added_at timestamp,
+            PRIMARY KEY (user_id, device_token))""")
     db.execute("""
-        CREATE TABLE IF NOT EXISTS push_token_owner (token text PRIMARY KEY, user_id uuid)""")
+        CREATE TABLE IF NOT EXISTS push_token_owner (device_token text PRIMARY KEY, user_id uuid)""")
 
 
 def enabled():
@@ -54,26 +54,26 @@ def register(user_id, token, session_id, platform='android'):
     """This phone gets `user_id`'s notifications while `session_id` lasts -
     and no longer anyone else's."""
     uid = uuid.UUID(str(user_id))
-    owner = db.execute('SELECT user_id FROM push_token_owner WHERE token = %s', [token]).one()
+    owner = db.execute('SELECT user_id FROM push_token_owner WHERE device_token = %s', [token]).one()
     if owner and owner.user_id != uid:
-        db.execute('DELETE FROM push_devices WHERE user_id = %s AND token = %s', [owner.user_id, token])
-    db.execute('INSERT INTO push_devices (user_id, token, platform, session_id, added_at) VALUES (%s, %s, %s, %s, %s)',
+        db.execute('DELETE FROM push_devices WHERE user_id = %s AND device_token = %s', [owner.user_id, token])
+    db.execute('INSERT INTO push_devices (user_id, device_token, platform, session_id, added_at) VALUES (%s, %s, %s, %s, %s)',
                [uid, token, platform, uuid.UUID(str(session_id)) if session_id else None, datetime.utcnow()])
-    db.execute('INSERT INTO push_token_owner (token, user_id) VALUES (%s, %s)', [token, uid])
+    db.execute('INSERT INTO push_token_owner (device_token, user_id) VALUES (%s, %s)', [token, uid])
 
 
 def forget(user_id, token):
     uid = uuid.UUID(str(user_id))
-    db.execute('DELETE FROM push_devices WHERE user_id = %s AND token = %s', [uid, token])
-    owner = db.execute('SELECT user_id FROM push_token_owner WHERE token = %s', [token]).one()
+    db.execute('DELETE FROM push_devices WHERE user_id = %s AND device_token = %s', [uid, token])
+    owner = db.execute('SELECT user_id FROM push_token_owner WHERE device_token = %s', [token]).one()
     if owner and owner.user_id == uid:
-        db.execute('DELETE FROM push_token_owner WHERE token = %s', [token])
+        db.execute('DELETE FROM push_token_owner WHERE device_token = %s', [token])
 
 
 def devices(user_id):
     """[(token, session_id)] of the member's phones."""
-    rows = db.execute('SELECT token, session_id FROM push_devices WHERE user_id = %s', [uuid.UUID(str(user_id))])
-    return [(r.token, r.session_id) for r in rows]
+    rows = db.execute('SELECT device_token, session_id FROM push_devices WHERE user_id = %s', [uuid.UUID(str(user_id))])
+    return [(r.device_token, r.session_id) for r in rows]
 
 
 def _session_lives(session_id):
