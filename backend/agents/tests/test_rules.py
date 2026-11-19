@@ -91,14 +91,18 @@ def test_finished_exchanges_get_the_personas_side_written():
     assert state.credits(SPHERE, NOW) == 0
 
 
-def test_between_personas_an_exchange_moves_along_but_waits_for_people_to_write():
+def test_between_personas_an_exchange_moves_only_while_people_are_around():
     open_ = Event('exchange_open', 'x:2:Initiated', 'p-emma', True, SPHERE, 'p-joe',
                   {'exchange_id': 'x2', 'status': 'Initiated', 'with_real': False, 'standing': True})
     done = Event('exchange_finished', 'x:3:p-joe', 'p-emma', True, SPHERE, 'p-joe',
                  {'exchange_id': 'x3', 'side': 'note', 'standing': True})
+    # Nobody real around: nothing moves.
     plans, _ = run([open_, done])
-    assert [p.action for p in plans] == ['advance']
-    assert plans[0].payload['to'] == 'In Progress'
+    assert plans == []
+    # Someone real did something: it moves on, spending a credit.
+    plans, state = run([Event('new_follower', 'n:0', REAL, False, SPHERE, 'p-emma'), open_, done])
+    assert [p.action for p in plans] == ['follow', 'advance', 'write_side']
+    assert plans[1].payload['to'] == 'In Progress'
 
 
 def test_with_a_real_member_the_persona_does_not_finish_the_exchange():

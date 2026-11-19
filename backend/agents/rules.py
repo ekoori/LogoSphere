@@ -194,8 +194,13 @@ def _exchange_finished(e, origin, add, now, rng, sp, state):
 def _exchange_open(e, origin, add, now, rng, sp, state):
     """An exchange the persona started is waiting to move on. With a real
     member, the persona only moves it to In Progress (the member decides when
-    it's finished); between personas it moves along over a few hours."""
+    it's finished). Between personas it moves along over a few hours - but
+    only while real people are around (it spends a ripple credit)."""
     status, with_real = e.ref['status'], e.ref.get('with_real', False)
+    if not with_real and (status not in ('Initiated', 'In Progress')
+                          or f"advance:{e.ref['exchange_id']}:{'In Progress' if status == 'Initiated' else 'Finished'}"
+                          in state.done or not state.spend_credit(e.sphere_id, now)):
+        return
     if status == 'Initiated':
         add(e.persona_id, 'advance', {'exchange_id': e.ref['exchange_id'], 'to': 'In Progress'},
             _later(rng, now, 30, 90) if with_real else _later(rng, now, 10, 40),
