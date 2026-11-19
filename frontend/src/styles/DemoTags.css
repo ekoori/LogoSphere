@@ -1,0 +1,96 @@
+/* Demo and AI-persona labels: small, quiet, but unmistakable on any background. */
+.demo-tag,
+.persona-tag {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 0.4em;
+    padding: 0.05em 0.5em;
+    border-radius: var(--r-pill);
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    white-space: nowrap;
+    text-transform: none;
+}
+
+.demo-tag {
+    color: #6b3f9e;
+    background: rgba(140, 90, 200, 0.12);
+    border: 1px solid rgba(140, 90, 200, 0.45);
+}
+
+.persona-tag {
+    color: #2f5d7c;
+    background: rgba(70, 130, 180, 0.12);
+    border: 1px solid rgba(70, 130, 180, 0.45);
+}
+
+/* On photo banners. */
+.ep-banner-content .demo-tag,
+.ep-banner-content .persona-tag {
+    color: #fdfaf2;
+    background: rgba(20, 24, 16, 0.5);
+    border-color: rgba(247, 244, 232, 0.6);
+}
+
+/* The strip under a demo sphere's banner. */
+.demo-strip {
+    display: flex;
+    gap: 0.7em;
+    align-items: flex-start;
+    margin: -1.2rem 0 1.6rem;
+    padding: 0.85em 1.1em;
+    border-radius: var(--r-md);
+    border: 1px solid rgba(140, 90, 200, 0.35);
+    background: rgba(140, 90, 200, 0.07);
+    color: var(--ink);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+.demo-strip strong { color: #5a338a; }
+
+/* "Try the demo spheres" invitation card (home). */
+.demo-invite {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8em 1.2em;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 1.4rem;
+    padding: 1em 1.2em;
+    border-radius: var(--r-md);
+    border: 1px solid rgba(140, 90, 200, 0.35);
+    background: rgba(140, 90, 200, 0.07);
+}
+.demo-invite p { margin: 0.2em 0 0; color: var(--ink-soft); font-size: 0.92rem; }
+.demo-invite h3 { margin: 0; font-family: var(--font-display); color: #5a338a; font-size: 1.1rem; }
+.demo-invite-actions { display: flex; gap: 0.5em; }
+
+/* The demo section on the Spheres page. */
+.demo-section-head {
+    margin: 2.2rem 0 0.8rem;
+    padding-top: 1.4rem;
+    border-top: 1px dashed rgba(140, 90, 200, 0.45);
+}
+.demo-section-head h2 { margin: 0 0 0.3em; color: #5a338a; }
+.demo-section-head p { margin: 0; color: var(--ink-soft); }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .demo-tag { color: #d3b8f5; }
+    :root:not([data-theme="light"]) .persona-tag { color: #a9d0ee; }
+    :root:not([data-theme="light"]) .demo-strip strong,
+    :root:not([data-theme="light"]) .demo-invite h3,
+    :root:not([data-theme="light"]) .demo-section-head h2 { color: #d3b8f5; }
+}
+
+/* A persona's profile page. */
+.user-persona-note {
+    margin: 0.3rem 0 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+}
+.user-persona-note .persona-tag { margin-left: 0; margin-right: 0.3em; }

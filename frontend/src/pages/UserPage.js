@@ -18,6 +18,7 @@ import api from '../api';
 import { mapExchange, mapService } from '../utils/mappers';
 import { useLogin } from '../App';
 import '../styles/ValueCardChip.css';
+import { PersonaTag } from '../components/DemoTags';
 
 function UserPage() {
     const { userId: viewerId } = useLogin();
@@ -101,6 +102,12 @@ function UserPage() {
                 <div className="user-profile-aside">
                     <img className="user-avatar-lg" src={avatar} alt={fullName} />
                     <h2 className="user-aside-name">{fullName}</h2>
+                    {user.is_agent && (
+                        <p className="user-persona-note">
+                            <PersonaTag /> A famous name playing an everyday neighbour in the demo spheres.
+                            Their posts are written by AI.
+                        </p>
+                    )}
                     {viewerId && !isOwnPage && (
                         <button
                             className={`follow-btn ${following ? 'is-following' : ''}`}

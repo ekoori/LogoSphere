@@ -17,6 +17,7 @@ function OpeningsPage() {
     const [spheres, setSpheres] = useState([]);
     const [filter, setFilter] = useState('all');
     const [sphereFilter, setSphereFilter] = useState('all');
+    const [query, setQuery] = useState('');
 
     const toggleFormVisibility = () => setIsFormVisible((v) => !v);
 
@@ -34,9 +35,18 @@ function OpeningsPage() {
         api.get('/api/spheres').then((r) => setSpheres(r.data || [])).catch(() => {});
     }, [fetchServices]);
 
+    const q = query.trim().toLowerCase();
+    const bySphere = (s) => {
+        if (sphereFilter === 'all') return true;
+        if (sphereFilter === 'real') return !s.isDemo;
+        if (sphereFilter === 'demo') return s.isDemo;
+        return s.spheres.some((sp) => sp.id === sphereFilter);
+    };
     const shown = services
         .filter((s) => filter === 'all' ? true : filter === 'offers' ? s.type === 'offer' : s.type === 'need')
-        .filter((s) => sphereFilter === 'all' ? true : s.spheres.some((sp) => sp.id === sphereFilter));
+        .filter(bySphere)
+        .filter((s) => !q || [s.title, s.description, s.provider, s.actingUser, s.project]
+            .some((f) => (f || '').toLowerCase().includes(q)));
 
     return (
         <div className="container">
@@ -45,7 +55,13 @@ function OpeningsPage() {
                     {isFormVisible ? 'Hide New Opening Form' : 'New Opening'}
                 </button>
                 <div className="search-box">
-                    <input type="text" placeholder="Search..." />
+                    <input
+                        type="search"
+                        placeholder="Search openings…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        aria-label="Search openings"
+                    />
                 </div>
                 <div className="filters">
                     <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Show All</button>
@@ -60,15 +76,28 @@ function OpeningsPage() {
                         onChange={(e) => setSphereFilter(e.target.value)}
                     >
                         <option value="all">All spheres</option>
-                        {spheres.map((s) => (
+                        <option value="real">Real spheres only</option>
+                        <option value="demo">Demo spheres only</option>
+                        {spheres.filter((s) => !s.is_demo).map((s) => (
                             <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
                         ))}
+                        {spheres.some((s) => s.is_demo) && (
+                            <optgroup label="Demo spheres">
+                                {spheres.filter((s) => s.is_demo).map((s) => (
+                                    <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
                     </select>
                 </div>
             </aside>
             <main>
                 {shown.length === 0 ? (
-                    <p className="empty-state">No offers or needs yet. Share something with your community.</p>
+                    <p className="empty-state">
+                        {q || filter !== 'all' || sphereFilter !== 'all'
+                            ? 'Nothing matches these filters.'
+                            : 'No offers or needs yet. Share something with your community.'}
+                    </p>
                 ) : (
                     <Openings services={shown} newServiceVisible={isFormVisible} onServiceAdded={fetchServices} currentUserId={userId} />
                 )}

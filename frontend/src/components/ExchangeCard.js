@@ -9,6 +9,7 @@ import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
+import { DemoTag, PersonaTag } from './DemoTags';
 import NewAcknowledgementForm from './NewAcknowledgementForm';
 import NewReceiptForm from './NewReceiptForm';
 import StatusProgression from './StatusProgression';
@@ -75,7 +76,7 @@ function ExchangeCard({
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
     receipts, acknowledgements,
-    onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify,
+    onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify, isDemo = false,
 }) {
     const navigate = useNavigate();
     const { entityHref } = useEntityIndex();
@@ -207,11 +208,13 @@ function ExchangeCard({
                     ) : (
                         <span className="xc-title">{title}</span>
                     )}
+                    {isDemo && <DemoTag />}
                     {!isExpanded && participants.length > 0 && (
                         <span className="xc-participants-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <Link to={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</Link>
+                                    {p && p.isAgent && <PersonaTag compact />}
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </React.Fragment>
                             ))}
@@ -248,6 +251,7 @@ function ExchangeCard({
                             {participants.map((p, i) => (
                                 <span key={i}>
                                     <Link to={pHref(p)}>{pName(p)}</Link>
+                                    {p && p.isAgent && <PersonaTag compact />}
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </span>
                             ))}
@@ -397,6 +401,7 @@ function ExchangeCard({
 
 ExchangeCard.propTypes = {
     id: PropTypes.string,
+    isDemo: PropTypes.bool,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     spheres: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,

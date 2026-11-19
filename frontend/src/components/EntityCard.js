@@ -14,6 +14,7 @@ import { useEntityIndex, KIND_PATH, ID_KEY } from '../utils/queries';
 import { useLogin } from '../App';
 import '../styles/EntityCard.css';
 import '../styles/ValueCardChip.css';
+import { DemoTag } from './DemoTags';
 
 const MANAGE_ROLES = { sphere: ['admin'], alliance: ['admin', 'steward'], project: ['manager', 'steward'] };
 const ROLE_LABEL = {
@@ -81,6 +82,7 @@ export default function EntityCard({ kind, entity, onJoin }) {
                     {breadcrumb}
                     <h3>
                         <Link to={href} className="entity-card-title-link">{entity.name}</Link>
+                        {entity.is_demo && <DemoTag />}
                         {kind === 'project' && entity.phase === 'closed' && <span className="entity-card-phase">Closed</span>}
                     </h3>
                     {alliances.length > 0 && (

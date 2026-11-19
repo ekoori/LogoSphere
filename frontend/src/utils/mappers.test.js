@@ -27,7 +27,15 @@ describe('mapExchange', () => {
     it('says who acted for a group', () => {
         const x = mapExchange(row({ other_kind: 'alliance', other_user_id: 'a1', other_user_name: 'Repair Café',
             recipient_acting_user_id: 'marie-id', recipient_acting_user_name: 'Marie Kondo' }), { ownerId: ME });
-        expect(x.participants[1]).toEqual({ name: 'Marie Kondo on behalf of Repair Café', id: 'a1', kind: 'alliance' });
+        expect(x.participants[1]).toEqual({ name: 'Marie Kondo on behalf of Repair Café', id: 'a1', kind: 'alliance', isAgent: false });
+    });
+
+    it('marks AI personas and demo exchanges, and invents no description', () => {
+        const x = mapExchange(row({ other_is_agent: true, is_demo: true, project_name: 'Tool Library' }), { ownerId: ME });
+        expect(x.participants.map((p) => p.isAgent)).toEqual([false, true]);
+        expect(x.isDemo).toBe(true);
+        // Used to read 'An act of giving within the "Tool Library" project.'
+        expect(x.description).toBe('');
     });
 
     it('attributes the receipt to the recipient and the note to the initiator', () => {

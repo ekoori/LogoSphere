@@ -208,12 +208,10 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             .clip(MaterialTheme.shapes.large),
                     )
                 }
-                Text(
-                    x.longDescription?.takeIf { it.isNotBlank() }
-                        ?: x.projectName?.let { "An act of giving within the \"$it\" project." }
-                        ?: "A moment of trust shared in the community.",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                // Only what the people wrote - no generated stand-in.
+                x.longDescription?.takeIf { it.isNotBlank() }?.let {
+                    Text(it, style = MaterialTheme.typography.bodyLarge)
+                }
                 if (x.isFinished) MetaText("✓ This exchange is finished — its details are locked.", maxLines = 2)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (x.projectId != null && x.projectName != null) {

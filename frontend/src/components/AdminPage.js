@@ -9,6 +9,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
 import { formatServerDate } from '../utils/dates';
+import { PersonaTag } from './DemoTags';
 import '../styles/Admin.css';
 
 const TABS = [
@@ -169,7 +170,10 @@ function UsersTab({ notify }) {
                                     <td className="adm-muted">{fmtDate(u.joined_at)}</td>
                                     <td className="num">{u.sphere_count}</td>
                                     <td className="num">{u.card_count}</td>
-                                    <td>{u.is_platform_admin ? <span className="adm-badge adm-badge--admin">admin</span> : <span className="adm-muted">member</span>}</td>
+                                    <td>
+                                        {u.is_platform_admin ? <span className="adm-badge adm-badge--admin">admin</span> : <span className="adm-muted">member</span>}
+                                        {u.is_agent && <PersonaTag compact />}
+                                    </td>
                                     <td className="actions">
                                         <button className="adm-btn" disabled={busyId === u.id} onClick={() => setEditing(editing?.id === u.id ? null : { id: u.id, name: u.name || '', surname: u.surname || '', location: u.location || '' })}>
                                             {editing?.id === u.id ? 'Close' : 'Edit'}
@@ -181,6 +185,15 @@ function UsersTab({ notify }) {
                                                 disabled={busyId === u.id}
                                                 onConfirm={() => act(u.id, () => api.patch(`/api/admin/users/${u.id}`, { is_platform_admin: !u.is_platform_admin }),
                                                     u.is_platform_admin ? `${u.full_name} is no longer an administrator.` : `${u.full_name} is now a platform administrator.`)}
+                                            />
+                                        )}
+                                        {!u.is_you && !u.is_platform_admin && (
+                                            <TwoStep
+                                                label={u.is_agent ? 'Make a person' : 'Make AI persona'}
+                                                confirmLabel={u.is_agent ? 'Confirm: a real person' : 'Confirm: AI persona'}
+                                                disabled={busyId === u.id}
+                                                onConfirm={() => act(u.id, () => api.patch(`/api/admin/users/${u.id}`, { is_agent: !u.is_agent }),
+                                                    u.is_agent ? `${u.full_name} is no longer an AI persona.` : `${u.full_name} is now an AI persona.`)}
                                             />
                                         )}
                                         {!u.is_you && !u.is_platform_admin && (
@@ -293,6 +306,7 @@ function EntitiesTab({ table, notify }) {
                                         <td className="adm-flags">
                                             <label><input type="checkbox" checked={!!e.is_public} disabled={busyId === e.id} onChange={(ev) => act(e.id, () => api.post(`/api/spheres/${e.id}/governance`, { is_public: ev.target.checked }), `${e.name} is ${ev.target.checked ? 'now' : 'no longer'} public.`)} /> public</label>
                                             <label><input type="checkbox" checked={!!e.is_sandbox} disabled={busyId === e.id} onChange={(ev) => act(e.id, () => api.post(`/api/spheres/${e.id}/governance`, { is_sandbox: ev.target.checked }), `${e.name} is ${ev.target.checked ? 'now' : 'no longer'} a sandbox.`)} /> sandbox</label>
+                                            <label title="Its members are AI personas; it and everything in it is labelled Demo"><input type="checkbox" checked={!!e.is_demo} disabled={busyId === e.id} onChange={(ev) => act(e.id, () => api.patch(`/api/admin/spheres/${e.id}`, { is_demo: ev.target.checked }), `${e.name} is ${ev.target.checked ? 'now' : 'no longer'} a demo sphere.`)} /> demo</label>
                                         </td>
                                     )}
                                     <td className="actions">

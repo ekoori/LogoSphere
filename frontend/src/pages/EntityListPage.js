@@ -3,12 +3,15 @@
 // other page that needs them) with value cards embedded, so a page of cards
 // is one request. The search box is real; the old placeholder filter buttons
 // that did nothing are gone.
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import api from '../api';
 import EntityForm from '../components/EntityForm';
 import EntityCard from '../components/EntityCard';
 import { useEntityList, useInvalidate, KIND_PATH, ID_KEY } from '../utils/queries';
+import { useLogin } from '../App';
+import { DemoTag } from '../components/DemoTags';
 import '../styles/EntityCard.css';
 
 const COPY = {
@@ -41,6 +44,37 @@ export default function EntityListPage({ kind }) {
         return res.data;
     };
 
+    // Demo groups (their members are AI personas) get their own section, after
+    // the real ones - side by side on the platform, never mixed up.
+    const { userId } = useLogin();
+    const real = rows.filter((e) => !e.is_demo);
+    const demo = rows.filter((e) => e.is_demo);
+    const inAllDemo = kind === 'sphere' && demo.length > 0 && !!userId
+        && demo.every((e) => (e.participants || []).map(String).includes(String(userId)));
+    const [joiningDemo, setJoiningDemo] = useState(false);
+    const joinDemo = async () => {
+        setJoiningDemo(true);
+        try {
+            await api.post('/api/demo/join');
+            await invalidate.all();
+        } finally {
+            setJoiningDemo(false);
+        }
+    };
+    const location = useLocation();
+    useEffect(() => {
+        if (location.hash === '#demo' && demo.length) {
+            document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [location.hash, demo.length]);
+    const grid = (list) => (
+        <div className="entity-grid">
+            {list.filter((e) => !(kind === 'project' && e.phase === 'closed')).map((e) => (
+                <EntityCard key={e[ID_KEY[kind]] || e.id} kind={kind} entity={e} onJoin={handleJoin} />
+            ))}
+        </div>
+    );
+
     return (
         <div className="container">
             <aside>
@@ -72,11 +106,24 @@ export default function EntityListPage({ kind }) {
                     <p className="empty-state">{search ? `Nothing matches “${search}”.` : copy.empty}</p>
                 ) : (
                     <>
-                        <div className="entity-grid">
-                            {rows.filter((e) => !(kind === 'project' && e.phase === 'closed')).map((e) => (
-                                <EntityCard key={e[ID_KEY[kind]] || e.id} kind={kind} entity={e} onJoin={handleJoin} />
-                            ))}
-                        </div>
+                        {real.length > 0 && grid(real)}
+                        {demo.length > 0 && (
+                            <section id="demo">
+                                <div className="demo-section-head">
+                                    <h2>Demo {copy.plural.toLowerCase()} <DemoTag /></h2>
+                                    <p>
+                                        The people here are AI personas: famous names playing everyday
+                                        neighbours. Join in and try anything; nothing here is real.
+                                    </p>
+                                    {kind === 'sphere' && userId && !inAllDemo && (
+                                        <button className="btn-orange" style={{ marginTop: '0.8rem' }} disabled={joiningDemo} onClick={joinDemo}>
+                                            {joiningDemo ? 'Joining…' : `Join all ${demo.length} demo spheres`}
+                                        </button>
+                                    )}
+                                </div>
+                                {grid(demo)}
+                            </section>
+                        )}
                         {kind === 'project' && rows.some((e) => e.phase === 'closed') && (
                             <details className="entity-archive">
                                 <summary>Closed &amp; archived ({rows.filter((e) => e.phase === 'closed').length})</summary>

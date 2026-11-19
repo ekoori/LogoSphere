@@ -9,6 +9,7 @@ import Avatar from '../components/Avatar';
 import * as rules from '../utils/exchangeRules';
 import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchangeRules';
 import { formatServerDate } from '../utils/dates';
+import { DemoTag, PersonaTag } from '../components/DemoTags';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
@@ -40,7 +41,7 @@ const KIND_GLYPH = { sphere: '✦', alliance: '◈', project: '◻' };
 // One participant row: differentiates a person from a group, shows "You" only
 // for the viewer when they're a person, and "· via <human>" when a person acted
 // on a group's behalf.
-const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou }) => {
+const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou, isAgent }) => {
     const isEntity = kind && kind !== 'user';
     const href = partHref(kind, id);
     return (
@@ -49,6 +50,7 @@ const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou }) =
             {isYou
                 ? <Link to="/profile" className="xc-participant-you">You</Link>
                 : (href ? <Link to={href}>{name}</Link> : <span>{name}</span>)}
+            {isAgent && <PersonaTag compact />}
             {isEntity && actingName && (
                 <span className="xc-participant-via">
                     {' · via '}
@@ -266,6 +268,7 @@ function ExchangePage() {
                 </div>
 
                 <div className="xc-page-meta">
+                    {xc.is_demo && <DemoTag />}
                     {fmtDate(xc.project_start_timestamp) && (
                         <span>{fmtDate(xc.project_start_timestamp)}</span>
                     )}
@@ -322,12 +325,10 @@ function ExchangePage() {
                                 {xc.has_image && (
                                     <img src={`/api/exchange/${xcId}/image`} alt="" className="xc-exchange-image" />
                                 )}
-                                <p className="xc-about-text">
-                                    {xc.exchange_long_description
-                                        || (xc.project_name
-                                            ? `An act of giving within the "${xc.project_name}" project.`
-                                            : 'A moment of trust shared in the community.')}
-                                </p>
+                                {/* Only what the people wrote - no stand-in text. */}
+                                {xc.exchange_long_description && (
+                                    <p className="xc-about-text">{xc.exchange_long_description}</p>
+                                )}
                                 {xc.is_finished && (
                                     <p className="xc-finished-note">✓ This exchange is finished — its details are now locked.</p>
                                 )}
@@ -656,6 +657,7 @@ function ExchangePage() {
                                 actingId={xc.initiator_acting_user_id}
                                 actingName={xc.initiator_acting_user_name}
                                 role="Initiator"
+                                isAgent={!!xc.initiator_is_agent}
                                 isYou={xc.initiator_kind === 'user' && String(xc.user_id) === String(userId)}
                             />
                             {xc.other_user_id && (
@@ -666,6 +668,7 @@ function ExchangePage() {
                                     actingId={xc.recipient_acting_user_id}
                                     actingName={xc.recipient_acting_user_name}
                                     role="Recipient"
+                                    isAgent={!!xc.other_is_agent}
                                     isYou={xc.other_kind === 'user' && String(xc.other_user_id) === String(userId)}
                                 />
                             )}

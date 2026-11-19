@@ -67,6 +67,9 @@ export function mapService(s) {
         // accept it.
         isProvider: !!s.is_provider,
         canManage: !!s.can_manage,
+        // The demonstration: from a demo sphere / posted by an AI persona.
+        isDemo: !!s.is_demo,
+        providerIsAgent: !!s.provider_is_agent,
         // Confirmed exchanges spawned from this opening (single-opening page).
         exchanges: (s.exchanges || []).map((x) => ({
             exchangeId: x.exchange_id,
@@ -216,16 +219,16 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         spheres: [],
         participants: iAmInitiator
             ? [
-                { name: ownerLabel, id: ownerLinkId, kind: ownerKind },
-                ...(row.other_user_name ? [{ name: recipientLabel, id: recipientLinkId, kind: recipientKind }] : []),
+                { name: ownerLabel, id: ownerLinkId, kind: ownerKind, isAgent: !!row.initiator_is_agent },
+                ...(row.other_user_name ? [{ name: recipientLabel, id: recipientLinkId, kind: recipientKind, isAgent: !!row.other_is_agent }] : []),
             ]
             : [
-                { name: initiatorLabel, id: initiatorLinkId, kind: initiatorKind },
-                { name: ownerLabel, id: ownerLinkId, kind: ownerKind },
+                { name: initiatorLabel, id: initiatorLinkId, kind: initiatorKind, isAgent: !!row.initiator_is_agent },
+                { name: ownerLabel, id: ownerLinkId, kind: ownerKind, isAgent: !!row.other_is_agent },
             ],
-        description: row.project_name
-            ? `An act of giving within the "${row.project_name}" project.`
-            : 'A moment of trust shared in the community.',
+        isDemo: !!row.is_demo,
+        // Only what the people wrote - no generated stand-in.
+        description: row.exchange_long_description || '',
         project: row.project_name || null,
         projectId: row.project_id || null,
         imageUrl: imageFor(row.exchange_description),

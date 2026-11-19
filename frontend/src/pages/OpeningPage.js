@@ -14,6 +14,7 @@ import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
+import { DemoTag, PersonaTag } from '../components/DemoTags';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
@@ -247,6 +248,7 @@ function OpeningPage() {
                     {sphere && (
                         <Link to={sphere.id ? `/sphere?id=${sphere.id}` : '#'}>{sphere.name}</Link>
                     )}
+                    {service.isDemo && <DemoTag />}
                     {service.project && (
                         <>
                             <span>|</span>
@@ -443,11 +445,15 @@ function OpeningPage() {
                                 {service.actingUser ? (
                                     <span>
                                         <Link to={service.actingUserId ? `/user?id=${service.actingUserId}` : '/user'}>{service.actingUser}</Link>
+                                        {service.providerIsAgent && <PersonaTag />}
                                         <span className="on-behalf-of"> on behalf of </span>
                                         <strong>{service.provider}</strong>
                                     </span>
                                 ) : (
-                                    <Link to={service.providerId ? `/user?id=${service.providerId}` : '/user'}>{service.provider}</Link>
+                                    <span>
+                                        <Link to={service.providerId ? `/user?id=${service.providerId}` : '/user'}>{service.provider}</Link>
+                                        {service.providerIsAgent && <PersonaTag />}
+                                    </span>
                                 )}
                             </div>
                         </div>

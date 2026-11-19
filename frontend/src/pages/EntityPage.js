@@ -24,6 +24,7 @@ import GovernancePanel from '../components/GovernancePanel';
 import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
+import { DemoTag, PersonaTag } from '../components/DemoTags';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -51,6 +52,7 @@ function RoleTier({ label, cls, people }) {
                     <Link key={m.id} to={`/user?id=${m.id}`} className={`ep-member-pill ep-member-pill--${cls}`}>
                         <Avatar userId={m.id} name={m.name} size={22} />
                         <span className="ep-member-name">{m.name}</span>
+                        {m.is_agent && <PersonaTag compact />}
                     </Link>
                 ))}
             </div>
@@ -164,6 +166,7 @@ export default function EntityPage({ kind }) {
             <EntityBanner kind={kind} imageUrl={entity.has_image ? `/api/${kind}s/${eid}/image` : undefined}>
                 <div className="ep-meta-row">
                     <span className="ep-eyebrow">{NOUN[kind]}</span>
+                    {entity.is_demo && <DemoTag />}
                     {statusInfo && <span className={`ep-status-badge ${statusInfo.cls}`}>{statusInfo.label}</span>}
                     {kind === 'sphere' && entity.location && <span className="ep-location-chip">{entity.location}</span>}
                     {kind !== 'sphere' && entity.sphere_name && (
@@ -193,6 +196,16 @@ export default function EntityPage({ kind }) {
                 )}
                 {joinNote && <p className={joinNote.ok ? 'ep-empty' : 'ep-not-found'} style={{ marginTop: '0.4rem' }}>{joinNote.text}</p>}
             </EntityBanner>
+
+            {entity.is_demo && (
+                <div className="demo-strip" role="note">
+                    <span aria-hidden="true">✦</span>
+                    <div>
+                        <strong>Demo {NOUN[kind].toLowerCase()}.</strong> The members here are AI personas:
+                        famous names playing everyday neighbours. Try anything; nothing here is real.
+                    </div>
+                </div>
+            )}
 
             {!canViewActivity ? (
                 <p className="ep-empty" style={{ padding: '0 0.5rem' }}>

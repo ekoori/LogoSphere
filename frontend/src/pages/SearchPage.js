@@ -10,6 +10,7 @@ import api from '../api';
 import { useLogin } from '../App';
 import Avatar from '../components/Avatar';
 import '../styles/Search.css';
+import { DemoTag, PersonaTag } from '../components/DemoTags';
 
 const KIND = {
     user:     { label: 'Person',   plural: 'People' },
@@ -163,6 +164,8 @@ function ResultRow({ item, mode }) {
             <div className="search-result-body">
                 <div className="search-result-head">
                     <Link className="search-result-name" to={item.link}>{item.name}</Link>
+                    {item.is_agent && <PersonaTag compact />}
+                    {item.is_demo && <DemoTag />}
                     <span className={`search-kind search-kind--${kind}`}>{KIND[kind]?.label || kind}</span>
                     {mode === 'near' && item.similarity != null && (
                         <span className="search-sim" title="Cosine similarity of value-graph vectors">

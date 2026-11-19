@@ -11,6 +11,7 @@ import Openings from '../components/Openings';
 import TabSelector from '../components/TabSelector';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import Avatar from '../components/Avatar';
+import DemoInvite from '../components/DemoInvite';
 import api from '../api';
 import { mapService, mapExchange } from '../utils/mappers';
 import { useLogin } from '../App';
@@ -88,6 +89,7 @@ function Home() {
                 <ConnectionsPanel ownerId={userId} viewerId={userId} />
             </aside>
             <main>
+                <DemoInvite onJoined={fetchFeed} />
                 <TabSelector
                     tabs={[
                         { key: 'meaning_trail', label: 'Meaning Trail' },

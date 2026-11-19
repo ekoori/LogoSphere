@@ -9,6 +9,7 @@ import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
 import Avatar from './Avatar';
+import { DemoTag, PersonaTag } from './DemoTags';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import '../styles/Openings.css';
@@ -27,7 +28,7 @@ function ServiceCard({
     imageUrl, time, status, likesCount, likedByCurrentUser, likedBy: likedByInitial = [], cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
-    isProvider = false, canManage = false, actionError = null,
+    isProvider = false, canManage = false, actionError = null, isDemo = false, providerIsAgent = false,
     currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
@@ -131,6 +132,7 @@ function ServiceCard({
                                 {index < spheres.length - 1 && ', '}
                             </React.Fragment>
                         ))}
+                        {isDemo && <DemoTag />}
                         {project && (
                             <>
                                 <span className="service-header-pipe"> | </span>
@@ -171,6 +173,7 @@ function ServiceCard({
                                 >
                                     {actingUser}
                                 </Link>
+                                {providerIsAgent && <PersonaTag compact />}
                                 <span className="on-behalf-of"> on behalf of </span>
                                 <strong>{provider}</strong>
                             </span>
@@ -183,6 +186,7 @@ function ServiceCard({
                                 >
                                     {provider}
                                 </Link>
+                                {providerIsAgent && <PersonaTag compact />}
                             </span>
                         )}
                     </div>
@@ -349,6 +353,8 @@ ServiceCard.propTypes = {
     pendingAcceptances: PropTypes.arrayOf(PropTypes.object),
     myAcceptance: PropTypes.object,
     isProvider: PropTypes.bool,
+    isDemo: PropTypes.bool,
+    providerIsAgent: PropTypes.bool,
     canManage: PropTypes.bool,
     actionError: PropTypes.string,
     currentUserId: PropTypes.string,
