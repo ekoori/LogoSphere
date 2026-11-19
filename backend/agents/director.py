@@ -441,7 +441,10 @@ class Director:
             'type': kind, 'title': text.title[:120], 'description': text.description,
             'sphere_id': sid, 'sphere_name': sphere.get('name'), 'project_name': project})
         detail = f"posted {kind} '{text.title}'"
-        if self.rng.random() < config.IMAGE_SHARE and store.usage_today()['images'] < config.DAILY_IMAGES:
+        # About a third of posts get a picture; a queued post can ask for one
+        # (or none) with payload['banner']. The daily image budget holds either way.
+        wants = payload['banner'] if 'banner' in payload else self.rng.random() < config.IMAGE_SHARE
+        if wants and store.usage_today()['images'] < config.DAILY_IMAGES:
             try:
                 image = self.illustrator.banner(f'{text.title}. {text.description}')
                 self.api(p.user_id).upload(f"/api/openings/{created['service_id']}/image", 'image', image)

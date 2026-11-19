@@ -163,3 +163,18 @@ def test_the_first_inbox_pass_answers_nothing_old(world):
     assert w.d.observe_inbox() == []
     assert 'baseline:inbox' in w.store.settings
     assert any(c[2] == '/api/notifications/read' for c in w.calls)     # cleared, not answered
+
+
+def test_a_post_can_ask_for_its_banner(world):
+    w = world
+    w.routes[('POST', '/api/openings')] = {'service_id': 'o-new'}
+    w.d._writer = SimpleNamespace(opening=lambda *a, **k: SimpleNamespace(
+        title='Long ladder free to borrow', description='Knock on my door.'))
+    w.d._illustrator = SimpleNamespace(banner=lambda subject: b'jpeg-bytes')
+    detail = w.d.do_post_opening(w.d.personas[JOE], {'sphere_id': SPHERE, 'kind': 'offer', 'banner': True})
+    assert ('p-joe', 'UPLOAD', '/api/openings/o-new/image', len(b'jpeg-bytes')) in w.calls
+    assert 'with a banner' in detail
+    w.calls.clear()
+    w.routes[('POST', '/api/openings')] = {'service_id': 'o-two'}
+    detail = w.d.do_post_opening(w.d.personas[JOE], {'sphere_id': SPHERE, 'kind': 'need', 'banner': False})
+    assert not any(c[1] == 'UPLOAD' for c in w.calls) and 'banner' not in detail
