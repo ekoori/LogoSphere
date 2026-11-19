@@ -73,8 +73,8 @@ def test_role_change_guards(api):
     # admin, but target isn't a member
     status, body = api.post(f'/api/spheres/{RIVERSIDE}/members/{NIL}/role', who='joe', json={'role': 'admin'})
     assert status == 404
-    # alliance Lead is not assignable
-    status, _ = api.post(f'/api/alliances/{REPAIR_CAFE}/members/{api.uid("marie")}/role', who='joe', json={'role': 'admin'})
+    # alliance Lead is not assignable, not even by a platform admin
+    status, _ = api.post(f'/api/alliances/{REPAIR_CAFE}/members/{api.uid("marie")}/role', who='admin', json={'role': 'admin'})
     assert status == 400
 
 
@@ -122,9 +122,9 @@ def test_public_sphere_endpoint_only_for_public_spheres(api, keep_rows):
     # (the demo data on ts.krbavcic.com has Riverside public, so no sphere's
     # flag is assumed).
     keep_rows('spheres', sphere_id=AI_COMMONS)
-    api.post(f'/api/spheres/{AI_COMMONS}/governance', who='joe', json={'is_public': False})
+    assert api.post(f'/api/spheres/{AI_COMMONS}/governance', who='admin', json={'is_public': False})[0] == 200
     assert api.get(f'/api/public/spheres/{AI_COMMONS}')[0] == 404
-    api.post(f'/api/spheres/{AI_COMMONS}/governance', who='joe', json={'is_public': True})
+    assert api.post(f'/api/spheres/{AI_COMMONS}/governance', who='admin', json={'is_public': True})[0] == 200
     status, d = api.get(f'/api/public/spheres/{AI_COMMONS}')
     assert status == 200 and d['is_public'] is True and 'openings' in d
 
