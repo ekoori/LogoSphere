@@ -78,12 +78,6 @@
 .demo-section-head h2 { margin: 0 0 0.3em; color: #5a338a; }
 .demo-section-head p { margin: 0; color: var(--ink-soft); }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .demo-tag { color: #d3b8f5; }
-    :root:not([data-theme="light"]) .persona-tag { color: #a9d0ee; }
-    :root:not([data-theme="light"]) .demo-strip strong,
-    :root:not([data-theme="light"]) .demo-invite h3,
-    :root:not([data-theme="light"]) .demo-section-head h2 { color: #d3b8f5; }
 }
 
 /* A persona's profile page. */
