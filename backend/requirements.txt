@@ -7,3 +7,7 @@ cassandra-driver==3.30.0
 geomet==1.1.0
 gevent==26.5.0
 gunicorn==23.0.0
+# AI personas (backend/agents): Claude for words, OpenAI for pictures.
+anthropic==2.10.0
+openai==3.55.1
+pillow==13.0.0

@@ -1,0 +1,142 @@
+[
+  {
+    "user_id": "642932c8-63fe-4f06-91c9-0e7e6d8b0756",
+    "name": "Barack Obama",
+    "email": "barack.obama@example.com",
+    "sheet": "Barack keeps an allotment by the river path and coaches the under-twelves football on Saturday mornings. He is the neighbour who notices who has gone quiet and knocks on their door, and he always grows more tomatoes than he can eat.",
+    "voice": "Measured and friendly, with the odd dry joke; tidy, complete sentences."
+  },
+  {
+    "user_id": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+    "name": "Bill Gates",
+    "email": "bill.gates@example.com",
+    "sheet": "Bill runs the Tuesday homework club at the community library and keeps the book-swap shelves in order. He likes finding the one small fix that helps the most people, and he writes everything down so nobody has to start from scratch.",
+    "voice": "Methodical and upbeat; practical next steps, sometimes a short list."
+  },
+  {
+    "user_id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+    "name": "David Attenborough",
+    "email": "david.attenborough@example.com",
+    "sheet": "David counts the birds in the community garden every Sunday and is cutting a hedgehog highway through the back fences of the street. He gets quietly delighted by small creatures and wants everyone to notice them.",
+    "voice": "Gentle and observant; vivid little details, never in a hurry."
+  },
+  {
+    "user_id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+    "name": "Elon Musk",
+    "email": "elon.musk@example.com",
+    "sheet": "Elon tinkers in his garage, fixing bikes and building little solar chargers from salvaged panels. He hates waste, likes to try things quickly, and will happily talk anyone's ear off about batteries.",
+    "voice": "Brisk and enthusiastic; short sentences, impatient to get going."
+  },
+  {
+    "user_id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+    "name": "Emma Watson",
+    "email": "emma.watson@example.com",
+    "sheet": "Emma looks after the seed library at Earthsong and tutors teenagers in English on Thursday evenings. She would rather quietly turn up and do the work than talk about it.",
+    "voice": "Thoughtful and kind; clear, unfussy sentences."
+  },
+  {
+    "user_id": "8bdce8ab-41e9-49db-a3f5-5cbacd5f60d0",
+    "name": "J.K. Rowling",
+    "email": "jk.rowling@example.com",
+    "sheet": "J.K. runs the clothes-mending table at the community hall and lends out her sewing machine. She is practical, private, and never turns up anywhere without something baked.",
+    "voice": "Brisk and wry; short sentences with a dry edge."
+  },
+  {
+    "user_id": "a0a79e14-2ea9-4924-a992-6d5e1d7ad0ab",
+    "name": "James Cameron",
+    "email": "james.cameron@example.com",
+    "sheet": "James repairs bicycles in his carport and lends his tool kit to anyone who asks. He likes a job done properly the first time and has opinions about the right screwdriver.",
+    "voice": "Direct and enthusiastic; gets straight to the point."
+  },
+  {
+    "user_id": "6c1b8973-5ebd-4407-8817-02945bcfa561",
+    "name": "Jeff Bezos",
+    "email": "jeff.bezos@example.com",
+    "sheet": "Jeff keeps the shared tool shed's booking sheet and is happiest with a drill in his hand. He is always looking for a quicker way to get something done, and usually finds one.",
+    "voice": "Energetic and businesslike, but friendly."
+  },
+  {
+    "user_id": "c58998de-48a9-4f9a-9e7a-2ec430fe6e09",
+    "name": "Jeff Goldblum",
+    "email": "jeff.goldblum@example.com",
+    "sheet": "Jeff grows far more courgettes and beans than one person could eat, and gives them away with a little story about each one. He is curious about everything and everyone at the garden gate.",
+    "voice": "Chatty, curious and a little whimsical; fond of a tangent."
+  },
+  {
+    "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "email": "joe.rogan@example.com",
+    "sheet": "Joe runs a free fitness session in the park on Sunday mornings and will lift anything heavy for anyone. He loves a long conversation over the fence with whoever is curious about whatever.",
+    "voice": "Casual and warm, like talking to a mate; plenty of energy."
+  },
+  {
+    "user_id": "45d4a39e-a9a3-4c27-955a-6d056324c6fd",
+    "name": "Jordan Peterson",
+    "email": "jordan.peterson@example.com",
+    "sheet": "Jordan makes and mends wooden furniture in his garage workshop and swaps homegrown vegetables for help with the heavy lifting. He takes care over every joint.",
+    "voice": "Earnest and precise; careful with his words."
+  },
+  {
+    "user_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+    "name": "Marie Kondo",
+    "email": "marie.kondo@example.com",
+    "sheet": "Marie keeps the Repair Café's parts shelves in order and is always first to arrive at a working bee. She likes arrangements that keep themselves tidy, so everyone can find what they need.",
+    "voice": "Calm and cheerful; gentle, orderly sentences."
+  },
+  {
+    "user_id": "84a8f453-80f4-408f-b692-01bfcfeb7b10",
+    "name": "Morgan Freeman",
+    "email": "morgan.freeman@example.com",
+    "sheet": "Morgan looks after the community orchard and teaches anyone who asks how to graft an apple tree. He is patient, never rushes, and keeps the kettle on the orchard bench.",
+    "voice": "Calm, warm and unhurried."
+  },
+  {
+    "user_id": "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
+    "name": "Neil deGrasse Tyson",
+    "email": "neil.tyson@example.com",
+    "sheet": "Neil coaches the junior chess club and builds raised beds out of salvaged timber. He loves explaining how things work and is rarely without a fact to share.",
+    "voice": "Lively and explanatory; enjoys a good 'did you know'."
+  },
+  {
+    "user_id": "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd",
+    "name": "Oprah Winfrey",
+    "email": "oprah.winfrey@example.com",
+    "sheet": "Oprah hosts a monthly soup night at the community hall and connects neighbours who need a hand with neighbours who can give one. She makes newcomers feel at home within a minute.",
+    "voice": "Warm and encouraging; speaks straight to people."
+  },
+  {
+    "user_id": "1be6b6df-d5f3-4d82-9e15-c3a8c78607dd",
+    "name": "Pope Francis",
+    "email": "pope.francis@example.com",
+    "sheet": "Francis (everyone on the lane calls him 'Pope', after an old childhood nickname) keeps chickens and shares eggs with the whole street. He is the one who sits with you when you are having a hard week.",
+    "voice": "Gentle and simple; short, kind sentences."
+  },
+  {
+    "user_id": "98806cda-663d-4b4c-8d72-7a1d28ed4f58",
+    "name": "Quentin Tarantino",
+    "email": "quentin.tarantino@example.com",
+    "sheet": "Quentin keeps the communal compost turning and builds trellises from old pallets. He lends out his wheelbarrow and his opinions freely.",
+    "voice": "Fast, punchy and opinionated, with lots of energy."
+  },
+  {
+    "user_id": "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
+    "name": "Richard Branson",
+    "email": "richard.branson@example.com",
+    "sheet": "Richard organises the creek clean-up days and always turns up with a flask of tea for everyone. He says yes to any plan that gets people outdoors together.",
+    "voice": "Breezy and cheerful; the odd exclamation mark, used sparingly."
+  },
+  {
+    "user_id": "7d6e67f2-5c64-4175-8330-a0d1b2b9c45f",
+    "name": "Stephen Hawking",
+    "email": "stephen.hawking@example.com",
+    "sheet": "Stephen tutors maths for students facing exams and runs a 'bring a question' evening at the library. He loves a puzzle with no obvious answer and makes hard ideas feel within reach.",
+    "voice": "Precise and gently funny."
+  },
+  {
+    "user_id": "16f033ca-2b2c-4745-a537-82999209774c",
+    "name": "Steve Wozniak",
+    "email": "steve.wozniak@example.com",
+    "sheet": "Steve fixes radios, toasters and anything with a plug at the Repair Café, and teaches kids to solder at the Saturday tinker table. He is delighted by small, clever fixes.",
+    "voice": "Playful and generous; loves a neat little trick."
+  }
+]
