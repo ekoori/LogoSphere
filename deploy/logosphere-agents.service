@@ -1,0 +1,17 @@
+[Unit]
+Description=LogoSphere AI personas (backend/agents)
+After=network.target logosphere-backend.service
+Wants=logosphere-backend.service
+
+[Service]
+User=igor
+Group=igor
+WorkingDirectory=/srv/logosphere/backend
+EnvironmentFile=/srv/logosphere/backend/prod.env
+EnvironmentFile=/srv/logosphere/backend/agents.env
+ExecStart=/srv/logosphere/backend/.venv/bin/python -u -m agents.run
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

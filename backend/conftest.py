@@ -62,12 +62,16 @@ def db(app):
 
 
 @pytest.fixture(scope='session', autouse=True)
-def test_admin(app, db):
+def test_admin(request):
     """A platform admin for this run only. Joe Rogan is an AI persona now and
     no longer an admin, and no real person's account belongs in a test. The
     account (random password, never stored) and everything registration gave
     it are removed afterwards. While the suite runs the personas are paused,
     so they don't react to what the tests do."""
+    if not CASSANDRA_UP:
+        yield None          # unit tests (backend/agents/tests) need no database
+        return
+    app, db = request.getfixturevalue('app'), request.getfixturevalue('db')
     import secrets
     from datetime import datetime, timedelta
     from app.models.spheres import Sphere
