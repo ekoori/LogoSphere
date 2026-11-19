@@ -44,6 +44,9 @@ npm-debug.log*
 
 # dotenv environment variable files
 .env*
+# Server-side env files (prod.env, agents.env) hold secrets too.
+*.env
+.venv/
 # ...but keep the committed example template
 !.env.example
 
