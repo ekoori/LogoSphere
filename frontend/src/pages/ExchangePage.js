@@ -50,11 +50,13 @@ const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou, isA
             {isYou
                 ? <Link to="/profile" className="xc-participant-you">You</Link>
                 : (href ? <Link to={href}>{name}</Link> : <span>{name}</span>)}
-            {isAgent && <PersonaTag compact />}
+            {/* The persona label goes next to a person: for a group, the one acting for it. */}
+            {isAgent && !isEntity && !isYou && <PersonaTag compact />}
             {isEntity && actingName && (
                 <span className="xc-participant-via">
                     {' · via '}
                     {actingId ? <Link to={`/user?id=${actingId}`}>{actingName}</Link> : actingName}
+                    {isAgent && <PersonaTag compact />}
                 </span>
             )}
             <span className="xc-participant-role">{role}</span>

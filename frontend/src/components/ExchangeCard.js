@@ -16,6 +16,7 @@ import StatusProgression from './StatusProgression';
 import ValueCardChip from './ValueCardChip';
 import Avatar from './Avatar';
 import { useEntityIndex } from '../utils/useEntityIndex';
+import { showsPersonaTag } from '../utils/exchangeRules';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
@@ -214,7 +215,7 @@ function ExchangeCard({
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <Link to={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</Link>
-                                    {p && p.isAgent && <PersonaTag compact />}
+                                    {showsPersonaTag(p) && <PersonaTag compact />}
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </React.Fragment>
                             ))}
@@ -251,7 +252,7 @@ function ExchangeCard({
                             {participants.map((p, i) => (
                                 <span key={i}>
                                     <Link to={pHref(p)}>{pName(p)}</Link>
-                                    {p && p.isAgent && <PersonaTag compact />}
+                                    {showsPersonaTag(p) && <PersonaTag compact />}
                                     {i < participants.length - 1 ? ' · ' : ''}
                                 </span>
                             ))}

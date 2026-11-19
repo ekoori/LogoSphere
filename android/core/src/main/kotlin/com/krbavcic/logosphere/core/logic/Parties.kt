@@ -19,6 +19,12 @@ data class Party(
     val isAgent: Boolean = false,
 ) {
     val label: String get() = if (isViewer) "You" else name
+
+    /** The AI persona label goes next to this side's own name only for a person, never "You". */
+    val personaByName: Boolean get() = isAgent && group == null && !isViewer
+
+    /** A group is never labelled itself: the label goes next to the persona acting for it. */
+    val personaActsForGroup: Boolean get() = isAgent && group != null && actingUserName != null
 }
 
 object Parties {

@@ -420,10 +420,13 @@ private fun PartyRow(party: Party, role: String, onClick: () -> Unit) {
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(party.label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
-                if (party.isAgent && !party.isViewer) PersonaTag()
+                if (party.personaByName) PersonaTag()
             }
             val via = party.actingUserName?.let { " · via $it" }.orEmpty()
-            MetaText((group?.noun ?: "Person") + via)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                MetaText((group?.noun ?: "Person") + via, modifier = Modifier.weight(1f, fill = false))
+                if (party.personaActsForGroup) PersonaTag(compact = true)
+            }
         }
         QuietPill(role)
     }

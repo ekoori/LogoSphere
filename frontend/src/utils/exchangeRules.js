@@ -37,3 +37,13 @@ export const stepIndex = (status) => {
 /** Whether the follow-up step shows: a follow-up note exists, or the status says so. */
 export const hasFollowup = (xc) =>
     !!(xc.initiator_comment || xc.recipient_comment) || statusOf(xc) === XC_FOLLOWUP_STATUS;
+
+/**
+ * The AI persona label belongs next to a person: a side that is a group
+ * (alliance, project, sphere) is never labelled, even when a persona acted
+ * for it, and "You" isn't either. `party` is a mapped participant
+ * ({ name, kind, isAgent }).
+ */
+export const showsPersonaTag = (party) =>
+    !!party && typeof party === 'object' && !!party.isAgent
+    && (!party.kind || party.kind === 'user') && party.name !== 'You';

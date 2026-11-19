@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitingReceipt, canCancel, hasFollowup, isCancelled, nextStatus, stepIndex } from './exchangeRules';
+import { awaitingReceipt, canCancel, hasFollowup, isCancelled, nextStatus, showsPersonaTag, stepIndex } from './exchangeRules';
 
 const xc = (status, extra = {}) => ({ exchange_status: status, ...extra });
 
@@ -51,5 +51,20 @@ describe('progress', () => {
         expect(hasFollowup(xc('Receipted'))).toBe(false);
         expect(hasFollowup(xc('Receipted', { recipient_comment: 'Still grateful' }))).toBe(true);
         expect(hasFollowup(xc('Additional Comments Added'))).toBe(true);
+    });
+});
+
+describe('showsPersonaTag', () => {
+    it('labels a persona who is a side of the exchange', () => {
+        expect(showsPersonaTag({ name: 'Emma Watson', kind: 'user', isAgent: true })).toBe(true);
+        expect(showsPersonaTag({ name: 'Emma Watson', isAgent: true })).toBe(true);
+    });
+
+    it('never labels a group, even when a persona acted for it, nor "You" or a real person', () => {
+        expect(showsPersonaTag({ name: 'Repair Café Collective', kind: 'alliance', isAgent: true })).toBe(false);
+        expect(showsPersonaTag({ name: 'You', kind: 'user', isAgent: true })).toBe(false);
+        expect(showsPersonaTag({ name: 'Igor', kind: 'user', isAgent: false })).toBe(false);
+        expect(showsPersonaTag('Someone')).toBe(false);
+        expect(showsPersonaTag(null)).toBe(false);
     });
 });

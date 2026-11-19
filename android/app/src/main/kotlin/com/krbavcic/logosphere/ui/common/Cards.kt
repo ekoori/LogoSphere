@@ -50,7 +50,7 @@ fun PartyTag(party: Party, modifier: Modifier = Modifier) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false),
         )
-        if (party.isAgent && !party.isViewer) PersonaTag(compact = true)
+        if (party.personaByName) PersonaTag(compact = true)
     }
 }
 

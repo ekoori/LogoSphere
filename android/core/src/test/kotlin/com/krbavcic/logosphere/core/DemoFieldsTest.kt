@@ -37,6 +37,21 @@ class DemoFieldsTest {
     }
 
     @Test
+    fun aGroupIsNeverLabelledOnlyThePersonaActingForIt() {
+        val x = LogoSphereJson.decodeFromString<Exchange>(
+            """{"exchange_id": "x2", "user_id": "me", "initiator_id": "me", "initiator_kind": "user",
+                "other_user_id": "a1", "other_user_name": "Repair Café Collective", "other_kind": "alliance",
+                "recipient_acting_user_id": "p1", "recipient_acting_user_name": "Steve Wozniak",
+                "is_demo": true, "initiator_is_agent": true, "other_is_agent": true}""",
+        )
+        val group = Parties.recipient(x, "me")!!
+        assertFalse(group.personaByName)
+        assertTrue(group.personaActsForGroup)
+        // A persona viewing their own exchange sees "You", unlabelled.
+        assertFalse(Parties.initiator(x, "me").personaByName)
+    }
+
+    @Test
     fun theDemoInvitationDecodes() {
         val d = LogoSphereJson.decodeFromString<DemoStatus>(
             """{"spheres": [{"id": "s1", "name": "Riverside Commons", "joined": false, "member_count": 10}],
