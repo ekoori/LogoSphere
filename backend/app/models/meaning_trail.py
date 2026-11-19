@@ -5,7 +5,6 @@
 #    [-] user: Refers to the user who the meaning_trail is associated with.
 #    [-] exchange_history: List of last 100 exchanges done by the user.
 # Methods: 
-#    [-] add_exchange(cls, user_id, other_user_id, project_id): Adds a graded entry against a exchange in a user's trust trail.
 #    [-] get_meaning_trail(cls, user_id): fetches a complete MeaningTrail of a particular user with all associated like counts and stores it into rtansaction_history.
 #    [-] add_gratitude_comment(cls, exchange_id, gratitude_comment): Adds a gratitude_comment to a exchange
 #    [-] add_user_comment(cls, user_comment): Adds a user_comment to a gratitude comment.
@@ -124,6 +123,15 @@ class Likes(Model):
 
 
 
+# Columns no read loads unless it serves them (get_image).
+_NO_BLOB = ['exchange_image']
+
+
+def _started(row):
+    """Sort key for trails: when the exchange began (undated rows last)."""
+    return row.project_start_timestamp or datetime.min
+
+
 class MeaningTrail(Model):
     __keyspace__ = 'logosphere'
     __table_name__ = 'meaning_trail'
@@ -167,6 +175,11 @@ class MeaningTrail(Model):
     # Editable details (inherited from the opening, changeable until finished).
     exchange_long_description = columns.Text()
     exchange_image = columns.Blob()
+    # Whether exchange_image is set. Reads never load the blob itself (see
+    # _NO_BLOB): exchanges copy their opening's banner, so every trail row
+    # used to drag megabytes through the driver - enough to stall the
+    # connection until its heartbeat declared it dead.
+    has_image = columns.Boolean()
     # Structured context on the recipient's receipt (Time / Effort / Care / ...).
     gratitude_comment_context = columns.Text()
     # The opening this exchange was created from (for a "created from" link).
@@ -180,18 +193,6 @@ class MeaningTrail(Model):
     # meaning it was. gratitude_comment_cards keeps the display snapshot.
     gratitude_card_ids = columns.List(columns.UUID)
     gratitude_frankl_mode = columns.Text()
-
-    @classmethod
-    def add_exchange(cls, user_id, other_user_id, project_id):
-        try:
-            cls.create(
-                user_id=user_id,
-                other_user_id=other_user_id,
-                exchange_id=uuid.uuid4(),
-                project_id=project_id
-            )
-        except Exception as e:
-            print(f"Error occurred while adding a exchange: {e}")
 
     @classmethod
     def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
@@ -215,6 +216,7 @@ class MeaningTrail(Model):
                 exchange_description=description,
                 exchange_long_description=long_description,
                 exchange_image=image,
+                has_image=bool(image),
                 exchange_status='Initiated',
                 project_name=project_name,
                 project_start_timestamp=datetime.utcnow(),
@@ -287,7 +289,7 @@ class MeaningTrail(Model):
             'gratitude_comment_context': self.gratitude_comment_context,
             # Image bytes are served separately via /api/exchange/<id>/image to
             # keep the (potentially large) blob out of trail-list payloads.
-            'has_image': bool(self.exchange_image),
+            'has_image': bool(self.has_image),
         }
 
 
@@ -375,10 +377,12 @@ class MeaningTrail(Model):
             names, kinds = cls._name_map(), cls._kind_map()
             seen, meaning_trail = set(), []
             # Rows where the user is the initiator (efficient — partition key).
-            owned = list(cls.objects(user_id=target))
+            owned = list(cls.objects(user_id=target).defer(_NO_BLOB))
             # Rows where the user is the other participant (secondary index).
-            other = list(cls.objects(other_user_id=target).allow_filtering())
-            for row in owned + other:
+            other = list(cls.objects(other_user_id=target).allow_filtering().defer(_NO_BLOB))
+            # Newest first. Without this the trail read as "what I started,
+            # then what others started with me", each in id order.
+            for row in sorted(owned + other, key=_started, reverse=True):
                 if row.exchange_id in seen:
                     continue
                 seen.add(row.exchange_id)
@@ -402,7 +406,8 @@ class MeaningTrail(Model):
         (making the count appear to drop)."""
         try:
             pid = UUID(str(project_id))
-            rows = list(cls.objects.filter(project_id=pid).allow_filtering())
+            rows = sorted(cls.objects.filter(project_id=pid).allow_filtering().defer(_NO_BLOB),
+                          key=_started, reverse=True)
             names, kinds = cls._name_map(), cls._kind_map()
             return [cls._enrich(row, row.user_id, viewer_id, names, kinds) for row in rows]
         except Exception as e:
@@ -423,7 +428,10 @@ class MeaningTrail(Model):
         if acting_user_id and str(acting_user_id) == str(viewer_id):
             return True
         from app.utils.permissions import can_manage_entity
-        return can_manage_entity(side_id, viewer_id)
+        # The entity's own managers only: the platform-admin override made an
+        # admin every exchange's other side - even a person's - so an admin
+        # could write someone else's receipt (their endorsed record) for them.
+        return can_manage_entity(side_id, viewer_id, include_platform_admin=False)
 
     @classmethod
     def get_for_view(cls, exchange_id, viewer_id):
@@ -432,7 +440,7 @@ class MeaningTrail(Model):
         Returns (None, False, False) if the exchange doesn't exist."""
         try:
             tx = UUID(str(exchange_id))
-            rows = list(cls.objects.filter(exchange_id=tx).limit(1).allow_filtering())
+            rows = list(cls.objects.filter(exchange_id=tx).limit(1).allow_filtering().defer(_NO_BLOB))
             if not rows:
                 return None, False, False
             row = rows[0]
@@ -494,13 +502,13 @@ class MeaningTrail(Model):
 
             names, kinds = cls._name_map(), cls._kind_map()
             # Efficient path: current user is the initiator (full PK lookup)
-            rows = list(cls.objects(user_id=user_uuid, exchange_id=tx_uuid))
+            rows = list(cls.objects(user_id=user_uuid, exchange_id=tx_uuid).defer(_NO_BLOB))
             if rows:
                 return cls._enrich(rows[0], user_uuid, user_uuid, names, kinds), True
 
             # Fallback: current user is (or acts for / manages) either side.
             # exchange_id is a clustering key so we need allow_filtering to query without partition key.
-            all_rows = list(cls.objects.filter(exchange_id=tx_uuid).allow_filtering())
+            all_rows = list(cls.objects.filter(exchange_id=tx_uuid).allow_filtering().defer(_NO_BLOB))
             for row in all_rows:
                 if cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, user_uuid):
                     return cls._enrich(row, user_uuid, user_uuid, names, kinds), True
@@ -519,7 +527,7 @@ class MeaningTrail(Model):
         key, so this needs allow_filtering — acceptable for low-frequency actions."""
         try:
             rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
+                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
             return len(rows) > 0
         except Exception as e:
             print(f"Error checking exchange existence: {e}")
@@ -539,7 +547,7 @@ class MeaningTrail(Model):
         scan (this runs per confirmed acceptance inside the openings list)."""
         try:
             rows = list(cls.objects(
-                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))))
+                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))).defer(_NO_BLOB))
             if not rows:
                 return None
             row = rows[0]
@@ -559,7 +567,7 @@ class MeaningTrail(Model):
         initiator's note). After this the exchange is immutable."""
         try:
             rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
+                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
             if not rows:
                 return False
             r = rows[0]
@@ -574,7 +582,7 @@ class MeaningTrail(Model):
         (the single stored row). Callers enforce the not-finished rule."""
         try:
             rows = list(cls.objects(
-                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))))
+                user_id=UUID(str(initiator_id)), exchange_id=UUID(str(exchange_id))).defer(_NO_BLOB))
             if not rows:
                 return False
             fields = {}
@@ -584,6 +592,7 @@ class MeaningTrail(Model):
                 fields['exchange_long_description'] = long_description
             if image is not None:
                 fields['exchange_image'] = image
+                fields['has_image'] = bool(image)
             if fields:
                 rows[0].update(**fields)
             return True
@@ -650,7 +659,7 @@ class MeaningTrail(Model):
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
                 exchange_id=UUID(str(exchange_id))
-            ))
+            ).defer(_NO_BLOB))
             if rows:
                 row = rows[0]
                 fields = {'exchange_status': status}
@@ -674,7 +683,7 @@ class MeaningTrail(Model):
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
                 exchange_id=UUID(str(exchange_id))
-            ))
+            ).defer(_NO_BLOB))
             if not rows:
                 return False
             row = rows[0]
@@ -707,7 +716,7 @@ class MeaningTrail(Model):
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
                 exchange_id=UUID(str(exchange_id))
-            ))
+            ).defer(_NO_BLOB))
             if not rows:
                 return False
             now = datetime.utcnow()

@@ -17,20 +17,22 @@ def create_sphere(user_id=None):
         return response, 200
 
     try:
-        if 'multipart/form-data' in request.content_type:
+        # Same rules as alliances and projects: a name is required, and an
+        # image only arrives as a validated multipart upload. (A request with
+        # no Content-Type used to 500 here, and a nameless sphere was stored.)
+        image = None
+        if request.content_type and 'multipart/form-data' in request.content_type:
             data = request.form
-            image = request.files.get('image')
-            if image:
-                image = image.read()
+            image_file = request.files.get('image')
+            if image_file:
+                image = image_file.read()
+                if not is_supported_image(image):
+                    return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
         else:
-            data = request.get_json()
-            image = data.get('image')
+            data = request.get_json(silent=True) or {}
 
-        logger.debug(f"Received sphere creation data: {data}")
-        if not data:
-            logger.error("No data provided for sphere creation")
-            response = jsonify({'message': 'No data provided'})
-            return response, 400
+        if not (data.get('name') or '').strip():
+            return jsonify({'message': 'Sphere name is required'}), 400
 
         logger.info(f"Creating new sphere by user_id: {user_id}")
         
@@ -40,7 +42,7 @@ def create_sphere(user_id=None):
         # Create new sphere
         new_sphere = Sphere.create(
             data={
-                'name': data.get('name'),
+                'name': data.get('name').strip(),
                 'description': data.get('description'),
                 'meaning_graph': data.get('meaning_graph'),
                 'location': data.get('location'),

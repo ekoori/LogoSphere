@@ -12,10 +12,18 @@
 import logging
 from flask import request, jsonify, current_app as app
 from app.models.value_card import ValueCard
-from app.utils.permissions import can_manage_entity as _can_manage_entity
+from app.utils.permissions import can_manage_entity as _can_manage_entity, get_entity_info
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
+
+
+def _may_write_entity_cards(entity_id, user_id):
+    """Who may write an entity's value cards: managers of a real sphere,
+    alliance or project (or a platform admin). Never a person's Meaning Graph,
+    which only its owner writes - can_manage_entity alone is true for a
+    platform admin on ANY id, people included."""
+    return get_entity_info(entity_id) is not None and _can_manage_entity(entity_id, user_id)
 
 
 def get_value_cards(target_user_id):
@@ -85,7 +93,7 @@ def create_entity_value_card(entity_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        if not _can_manage_entity(entity_id, user_id):
+        if not _may_write_entity_cards(entity_id, user_id):
             return jsonify({'message': 'Not authorized to manage this entity'}), 403
         data = request.get_json()
         if not data or not data.get('care_about'):
@@ -103,7 +111,7 @@ def edit_entity_value_card(entity_id, card_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        if not _can_manage_entity(entity_id, user_id):
+        if not _may_write_entity_cards(entity_id, user_id):
             return jsonify({'message': 'Not authorized to manage this entity'}), 403
         data = request.get_json()
         if not data:
@@ -123,7 +131,7 @@ def delete_entity_value_card(entity_id, card_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        if not _can_manage_entity(entity_id, user_id):
+        if not _may_write_entity_cards(entity_id, user_id):
             return jsonify({'message': 'Not authorized to manage this entity'}), 403
         ValueCard.delete(entity_id, card_id)
         return jsonify({'message': 'deleted'}), 200
@@ -154,7 +162,7 @@ def clone_value_card(user_id=None):
         # Authorized targets: yourself, or an entity (sphere/alliance/project)
         # you manage — never an arbitrary other user or entity.
         is_self = str(target_id) == str(user_id)
-        if not is_self and not _can_manage_entity(target_id, user_id):
+        if not is_self and not _may_write_entity_cards(target_id, user_id):
             return jsonify({'message': 'Not authorized to add a value card there'}), 403
 
         clone_data = {
@@ -210,7 +218,7 @@ def endorse_entity_value_card(entity_id, card_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        if not _can_manage_entity(entity_id, user_id):
+        if not _may_write_entity_cards(entity_id, user_id):
             return jsonify({'message': 'Not authorized to manage this entity'}), 403
         card = ValueCard.endorse(entity_id, card_id)
         if not card:
@@ -226,7 +234,7 @@ def review_entity_value_card(entity_id, card_id, user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
-        if not _can_manage_entity(entity_id, user_id):
+        if not _may_write_entity_cards(entity_id, user_id):
             return jsonify({'message': 'Not authorized to manage this entity'}), 403
         card = ValueCard.mark_reviewed(entity_id, card_id)
         if not card:

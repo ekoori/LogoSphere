@@ -180,8 +180,11 @@ class Service:
 
     @classmethod
     def get_by_id(cls, service_id):
+        # Not SELECT *: that also pulled the banner blob through the driver on
+        # every opening view (megabytes, enough to stall the connection) only
+        # for _from_row to ignore it. get_image serves the image itself.
         row = cassandra_session.execute(
-            "SELECT * FROM services WHERE service_id = %s", [service_id]
+            f"SELECT {cls._LIST_COLS} FROM services WHERE service_id = %s", [service_id]
         ).one()
         return cls._from_row(row) if row else None
 

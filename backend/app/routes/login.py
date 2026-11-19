@@ -102,7 +102,8 @@ def login():
                 )
             )
 
-            logger.info(f'Session saved with ID: {session_id}')
+            # Never log the token itself: it is a bearer credential.
+            logger.info('Session saved for user %s', user_id)
             return response, 200
 
         else:
@@ -123,10 +124,9 @@ def check_session():
 
     try:
         session_id = get_session_token()
-        logger.info(f'Checking session for session_id: {str(session_id)}')
 
         if not session_id:
-            logger.info(f'No valid session_id found in cookies')
+            logger.debug('check_session: no session token on the request')
             response = jsonify({'status': 'inactive', 'user_id': None})
             return response, 200
 
@@ -172,10 +172,9 @@ def logout():
     
     try:
         session_id = get_session_token()
-        logger.info(f'Retrieved session_id for logout: {session_id}')
 
         if not session_id or not is_valid_uuid(session_id):
-            logger.error(f'Invalid or missing session_id for logout: {session_id}')
+            logger.warning('Logout without a valid session token')
             response = jsonify({'message': 'Invalid session_id'})
             return response, 400
 
@@ -188,7 +187,7 @@ def logout():
         response.set_cookie('session_id', '', expires=0, path='/')
         session.clear()  # Clear the session data
         
-        logger.info(f'Session deleted and user logged out with session_id: {session_id}')
+        logger.info('User logged out')
         return response, 200
     except Exception as e:
         logger.error(f'Error during logout: {e}')

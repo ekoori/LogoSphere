@@ -26,20 +26,27 @@ def test_tally_weights_delegations_transitively_and_direct_vote_overrides():
 
 
 @pytest.fixture
-def clean_alliance_governance(api, db):
+def clean_alliance_governance(api, db, keep_rows):
     """David joins Repair Cafe as a plain member for the test (Joe is a platform
-    admin, Marie a steward, Steve the Lead - none of them is 'just a member');
-    afterwards remove him and any proposals/votes/delegations, and reset the
-    alliance's policies."""
+    admin, Marie a steward, Steve the Lead - none of them is 'just a member').
+    Afterwards the alliance row (members, policies) is put back exactly, and
+    only the proposals, votes and delegations the test made are removed -
+    governance that already existed is left alone."""
+    aid = uuid.UUID(REPAIR_CAFE)
+    keep_rows('alliances', alliance_id=aid)
+    proposals_before = {r.proposal_id for r in db.execute(
+        'SELECT proposal_id FROM governance_proposals WHERE entity_id = %s', [aid])}
+    delegators_before = {r.delegator_id for r in db.execute(
+        'SELECT delegator_id FROM governance_delegations WHERE entity_id = %s', [aid])}
     api.post(f'/api/alliances/{REPAIR_CAFE}/join', who='david')
     yield
-    aid = uuid.UUID(REPAIR_CAFE)
-    api.post(f'/api/alliances/{REPAIR_CAFE}/members/{api.uid("david")}/role', who='joe', json={'role': 'remove'})
     for r in db.execute('SELECT proposal_id FROM governance_proposals WHERE entity_id = %s', [aid]):
-        db.execute('DELETE FROM governance_votes WHERE proposal_id = %s', [r.proposal_id])
-    db.execute('DELETE FROM governance_proposals WHERE entity_id = %s', [aid])
-    db.execute('DELETE FROM governance_delegations WHERE entity_id = %s', [aid])
-    db.execute("UPDATE alliances SET decision_policy = 'majority', confirm_policy = 'board', pm_policy = 'single-pm' WHERE alliance_id = %s", [aid])
+        if r.proposal_id not in proposals_before:
+            db.execute('DELETE FROM governance_votes WHERE proposal_id = %s', [r.proposal_id])
+            db.execute('DELETE FROM governance_proposals WHERE entity_id = %s AND proposal_id = %s', [aid, r.proposal_id])
+    for r in db.execute('SELECT delegator_id FROM governance_delegations WHERE entity_id = %s', [aid]):
+        if r.delegator_id not in delegators_before:
+            db.execute('DELETE FROM governance_delegations WHERE entity_id = %s AND delegator_id = %s', [aid, r.delegator_id])
 
 
 def test_governance_view_is_members_only(api):
@@ -60,7 +67,11 @@ def test_policy_proposal_lifecycle(api, clean_alliance_governance):
         'kind': 'policy', 'policy_key': 'confirm_policy', 'policy_value': 'any-member', 'days': 3})
     assert status == 201, p
     pid = p['proposal_id']
-    assert p['status'] == 'open' and p['tally']['eligible'] == 4   # Steve, Joe, Marie + David for this test
+    # Everyone in the alliance may vote: Steve, Joe, Marie, David (joined for this
+    # test) - and whoever else has joined on this database.
+    _, alliance = api.get(f'/api/alliances/{REPAIR_CAFE}', who='joe')
+    members = [m for m in alliance['members'] if m.get('role') != 'pending']
+    assert p['status'] == 'open' and p['tally']['eligible'] == len(members) >= 4
     # proposing the current value is refused
     assert api.post(f'/api/alliances/{REPAIR_CAFE}/proposals', who='joe', json={
         'kind': 'policy', 'policy_key': 'confirm_policy', 'policy_value': 'board'})[0] == 400
@@ -91,7 +102,7 @@ def test_policy_proposal_lifecycle(api, clean_alliance_governance):
     assert api.post(f'/api/alliances/{REPAIR_CAFE}/proposals/{pid}/vote', who='joe', json={'choice': 'no'})[0] == 409
     _, g = api.get(f'/api/alliances/{REPAIR_CAFE}/governance', who='joe')
     assert g['policies']['confirm_policy']['value'] == 'any-member'
-    assert [x['status'] for x in g['proposals']] == ['passed']
+    assert [x['status'] for x in g['proposals'] if x['proposal_id'] == pid] == ['passed']
 
 
 def test_motion_and_withdraw(api, clean_alliance_governance):
@@ -121,9 +132,9 @@ def test_managers_can_set_policies_directly_and_they_are_validated(api, clean_al
 
 
 @pytest.fixture
-def reopen_project(api):
+def reopen_project(keep_rows):
+    keep_rows('projects', project_id=TOOL_LIBRARY)
     yield
-    api.patch(f'/api/projects/{TOOL_LIBRARY}', who='joe', json={'phase': 'ongoing'})
 
 
 def test_closed_project_takes_no_openings(api, reopen_project):

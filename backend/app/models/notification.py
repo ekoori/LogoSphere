@@ -60,12 +60,16 @@ class Notification:
 
     @classmethod
     def mark_read(cls, user_id, created_at, notification_id):
+        """True if that notification exists (and is now read). IF EXISTS: a
+        plain UPDATE is an upsert, so a key that matched nothing - a wrong id, or
+        a created_at off by a millisecond - used to insert a blank notification
+        into the inbox while the real one stayed unread."""
         try:
-            cassandra_session.execute(
-                "UPDATE notifications SET is_read = true WHERE user_id = %s AND created_at = %s AND notification_id = %s",
+            result = cassandra_session.execute(
+                "UPDATE notifications SET is_read = true WHERE user_id = %s AND created_at = %s AND notification_id = %s IF EXISTS",
                 [uuid.UUID(str(user_id)), created_at, uuid.UUID(str(notification_id))]
             )
-            return True
+            return bool(result.was_applied)
         except Exception as e:
             logging.error(f'Error marking notification read: {e}')
             return False

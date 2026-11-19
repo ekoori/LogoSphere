@@ -5,7 +5,7 @@ from app.models.project import Project
 from app.models.value_card import ValueCard
 from app.models.user import User
 from app.models.spheres import Sphere
-from app.utils.permissions import can_manage_entity, get_entity_info, entity_sphere_ids, is_platform_admin
+from app.utils.permissions import founding_sphere_error, can_manage_entity, get_entity_info, entity_sphere_ids, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 
@@ -31,6 +31,9 @@ def create_project(user_id=None):
             return jsonify({'message': 'Project name is required'}), 400
         if not data.get('sphere_id'):
             return jsonify({'message': 'A sphere is required'}), 400
+        refused = founding_sphere_error(data['sphere_id'], user_id)
+        if refused:
+            return jsonify({'message': refused[0]}), refused[1]
         # Record the founder's display name so they aren't shown as a generic member.
         creator = User.get(str(user_id))
         creator_name = None

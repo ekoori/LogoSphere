@@ -5,7 +5,6 @@ the Cassandra-backed @validate_session decorator (consistent with the other
 routes), which injects the authenticated user_id.
 Methods:
     [x] get_meaning_trail() : GET/POST '/meaning_trail' — fetch a user's trust trail.
-    [x] add_exchange() : POST '/meaning_trail/add_exchange' — add a exchange.
 """
 
 import logging
@@ -206,23 +205,6 @@ def get_meaning_trail_by_project(project_id, user_id=None):
             and viewer not in (project.participants or []) and not is_platform_admin(viewer):
         return jsonify({'message': 'Project not found'}), 404
     return jsonify(MeaningTrail.get_by_project_id(project_id, viewer_id=user_id)), 200
-
-
-@validate_session
-def add_exchange(user_id=None):
-    if request.method == 'OPTIONS':
-        return app.make_default_options_response(), 200
-    try:
-        data = request.get_json() or {}
-        other_user_id = data['other_user_id']
-        project_id = data['project_id']
-        MeaningTrail.add_exchange(str(user_id), other_user_id, project_id)
-        return jsonify({'message': 'Exchange added successfully'}), 200
-    except KeyError as e:
-        return jsonify({'message': f'Missing field: {e}'}), 400
-    except Exception as e:
-        logger.error(f"Error in add_exchange: {e}")
-        return jsonify({'message': 'Internal server error'}), 500
 
 
 @validate_session

@@ -448,38 +448,6 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
       tags: [Meaning Trail]
 
-  /api/meaning_trail/add_exchange:
-    post:
-      summary: Start a new exchange
-      operationId: addExchange
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [other_user_id, project_id]
-              properties:
-                other_user_id: { type: string, format: uuid }
-                project_id: { type: string, format: uuid }
-      responses:
-        '200':
-          description: Exchange created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string, example: Exchange added successfully }
-        '400':
-          description: A required field is missing.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '500':
-          $ref: '#/components/responses/InternalError'
-      tags: [Meaning Trail]
-
   /api/meaning_trail/by_project/{project_id}:
     get:
       summary: Get all exchanges tied to a project
@@ -1289,9 +1257,9 @@ paths:
     get:
       summary: List openings
       description: >-
-        Filters out non-perpetual openings that are already in progress or
-        completed, and openings scoped to a sphere the caller isn't a member
-        of.
+        Newest first. Filters out non-perpetual openings that are already in
+        progress or completed, and openings scoped to a sphere the caller
+        isn't a member of.
       operationId: listOpenings
       responses:
         '200':
@@ -1426,7 +1394,12 @@ paths:
 
   /api/openings/{service_id}/reject:
     post:
-      summary: Reject a pending acceptance
+      summary: Decline a pending acceptance, or take your own back
+      description: >-
+        The provider (or a platform admin) declines someone's pending
+        acceptance; the accepting side - the person, the human who accepted
+        for a group, or that group's managers - may take its own back. A
+        one-time opening reopens to others.
       operationId: rejectOpeningAcceptance
       parameters:
         - $ref: '#/components/parameters/ServiceId'
@@ -1441,7 +1414,7 @@ paths:
                 accepter_id: { type: string, format: uuid }
       responses:
         '200':
-          description: Acceptance declined.
+          description: Acceptance declined (or taken back).
           content:
             application/json:
               schema:
@@ -1453,7 +1426,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
         '403':
-          description: Only the provider can reject acceptances.
+          description: Neither the provider nor the accepting side.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

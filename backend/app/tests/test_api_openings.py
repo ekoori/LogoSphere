@@ -9,11 +9,15 @@ OPENING = '2052e249-96e0-5b37-aaef-5a23ae361baf'   # Joe's perpetual "Sharing wh
 
 
 @pytest.fixture
-def exchange(api, db):
+def exchange(api, db, keep_rows):
     """Marie accepts Joe's perpetual opening and Joe confirms -> one exchange.
-    Yields its id; teardown deletes the exchange, acceptance, likes and any
-    version the test branched."""
+    Yields its id; teardown deletes the exchange, its likes and any version the
+    test branched, and puts the opening, Marie's acceptance and her like on it
+    back exactly as they were."""
     marie = api.uid('marie')
+    keep_rows('services', service_id=OPENING)
+    keep_rows('opening_acceptances', service_id=OPENING, accepter_id=marie)
+    keep_rows('opening_likes', service_id=OPENING, user_id=marie)
     status, body = api.post(f'/api/openings/{OPENING}/accept', who='marie', json={})
     assert status in (200, 201), body
     status, body = api.post(f'/api/openings/{OPENING}/confirm', who='joe', json={'accepter_id': marie})
@@ -21,15 +25,13 @@ def exchange(api, db):
     xid = body['exchange_id']
     created_versions = []
     yield {'id': xid, 'marie': marie, 'versions': created_versions}
-    joe, x, op, m = uuid.UUID(JOE), uuid.UUID(xid), uuid.UUID(OPENING), uuid.UUID(marie)
+    joe, x = uuid.UUID(JOE), uuid.UUID(xid)
     db.execute('DELETE FROM meaning_trail WHERE user_id = %s AND exchange_id = %s', [joe, x])
-    db.execute('DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s', [op, m])
+    db.execute('DELETE FROM receipt_photos WHERE exchange_id = %s', [x])
     for ct in ('exchange', 'gratitude', 'user', 'other'):
         db.execute('DELETE FROM likes WHERE exchange_id = %s AND comment_type = %s', [x, ct])
-    db.execute('DELETE FROM opening_likes WHERE service_id = %s AND user_id = %s', [op, m])
     for v in created_versions:
         db.execute('DELETE FROM services WHERE service_id = %s', [uuid.UUID(v)])
-    db.execute('UPDATE services SET is_current = true, title = %s WHERE service_id = %s', ['Sharing what I know', op])
 
 
 def test_second_confirm_is_idempotent(api, exchange):
@@ -100,13 +102,27 @@ def test_edit_after_exchange_branches_a_version(api, exchange):
     assert new_id in ids and OPENING not in ids
 
 
-def test_edit_without_exchange_updates_in_place(api, db):
+def test_platform_admin_is_not_the_other_side(api, exchange):
+    """Regression: the platform-admin override in can_manage_entity made an
+    admin count as every exchange's recipient - even when the recipient is a
+    person - so Joe could write Marie's receipt for her."""
+    xid = exchange['id']
+    status, body = api.get(f'/api/exchange/{xid}', who='joe')
+    assert status == 200
+    assert body['is_initiator'] is True and body['is_other'] is False
+    status, _ = api.post(f'/api/exchange/{xid}/comment', who='joe',
+                         json={'type': 'gratitude', 'text': 'Not mine to write.'})
+    assert status == 403
+    # Marie still is the other side.
+    _, as_marie = api.get(f'/api/exchange/{xid}', who='marie')
+    assert as_marie['is_other'] is True and as_marie['is_initiator'] is False
+
+
+def test_edit_without_exchange_updates_in_place(api, keep_rows):
     opening = '71887191-7e4c-5731-8f03-ba543bc778d6'   # Joe's "Looking for a helping hand" (no exchange)
-    try:
-        status, body = api.patch(f'/api/openings/{opening}', who='joe', json={'title': 'Looking for a helping hand (t)'})
-        assert status == 200 and body['versioned'] is False and body['service']['service_id'] == opening
-    finally:
-        db.execute('UPDATE services SET title = %s WHERE service_id = %s', ['Looking for a helping hand', uuid.UUID(opening)])
+    keep_rows('services', service_id=opening)
+    status, body = api.patch(f'/api/openings/{opening}', who='joe', json={'title': 'Looking for a helping hand (t)'})
+    assert status == 200 and body['versioned'] is False and body['service']['service_id'] == opening
 
 
 def test_only_the_provider_edits(api):
@@ -114,20 +130,39 @@ def test_only_the_provider_edits(api):
     assert status == 403
 
 
+def test_marketplace_lists_newest_first(api):
+    status, body = api.get('/api/openings', who='marie')
+    stamps = [o.get('created_at') or '' for o in body]
+    assert status == 200 and len(stamps) > 1 and stamps == sorted(stamps, reverse=True)
+
+
 # ── Platform admins are not parties to other people's openings ──────────────
-def test_platform_admin_can_accept_someone_elses_opening(api, db):
+def test_platform_admin_can_accept_someone_elses_opening(api, keep_rows):
     """Regression: an admin used to get 'You cannot accept your own opening'
     on EVERY opening, because the manage-anything override was also used to
     decide who the provider is."""
     _, items = api.get('/api/openings', who='joe')
-    theirs = next(o for o in items if o['provider_id'] != api.uid('joe') and o['cadence'] == 'perpetual')
+    # Another person's own ongoing opening - not one a group provides (Joe
+    # runs some, and those ARE his to provide), whatever order the list is in.
+    groups = {g.get(key) for path, key in (('/api/alliances', 'alliance_id'), ('/api/projects', 'project_id'))
+              for g in api.get(path, who='joe')[1]}
+    theirs = next(o for o in items if o['provider_id'] not in groups | {api.uid('joe')}
+                  and o['cadence'] == 'perpetual')
     assert theirs['is_provider'] is False and theirs['can_manage'] is True
     mine = next(o for o in items if o['id'] == OPENING)
     assert mine['is_provider'] is True and mine['can_manage'] is True
+    # An acceptance Joe already had on it (demo data) survives the test.
+    joe = api.uid('joe')
+    keep_rows('opening_acceptances', service_id=theirs['id'], accepter_id=joe)
     status, body = api.post(f"/api/openings/{theirs['id']}/accept", who='joe', json={})
     assert status == 200, body
-    db.execute('DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s',
-               [uuid.UUID(theirs['id']), uuid.UUID(api.uid('joe'))])
+    # ...but managing it doesn't let him confirm his own acceptance: that is the
+    # provider's consent. He sees it as his own, not as one awaiting him.
+    status, body = api.post(f"/api/openings/{theirs['id']}/confirm", who='joe', json={'accepter_id': joe})
+    assert status == 403, body
+    _, opening = api.get(f"/api/openings/{theirs['id']}", who='joe')
+    assert opening['my_acceptance']['status'] == 'pending'
+    assert all(p['accepter_id'] != joe for p in opening['pending_acceptances'])
 
 
 # ── Cancelling an opening ───────────────────────────────────────────────────
@@ -178,3 +213,98 @@ def test_confirmed_opening_cannot_be_cancelled(api, davids_opening):
         for who in ('david', 'marie'):
             db.execute('DELETE FROM meaning_trail WHERE user_id = %s AND exchange_id = %s',
                        [uuid.UUID(api.uid(who)), xid])
+
+
+# ── Declining, banners, exchange edits and receipt photos ────────────────────
+def test_provider_declines_an_acceptance(api, davids_opening):
+    sid = davids_opening
+    marie = api.uid('marie')
+    assert api.post(f'/api/openings/{sid}/accept', who='marie', json={})[0] == 200
+    _, page = api.get(f'/api/openings/{sid}', who='david')
+    assert [p['accepter_id'] for p in page['pending_acceptances']] == [marie]
+    # Only the providing side (or a platform admin) declines.
+    assert api.post(f'/api/openings/{sid}/reject', who='elon', json={'accepter_id': marie})[0] == 403
+    assert api.post(f'/api/openings/{sid}/reject', who='david', json={})[0] == 400
+    status, _ = api.post(f'/api/openings/{sid}/reject', who='david', json={'accepter_id': marie})
+    assert status == 200
+    _, page = api.get(f'/api/openings/{sid}', who='marie')
+    assert page['my_acceptance'] is None and page['status'] == 'Posted'      # open to others again
+    assert api.post(f'/api/openings/{sid}/reject', who='david', json={'accepter_id': marie})[0] == 404
+
+
+def test_accepter_takes_their_acceptance_back(api, davids_opening):
+    """Regression: only the provider could undo an acceptance, so someone who
+    changed their mind was stuck - and an admin's one way out withdrew the
+    whole opening for everyone."""
+    sid = davids_opening
+    marie = api.uid('marie')
+    assert api.post(f'/api/openings/{sid}/accept', who='marie', json={})[0] == 200
+    # Nobody else takes it back for her.
+    assert api.post(f'/api/openings/{sid}/reject', who='elon', json={'accepter_id': marie})[0] == 403
+    status, body = api.post(f'/api/openings/{sid}/reject', who='marie', json={'accepter_id': marie})
+    assert status == 200 and body['message'] == 'Acceptance taken back'
+    _, page = api.get(f'/api/openings/{sid}', who='marie')
+    assert page['my_acceptance'] is None and page['status'] == 'Posted'      # open to others again
+    # Once confirmed it is an exchange, and there is nothing left to take back.
+    assert api.post(f'/api/openings/{sid}/accept', who='marie', json={})[0] == 200
+    status, body = api.post(f'/api/openings/{sid}/confirm', who='david', json={'accepter_id': marie})
+    assert status == 200 and body['exchange_id'], body
+    xid = uuid.UUID(body['exchange_id'])
+    try:
+        assert api.post(f'/api/openings/{sid}/reject', who='marie', json={'accepter_id': marie})[0] == 409
+    finally:
+        from app.db import session as db
+        for who in ('david', 'marie'):
+            db.execute('DELETE FROM meaning_trail WHERE user_id = %s AND exchange_id = %s',
+                       [uuid.UUID(api.uid(who)), xid])
+
+
+def test_opening_banner_is_the_providers(app, api, davids_opening):
+    from conftest import PNG_1PX
+    import io
+    sid = davids_opening
+    upload = lambda who, data: api.post(f'/api/openings/{sid}/image', who=who, content_type='multipart/form-data',
+                                        data={'image': (io.BytesIO(data), 'banner.png')})
+    assert upload('marie', PNG_1PX)[0] == 403
+    assert upload('david', b'definitely not an image')[0] == 400
+    assert upload('david', PNG_1PX)[0] == 200
+    r = app.test_client().get(f'/api/openings/{sid}/image')       # public, for <img src>
+    assert r.status_code == 200 and r.data == PNG_1PX and r.mimetype == 'image/png'
+    _, page = api.get(f'/api/openings/{sid}', who='marie')
+    assert page['has_image'] is True and page.get('image') is None    # never inlined in JSON
+
+
+def test_exchange_edit_and_banner(app, api, exchange):
+    from conftest import PNG_1PX
+    import io
+    xid = exchange['id']
+    assert api.post(f'/api/exchange/{xid}/edit', who='elon', json={'title': 'Not mine'})[0] == 403
+    status, _ = api.post(f'/api/exchange/{xid}/edit', who='joe', json={'title': 'Edited title', 'description': 'Longer words'})
+    assert status == 200
+    _, x = api.get(f'/api/exchange/{xid}', who='marie')
+    assert x['exchange']['exchange_description'] == 'Edited title'
+    assert x['exchange']['exchange_long_description'] == 'Longer words'
+
+    status, _ = api.post(f'/api/exchange/{xid}/edit', who='marie', content_type='multipart/form-data',
+                         data={'image': (io.BytesIO(PNG_1PX), 'b.png')})
+    assert status == 200
+    r = api.client.get(f'/api/exchange/{xid}/image', headers={'Authorization': f"Bearer {api.login('joe')}"})
+    assert r.status_code == 200 and r.data == PNG_1PX
+    # Not public: the exchange image follows the exchange's visibility.
+    assert app.test_client().get(f'/api/exchange/{xid}/image').status_code == 401
+
+
+def test_receipt_photos_are_the_recipients(api, exchange):
+    from conftest import PNG_1PX
+    import io
+    xid = exchange['id']
+    photos = lambda n: {'photos': [(io.BytesIO(PNG_1PX), f'p{i}.png') for i in range(n)]}
+    status, _ = api.post(f'/api/exchange/{xid}/receipt_photos', who='joe', content_type='multipart/form-data', data=photos(1))
+    assert status == 403                                             # the initiator isn't the recipient
+    status, body = api.post(f'/api/exchange/{xid}/receipt_photos', who='marie', content_type='multipart/form-data',
+                            data=photos(4))
+    assert status == 200 and body['count'] == 3                      # at most three
+    _, x = api.get(f'/api/exchange/{xid}', who='joe')
+    assert x['exchange']['receipt_photo_count'] == 3
+    r = api.client.get(f'/api/exchange/{xid}/receipt_photo/0', headers={'Authorization': f"Bearer {api.login('joe')}"})
+    assert r.status_code == 200 and r.data == PNG_1PX

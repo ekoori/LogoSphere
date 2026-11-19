@@ -7,6 +7,37 @@ def test_login_returns_session_and_profile(api):
     assert body['session_id']
     assert body['data']['name'].startswith('Joe')
     assert 'password' not in body['data']
+    api.logout_token(body['session_id'])
+
+
+def test_login_response_carries_only_the_new_session(api):
+    """The user data in a login response must not carry a session token. It
+    used to include another live session of the same user (from an earlier
+    sign-in), handing out a second bearer credential."""
+    creds = {'email': 'marie.kondo@example.com', 'password': 'Marie'}
+    _, first = api.post('/api/login', json=creds)
+    status, second = api.post('/api/login', json=creds)
+    try:
+        assert status == 200
+        assert 'session_id' not in second['data']
+        assert second['session_id'] != first['session_id']
+    finally:
+        api.logout_token(first['session_id'])
+        api.logout_token(second['session_id'])
+
+
+def test_public_profile_hides_email_from_other_members(api):
+    marie = api.uid('marie')
+    status, body = api.get(f'/api/users/{marie}', who='david')
+    assert status == 200
+    assert body['name'].startswith('Marie')
+    assert 'email' not in body
+    assert 'session_id' not in body
+    # The person themself, and platform admins, still see it.
+    _, own = api.get(f'/api/users/{marie}', who='marie')
+    assert own['email'] == 'marie.kondo@example.com'
+    _, admin = api.get(f'/api/users/{marie}', who='joe')
+    assert admin['email'] == 'marie.kondo@example.com'
 
 
 def test_bad_password_is_401_with_message(api):

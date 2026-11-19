@@ -23,8 +23,11 @@ def test_session_rebuilds_after_the_cluster_dies(app, db):
     assert isinstance(list(MeaningTrail.objects.all().limit(1)), list)
 
     # and the Flask session interface (plain queries, no stale prepared statements)
-    r = app.test_client().post('/api/login', json={'email': 'joe.rogan@example.com', 'password': 'Joe'})
+    client = app.test_client()
+    r = client.post('/api/login', json={'email': 'joe.rogan@example.com', 'password': 'Joe'})
     assert r.status_code == 200
+    # The session this made is ended again, so the run leaves no sessions behind.
+    client.post('/api/logout', headers={'Authorization': f"Bearer {r.get_json()['session_id']}"})
 
 
 def test_raw_and_orm_sessions_do_not_share_a_cluster(db):

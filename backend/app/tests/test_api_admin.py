@@ -17,7 +17,8 @@ def test_admin_endpoints_are_platform_admin_only(api):
     assert any(a['email'] == 'joe.rogan@example.com' for a in body['platform_admins'])
 
 
-def test_user_list_and_admin_flag_guards(api):
+def test_user_list_and_admin_flag_guards(api, keep_rows):
+    keep_rows('users', user_id=api.uid('david'))
     status, body = api.get('/api/admin/users', who='joe')
     assert status == 200
     users = {u['email']: u for u in body['users']}
@@ -43,13 +44,13 @@ def test_user_list_and_admin_flag_guards(api):
     assert status == 403
 
 
-def test_admin_edits_a_users_name(api, db):
+def test_admin_edits_a_users_name(api, keep_rows):
     david = api.uid('david')
+    keep_rows('users', user_id=david)   # David keeps his own location afterwards
     status, body = api.patch(f'/api/admin/users/{david}', who='joe', json={'location': 'Bristol'})
     assert status == 200 and body['user']['location'] == 'Bristol'
     status, _ = api.patch(f'/api/admin/users/{david}', who='joe', json={'name': ''})
     assert status == 400
-    db.execute('UPDATE users SET location = null WHERE user_id = %s', [uuid.UUID(david)])
 
 
 @pytest.fixture

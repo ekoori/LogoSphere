@@ -178,3 +178,21 @@ def get_entity_info(entity_id):
         return {'kind': 'project', 'name': row.name}
 
     return None
+
+
+def founding_sphere_error(sphere_id, user_id):
+    """Why `user_id` may not found an alliance or project inside `sphere_id`, as
+    (message, status) - or None if they may. As with joining one, its founder
+    must belong to the sphere (a platform admin may act anywhere), and the
+    sphere must exist: creation used to accept any sphere id, even a private
+    sphere the founder wasn't in, or one that doesn't exist."""
+    from app.models.spheres import Sphere
+    try:
+        sid = uuid.UUID(str(sphere_id))
+    except (ValueError, TypeError):
+        return 'Unknown sphere', 400
+    if not Sphere.get_by_id(sid):
+        return 'Sphere not found', 404
+    if is_platform_admin(user_id) or sid in Sphere.member_sphere_ids(user_id):
+        return None
+    return 'Join the sphere first', 403

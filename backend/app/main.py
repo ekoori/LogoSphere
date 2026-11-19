@@ -34,7 +34,7 @@ from app.routes.cassandra import CassandraSessionInterface
 from app.routes.login import login, logout, check_session
 from app.routes.profile import get_user, get_profile, update_user, get_public_user, get_user_avatar, toggle_follow, get_following
 from app.routes.registration import register
-from app.routes.meaning_trail import get_meaning_trail, get_meaning_trail_by_project, add_exchange, get_exchange, update_xc_status, add_xc_comment, like_exchange, edit_exchange, get_exchange_image, upload_receipt_photos, get_receipt_photo
+from app.routes.meaning_trail import get_meaning_trail, get_meaning_trail_by_project, get_exchange, update_xc_status, add_xc_comment, like_exchange, edit_exchange, get_exchange_image, upload_receipt_photos, get_receipt_photo
 from app.models.user import User
 from app.routes.spheres import create_sphere, get_spheres, update_sphere_governance, get_public_sphere
 from app.routes import entities as entity_routes
@@ -116,7 +116,6 @@ app.add_url_rule('/api/following', view_func=get_following, methods=['GET', 'OPT
 app.add_url_rule('/api/updateuser', view_func=update_user, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/register', view_func=register, methods=['POST'])
 app.add_url_rule('/api/meaning_trail', view_func=get_meaning_trail, methods=['GET', 'POST', 'OPTIONS'])
-app.add_url_rule('/api/meaning_trail/add_exchange', view_func=add_exchange, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/meaning_trail/by_project/<project_id>', view_func=get_meaning_trail_by_project, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/exchange/<exchange_id>', view_func=get_exchange, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/exchange/<exchange_id>/status', view_func=update_xc_status, methods=['POST', 'OPTIONS'])

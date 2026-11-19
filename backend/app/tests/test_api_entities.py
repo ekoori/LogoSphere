@@ -79,13 +79,12 @@ def test_role_change_guards(api):
 
 
 @pytest.fixture
-def approval_project(api):
-    """Put Community Tool Library on join_policy=approval for one test, then
-    restore it and make sure David is not left as a member."""
+def approval_project(api, keep_rows):
+    """Put Community Tool Library on join_policy=approval for one test; the
+    project row (policy, members, roles) is put back exactly afterwards."""
+    keep_rows('projects', project_id=TOOL_LIBRARY)
     api.patch(f'/api/projects/{TOOL_LIBRARY}', who='joe', json={'join_policy': 'approval'})
     yield TOOL_LIBRARY
-    api.post(f'/api/projects/{TOOL_LIBRARY}/members/{api.uid("david")}/role', who='joe', json={'role': 'remove'})
-    api.patch(f'/api/projects/{TOOL_LIBRARY}', who='joe', json={'join_policy': 'open'})
 
 
 def test_join_approval_flow(api, approval_project):
@@ -118,16 +117,93 @@ def test_founder_cannot_be_removed(api):
     assert status == 400 and 'founder' in body['message'].lower()
 
 
-def test_public_sphere_endpoint_only_for_public_spheres(api):
-    assert api.get(f'/api/public/spheres/{RIVERSIDE}')[0] == 404
+def test_public_sphere_endpoint_only_for_public_spheres(api, keep_rows):
+    # Whatever AI Commons' flag is on this database, it's put back afterwards
+    # (the demo data on ts.krbavcic.com has Riverside public, so no sphere's
+    # flag is assumed).
+    keep_rows('spheres', sphere_id=AI_COMMONS)
+    api.post(f'/api/spheres/{AI_COMMONS}/governance', who='joe', json={'is_public': False})
+    assert api.get(f'/api/public/spheres/{AI_COMMONS}')[0] == 404
     api.post(f'/api/spheres/{AI_COMMONS}/governance', who='joe', json={'is_public': True})
-    try:
-        status, d = api.get(f'/api/public/spheres/{AI_COMMONS}')
-        assert status == 200 and d['is_public'] is True and 'openings' in d
-    finally:
-        api.post(f'/api/spheres/{AI_COMMONS}/governance', who='joe', json={'is_public': False})
+    status, d = api.get(f'/api/public/spheres/{AI_COMMONS}')
+    assert status == 200 and d['is_public'] is True and 'openings' in d
 
 
 def test_sandbox_flag_is_platform_admin_only(api):
     status, _ = api.post(f'/api/spheres/{RIVERSIDE}/governance', who='marie', json={'is_sandbox': True})
     assert status == 403
+
+
+# ── Founding spheres, alliances and projects; banners ───────────────────────
+@pytest.fixture
+def founded(db):
+    """(table, id column, id) of everything a test founds; deleted afterwards."""
+    import uuid
+    made = []
+    yield made
+    for table, column, eid in made:
+        db.execute(f'DELETE FROM {table} WHERE {column} = %s', [uuid.UUID(eid)])
+
+
+def test_a_sphere_needs_a_name(api):
+    assert api.post('/api/spheres', who='marie', json={'description': 'nameless'})[0] == 400
+    assert api.post('/api/spheres', who='marie', json={'name': '   '})[0] == 400
+    assert api.post('/api/spheres', who='marie', content_type='multipart/form-data', data={'description': 'x'})[0] == 400
+    # No Content-Type at all is a clean 400 (it used to be a 500).
+    r = api.client.post('/api/spheres', headers={'Authorization': f"Bearer {api.login('marie')}"})
+    assert r.status_code == 400
+
+
+def test_found_a_sphere(api, founded):
+    import io
+    status, s = api.post('/api/spheres', who='marie', json={'name': 'Test sphere (delete me)', 'description': 'temporary'})
+    assert status == 201 and s['name'] == 'Test sphere (delete me)'
+    founded.append(('spheres', 'sphere_id', s['sphere_id']))
+    _, detail = api.get(f"/api/spheres/{s['sphere_id']}", who='marie')
+    assert detail['can_manage'] is True and str(detail['admin1']) == api.uid('marie')
+    status, _ = api.post('/api/spheres', who='marie', content_type='multipart/form-data',
+                         data={'name': 'Bad image sphere', 'image': (io.BytesIO(b'not an image at all'), 'x.png')})
+    assert status == 400
+
+
+def test_found_an_alliance_inside_your_sphere(api, founded):
+    assert api.post('/api/alliances', who='marie', json={'sphere_id': RIVERSIDE})[0] == 400          # no name
+    assert api.post('/api/alliances', who='marie', json={'name': 'Test alliance'})[0] == 400        # no sphere
+    assert api.post('/api/alliances', who='marie', json={'name': 'T', 'sphere_id': NIL})[0] == 404   # no such sphere
+    # Elon belongs to AI Commons only: he can't found an alliance in Riverside.
+    assert api.post('/api/alliances', who='elon', json={'name': 'Test alliance', 'sphere_id': RIVERSIDE})[0] == 403
+    status, a = api.post('/api/alliances', who='marie', json={'name': 'Test alliance (delete me)', 'sphere_id': RIVERSIDE})
+    assert status == 201, a
+    aid = a.get('alliance_id') or a.get('id')
+    founded.append(('alliances', 'alliance_id', aid))
+    _, detail = api.get(f'/api/alliances/{aid}', who='marie')
+    assert detail['name'] == 'Test alliance (delete me)'
+    assert any(m['id'] == api.uid('marie') for m in detail['members'])
+
+
+def test_found_a_project_inside_your_sphere(api, founded):
+    assert api.post('/api/projects', who='elon', json={'name': 'Test project', 'sphere_id': RIVERSIDE})[0] == 403
+    assert api.post('/api/projects', who='marie', json={'name': 'Test project', 'sphere_id': NIL})[0] == 404
+    status, p = api.post('/api/projects', who='marie', json={'name': 'Test project (delete me)', 'sphere_id': RIVERSIDE})
+    assert status == 201, p
+    founded.append(('projects', 'project_id', p.get('project_id') or p.get('id')))
+
+
+def test_banners_are_for_managers(app, api, founded):
+    import io
+    from conftest import PNG_1PX
+    status, p = api.post('/api/projects', who='marie', json={'name': 'Test banner project (delete me)', 'sphere_id': RIVERSIDE})
+    assert status == 201, p
+    pid = p.get('project_id') or p.get('id')
+    founded.append(('projects', 'project_id', pid))
+
+    def upload(who, data, target=pid):
+        return api.post(f'/api/projects/{target}/image', who=who, content_type='multipart/form-data',
+                        data={'image': (io.BytesIO(data), 'banner.png')})[0]
+
+    assert upload('david', PNG_1PX) == 403
+    assert upload('marie', b'not an image, not at all') == 400
+    assert upload('marie', PNG_1PX) == 200
+    r = app.test_client().get(f'/api/projects/{pid}/image')            # public, for <img src>
+    assert r.status_code == 200 and r.data == PNG_1PX
+    assert upload('marie', PNG_1PX, target=NIL) == 404

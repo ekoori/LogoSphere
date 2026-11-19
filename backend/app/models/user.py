@@ -14,7 +14,6 @@
 #    [+] to_dict(self): Returns the user's details as a dictionary.
 #    [+] register(cls, data): Registers a new user in the system and stores the user details in Cassandra.
 #    [+] login(cls, data): Authenticates a user by checking the provided credentials against stored records in Cassandra.
-#    [+] get_existing_session(cls, user_id): Retrieves an existing session ID for a user if one exists and is active.
 #    [+] check_session(cls, session_id): Verifies if a session with the given session_id is still active.
 #    [+] logout(cls, session_id): Logs out a user by deleting their session from Cassandra.
 #    [+] get(user_id): Fetches the user with the given user_id from the database.
@@ -27,7 +26,6 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
-import base64
 
 # Basic email shape check + minimum password length. This is input validation,
 # not account/ownership verification (no confirmation email is sent).
@@ -44,6 +42,10 @@ class User(UserMixin):
         self.surname = None
         self.location = None
         self.profile_picture = None
+        # Whether a profile picture is stored. The picture itself is never
+        # read here (get_picture serves it): it went out base64-encoded in
+        # every check_session and profile response - megabytes per call.
+        self.has_picture = False
         self.session_id = session_id
 
 
@@ -51,15 +53,17 @@ class User(UserMixin):
         # Local import avoids any module load-order coupling with the
         # permissions helper (which reads the credentials table).
         from app.utils.permissions import is_platform_admin
+        # No session_id here: a user's data must never carry a session token
+        # (routes/login.py returns the new session separately).
         return {
             'name': self.name,
             'user_id': str(self.user_id),
             'email': self.email,
-            'session_id': str(self.session_id) if self.session_id else None,
             'surname': self.surname,
             'location': self.location,
             'is_platform_admin': is_platform_admin(self.user_id),
-            'profile_picture': base64.b64encode(self.profile_picture).decode('utf-8') if self.profile_picture else None
+            # The picture itself is served by /api/users/<id>/avatar.
+            'has_picture': bool(self.has_picture),
         }
 
 
@@ -128,18 +132,11 @@ class User(UserMixin):
                     user_details = cassandra_session.execute(user_details_query, (row.user_id,)).one()
 
                     if user_details:
-                        # Create User instance with all required fields
-                        user = cls(name=user_details.name, email=row.email, user_id=row.user_id)
-
-                        # Get existing session ID, if any
-                        existing_session_id = cls.get_existing_session(user.user_id)
-                        if existing_session_id:
-                            user.session_id = str(existing_session_id)
-                        else:
-                            user.session_id = None
-
-                        logging.info(f'User logged in with session_id: {user.session_id}')
-                        return user
+                        # The caller (routes/login.py) creates the new session. No
+                        # other session of this user is looked up or returned: the
+                        # login response used to carry one (a second live token)
+                        # inside its user data.
+                        return cls(name=user_details.name, email=row.email, user_id=row.user_id)
                     else:
                         logging.error('User details not found in the users table')
                         return None
@@ -151,36 +148,21 @@ class User(UserMixin):
             logging.error(f'Error during login: {e}')
             return None
 
-    @classmethod
-    def get_existing_session(cls, user_id):
-        # user_id is backed by a secondary index; filter expiry in Python so we
-        # avoid a non-key range predicate (which would force ALLOW FILTERING).
-        query = "SELECT session_id, expire_at FROM sessions WHERE user_id = %s"
-        rows = cassandra_session.execute(query, (user_id,))
-
-        now = datetime.utcnow()
-        for row in rows:
-            if row.expire_at and row.expire_at > now:
-                return row.session_id
-
-        return None
-
+    # Session tokens are bearer credentials: they are never written to the logs.
     @classmethod
     def check_session(cls, session_id):
         try:
-            logging.info(f'Checking session with session_id: {session_id}')
             query = "SELECT * FROM sessions WHERE session_id = %s"
             rows = cassandra_session.execute(query, (uuid.UUID(session_id),))  # Ensure session_id is converted to UUID
 
             for row in rows:
                 if row.expire_at > datetime.utcnow():
-                    logging.info(f'Session is active for session_id: {session_id}')
                     if isinstance(row.user_id, uuid.UUID):
                         return row.user_id
                     else:
                         logging.error(f"Invalid user_id found: {row.user_id}")
                         return None
-            logging.error(f'Session is inactive or expired for session_id: {session_id}')
+            logging.info('Session is inactive or expired')
             return None
         except Exception as e:
             logging.error(f'Error during session check: {e}')
@@ -189,11 +171,10 @@ class User(UserMixin):
     @classmethod
     def logout(cls, session_id):
         try:
-            logging.info(f'Logging out session with session_id: {session_id}')
             session_uuid = uuid.UUID(session_id)
             query = "DELETE FROM sessions WHERE session_id = %s"
-            result = cassandra_session.execute(query, (session_uuid,))
-            logging.info(f'Session with session_id {session_id} has been deleted. Result: {result}')
+            cassandra_session.execute(query, (session_uuid,))
+            logging.info('Session deleted on logout')
         except Exception as e:
             logging.error(f'Error during logout: {e}')
 
@@ -207,20 +188,32 @@ class User(UserMixin):
 
         try:
             logging.info(f'user.py: Fetching user with user_id: {user_id}')
-            query = "SELECT user_id, email, name, surname, location, profile_picture FROM users WHERE user_id = %s"
+            # writetime() tells whether a picture is set without loading it.
+            query = ("SELECT user_id, email, name, surname, location, writetime(profile_picture) AS picture_wt "
+                     "FROM users WHERE user_id = %s")
             rows = cassandra_session.execute(query, (user_id,))
 
             for row in rows:
                 user = cls(name=row.name, email=row.email, user_id=row.user_id)
                 user.surname = row.surname
                 user.location = row.location
-                user.profile_picture = row.profile_picture
+                user.has_picture = row.picture_wt is not None
                 return user
 
             logging.error(f'User not found with user_id: {user_id}')
             return None
         except Exception as e:
             logging.error(f'Error fetching user: {e}')
+            return None
+
+    @classmethod
+    def get_picture(cls, user_id):
+        """The stored profile picture's bytes, or None (for the avatar endpoint)."""
+        try:
+            row = cassandra_session.execute(
+                "SELECT profile_picture FROM users WHERE user_id = %s", [uuid.UUID(str(user_id))]).one()
+            return row.profile_picture if row else None
+        except (ValueError, TypeError):
             return None
 
     @classmethod

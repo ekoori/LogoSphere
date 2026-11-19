@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.follow import Follow
 from app.models.notification import Notification
 from app.utils.validation import is_supported_image
+from app.utils.permissions import is_platform_admin
 from app.middleware.session_middleware import validate_session
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,10 @@ def toggle_follow(target_id, user_id=None):
     try:
         if str(target_id) == str(user_id):
             return jsonify({'message': "You can't follow yourself"}), 400
+        # Following an id that is nobody stored a follow row and a notification
+        # for a person who doesn't exist.
+        if not User.get(str(target_id)):
+            return jsonify({'message': 'User not found'}), 404
         following = Follow.toggle(user_id, target_id)
         if following:
             follower = User.get(str(user_id))
@@ -89,12 +94,12 @@ def get_user_avatar(target_id):
     the browser console isn't spammed with 404s for every avatar-less user."""
     try:
         user = User.get(str(target_id))
-        if not user or not user.profile_picture:
+        data = User.get_picture(target_id) if user and user.has_picture else None
+        if not data:
             name = (f"{user.name or ''} {user.surname or ''}".strip() if user else '')
             resp = Response(_initials_avatar_svg(name), mimetype='image/svg+xml')
             resp.headers['Cache-Control'] = 'public, max-age=300'
             return resp
-        data = user.profile_picture
         if data[:8] == b'\x89PNG\r\n\x1a\n':
             ctype = 'image/png'
         elif data[:6] in (b'GIF87a', b'GIF89a'):
@@ -158,6 +163,11 @@ def get_public_user(target_id, user_id=None):
         if not user:
             return jsonify({'message': 'User not found'}), 404
         d = user.to_dict()
+        # Email addresses are private: any signed-in member could otherwise read
+        # every member's address by walking user ids. Only the person themself
+        # and platform admins (who already see it in the admin console) get it.
+        if str(target_id) != str(user_id) and not is_platform_admin(user_id):
+            d.pop('email', None)
         # Whether the viewer follows this user, + their follower/following counts.
         d['is_following'] = (str(target_id) != str(user_id)) and Follow.is_following(user_id, target_id)
         d['following_count'] = Follow.following_count(target_id)
@@ -212,8 +222,10 @@ def update_user(user_id=None):
                 if not is_supported_image(profile_picture):
                     return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
         else:
-            data = request.get_json()
-            profile_picture = data.get('profile_picture')
+            data = request.get_json(silent=True)
+            # A picture only arrives as a validated multipart upload; a JSON
+            # value would go into the blob column unchecked.
+            profile_picture = None
 
         logger.debug(f"Received update data: {data}")
         if not data:

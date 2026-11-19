@@ -169,7 +169,9 @@ for col in ["ADD initiator_acting_user_id uuid", "ADD initiator_acting_user_name
             # The opening this exchange was created from, and per-stage
             # transition timestamps for the progress bar.
             "ADD source_service_id uuid", "ADD in_progress_at timestamp",
-            "ADD finished_at timestamp", "ADD receipted_at timestamp"]:
+            "ADD finished_at timestamp", "ADD receipted_at timestamp",
+            # Whether exchange_image is set, so reads never load the blob.
+            "ADD has_image boolean"]:
     r = run(f"ALTER TABLE logosphere.meaning_trail {col}")
     if r is True:
         print(f"[OK]   meaning_trail: {col}")

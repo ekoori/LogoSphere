@@ -13,6 +13,7 @@ monkey.patch_all()
 import os
 import socket
 import sys
+import uuid
 import pytest
 
 os.environ.setdefault('CASSANDRA_HOST', '127.0.0.1')
@@ -37,6 +38,9 @@ USERS = {
     'david': ('david.attenborough@example.com', 'David'),  # Riverside member, not in Tool Library
     'elon': ('elon.musk@example.com', 'Elon'),        # AI Commons only - not in Riverside
 }
+# A 1x1 PNG, for image upload tests.
+PNG_1PX = __import__('base64').b64decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
 RIVERSIDE = '11111111-1111-1111-1111-111111111111'
 AI_COMMONS = '22222222-2222-2222-2222-222222222222'
 REPAIR_CAFE = 'aaaaaaaa-0000-0000-0000-000000000001'
@@ -99,10 +103,67 @@ class Api:
         self.login(who)
         return self.ids[who]
 
+    def logout_token(self, token):
+        """Ends a session a test created outside login() (e.g. by logging in itself)."""
+        self.client.post('/api/logout', headers={'Authorization': f'Bearer {token}'})
+
 
 @pytest.fixture(scope='session')
-def api(app):
-    return Api(app.test_client())
+def api(app, db):
+    """The shared client. When the session ends it logs its test accounts out
+    and removes the notifications they caused, so a run against a database
+    whose data matters (the demo data on ts.krbavcic.com) leaves no trace."""
+    import datetime
+    started = datetime.datetime.utcnow() - datetime.timedelta(seconds=5)
+    client = Api(app.test_client())
+    yield client
+    for who in list(client.tokens):
+        client.post('/api/logout', who=who)
+    actors = [uuid.UUID(i) for i in client.ids.values()]
+    if actors:
+        for r in db.execute('SELECT user_id, created_at, notification_id, actor_id FROM notifications '
+                            'WHERE created_at > %s ALLOW FILTERING', [started]):
+            if r.actor_id in actors:
+                db.execute('DELETE FROM notifications WHERE user_id = %s AND created_at = %s AND notification_id = %s',
+                           [r.user_id, r.created_at, r.notification_id])
+
+
+@pytest.fixture
+def keep_rows(db):
+    """Puts rows back exactly as the test found them, whatever the test does to
+    them: `keep_rows('users', user_id=david)` before changing David's row. A row
+    that didn't exist is deleted again; one that did is re-inserted with every
+    column (via SELECT JSON / INSERT JSON). Teardowns used to write fixed "seed"
+    values instead, which on real data cost e.g. David his location."""
+    saved = []
+
+    def as_key(v):
+        # Ids arrive as strings; other key values (timestamps) pass through.
+        if isinstance(v, str):
+            try:
+                return uuid.UUID(v)
+            except ValueError:
+                return v
+        return v
+
+    def keep(table, **key):
+        key = {c: as_key(v) for c, v in key.items()}
+        where = ' AND '.join(f'{c} = %s' for c in key)
+        # Image blobs are left out (and left alone on restore, DEFAULT UNSET):
+        # no test changes them, and reading megabytes of image through the
+        # driver can stall the connection until its heartbeat gives up.
+        columns = [r.column_name for r in db.execute(
+            'SELECT column_name, type FROM system_schema.columns WHERE keyspace_name = %s AND table_name = %s',
+            ['logosphere', table]) if r.type != 'blob']
+        row = db.execute(f'SELECT JSON {", ".join(columns)} FROM {table} WHERE {where}', list(key.values())).one()
+        saved.append((table, where, list(key.values()), row[0] if row else None))
+
+    yield keep
+    for table, where, values, raw in reversed(saved):
+        if raw is None:
+            db.execute(f'DELETE FROM {table} WHERE {where}', values)
+        else:
+            db.execute(f'INSERT INTO {table} JSON %s DEFAULT UNSET', [raw])
 
 
 _EXIT = {'status': 0}

@@ -86,7 +86,12 @@ def _enrich_service(s, viewer, include_exchanges=False):
     d['liked_by'] = Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False
-    d['pending_acceptances'] = Service.acceptances(sid, status='pending') if can_manage else []
+    pending = Service.acceptances(sid, status='pending') if can_manage else []
+    # Your own acceptance is never yours to confirm (a platform admin can
+    # manage other people's openings and accept them too); it reaches you as
+    # my_acceptance instead.
+    d['pending_acceptances'] = [a for a in pending
+                                if viewer is None or str(viewer) not in (a['accepter_id'], a.get('acting_user_id'))]
     # Resolve the viewer's own acceptance even when they accepted on behalf of
     # an entity (the row is keyed by the entity, not the human).
     d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer) if viewer else None
@@ -235,6 +240,9 @@ def get_services(user_id=None):
                 continue
 
             services.append(_enrich_service(s, viewer))
+        # Newest first: the table's own order is by partition-key token, which
+        # reads as random to a person browsing the marketplace.
+        services.sort(key=lambda d: d.get('created_at') or '', reverse=True)
         logger.info(f"Retrieved {len(services)} services")
         return jsonify(services), 200
     except Exception as e:
@@ -382,6 +390,11 @@ def confirm_service(service_id, user_id=None):
         acceptance = Service.get_acceptance(service_uuid, accepter_uuid)
         if not acceptance:
             return jsonify({'message': 'No such acceptance'}), 404
+        # Confirming is the providing side's consent. A platform admin may
+        # manage any opening, but must not confirm their own acceptance - that
+        # would start an exchange the provider never agreed to.
+        if str(user_id) in (str(acceptance['accepter_id']), str(acceptance.get('acting_user_id'))):
+            return jsonify({'message': "You can't confirm your own acceptance - the provider confirms it"}), 403
         if acceptance['status'] == 'confirmed':
             return jsonify({'message': 'Already confirmed',
                             'exchange_id': acceptance['exchange_id']}), 200
@@ -444,8 +457,9 @@ def confirm_service(service_id, user_id=None):
 
 @validate_session
 def reject_service(service_id, user_id=None):
-    """The provider declines a pending acceptance. The acceptance is removed and,
-    for a single opening, the opening reopens for others."""
+    """The provider declines a pending acceptance - or the accepting side takes
+    its own back. The acceptance is removed and, for a single opening, the
+    opening reopens for others."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
@@ -459,10 +473,18 @@ def reject_service(service_id, user_id=None):
         service = Service.get_by_id(service_uuid)
         if not service:
             return jsonify({'message': 'Opening not found'}), 404
-        if not _is_provider_or_manager(service, user_id):
-            return jsonify({'message': 'Only the provider can reject acceptances'}), 403
 
         acceptance = Service.get_acceptance(service_uuid, accepter_uuid)
+        # Whoever accepted may change their mind before it is confirmed: the
+        # person, the human who accepted for a group, or that group's managers.
+        # Without this the only way out was the provider declining it (or an
+        # admin withdrawing the whole opening).
+        retracting = acceptance is not None and (
+            str(accepter_uuid) == str(user_id)
+            or acceptance.get('acting_user_id') == str(user_id)
+            or can_manage_entity(accepter_uuid, user_id, include_platform_admin=False))
+        if not retracting and not _is_provider_or_manager(service, user_id):
+            return jsonify({'message': 'Only the provider can decline an acceptance'}), 403
         if not acceptance:
             return jsonify({'message': 'No such acceptance'}), 404
         if acceptance['status'] == 'confirmed':
@@ -472,8 +494,9 @@ def reject_service(service_id, user_id=None):
         if service.cadence != 'perpetual':
             Service.reopen(service_uuid)
 
-        logger.info(f"Opening {service_id} acceptance by {accepter_id} rejected")
-        return jsonify({'message': 'Acceptance declined'}), 200
+        logger.info(f"Opening {service_id} acceptance by {accepter_id} "
+                    f"{'taken back' if retracting else 'declined'}")
+        return jsonify({'message': 'Acceptance taken back' if retracting else 'Acceptance declined'}), 200
     except ValueError:
         return jsonify({'message': 'Invalid id'}), 400
     except Exception as e:

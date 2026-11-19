@@ -35,7 +35,8 @@ def mark_notification_read(user_id=None):
         if not created_at_raw or not notification_id:
             return jsonify({'message': 'created_at and notification_id are required'}), 400
         created_at = datetime.fromisoformat(created_at_raw)
-        Notification.mark_read(user_id, created_at, notification_id)
+        if not Notification.mark_read(user_id, created_at, notification_id):
+            return jsonify({'message': 'Notification not found'}), 404
         return jsonify({'message': 'ok'}), 200
     except ValueError:
         return jsonify({'message': 'Invalid created_at'}), 400
