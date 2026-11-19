@@ -8,20 +8,25 @@ import coil.decode.SvgDecoder
 import coil.disk.DiskCache
 import com.krbavcic.logosphere.core.api.BearerAuthInterceptor
 import com.krbavcic.logosphere.core.api.LogoSphereApi
+import com.krbavcic.logosphere.core.logic.AppLink
 import com.krbavcic.logosphere.data.ChangeBus
 import com.krbavcic.logosphere.data.CommunityRepository
 import com.krbavcic.logosphere.data.InboxRepository
 import com.krbavcic.logosphere.data.OpeningsRepository
 import com.krbavcic.logosphere.data.SessionManager
 import com.krbavcic.logosphere.data.SessionStore
+import com.krbavcic.logosphere.push.Push
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 /** Everything the screens share, built once per process. */
 class AppContainer(context: Context) {
+    private val appContext = context.applicationContext
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     val sessionStore = SessionStore(context, BuildConfig.DEFAULT_SERVER_URL)
@@ -52,7 +57,31 @@ class AppContainer(context: Context) {
             openings.clear()
             inbox.clear()
         },
+        onSignedIn = { registerPush() },
+        beforeSignOut = { forgetPush() },
     )
+
+    /** A tapped notification's link, for the screens to open once they're up (ui/Root.kt). */
+    val pendingLink = MutableStateFlow<AppLink?>(null)
+
+    /** This phone gets the signed-in member's notifications: [token], or Firebase's current one. */
+    fun registerPush(token: String? = null) {
+        if (session.user == null) return
+        appScope.launch {
+            val current = token ?: Push.token(appContext) ?: return@launch
+            runCatching { api.registerDevice(current) }
+        }
+    }
+
+    private suspend fun forgetPush() {
+        val current = Push.token(appContext) ?: return
+        runCatching { api.forgetDevice(current) }
+    }
+
+    /** A notification arrived: the Inbox badge catches up. */
+    fun refreshInbox() {
+        appScope.launch { runCatching { inbox.refreshCount() } }
+    }
 }
 
 class LogoSphereApplication : Application(), ImageLoaderFactory {
@@ -61,6 +90,7 @@ class LogoSphereApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        Push.createChannel(this)
         container = AppContainer(this)
         container.session.restore()
     }

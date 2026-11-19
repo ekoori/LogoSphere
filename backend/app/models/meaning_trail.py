@@ -48,6 +48,32 @@ _kind_map_cache = {'data': None, 'ts': 0.0}
 LIKE_TYPES = ('exchange', 'gratitude', 'user', 'other')
 
 
+def own_like_targets(row, viewer_id, is_initiator=False, is_other=False):
+    """The parts of an exchange that are the viewer's own, so not theirs to
+    appreciate: the exchange itself for either side, the initiator's note
+    ('user') for the initiating side, the receipt ('gratitude') for the
+    receiving side, an acknowledgement ('other') for whoever wrote it.
+
+    `row` is an exchange dict (to_dict); a side is its person or group and the
+    person who acted for it. is_initiator / is_other (from get_for_view) add
+    the managers of a group side, where they're known."""
+    viewer = str(viewer_id or '')
+    if not viewer:
+        return set()
+
+    def side(*keys):
+        return {str(row.get(k)) for k in keys if row.get(k)}
+
+    own = set()
+    if is_initiator or viewer in side('user_id', 'initiator_acting_user_id'):
+        own |= {'exchange', 'user'}
+    if is_other or viewer in side('other_user_id', 'recipient_acting_user_id'):
+        own |= {'exchange', 'gratitude'}
+    if str(row.get('other_comment_author_id') or '') == viewer:
+        own.add('other')
+    return own
+
+
 class Likes(Model):
     """Per-user like rows, scoped to an exchange + comment_type.
 
@@ -112,13 +138,15 @@ class Likes(Model):
         return [{'id': str(i), 'name': names.get(i, 'Member')} for i in ids]
 
     @classmethod
-    def summary_for_exchange(cls, exchange_id, user_id=None):
-        """Return {comment_type: {'count': n, 'liked': bool, 'by': [{id,name}]}}."""
+    def summary_for_exchange(cls, exchange_id, user_id=None, own=()):
+        """Return {comment_type: {'count': n, 'liked': bool, 'by': [{id,name}],
+        'own': bool}} - `own` (see own_like_targets) marks what the viewer
+        made, which the apps offer no like button for."""
         out = {}
         for ct in LIKE_TYPES:
             liked = cls.is_liked_by(exchange_id, ct, user_id) if user_id else False
             by = cls.likers(exchange_id, ct)
-            out[ct] = {'count': len(by), 'liked': liked, 'by': by}
+            out[ct] = {'count': len(by), 'liked': liked, 'by': by, 'own': ct in own}
         return out
 
 
@@ -362,7 +390,7 @@ class MeaningTrail(Model):
     def _enrich(cls, row, target_id, viewer_id, names, kinds=None):
         """Row → dict with like summary and both-sides perspective fields."""
         d = row.to_dict()
-        d['likes'] = Likes.summary_for_exchange(row.exchange_id, viewer_id)
+        d['likes'] = Likes.summary_for_exchange(row.exchange_id, viewer_id, own=own_like_targets(d, viewer_id))
         d['initiator_id'] = str(row.user_id) if row.user_id else None
         d['initiator_name'] = names.get(row.user_id, 'A member')
         # Perspective is relative to whose trail this is (target_id).
@@ -459,6 +487,10 @@ class MeaningTrail(Model):
             d = cls._enrich(row, viewer_id, viewer_id, names, cls._kind_map())
             is_initiator = cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, viewer_id)
             is_other = cls._viewer_on_side(row.other_user_id, row.recipient_acting_user_id, viewer_id)
+            # A group side's managers are known here: their side's parts are theirs too.
+            own = own_like_targets(d, viewer_id, is_initiator, is_other)
+            for ct, summary in (d.get('likes') or {}).items():
+                summary['own'] = ct in own
             return d, is_initiator, is_other
         except Exception as e:
             print(f"Error getting exchange for view: {e}")

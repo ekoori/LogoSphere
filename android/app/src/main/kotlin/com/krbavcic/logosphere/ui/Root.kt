@@ -1,5 +1,10 @@
 package com.krbavcic.logosphere.ui
 
+import android.Manifest
+import android.content.Context
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -34,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -49,6 +55,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.data.AuthState
+import com.krbavcic.logosphere.push.Push
 import com.krbavcic.logosphere.ui.auth.RegisterScreen
 import com.krbavcic.logosphere.ui.auth.SignInScreen
 import com.krbavcic.logosphere.ui.communities.CommunitiesScreen
@@ -70,6 +77,21 @@ private fun Tab.icon(selected: Boolean): ImageVector = when (this) {
     Tab.Communities -> if (selected) Icons.Filled.Groups else Icons.Outlined.Groups
     Tab.Inbox -> if (selected) Icons.Filled.Notifications else Icons.Outlined.Notifications
     Tab.Me -> if (selected) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle
+}
+
+/** Android 13+: once, after signing in, ask whether LogoSphere may show notifications. */
+@Composable
+private fun AskForNotifications(signedIn: Boolean) {
+    if (Build.VERSION.SDK_INT < 33) return
+    val context = LocalContext.current
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    LaunchedEffect(signedIn) {
+        if (!signedIn || Push.mayNotify(context)) return@LaunchedEffect
+        val prefs = context.getSharedPreferences("logosphere", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("asked_notifications", false)) return@LaunchedEffect
+        prefs.edit().putBoolean("asked_notifications", true).apply()
+        ask.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 }
 
 @Composable
@@ -124,6 +146,17 @@ fun LogoSphereRoot() {
             openWeb = { path -> uriHandler.openUri(container.api.webUrl(path)) },
         )
     }
+
+    // A tapped notification opens its page once the signed-in screens are up.
+    val pendingLink by container.pendingLink.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingLink, inMain) {
+        val link = pendingLink ?: return@LaunchedEffect
+        if (inMain) {
+            container.pendingLink.value = null
+            navigator.link(link)
+        }
+    }
+    AskForNotifications(signedIn)
 
     val unread by container.inbox.unread.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()

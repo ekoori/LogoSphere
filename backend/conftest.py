@@ -15,6 +15,10 @@ import sys
 import uuid
 import pytest
 
+# The suite never pushes to real phones, though it runs with production's
+# settings (app/utils/push); test_api_push stands in for Firebase.
+os.environ.pop('FCM_CREDENTIALS', None)
+
 os.environ.setdefault('CASSANDRA_HOST', '127.0.0.1')
 os.environ.setdefault('LOG_LEVEL', 'WARNING')
 

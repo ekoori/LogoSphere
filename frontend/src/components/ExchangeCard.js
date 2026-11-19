@@ -73,7 +73,7 @@ function ExchangeCard({
     id,
     type, title, spheres, participants, description,
     project, projectId, imageUrl, time, status,
-    likesCount, likedByCurrentUser, likedBy: likedByInitial = [],
+    likesCount, likedByCurrentUser, likedBy: likedByInitial = [], canLike = true,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
     receipts, acknowledgements,
@@ -231,6 +231,7 @@ function ExchangeCard({
                         likedBy={likedBy}
                         time=""
                         onLike={handleLike}
+                        canLike={canLike}
                     />
                 </div>
 
@@ -323,6 +324,7 @@ function ExchangeCard({
                                             likedBy={tf.likedBy}
                                             time={tf.time}
                                             onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType, true); }}
+                                            canLike={tf.canLike !== false}
                                         />
                                     </div>
                                 ))}
@@ -375,6 +377,7 @@ function ExchangeCard({
                                             likedBy={s.likedBy}
                                             time={s.time}
                                             onLike={(e) => { e.stopPropagation(); handleCommentLike(s.commentType, false); }}
+                                            canLike={s.canLike !== false}
                                         />
                                     </div>
                                 ))}

@@ -57,6 +57,7 @@ import com.krbavcic.logosphere.core.model.CommentType
 import com.krbavcic.logosphere.core.model.ExchangeDetail
 import com.krbavcic.logosphere.core.model.FranklMode
 import com.krbavcic.logosphere.core.model.LikeTarget
+import com.krbavcic.logosphere.core.model.LikeInfo
 import com.krbavcic.logosphere.core.model.NewComment
 import com.krbavcic.logosphere.core.model.ValueCard
 import com.krbavcic.logosphere.data.Change
@@ -71,7 +72,7 @@ import com.krbavcic.logosphere.ui.common.BrandCard
 import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.ExchangeStatusPill
 import com.krbavcic.logosphere.ui.common.GroupAvatar
-import com.krbavcic.logosphere.ui.common.LikeButton
+import com.krbavcic.logosphere.ui.common.LikeControl
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.PersonaTag
@@ -194,7 +195,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                     ExchangeStatusPill(x)
                     if (x.isDemo) DemoTag()
                     Spacer(Modifier.weight(1f))
-                    LikeButton(x.likesFor(LikeTarget.Exchange).liked, x.likesFor(LikeTarget.Exchange).count, { vm.like(LikeTarget.Exchange) })
+                    LikeControl(x.likesFor(LikeTarget.Exchange), { vm.like(LikeTarget.Exchange) })
                 }
                 Text(x.title ?: "An exchange of trust", style = MaterialTheme.typography.headlineSmall)
                 MetaText(
@@ -279,8 +280,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             context = x.receiptContext,
                             at = x.receiptAt,
                             accent = Brand.colors.receiptAccent,
-                            likes = x.likesFor(LikeTarget.Receipt).count,
-                            liked = x.likesFor(LikeTarget.Receipt).liked,
+                            likes = x.likesFor(LikeTarget.Receipt),
                             onLike = { vm.like(LikeTarget.Receipt) },
                         )
                         if (x.receiptPhotoCount > 0) {
@@ -308,8 +308,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             context = null,
                             at = x.initiatorNoteAt,
                             accent = Brand.colors.receiptAccent,
-                            likes = x.likesFor(LikeTarget.InitiatorNote).count,
-                            liked = x.likesFor(LikeTarget.InitiatorNote).liked,
+                            likes = x.likesFor(LikeTarget.InitiatorNote),
                             onLike = { vm.like(LikeTarget.InitiatorNote) },
                         )
                     }
@@ -375,8 +374,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             context = null,
                             at = x.acknowledgementAt,
                             accent = Brand.colors.acknowledgementAccent,
-                            likes = x.likesFor(LikeTarget.Acknowledgement).count,
-                            liked = x.likesFor(LikeTarget.Acknowledgement).liked,
+                            likes = x.likesFor(LikeTarget.Acknowledgement),
                             onLike = { vm.like(LikeTarget.Acknowledgement) },
                         )
                     } ?: Text("No acknowledgements yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -444,8 +442,7 @@ private fun Written(
     context: String?,
     at: String?,
     accent: androidx.compose.ui.graphics.Color,
-    likes: Int,
-    liked: Boolean,
+    likes: LikeInfo,
     onLike: () -> Unit,
 ) {
     val navigator = LocalNavigator.current
@@ -466,7 +463,7 @@ private fun Written(
                     QuietPill(it)
                 }
             }
-            LikeButton(liked, likes, onLike)
+            LikeControl(likes, onLike)
         }
         QuoteLine(author = Dates.day(at), text = text, accent = accent, maxLines = 20)
         if (cards.isNotEmpty()) ValueChips(cards)

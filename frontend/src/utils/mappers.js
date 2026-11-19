@@ -142,6 +142,8 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         likesCount: likes[ct]?.count || 0,
         likedBy: likes[ct]?.by || [],
         likedByCurrentUser: likes[ct]?.liked || false,
+        // The server marks what the viewer made: not theirs to appreciate.
+        canLike: !likes[ct]?.own,
     });
 
     // Perspective: an exchange appears in both parties' trails. viewer_is_initiator

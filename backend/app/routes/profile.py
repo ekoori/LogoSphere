@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.follow import Follow
 from app.models.notification import Notification
 from app.utils.validation import is_supported_image
+from app.utils.pictures import picture_response
 from app.utils.permissions import is_platform_admin
 from app.middleware.session_middleware import validate_session
 
@@ -97,20 +98,8 @@ def get_user_avatar(target_id):
         data = User.get_picture(target_id) if user and user.has_picture else None
         if not data:
             name = (f"{user.name or ''} {user.surname or ''}".strip() if user else '')
-            resp = Response(_initials_avatar_svg(name), mimetype='image/svg+xml')
-            resp.headers['Cache-Control'] = 'public, max-age=300'
-            return resp
-        if data[:8] == b'\x89PNG\r\n\x1a\n':
-            ctype = 'image/png'
-        elif data[:6] in (b'GIF87a', b'GIF89a'):
-            ctype = 'image/gif'
-        elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-            ctype = 'image/webp'
-        else:
-            ctype = 'image/jpeg'
-        resp = Response(data, mimetype=ctype)
-        resp.headers['Cache-Control'] = 'public, max-age=300'
-        return resp
+            return picture_response(_initials_avatar_svg(name).encode('utf-8'), ctype='image/svg+xml')
+        return picture_response(data)
     except Exception as e:
         logger.error(f"Error in get_user_avatar: {e}")
         # Last-resort placeholder so the <img> still resolves without a console error.

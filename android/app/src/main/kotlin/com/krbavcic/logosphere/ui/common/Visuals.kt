@@ -39,10 +39,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
+import com.krbavcic.logosphere.core.api.pictureSideFor
 import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.Progress
 import com.krbavcic.logosphere.core.model.CommunityKind
@@ -61,6 +63,7 @@ private fun initials(name: String?): String =
 @Composable
 fun Avatar(userId: String?, name: String?, size: Dp = 40.dp, modifier: Modifier = Modifier) {
     val api = LocalAppContainer.current.api
+    val side = pictureSideFor(with(LocalDensity.current) { size.roundToPx() })
     val placeholder = @Composable {
         Box(
             Modifier
@@ -81,7 +84,7 @@ fun Avatar(userId: String?, name: String?, size: Dp = 40.dp, modifier: Modifier 
             placeholder()
         } else {
             SubcomposeAsyncImage(
-                model = api.avatarUrl(userId),
+                model = api.avatarUrl(userId, side),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

@@ -57,6 +57,7 @@ import com.krbavcic.logosphere.ui.common.BrandCard
 import com.krbavcic.logosphere.ui.common.Choice
 import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.LikeButton
+import com.krbavcic.logosphere.ui.common.LikeCount
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningTypePill
@@ -229,6 +230,8 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                     // Your own opening isn't yours to appreciate (an old self-like can come off).
                     if (!OpeningRules.isOwn(opening, me) || opening.likedByMe) {
                         LikeButton(opening.likedByMe, opening.likes, vm::like)
+                    } else {
+                        LikeCount(opening.likes)
                     }
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

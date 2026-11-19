@@ -145,7 +145,7 @@ fun ExchangeCard(
                 // The status is already the pill at the top of the card.
                 ProgressStrip(ExchangeRules.progress(exchange), Modifier.weight(1f), showLabel = false)
                 Spacer(Modifier.width(8.dp))
-                LikeButton(likes.liked, likes.count, onLike)
+                LikeControl(likes, onLike)
             }
         }
     }
@@ -170,6 +170,8 @@ fun OpeningCard(
                 // Your own opening isn't yours to appreciate (an old self-like can come off).
                 if (!OpeningRules.isOwn(opening, viewerId) || opening.likedByMe) {
                     LikeButton(opening.likedByMe, opening.likes, onLike)
+                } else {
+                    LikeCount(opening.likes)
                 }
             }
             Text(opening.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)

@@ -5,6 +5,15 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Avatar.css';
 
+// The smaller copies the server makes of a picture (backend app/utils/pictures).
+const SIDES = [160, 320, 640];
+
+// The smallest copy that still looks sharp at `size` CSS pixels on this screen.
+function sideFor(size) {
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 3) : 2;
+    return SIDES.find((s) => s >= size * dpr);
+}
+
 export default function Avatar({ userId, name = '', size = 24, className = '' }) {
     const [failed, setFailed] = useState(false);
     // Reset the error state if the id changes (list re-use).
@@ -24,7 +33,7 @@ export default function Avatar({ userId, name = '', size = 24, className = '' })
         <img
             className={`avatar ${className}`}
             style={style}
-            src={`/api/users/${userId}/avatar`}
+            src={`/api/users/${userId}/avatar${sideFor(size) ? `?size=${sideFor(size)}` : ''}`}
             alt=""
             loading="lazy"
             onError={() => setFailed(true)}

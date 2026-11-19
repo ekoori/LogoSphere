@@ -40,6 +40,8 @@ from app.routes.spheres import create_sphere, get_spheres, update_sphere_governa
 from app.routes import entities as entity_routes
 from app.routes import governance as governance_routes
 from app.models.governance import ensure_tables as ensure_governance_tables
+from app.routes.push import register_device, forget_device
+from app.utils.push import ensure_tables as ensure_push_tables
 from app.routes.alliances import create_alliance, get_alliances
 from app.routes.projects import create_project, get_projects
 from app.routes.openings import create_service, get_services, get_service, accept_service, confirm_service, reject_service, like_service, update_service_image, get_service_image, edit_opening, cancel_service
@@ -139,6 +141,10 @@ entity_routes.register(app)
 # Liquid democracy: proposals, votes, delegation - for every entity kind.
 governance_routes.register(app)
 ensure_governance_tables()
+# Push notifications: the phones each member is signed in on.
+ensure_push_tables()
+app.add_url_rule('/api/push/devices', view_func=register_device, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/push/devices/forget', view_func=forget_device, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>', view_func=get_service, methods=['GET', 'OPTIONS'])

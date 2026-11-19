@@ -166,3 +166,58 @@ def load(key):
 def fetch(key, blob=None):
     """A row's picture: from its bucket key when it has one, else its blob."""
     return load(key) if key else (blob or None)
+
+
+# ── Serving ─────────────────────────────────────────────────────────────────
+# Smaller copies the apps may ask for (?size=): avatars are shown at ~20-96 px,
+# and a phone screen is ~1080 px wide.
+VARIANT_SIDES = (160, 320, 640)
+
+
+def digest(data):
+    """A picture's content label - the same hash its bucket key is named after,
+    so it never changes while the picture doesn't (an HTTP ETag)."""
+    return hashlib.sha256(data).hexdigest()[:32]
+
+
+def sniff(data):
+    """A picture's content type, from its first bytes."""
+    if data[:8] == b'\x89PNG\r\n\x1a\n':
+        return 'image/png'
+    if data[:6] in (b'GIF87a', b'GIF89a'):
+        return 'image/gif'
+    if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        return 'image/webp'
+    if data.lstrip()[:4] in (b'<svg', b'<?xm'):
+        return 'image/svg+xml'
+    return 'image/jpeg'
+
+
+def scaled(data, side):
+    """(bytes, content type) of the picture fitting within side x side pixels,
+    made once and kept in the local cache under its content. A picture already
+    that small (or animated, or not a bitmap) comes back as it is."""
+    original = (data, sniff(data))
+    if side not in VARIANT_SIDES or original[1] == 'image/svg+xml':
+        return original
+    key = f'variants/{digest(data)}-{side}'
+    hit = _cache_get(key)
+    if hit is not None:
+        return hit, sniff(hit)
+    from PIL import Image
+    try:
+        img = Image.open(io.BytesIO(data))
+        if max(img.size) <= side or getattr(img, 'is_animated', False):
+            return original
+        img.load()
+    except Exception:  # noqa: BLE001 - serve what is stored rather than fail
+        return original
+    img.thumbnail((side, side), Image.LANCZOS)
+    out = io.BytesIO()
+    if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+        img.convert('RGBA').save(out, 'WEBP', quality=85, method=4)
+    else:
+        img.convert('RGB').save(out, 'JPEG', quality=JPEG_QUALITY, optimize=True, progressive=True)
+    body = out.getvalue()
+    _cache_put(key, body)
+    return body, sniff(body)

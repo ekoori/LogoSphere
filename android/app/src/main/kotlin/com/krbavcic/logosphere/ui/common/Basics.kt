@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.krbavcic.logosphere.core.model.LikeInfo
 import com.krbavcic.logosphere.ui.Load
 import com.krbavcic.logosphere.ui.theme.Brand
 import kotlinx.coroutines.flow.Flow
@@ -320,6 +321,28 @@ fun LikeButton(liked: Boolean, count: Int, onToggle: () -> Unit, modifier: Modif
             Text(count.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+/** How many appreciated something of the viewer's own: a count, not a button (it isn't theirs to like). */
+@Composable
+fun LikeCount(count: Int, modifier: Modifier = Modifier) {
+    if (count <= 0) return
+    Row(
+        modifier
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .semantics(mergeDescendants = true) { contentDescription = "Appreciated by $count" },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.Favorite, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(4.dp))
+        Text(count.toString(), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The like control for one part of an exchange: a button, or only its count when it's the viewer's own. */
+@Composable
+fun LikeControl(info: LikeInfo, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    if (info.canLike) LikeButton(info.liked, info.count, onToggle, modifier) else LikeCount(info.count, modifier)
 }
 
 /** A full-width primary action, the web's `.btn-primary`. */

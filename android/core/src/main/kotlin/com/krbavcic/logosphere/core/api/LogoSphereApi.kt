@@ -75,6 +75,12 @@ class BearerAuthInterceptor(
     }
 }
 
+/** The smaller copies the server makes of a picture (`?size=`). */
+val PICTURE_SIDES = listOf(160, 320, 640)
+
+/** The smallest copy that still looks sharp at [px] pixels, or null for the full picture. */
+fun pictureSideFor(px: Int): Int? = PICTURE_SIDES.firstOrNull { it >= px }
+
 /**
  * The LogoSphere REST API (backend/app/main.py). Every call is a suspend function that returns the
  * decoded body or throws: [UnauthorizedException] for a `401` on an authenticated request (after
@@ -105,6 +111,16 @@ class LogoSphereApi(
     /** Revokes the session on the server; the caller forgets it locally either way. */
     suspend fun logout() {
         post<JsonElement>("/api/logout", JsonObject(emptyMap()))
+    }
+
+    /** This phone gets the signed-in member's notifications, until this session ends. */
+    suspend fun registerDevice(token: String) {
+        post<JsonElement>("/api/push/devices", buildJsonObject { put("token", token); put("platform", "android") })
+    }
+
+    /** This phone stops getting the member's notifications (before signing out). */
+    suspend fun forgetDevice(token: String) {
+        post<JsonElement>("/api/push/devices/forget", buildJsonObject { put("token", token) })
     }
 
     suspend fun checkSession(): SessionStatus = get("/api/check_session")
@@ -256,7 +272,9 @@ class LogoSphereApi(
 
     // ── Images (loaded by the image loader through the same client) ─────────
 
-    fun avatarUrl(userId: String): String = url("/api/users/$userId/avatar").toString()
+    /** A member's avatar; [side] asks for a smaller copy (one of [PICTURE_SIDES]) where it's shown small. */
+    fun avatarUrl(userId: String, side: Int? = null): String =
+        url("/api/users/$userId/avatar") { side?.let { addQueryParameter("size", it.toString()) } }.toString()
     fun communityImageUrl(kind: CommunityKind, id: String): String = url("/api/${kind.path}/$id/image").toString()
     fun openingImageUrl(id: String): String = url("/api/openings/$id/image").toString()
     fun exchangeImageUrl(id: String): String = url("/api/exchange/$id/image").toString()

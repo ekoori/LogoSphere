@@ -28,6 +28,10 @@ class SessionManager(
     private val api: () -> LogoSphereApi,
     private val scope: CoroutineScope,
     private val onSignedOut: () -> Unit,
+    /** Signed in, or a saved session restored: e.g. register this phone for push. */
+    private val onSignedIn: () -> Unit = {},
+    /** Signing out, while the session still works: e.g. forget this phone for push. */
+    private val beforeSignOut: suspend () -> Unit = {},
 ) {
     private val _state = MutableStateFlow<AuthState>(AuthState.Loading)
     val state: StateFlow<AuthState> = _state.asStateFlow()
@@ -44,6 +48,7 @@ class SessionManager(
                 return@launch
             }
             _state.value = AuthState.SignedIn(saved.user)
+            onSignedIn()
             verify()
         }
     }
@@ -78,6 +83,7 @@ class SessionManager(
         val user = SessionUser(response.data.userId, response.data.displayName, response.data.isPlatformAdmin)
         store.save(SavedSession(response.sessionId, user))
         _state.value = AuthState.SignedIn(user)
+        onSignedIn()
     }
 
     suspend fun register(name: String, email: String, password: String, server: String? = null) {
@@ -88,6 +94,7 @@ class SessionManager(
 
     fun signOut() {
         scope.launch {
+            runCatching { beforeSignOut() }
             // Revoke it on the server too; if that fails the session still ends here.
             runCatching { api().logout() }
             end(null)

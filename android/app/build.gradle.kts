@@ -5,6 +5,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Push notifications need the Firebase project's google-services.json beside this file (kept out
+// of git). Without it the app builds and runs as before, just without push (see push/Push.kt).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // The release key never enters the repository: its keystore and password are Gradle properties
 // (in ~/.gradle/gradle.properties) or environment variables.
 fun releaseSigning(property: String, variable: String): String? =
@@ -103,6 +109,10 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
 }

@@ -11,29 +11,10 @@ function MeaningTrail({ items }) {
                 item.type === 'acknowledgement' ? (
                     <AcknowledgementCard key={item.id} acknowledgement={item} />
                 ) : (
+                    // Every mapped field (isDemo, likedBy, canLike, ...) reaches the card.
                     <ExchangeCard
                         key={item.id}
-                        id={item.id}
-                        type={item.type}
-                        title={item.title}
-                        spheres={item.spheres}
-                        participants={item.participants}
-                        description={item.description}
-                        project={item.project}
-                        projectId={item.projectId}
-                        imageUrl={item.imageUrl}
-                        time={item.time}
-                        status={item.status}
-                        likesCount={item.likesCount}
-                        likedByCurrentUser={item.likedByCurrentUser}
-                        initiatedTime={item.initiatedTime}
-                        inProgressTime={item.inProgressTime}
-                        finishedTime={item.finishedTime}
-                        receiptedTime={item.receiptedTime}
-                        additionalCommentsTime={item.additionalCommentsTime}
-                        hasFollowupComment={item.hasFollowupComment}
-                        receipts={item.receipts}
-                        acknowledgements={item.acknowledgements}
+                        {...item}
                         onAddReceipt={item.onAddReceipt || (() => {})}
                         onAddAcknowledgement={item.onAddAcknowledgement || (() => {})}
                         onModifyExchange={item.onModifyExchange || (() => {})}

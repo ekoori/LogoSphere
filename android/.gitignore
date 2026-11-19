@@ -16,3 +16,6 @@
 
 # Screenshots from tools/droid.py
 tools/shots/
+
+# The Firebase project's app config (push notifications) stays out of the repository.
+app/google-services.json

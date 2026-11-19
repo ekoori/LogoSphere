@@ -21,6 +21,12 @@ cd frontend && npm run build && tar czf - build | ssh igor@45.79.237.252 'rm -rf
 ```
 
 After changing the nginx file: `sudo nginx -t && sudo systemctl reload nginx`.
+After changing a unit: `sudo cp deploy/<unit> /etc/systemd/system/ && sudo systemctl daemon-reload`, then restart it.
+
+The backend's workers are never recycled (no `--max-requests`): gunicorn's
+thread worker drops the connections it has accepted but not yet read when it
+retires, which reset the personas' requests and gave people 502s. The
+personas' API client sends a dropped read once more (`backend/agents/platform.py`).
 
 ## Pictures
 
@@ -38,3 +44,24 @@ development) pictures stay in their Cassandra blob columns.
 A new picture column needs its `ALTER TABLE` on the host before the backend
 restarts (copies in `backend/reseed_demo.py`). `backend/migrate_images_to_bucket.py`
 moves any blobs left in rows into the bucket, backing each one up first.
+
+Every picture response carries an ETag made from its content
+(`backend/app/utils/pictures.py`): clients keep a picture five minutes, then ask
+again and get a bodiless 304 while it hasn't changed. `?size=160|320|640` serves
+a smaller copy (the apps' avatars ask for one), made once and kept in the cache
+under `variants/`.
+
+## Push notifications
+
+Every in-app notification is also pushed, through Firebase Cloud Messaging, to
+the phones its member is signed in on (`backend/app/utils/push.py`). The Android
+app registers its token at sign-in and forgets it at sign-out; a registration
+lasts as long as its session.
+
+- Firebase project: its Android app is `com.krbavcic.logosphere`, and its
+  `google-services.json` goes in `android/app/` (kept out of git). A build
+  without it works, without push.
+- The project's service-account key lives at `/etc/logosphere/fcm.json`
+  (owner `igor`, mode 600); `FCM_CREDENTIALS` in `backend/prod.env` points to
+  it. Without it, phones still register and nothing is sent.
+- The test suite never sends (conftest drops `FCM_CREDENTIALS`).

@@ -3,4 +3,6 @@
     <!-- The web's paper token (warm linen). -->
     <color name="ic_launcher_background">#F3ECDA</color>
     <color name="splash_background">#F3ECDA</color>
+    <!-- The sun's clay, for notifications. -->
+    <color name="notification_accent">#C2643C</color>
 </resources>

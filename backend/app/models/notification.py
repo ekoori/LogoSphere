@@ -22,17 +22,22 @@ class Notification:
         """Emit a notification to user_id. Silently no-ops on failure — a
         missed notification should never break the action that triggered it."""
         try:
+            notification_id = uuid.uuid4()
             cassandra_session.execute(
                 """INSERT INTO notifications
                    (user_id, created_at, notification_id, actor_id, actor_name,
                     type, message, link, is_read)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                (uuid.UUID(str(user_id)), datetime.utcnow(), uuid.uuid4(),
+                (uuid.UUID(str(user_id)), datetime.utcnow(), notification_id,
                  uuid.UUID(str(actor_id)) if actor_id else None, actor_name,
                  type_, message, link, False)
             )
         except Exception as e:
             logging.error(f'Error creating notification: {e}')
+            return
+        # And to the member's phones (in the background; see app/utils/push).
+        from app.utils import push
+        push.notify(user_id, message, link=link, kind=type_, notification_id=notification_id)
 
     @classmethod
     def withdraw(cls, user_id, type_, link, actor_id=None):

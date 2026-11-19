@@ -176,7 +176,12 @@ data class LikeInfo(
     val count: Int = 0,
     val liked: Boolean = false,
     val by: List<PersonRef> = emptyList(),
-)
+    /** The viewer made this (their exchange, note, receipt or acknowledgement): not theirs to like. */
+    val own: Boolean = false,
+) {
+    /** A like button, or only the count: an old self-like can still be taken off. */
+    val canLike: Boolean get() = !own || liked
+}
 
 /**
  * One exchange. The Meaning Trail endpoints return a list of these; `GET /api/exchange/<id>`

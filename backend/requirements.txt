@@ -13,3 +13,5 @@ openai==3.55.1
 pillow==13.0.0
 # Pictures in object storage (app/utils/image_store; Pillow above normalises them).
 boto3==1.44.6
+# Push notifications through Firebase Cloud Messaging (app/utils/push; its HTTP is urllib3, already here).
+google-auth==2.62.2

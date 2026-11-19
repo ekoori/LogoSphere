@@ -90,3 +90,15 @@ def test_without_a_bucket_the_row_keeps_the_picture(monkeypatch):
     monkeypatch.delenv('S3_BUCKET', raising=False)
     assert image_store.store(PNG_1PX, 'banner') == (None, PNG_1PX)
     assert image_store.store(None) == (None, None)
+
+
+def test_a_smaller_copy_is_made_once_and_kept(monkeypatch, tmp_path):
+    monkeypatch.setenv('IMAGE_CACHE_DIR', str(tmp_path))
+    body, _ = image_store.normalise(_jpeg((1600, 800)), 'banner')
+    small, kind = image_store.scaled(body, 160)
+    assert kind == 'image/jpeg' and Image.open(io.BytesIO(small)).size == (160, 80)
+    assert list(tmp_path.rglob('*-160'))                                  # kept in the cache
+    assert image_store.scaled(body, 160) == (small, kind)
+    assert image_store.scaled(body, 999) == (body, 'image/jpeg')         # only the sizes the apps use
+    assert image_store.scaled(PNG_1PX, 160) == (PNG_1PX, 'image/png')    # already small enough
+    assert image_store.digest(body) == image_store.digest(body) != image_store.digest(small)

@@ -69,10 +69,9 @@ def test_status_state_machine(api, exchange):
 
 def test_likes_are_people_not_numbers(api, exchange):
     xid = exchange['id']
-    api.post(f'/api/exchange/{xid}/like', who='joe', json={'comment_type': 'exchange'})
-    status, body = api.post(f'/api/exchange/{xid}/like', who='marie', json={'comment_type': 'exchange'})
+    status, body = api.post(f'/api/exchange/{xid}/like', who='david', json={'comment_type': 'exchange'})
     assert status == 200
-    assert sorted(p['name'] for p in body['by']) == ['Joe Rogan', 'Marie Kondo']
+    assert [p['name'] for p in body['by']] == ['David Attenborough']
     # openings: explicit target state is idempotent
     _, b1 = api.post(f'/api/openings/{OPENING}/like', who='marie', json={'liked': True})
     _, b2 = api.post(f'/api/openings/{OPENING}/like', who='marie', json={'liked': True})
@@ -87,6 +86,30 @@ def test_your_own_opening_is_not_yours_to_appreciate(api, keep_rows):
     assert status == 403, body
     status, _ = api.post(f'/api/openings/{OPENING}/like', who='joe', json={'liked': False})
     assert status == 200        # an old self-like can still come off
+
+
+def test_your_own_exchange_is_not_yours_to_appreciate(api, exchange):
+    xid = exchange['id']
+    for who in ('joe', 'marie'):            # either side
+        status, body = api.post(f'/api/exchange/{xid}/like', who=who, json={'comment_type': 'exchange'})
+        assert status == 403, body
+    # The apps learn which parts are the viewer's own, and offer no button there.
+    status, body = api.get(f'/api/exchange/{xid}', who='marie')
+    likes = body['exchange']['likes']
+    assert likes['exchange']['own'] and likes['gratitude']['own'] and not likes['user']['own']
+    status, body = api.get(f'/api/exchange/{xid}', who='david')
+    assert not any(v['own'] for v in body['exchange']['likes'].values())
+
+
+def test_what_is_whose_on_an_exchange():
+    from app.models.meaning_trail import own_like_targets
+    # I initiated as a person; R acted for the receiving group G; N acknowledged it.
+    row = {'user_id': 'I', 'other_user_id': 'G', 'recipient_acting_user_id': 'R', 'other_comment_author_id': 'N'}
+    assert own_like_targets(row, 'I') == {'exchange', 'user'}           # their exchange and their note
+    assert own_like_targets(row, 'R') == {'exchange', 'gratitude'}      # their exchange and their receipt
+    assert own_like_targets(row, 'M', is_other=True) == {'exchange', 'gratitude'}  # manages G
+    assert own_like_targets(row, 'N') == {'other'}                      # their acknowledgement
+    assert own_like_targets(row, 'X') == set() and own_like_targets(row, None) == set()
 
 
 def test_edit_after_exchange_branches_a_version(api, exchange):

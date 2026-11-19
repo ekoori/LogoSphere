@@ -10,9 +10,12 @@ Methods:
 import logging
 import uuid
 from flask import request, jsonify, current_app as app, Response
-from app.models.meaning_trail import MeaningTrail, Likes, LIKE_TYPES
+from app.models.meaning_trail import MeaningTrail, Likes, LIKE_TYPES, own_like_targets
+
+OWN_NOUN = {'exchange': 'exchange', 'gratitude': 'receipt', 'user': 'note', 'other': 'acknowledgement'}
 from app.models.notification import Notification
 from app.utils.validation import is_supported_image
+from app.utils.pictures import picture_response
 from app.middleware.session_middleware import validate_session
 from app.models.spheres import Sphere
 from app.utils.permissions import is_platform_admin
@@ -62,19 +65,9 @@ def _load_visible_exchange(exchange_id, viewer_id):
 # Serving images for <img src>: the browser sends the session cookie, so these
 # can be gated like the exchange itself.
 def _image_response(data):
-    if not data:
-        return ('', 404)
-    if data[:8] == b'\x89PNG\r\n\x1a\n':
-        ctype = 'image/png'
-    elif data[:6] in (b'GIF87a', b'GIF89a'):
-        ctype = 'image/gif'
-    elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-        ctype = 'image/webp'
-    else:
-        ctype = 'image/jpeg'
-    resp = Response(data, mimetype=ctype)
-    resp.headers['Cache-Control'] = 'private, no-cache'
-    return resp
+    """Exchange pictures and receipt photos: private (behind the exchange's
+    permission check), labelled with their content (see app/utils/pictures)."""
+    return picture_response(data, private=True)
 
 
 @validate_session
@@ -381,9 +374,15 @@ def like_exchange(exchange_id, user_id=None):
 
         # Any authenticated member can like an exchange they can see, but the
         # exchange must actually exist (avoids orphan like rows).
-        tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
+        tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
+
+        # Appreciation is a signal from others: nobody likes what they made (an
+        # old self-like can still be taken off).
+        if comment_type in own_like_targets(tx_dict, user_id, is_initiator, is_other) and \
+                not Likes.is_liked_by(exchange_id, comment_type, user_id):
+            return jsonify({'message': f"You can't appreciate your own {OWN_NOUN[comment_type]}"}), 403
 
         liked, count = Likes.toggle(exchange_id, comment_type, user_id)
         return jsonify({'liked': liked, 'count': count, 'comment_type': comment_type,
