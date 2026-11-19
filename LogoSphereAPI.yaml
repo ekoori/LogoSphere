@@ -1867,6 +1867,71 @@ paths:
           $ref: '#/components/responses/InternalError'
       tags: [Notifications]
 
+  /api/push/devices:
+    post:
+      summary: Get push notifications on this phone
+      description: >-
+        Registers the phone's Firebase Cloud Messaging token: every in-app
+        notification of the signed-in member is then also pushed to it, until
+        this session ends. A phone follows whoever signed in on it last. Nothing
+        is sent while the server has no Firebase key (`sending` is false).
+      operationId: registerPushDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string, description: The phone's FCM registration token }
+                platform: { type: string, enum: [android], default: android }
+      responses:
+        '200':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registered: { type: boolean, example: true }
+                  sending: { type: boolean, description: Whether the server can send pushes now }
+        '400':
+          description: No token, or an unknown platform.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Notifications]
+
+  /api/push/devices/forget:
+    post:
+      summary: Stop push notifications on this phone
+      description: Called at sign-out, while the session still works.
+      operationId: forgetPushDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200':
+          description: Forgotten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { forgotten: { type: boolean, example: true } }
+        '400':
+          description: No token.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Notifications]
+
   /api/notifications/read_all:
     post:
       summary: Mark all notifications as read
