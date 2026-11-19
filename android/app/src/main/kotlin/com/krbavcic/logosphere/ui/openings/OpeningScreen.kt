@@ -55,10 +55,12 @@ import com.krbavcic.logosphere.ui.common.BackTopBar
 import com.krbavcic.logosphere.ui.common.Banner
 import com.krbavcic.logosphere.ui.common.BrandCard
 import com.krbavcic.logosphere.ui.common.Choice
+import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.LikeButton
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningTypePill
+import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.Picker
 import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.ProgressTimeline
@@ -194,6 +196,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         OpeningTypePill(opening.isOffer)
                         if (opening.isPerpetual) QuietPill("↻ Ongoing")
                         if (opening.version > 1) QuietPill("Version ${opening.version}")
+                        if (opening.isDemo) DemoTag()
                     }
                     Text(opening.title, style = MaterialTheme.typography.headlineSmall, color = Color(0xFFFDFAF2))
                 }
@@ -209,17 +212,24 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                     Avatar(personId, opening.actingUser ?: opening.provider, size = 36.dp)
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            when {
-                                opening.actingUser != null -> "${opening.actingUser} for ${opening.provider}"
-                                OpeningRules.isOwn(opening, me) -> "You"
-                                else -> opening.provider ?: "A member"
-                            },
-                            style = MaterialTheme.typography.titleSmall,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                when {
+                                    opening.actingUser != null -> "${opening.actingUser} for ${opening.provider}"
+                                    OpeningRules.isOwn(opening, me) -> "You"
+                                    else -> opening.provider ?: "A member"
+                                },
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                            if (opening.providerIsAgent && !OpeningRules.isOwn(opening, me)) PersonaTag()
+                        }
                         MetaText("Posted ${Dates.day(opening.createdAt)}")
                     }
-                    LikeButton(opening.likedByMe, opening.likes, vm::like)
+                    // Your own opening isn't yours to appreciate (an old self-like can come off).
+                    if (!OpeningRules.isOwn(opening, me) || opening.likedByMe) {
+                        LikeButton(opening.likedByMe, opening.likes, vm::like)
+                    }
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (opening.sphereId != null) {

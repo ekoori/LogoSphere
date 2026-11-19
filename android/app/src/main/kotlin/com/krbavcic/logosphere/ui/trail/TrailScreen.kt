@@ -1,5 +1,6 @@
 package com.krbavcic.logosphere.ui.trail
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,15 +28,18 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krbavcic.logosphere.AppContainer
+import com.krbavcic.logosphere.core.model.DemoStatus
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.LikeTarget
 import com.krbavcic.logosphere.core.model.Opening
@@ -44,7 +48,9 @@ import com.krbavcic.logosphere.data.Change
 import com.krbavcic.logosphere.ui.LoadViewModel
 import com.krbavcic.logosphere.ui.LocalAppContainer
 import com.krbavcic.logosphere.ui.LocalNavigator
+import com.krbavcic.logosphere.ui.Tab
 import com.krbavcic.logosphere.ui.common.Avatar
+import com.krbavcic.logosphere.ui.common.DemoInviteCard
 import com.krbavcic.logosphere.ui.common.EmptyNote
 import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.LoadContent
@@ -61,6 +67,8 @@ data class TrailData(
     val trail: List<Exchange>,
     val myOpenings: List<Opening>,
     val following: List<PersonRef>,
+    /** Demo spheres, when the member is in none of them yet: the invitation. */
+    val demoInvite: DemoStatus? = null,
 )
 
 class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>() {
@@ -75,14 +83,25 @@ class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>()
         val trail = async { app.api.myTrail() }
         val openings = async { app.openings.list(force) }
         val following = async { app.api.following() }
+        val demo = async { runCatching { app.api.demo() }.getOrNull() }
         val me = viewerId
         TrailData(
             trail = trail.await(),
             // Your own postings, including those you posted for a group.
             myOpenings = openings.await().filter { it.providerId == me || it.actingUserId == me },
             following = following.await(),
+            demoInvite = demo.await()?.takeIf { it.spheres.isNotEmpty() && !it.joinedAny },
         )
     }
+
+    /** Join every demo sphere at once (the invitation's main button). */
+    fun joinDemo() = act(onSuccess = {
+        app.openings.invalidate()
+        app.changes.emit(Change.Communities)
+        app.changes.emit(Change.Openings)
+        update { it.copy(demoInvite = null) }
+        say("You've joined the demo spheres. Try anything there.")
+    }) { app.api.joinDemo() }
 
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
         data.copy(trail = data.trail.map(f))
@@ -102,6 +121,14 @@ fun TrailScreen() {
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // "Not now" on the demo invitation is remembered on this device.
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("logosphere", Context.MODE_PRIVATE) }
+    var demoInviteDismissed by remember { mutableStateOf(prefs.getBoolean("demoInviteDismissed", false)) }
+    fun dismissDemoInvite() {
+        prefs.edit().putBoolean("demoInviteDismissed", true).apply()
+        demoInviteDismissed = true
+    }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -135,6 +162,14 @@ fun TrailScreen() {
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    data.demoInvite?.let { invite ->
+                        if (!demoInviteDismissed) {
+                            item(key = "demo-invite") {
+                                DemoInviteCard(invite, onJoin = vm::joinDemo, onLook = { navigator.tab(Tab.Communities) },
+                                    onDismiss = { dismissDemoInvite() })
+                            }
+                        }
+                    }
                     item(key = "tabs") {
                         ScrollingTabs(
                             options = listOf("Meaning Trail", "My openings", "Following (${data.following.size})"),

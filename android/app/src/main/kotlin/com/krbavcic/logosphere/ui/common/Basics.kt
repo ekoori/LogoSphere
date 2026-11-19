@@ -108,6 +108,38 @@ fun QuietPill(text: String, modifier: Modifier = Modifier) {
     Pill(text, MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, modifier)
 }
 
+/** From a demo sphere, where the members are AI personas. */
+@Composable
+fun DemoTag(modifier: Modifier = Modifier) {
+    Pill("Demo", Brand.colors.demoWash, Brand.colors.onDemoWash, modifier.semantics {
+        contentDescription = "Demo: from a demo sphere, where the members are AI personas"
+    })
+}
+
+/** What a demo sphere is, said plainly where it matters. */
+@Composable
+fun DemoNote(lead: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "$lead. The members here are AI personas: famous names playing everyday neighbours. " +
+            "Try anything; nothing here is real.",
+        style = MaterialTheme.typography.bodyMedium,
+        color = Brand.colors.onDemoWash,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(Brand.colors.demoWash)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    )
+}
+
+/** An AI persona: a famous name playing an everyday neighbour. */
+@Composable
+fun PersonaTag(modifier: Modifier = Modifier, compact: Boolean = false) {
+    Pill(if (compact) "AI" else "AI persona", Brand.colors.personaWash, Brand.colors.onPersonaWash, modifier.semantics {
+        contentDescription = "AI persona"
+    })
+}
+
 /** A small uppercase label above a section, like the web's eyebrows. */
 @Composable
 fun SectionHeading(text: String, modifier: Modifier = Modifier, trailing: @Composable (() -> Unit)? = null) {

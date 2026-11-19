@@ -54,6 +54,8 @@ data class PublicUser(
     @SerialName("is_following") val isFollowing: Boolean = false,
     @SerialName("following_count") val followingCount: Int = 0,
     @SerialName("is_platform_admin") val isPlatformAdmin: Boolean = false,
+    /** An AI persona: a famous name playing an everyday neighbour in the demo spheres. */
+    @SerialName("is_agent") val isAgent: Boolean = false,
 ) {
     val displayName: String
         get() = listOfNotNull(name, surname).joinToString(" ").trim().ifEmpty { "Member" }
@@ -89,6 +91,8 @@ data class Acceptance(
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("acting_user_id") val actingUserId: String? = null,
     @SerialName("acting_user_name") val actingUserName: String? = null,
+    /** The human behind it is an AI persona. */
+    @SerialName("is_agent") val isAgent: Boolean = false,
 )
 
 /** A perpetual opening's many acceptances, folded into one date per phase. */
@@ -139,6 +143,9 @@ data class Opening(
     val exchanges: List<Acceptance> = emptyList(),
     val version: Int = 1,
     @SerialName("is_current") val isCurrent: Boolean = true,
+    /** From a demo sphere, where the members are AI personas. */
+    @SerialName("is_demo") val isDemo: Boolean = false,
+    @SerialName("provider_is_agent") val providerIsAgent: Boolean = false,
 ) {
     val isOffer: Boolean get() = type != "need"
     val isPerpetual: Boolean get() = cadence == "perpetual"
@@ -226,6 +233,9 @@ data class Exchange(
     @SerialName("has_image") val hasImage: Boolean = false,
     @SerialName("receipt_photo_count") val receiptPhotoCount: Int = 0,
     @SerialName("is_finished") val isFinished: Boolean = false,
+    @SerialName("is_demo") val isDemo: Boolean = false,
+    @SerialName("initiator_is_agent") val initiatorIsAgent: Boolean = false,
+    @SerialName("other_is_agent") val otherIsAgent: Boolean = false,
 ) {
     fun likesFor(target: LikeTarget): LikeInfo = likes[target.key] ?: LikeInfo()
 }
@@ -299,6 +309,7 @@ data class Member(
     val id: String,
     val name: String? = null,
     val role: String? = null,
+    @SerialName("is_agent") val isAgent: Boolean = false,
 )
 
 /**
@@ -321,6 +332,8 @@ data class Community(
     @SerialName("value_cards") val valueCards: List<ValueCard> = emptyList(),
     @SerialName("has_image") val hasImage: Boolean = false,
     @SerialName("is_public") val isPublic: Boolean = false,
+    /** A demo sphere, or a group inside one: its members are AI personas. */
+    @SerialName("is_demo") val isDemo: Boolean = false,
     @SerialName("join_policy") val joinPolicy: String? = null,
     val admin1: String? = null,
     /** Sphere: its alliances' names. */
@@ -370,6 +383,7 @@ data class AppNotification(
     val link: String? = null,
     @SerialName("actor_id") val actorId: String? = null,
     @SerialName("actor_name") val actorName: String? = null,
+    @SerialName("actor_is_agent") val actorIsAgent: Boolean = false,
     /** Kept verbatim: marking one read sends it back as part of the row's key. */
     @SerialName("created_at") val createdAt: String,
     @SerialName("is_read") val isRead: Boolean = false,
@@ -398,6 +412,8 @@ data class SearchItem(
     /** "Near my values": the words that made it similar. */
     val why: List<String> = emptyList(),
     val similarity: Double? = null,
+    @SerialName("is_demo") val isDemo: Boolean = false,
+    @SerialName("is_agent") val isAgent: Boolean = false,
 )
 
 @Serializable
@@ -423,4 +439,24 @@ data class SearchResults(
     val groups: List<SearchGroup> = emptyList(),
     val note: String? = null,
     val around: SearchAround? = null,
+)
+
+
+// ── The demonstration ───────────────────────────────────────────────────────
+
+@Serializable
+data class DemoSphere(
+    val id: String,
+    val name: String = "",
+    val description: String? = null,
+    val joined: Boolean = false,
+    @SerialName("member_count") val memberCount: Int = 0,
+)
+
+/** `GET /api/demo`: the demo spheres and whether you're in each. */
+@Serializable
+data class DemoStatus(
+    val spheres: List<DemoSphere> = emptyList(),
+    @SerialName("joined_any") val joinedAny: Boolean = false,
+    @SerialName("joined_all") val joinedAll: Boolean = false,
 )

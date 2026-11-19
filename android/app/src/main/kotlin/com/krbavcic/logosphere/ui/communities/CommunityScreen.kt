@@ -50,18 +50,21 @@ import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.Avatar
 import com.krbavcic.logosphere.ui.common.BackTopBar
 import com.krbavcic.logosphere.ui.common.Banner
+import com.krbavcic.logosphere.ui.common.DemoNote
+import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.EmptyNote
 import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.GroupAvatar
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningCard
+import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.QuietPill
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
-import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.ScrollingTabs
+import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.ValueChips
 import kotlinx.coroutines.async
@@ -225,12 +228,14 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
         item(key = "about") {
             Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (c.isDemo) DemoTag()
                     QuietPill("${members.size} member${if (members.size == 1) "" else "s"}")
                     c.location?.takeIf { c.kind == CommunityKind.Sphere }?.let { QuietPill(it) }
                     if (c.kind == CommunityKind.Sphere && c.isPublic) QuietPill("Public")
                     if (c.kind == CommunityKind.Project) QuietPill(if (c.isClosed) "Closed" else c.status ?: "Ongoing")
                     if (c.joinPolicy == "approval") QuietPill("Joining needs approval")
                 }
+                if (c.isDemo) DemoNote("Demo ${c.kind.noun.lowercase()}")
                 if (c.kind != CommunityKind.Sphere && c.parentSphereId != null) {
                     AssistChip(
                         onClick = { navigator.community(CommunityKind.Sphere, c.parentSphereId!!) },
@@ -342,6 +347,7 @@ private fun MemberRow(member: Member) {
         Avatar(member.id, member.name, size = 36.dp)
         Spacer(Modifier.width(12.dp))
         Text(member.name ?: "Member", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+        if (member.isAgent) PersonaTag(compact = true)
     }
 }
 

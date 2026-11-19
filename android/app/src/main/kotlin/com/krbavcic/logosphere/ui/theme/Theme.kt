@@ -34,6 +34,11 @@ data class BrandColors(
     val acknowledgementAccent: Color,
     val card: Color,
     val cardBorder: Color,
+    /** The demonstration: Demo spheres and their AI personas. */
+    val demoWash: Color,
+    val onDemoWash: Color,
+    val personaWash: Color,
+    val onPersonaWash: Color,
 )
 
 private val LightBrand = BrandColors(
@@ -47,6 +52,10 @@ private val LightBrand = BrandColors(
     acknowledgementAccent = Palette.Honey,
     card = Palette.Surface,
     cardBorder = Palette.Border,
+    demoWash = Color(0xFFEDE3F7),
+    onDemoWash = Color(0xFF5A338A),
+    personaWash = Color(0xFFDDEAF4),
+    onPersonaWash = Color(0xFF2F5D7C),
 )
 
 private val DarkBrand = BrandColors(
@@ -60,6 +69,10 @@ private val DarkBrand = BrandColors(
     acknowledgementAccent = Color(0xFFE9BE6A),
     card = Palette.NightSurface,
     cardBorder = Color(0xFF3D4636),
+    demoWash = Color(0xFF3E2D55),
+    onDemoWash = Color(0xFFE2CFF8),
+    personaWash = Color(0xFF22394A),
+    onPersonaWash = Color(0xFFBFDDF2),
 )
 
 val LocalBrandColors = staticCompositionLocalOf { LightBrand }

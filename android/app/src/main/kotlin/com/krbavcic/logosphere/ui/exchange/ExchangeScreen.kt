@@ -68,11 +68,13 @@ import com.krbavcic.logosphere.ui.Navigator
 import com.krbavcic.logosphere.ui.common.Avatar
 import com.krbavcic.logosphere.ui.common.BackTopBar
 import com.krbavcic.logosphere.ui.common.BrandCard
+import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.ExchangeStatusPill
 import com.krbavcic.logosphere.ui.common.GroupAvatar
 import com.krbavcic.logosphere.ui.common.LikeButton
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
+import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.ProgressTimeline
 import com.krbavcic.logosphere.ui.common.QuietPill
@@ -190,6 +192,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ExchangeStatusPill(x)
+                    if (x.isDemo) DemoTag()
                     Spacer(Modifier.weight(1f))
                     LikeButton(x.likesFor(LikeTarget.Exchange).liked, x.likesFor(LikeTarget.Exchange).count, { vm.like(LikeTarget.Exchange) })
                 }
@@ -415,7 +418,10 @@ private fun PartyRow(party: Party, role: String, onClick: () -> Unit) {
         if (group != null) GroupAvatar(group, size = 36.dp) else Avatar(party.id, party.name, size = 36.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(party.label, style = MaterialTheme.typography.titleSmall)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(party.label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
+                if (party.isAgent && !party.isViewer) PersonaTag()
+            }
             val via = party.actingUserName?.let { " · via $it" }.orEmpty()
             MetaText((group?.noun ?: "Person") + via)
         }

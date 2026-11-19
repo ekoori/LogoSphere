@@ -56,19 +56,21 @@ import com.krbavcic.logosphere.ui.LocalAppContainer
 import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.Avatar
 import com.krbavcic.logosphere.ui.common.BackTopBar
+import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.GroupAvatar
 import com.krbavcic.logosphere.ui.common.MetaText
+import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.theme.valueCardAccent
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.coroutines.cancellation.CancellationException
 
 private val SCOPES = listOf(
     null to "Everything", "user" to "People", "sphere" to "Spheres", "alliance" to "Alliances",
@@ -166,7 +168,7 @@ fun SearchScreen() {
                     }
                     MetaText(
                         if (mode == 1) {
-                            "Ranks by how close each value graph is to the values you describe, or to your own cards."
+                            "Ranks by how close each Meaning Graph is to the values you describe, or to your own cards."
                         } else {
                             "Sphere-scoped openings, alliances and projects only show if you're in the sphere."
                         },
@@ -185,7 +187,7 @@ fun SearchScreen() {
             }
             results?.around?.takeIf { mode == 1 && query.isBlank() }?.let { around ->
                 item(key = "around") {
-                    MetaText("Around the value graph of ${around.name ?: "you"} (${around.cardCount} cards)")
+                    MetaText("Around the Meaning Graph of ${around.name ?: "you"} (${around.cardCount} cards)")
                 }
             }
             results?.groups?.forEach { group ->
@@ -220,7 +222,12 @@ private fun ResultRow(item: SearchItem, onClick: () -> Unit) {
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(item.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(item.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false))
+                if (item.isAgent) PersonaTag(compact = true)
+                if (item.isDemo) DemoTag()
+            }
             item.summary?.takeIf { it.isNotBlank() }?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }

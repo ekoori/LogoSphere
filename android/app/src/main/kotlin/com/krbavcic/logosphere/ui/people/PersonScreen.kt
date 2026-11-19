@@ -46,6 +46,7 @@ import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningCard
+import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SectionHeading
@@ -126,9 +127,15 @@ fun PersonScreen(id: String) {
                             Spacer(Modifier.width(16.dp))
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(data.user.displayName, style = MaterialTheme.typography.headlineSmall)
+                                if (data.user.isAgent) PersonaTag()
                                 data.user.location?.let { MetaText("📍 $it") }
                                 MetaText("${data.trail.size} exchanges  ·  ${data.openings.size} openings")
                             }
+                        }
+                    }
+                    if (data.user.isAgent) {
+                        item(key = "persona") {
+                            MetaText("A famous name playing an everyday neighbour in the demo spheres. Their posts are written by AI.", maxLines = 3)
                         }
                     }
                     item(key = "follow") {

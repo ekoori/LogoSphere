@@ -3,6 +3,7 @@ package com.krbavcic.logosphere.core.api
 import com.krbavcic.logosphere.core.model.AppNotification
 import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
+import com.krbavcic.logosphere.core.model.DemoStatus
 import com.krbavcic.logosphere.core.model.ConfirmResult
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.ExchangeDetail
@@ -213,6 +214,13 @@ class LogoSphereApi(
     // ── Notifications ───────────────────────────────────────────────────────
 
     suspend fun notifications(): NotificationInbox = get("/api/notifications")
+
+    // ── The demonstration ────────────────────────────────────────────────────
+    /** The demo spheres (AI personas play everyday neighbours there) and whether you're in each. */
+    suspend fun demo(): DemoStatus = get("/api/demo")
+
+    /** Join every demo sphere at once. */
+    suspend fun joinDemo(): DemoStatus = post("/api/demo/join", JsonObject(emptyMap()))
 
     suspend fun markRead(notification: AppNotification) {
         post<JsonElement>(

@@ -15,6 +15,8 @@ data class Party(
     val actingUserId: String?,
     val actingUserName: String?,
     val isViewer: Boolean,
+    /** The person (or the human acting for the group) is an AI persona. */
+    val isAgent: Boolean = false,
 ) {
     val label: String get() = if (isViewer) "You" else name
 }
@@ -30,6 +32,7 @@ object Parties {
             actingUserId = exchange.initiatorActingUserId,
             actingUserName = exchange.initiatorActingUserName,
             isViewer = group == null && id != null && id == viewerId,
+            isAgent = exchange.initiatorIsAgent,
         )
     }
 
@@ -43,6 +46,7 @@ object Parties {
             actingUserId = exchange.recipientActingUserId,
             actingUserName = exchange.recipientActingUserName,
             isViewer = group == null && id == viewerId,
+            isAgent = exchange.otherIsAgent,
         )
     }
 }

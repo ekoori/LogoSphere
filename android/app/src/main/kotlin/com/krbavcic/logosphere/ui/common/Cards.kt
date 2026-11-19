@@ -48,7 +48,9 @@ fun PartyTag(party: Party, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
+        if (party.isAgent && !party.isViewer) PersonaTag(compact = true)
     }
 }
 
@@ -100,8 +102,9 @@ fun ExchangeCard(
     val likes = exchange.likesFor(LikeTarget.Exchange)
     BrandCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 ExchangeStatusPill(exchange)
+                if (exchange.isDemo) DemoTag()
                 Spacer(Modifier.weight(1f))
                 MetaText(Dates.day(exchange.startedAt))
             }
@@ -162,8 +165,12 @@ fun OpeningCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 OpeningTypePill(opening.isOffer)
                 if (opening.isPerpetual) QuietPill("↻ Ongoing")
+                if (opening.isDemo) DemoTag()
                 Spacer(Modifier.weight(1f))
-                LikeButton(opening.likedByMe, opening.likes, onLike)
+                // Your own opening isn't yours to appreciate (an old self-like can come off).
+                if (!OpeningRules.isOwn(opening, viewerId) || opening.likedByMe) {
+                    LikeButton(opening.likedByMe, opening.likes, onLike)
+                }
             }
             Text(opening.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -173,6 +180,7 @@ fun OpeningCard(
                     OpeningRules.isOwn(opening, viewerId) -> "You"
                     else -> opening.provider ?: "A member"
                 }
+                if (opening.providerIsAgent && !OpeningRules.isOwn(opening, viewerId)) PersonaTag(compact = true)
                 MetaText(
                     listOfNotNull(by, opening.sphereName, opening.projectName).joinToString("  ·  "),
                     modifier = Modifier.weight(1f),

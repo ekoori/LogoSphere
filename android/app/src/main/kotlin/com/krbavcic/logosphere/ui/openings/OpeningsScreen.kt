@@ -57,6 +57,10 @@ import kotlinx.coroutines.coroutineScope
 
 data class OpeningsData(val openings: List<Opening>, val spheres: List<Community>)
 
+// Sphere filter choices that aren't a single sphere.
+private const val REAL_SPHERES = "real-spheres"
+private const val DEMO_SPHERES = "demo-spheres"
+
 class OpeningsViewModel(private val app: AppContainer) : LoadViewModel<OpeningsData>() {
     val viewerId: String? get() = app.session.user?.id
 
@@ -115,7 +119,14 @@ fun OpeningsScreen() {
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
             val shown = data.openings
                 .filter { when (type) { 1 -> it.isOffer; 2 -> !it.isOffer; else -> true } }
-                .filter { sphereId == null || it.sphereId == sphereId }
+                .filter {
+                    when (sphereId) {
+                        null -> true
+                        REAL_SPHERES -> !it.isDemo
+                        DEMO_SPHERES -> it.isDemo
+                        else -> it.sphereId == sphereId
+                    }
+                }
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
@@ -132,7 +143,12 @@ fun OpeningsScreen() {
                             SegmentedTabs(listOf("All", "Offers", "Needs"), type, { type = it })
                             if (data.spheres.isNotEmpty()) {
                                 FilterMenuChip(
-                                    choices = listOf(Choice(null, "All spheres")) + data.spheres.map { Choice(it.id, it.name) },
+                                    choices = listOf(
+                                        Choice(null, "All spheres"),
+                                        Choice(REAL_SPHERES, "Real spheres only"),
+                                        Choice(DEMO_SPHERES, "Demo spheres only"),
+                                    ) + data.spheres.sortedBy { it.isDemo }
+                                        .map { Choice(it.id, if (it.isDemo) "${it.name} (demo)" else it.name) },
                                     selected = sphereId,
                                     onSelect = { sphereId = it },
                                 )

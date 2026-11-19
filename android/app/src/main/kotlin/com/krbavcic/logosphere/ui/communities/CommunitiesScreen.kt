@@ -43,13 +43,17 @@ import com.krbavcic.logosphere.ui.LocalAppContainer
 import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.Banner
 import com.krbavcic.logosphere.ui.common.BrandCard
+import com.krbavcic.logosphere.ui.common.DemoNote
+import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.DonePill
 import com.krbavcic.logosphere.ui.common.EmptyNote
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
+import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.QuietPill
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
+import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
@@ -67,6 +71,15 @@ class CommunitiesViewModel(private val app: AppContainer) : LoadViewModel<Map<Co
         CommunityKind.entries.associateWith { kind -> async { app.communities.list(kind, force) } }
             .mapValues { it.value.await() }
     }
+
+    /** Join every demo sphere at once. */
+    fun joinDemo() = act(onSuccess = {
+        CommunityKind.entries.forEach { app.communities.invalidate(it) }
+        app.openings.invalidate()
+        app.changes.emit(Change.Communities)
+        app.changes.emit(Change.Openings)
+        say("You've joined the demo spheres. Try anything there.")
+    }) { app.api.joinDemo() }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,8 +108,11 @@ fun CommunitiesScreen() {
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { lists ->
             val kind = CommunityKind.entries[tab]
-            // Your own communities first, then the rest.
-            val shown = lists[kind].orEmpty().sortedByDescending { Membership.isMember(it, vm.viewerId) }
+            // Your own communities first, then the rest; demo ones in a section of their own.
+            val all = lists[kind].orEmpty().sortedByDescending { Membership.isMember(it, vm.viewerId) }
+            val shown = all.filter { !it.isDemo }
+            val demo = all.filter { it.isDemo }
+            val inAllDemo = demo.isNotEmpty() && demo.all { Membership.isMember(it, vm.viewerId) }
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 32.dp),
@@ -117,9 +133,23 @@ fun CommunitiesScreen() {
                             maxLines = 2,
                         )
                     }
-                    if (shown.isEmpty()) item { EmptyNote("No ${kind.plural.lowercase()} to show yet.") }
+                    if (shown.isEmpty() && demo.isEmpty()) item { EmptyNote("No ${kind.plural.lowercase()} to show yet.") }
                     items(shown, key = { kind.name + it.id }) { community ->
                         CommunityCard(community, vm.viewerId) { navigator.community(kind, community.id) }
+                    }
+                    if (demo.isNotEmpty()) {
+                        item(key = "demo-head") {
+                            Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SectionHeading("Demo ${kind.plural.lowercase()}")
+                                DemoNote("Demo ${kind.plural.lowercase()}")
+                                if (kind == CommunityKind.Sphere && !inAllDemo) {
+                                    PrimaryAction("Join all ${demo.size} demo spheres", onClick = vm::joinDemo)
+                                }
+                            }
+                        }
+                        items(demo, key = { "demo-" + kind.name + it.id }) { community ->
+                            CommunityCard(community, vm.viewerId) { navigator.community(kind, community.id) }
+                        }
                     }
                 }
             }
@@ -147,6 +177,7 @@ fun CommunityCard(community: Community, viewerId: String?, onClick: () -> Unit) 
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.padding(4.dp))
+                    if (community.isDemo) DemoTag(Modifier.padding(end = 6.dp))
                     when {
                         Membership.isMember(community, viewerId) -> DonePill(text = "Member")
                         Membership.role(community, viewerId) == "pending" -> QuietPill("Requested")
