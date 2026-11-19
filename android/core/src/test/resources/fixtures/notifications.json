@@ -1,0 +1,505 @@
+{
+ "notifications": [
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:08.689000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "4cb12eb0-e296-49f9-b803-d51f57778507",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:08.310000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "2782609f-aeb4-4a78-aea7-bdf4602745ee",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:07.997000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "7bc0badc-a329-4968-b14d-f280a282e179",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:07.751000",
+   "is_read": false,
+   "link": "/exchange?id=51a3a90f-4306-49f4-baf9-57bdcb6fdf08",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "407c0abc-ee44-4ee7-9f93-5e1331e5876a",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:07.277000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "973f6a36-7756-4a92-bb70-f646b0ee9fd7",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:07.082000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "6c76214e-77cc-4d29-9ccf-2c5814c72e8c",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-12T00:19:06.515000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "9e76631d-3012-4add-83d7-0648a96e05ed",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:53.828000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "213418e0-cf36-4d43-8a78-6dadcbc0aaf0",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:53.374000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "ddf68062-c921-4c61-bbe4-594b47f474c1",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:53.033000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "c89eabde-eddf-47f6-8b77-35551b043f5e",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:52.834000",
+   "is_read": false,
+   "link": "/exchange?id=5e0ae4da-675a-48fa-aab8-f315e503e041",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "482cd072-1b89-4860-9fae-ab5154a18f18",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:52.333000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "12407016-42fa-4fb2-9164-3d0919f9914c",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:52.153000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "b134b70a-7d71-4fa4-9160-fcfc9180f45e",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T22:28:51.412000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "2023f6b4-0881-496b-8736-efe833ef55cf",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:52.746000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "5e34382b-11b2-4ed2-bf5f-021f5e1fbcd7",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:52.008000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "f36c09a8-7495-4bbf-a549-cc9c0d37c153",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:51.677000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "ba23ec59-b697-45d6-b331-16270e917e38",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:51.466000",
+   "is_read": false,
+   "link": "/exchange?id=5ed07c15-0dad-4a5e-8d50-e3bb4ed4c489",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "1bd9841d-29ed-4fbf-acb1-428d0a95d51b",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:51.085000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "288fcb1b-df76-492f-96a5-cae94b6a97f7",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:50.935000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "e6c7995b-bd62-411c-8782-3f7e369cc32c",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:19:50.353000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "657379d5-eb1f-40f2-936e-a86054f63796",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:45.774000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "7a5e48a1-58c0-472d-b48e-002d5c9725c0",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:45.168000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "12fbf1f1-a5c4-40e6-96ab-091017e85369",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:44.782000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "820998fd-cab0-4ef5-9488-16dccf016158",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:44.570000",
+   "is_read": false,
+   "link": "/exchange?id=910a2952-934e-4e61-8fa5-f4e5de3f374f",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "1fd3880b-4943-43d8-a686-4763ba0f6535",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:44.237000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "ed674810-e4a0-4944-9d10-4be0b5bffb4a",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:44.107000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "0475f59a-781e-4e7e-a947-5af46392563f",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:16:42.888000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "9772a86d-71be-43b5-849c-bbbc5e0fb0d7",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:55.593000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "091f3107-1913-425e-a8c7-4861faaaec54",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:55.194000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "e1bd744a-b5a2-4d1a-8f1d-8b7a5a14622a",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:54.842000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "688fe246-cf84-4021-a9b1-6cfaea7fface",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:54.647000",
+   "is_read": false,
+   "link": "/exchange?id=4129da29-64f8-4d50-b9c0-095884d3f16b",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "8e291e8e-b32f-4a20-82f6-b65c02d6cd7e",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:54.211000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "21a225f0-7d1f-42a6-94ce-e6844c68e925",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:54.062000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "a403e796-fd3e-4102-be9b-1a21d1650bd6",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T14:08:53.464000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "d087f70e-2071-4193-a95a-1de1d535e6b7",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:45.621000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "6de271ad-5ce2-44ae-89e7-1b7b8f309972",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:45.302000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "ae2223e0-cb78-447d-a475-b5875f301015",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:45.029000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "c73c1851-9a2e-4f3b-ac27-87c24e5c0fc4",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:44.866000",
+   "is_read": false,
+   "link": "/exchange?id=d235ed44-81fa-4904-8256-acb43364e1d2",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "4dfb683f-0151-40d1-849e-3a2aee489738",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:44.511000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "1a39c11f-2cc0-4407-9607-2b1aaef18f17",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:44.357000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "1b5ec684-491c-4637-8a19-05241186f570",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:41:43.798000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "2b3627ba-74ff-410e-a333-7b9367a3a7b8",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:21.331000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "964a047c-365f-483d-8deb-1311e171a64c",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:20.922000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "d83be96b-fcdf-46f1-8e96-9080f0dc3152",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:20.510000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "9915b38f-e26c-4ad4-8cd9-ceba592f439d",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:20.233000",
+   "is_read": false,
+   "link": "/exchange?id=6fef93e5-74d1-4a21-90a9-0bd7db31d8c2",
+   "message": "Marie Kondo left you a receipt",
+   "notification_id": "0b32daf6-cf42-4734-ac38-fe6fb5688611",
+   "type": "receipt_received"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:19.446000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "a0ec4a78-b0bd-4c5c-b703-1eb7d2ca66cb",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:19.121000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "6070d177-528c-4651-86b3-bc8415abe9ab",
+   "type": "opening_accepted"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:39:18.335000",
+   "is_read": false,
+   "link": "/alliance?id=aaaaaaaa-0000-0000-0000-000000000001&tab=governance",
+   "message": "New proposal in Repair Café Collective: \"Hold the repair cafe on Sundays in winter\"",
+   "notification_id": "4972e6a0-921a-434c-9a9c-b9ed812af2e9",
+   "type": "proposal_opened"
+  },
+  {
+   "actor_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "actor_name": "Marie Kondo",
+   "created_at": "2026-09-11T13:38:14.449000",
+   "is_read": false,
+   "link": "/opening?id=2052e249-96e0-5b37-aaef-5a23ae361baf",
+   "message": "Marie Kondo wants to accept your opening \"Sharing what I know\"",
+   "notification_id": "71e39b32-a2ab-4fda-8b48-506122df45ee",
+   "type": "opening_accepted"
+  }
+ ],
+ "unread_count": 50
+}

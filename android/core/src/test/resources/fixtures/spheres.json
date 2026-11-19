@@ -1,0 +1,454 @@
+[
+ {
+  "admin1": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "alliances": [
+   "Open Compute Guild"
+  ],
+  "decision_policy": "majority",
+  "description": "A sphere pooling open compute and knowledge so that powerful AI research is a public good, not a private moat. Members share GPUs, datasets and mentorship in the spirit of the gift.",
+  "has_image": true,
+  "image": null,
+  "is_public": false,
+  "is_sandbox": false,
+  "join_policy": "open",
+  "location": "Distributed",
+  "meaning_graph": "#opencompute #knowledgecommons #ai",
+  "members": [
+   {
+    "id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+    "name": "Elon Musk",
+    "role": "member"
+   },
+   {
+    "id": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+    "name": "Bill Gates",
+    "role": "member"
+   },
+   {
+    "id": "7d6e67f2-5c64-4175-8330-a0d1b2b9c45f",
+    "name": "Stephen Hawking",
+    "role": "member"
+   },
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "admin"
+   },
+   {
+    "id": "98806cda-663d-4b4c-8d72-7a1d28ed4f58",
+    "name": "Quentin Tarantino",
+    "role": "member"
+   },
+   {
+    "id": "8bdce8ab-41e9-49db-a3f5-5cbacd5f60d0",
+    "name": "J.K. Rowling",
+    "role": "member"
+   },
+   {
+    "id": "a0a79e14-2ea9-4924-a992-6d5e1d7ad0ab",
+    "name": "James Cameron",
+    "role": "member"
+   },
+   {
+    "id": "642932c8-63fe-4f06-91c9-0e7e6d8b0756",
+    "name": "Barack Obama",
+    "role": "member"
+   }
+  ],
+  "name": "AI Commons",
+  "participant_names": [
+   "Elon Musk",
+   "Bill Gates",
+   "Stephen Hawking",
+   "Joe Rogan",
+   "Quentin Tarantino",
+   "J.K. Rowling",
+   "James Cameron",
+   "Barack Obama"
+  ],
+  "participants": [
+   "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+   "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+   "7d6e67f2-5c64-4175-8330-a0d1b2b9c45f",
+   "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+   "98806cda-663d-4b4c-8d72-7a1d28ed4f58",
+   "8bdce8ab-41e9-49db-a3f5-5cbacd5f60d0",
+   "a0a79e14-2ea9-4924-a992-6d5e1d7ad0ab",
+   "642932c8-63fe-4f06-91c9-0e7e6d8b0756"
+  ],
+  "projects": [
+   "Open GPU Cluster"
+  ],
+  "sphere_id": "22222222-2222-2222-2222-222222222222",
+  "value_cards": [
+   {
+    "because": "The most powerful AI systems will shape the century. If only a handful of companies control the compute, they control the future. That is not acceptable.",
+    "card_id": "3842ad2d-2ddf-40f3-8a05-421287644dba",
+    "care_about": "Treating access to AI processing power the way we treat roads and water — something managed for collective benefit, not private advantage.",
+    "color_key": "honey",
+    "created_at": "2026-07-04T23:21:47.263000",
+    "drift_looks_like": "Open compute that serves open-washing — free access for friendly researchers, closed for anyone who might compete.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The researcher with the best question over the one with the biggest budget.",
+    "is_current": true,
+    "looks_like": [
+     "Allocating GPU time by research value, not ability to pay",
+     "Publishing utilisation data so the community can hold allocators accountable",
+     "Rejecting uses that would close rather than open knowledge"
+    ],
+    "needs_review": true,
+    "never_do": "Accept a use that benefits one member at the cost of the commons.",
+    "replaces_card_id": "63cbba76-1a91-413a-9449-1e2e52bdbf12",
+    "reviewed_at": null,
+    "title": "Compute as public infrastructure (edited)",
+    "user_id": "22222222-2222-2222-2222-222222222222"
+   },
+   {
+    "because": "The atmosphere is a finite buffer. Every year of delay locks in compounding consequences. The technology exists; the bottleneck is manufacturing scale and political inertia.",
+    "card_id": "7e01778e-51ac-4071-b89a-dd8ed4af10f9",
+    "care_about": "Moving civilisation off fossil fuels as fast as physically possible — not out of environmentalism but because sustainable energy is simply the correct long-term path.",
+    "color_key": "leaf",
+    "created_at": "2026-07-04T15:27:23.319000",
+    "drift_looks_like": "Treating sustainability as a marketing angle. Optimising vehicle range for luxury buyers over energy density for affordability.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "Speed of transition over profit margin on any single product.",
+    "is_current": true,
+    "looks_like": [
+     "Building the world's largest battery factories before there was demand",
+     "Treating the energy problem as a manufacturing problem first",
+     "Publishing Tesla's patents openly to accelerate the entire industry"
+    ],
+    "needs_review": true,
+    "never_do": "Pretend that incremental improvement is enough.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Accelerating the energy transition",
+    "user_id": "22222222-2222-2222-2222-222222222222"
+   },
+   {
+    "because": "Every major AI breakthrough built on decades of public funding and publicly shared research. Privatising the next layer is theft from the commons.",
+    "card_id": "c13d7597-41bf-472f-bb71-2cc2ea5395c0",
+    "care_about": "Conducting and sharing research in AI not for competitive advantage but because the knowledge belongs to everyone.",
+    "color_key": "leaf",
+    "created_at": "2026-07-01T22:16:26.646000",
+    "drift_looks_like": "Research published just enough to appear open while keeping the important bits proprietary.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The open result over the closed product.",
+    "is_current": true,
+    "looks_like": [
+     "Publishing findings before seeking commercial applications",
+     "Refusing research that cannot be published",
+     "Actively citing and compensating the open-source work we build on"
+    ],
+    "needs_review": true,
+    "never_do": "Build on someone's open work without acknowledging it.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "AI research as a gift to humanity",
+    "user_id": "22222222-2222-2222-2222-222222222222"
+   }
+  ],
+  "values": [
+   "open source",
+   "knowledge sharing",
+   "compute as commons"
+  ]
+ },
+ {
+  "admin1": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "alliances": [
+   "Repair Café Collective",
+   "Seed Keepers Alliance"
+  ],
+  "decision_policy": "majority",
+  "description": "A solarpunk neighbourhood where tools, time and skills are shared freely. We grow food, repair what breaks, and look after one another — no money changes hands, only trust.",
+  "has_image": false,
+  "image": null,
+  "is_public": false,
+  "is_sandbox": false,
+  "join_policy": "open",
+  "location": "Riverside",
+  "meaning_graph": "#mutualaid #repair #gardens #localfirst",
+  "members": [
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "admin"
+   },
+   {
+    "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+    "name": "Marie Kondo",
+    "role": "member"
+   },
+   {
+    "id": "16f033ca-2b2c-4745-a537-82999209774c",
+    "name": "Steve Wozniak",
+    "role": "member"
+   },
+   {
+    "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+    "name": "David Attenborough",
+    "role": "member"
+   },
+   {
+    "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+    "name": "Emma Watson",
+    "role": "member"
+   },
+   {
+    "id": "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
+    "name": "Neil deGrasse Tyson",
+    "role": "member"
+   },
+   {
+    "id": "6c1b8973-5ebd-4407-8817-02945bcfa561",
+    "name": "Jeff Bezos",
+    "role": "member"
+   },
+   {
+    "id": "a566548f-dc0f-46d8-aefb-e48f7d0b4af9",
+    "name": "Ada Lovelace",
+    "role": "member"
+   },
+   {
+    "id": "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
+    "name": "Richard Branson",
+    "role": "member"
+   },
+   {
+    "id": "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd",
+    "name": "Oprah Winfrey",
+    "role": "member"
+   }
+  ],
+  "name": "Riverside Commons",
+  "participant_names": [
+   "Joe Rogan",
+   "Marie Kondo",
+   "Steve Wozniak",
+   "David Attenborough",
+   "Emma Watson",
+   "Neil deGrasse Tyson",
+   "Jeff Bezos",
+   "Ada Lovelace",
+   "Richard Branson",
+   "Oprah Winfrey"
+  ],
+  "participants": [
+   "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+   "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "16f033ca-2b2c-4745-a537-82999209774c",
+   "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+   "ff52c318-95e0-4f1f-89cc-62551c814a83",
+   "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
+   "6c1b8973-5ebd-4407-8817-02945bcfa561",
+   "a566548f-dc0f-46d8-aefb-e48f7d0b4af9",
+   "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
+   "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd"
+  ],
+  "projects": [
+   "Community Tool Library",
+   "Neighbourhood Solar Microgrid"
+  ],
+  "sphere_id": "11111111-1111-1111-1111-111111111111",
+  "value_cards": [
+   {
+    "because": "The supermarket is three supply-chain disruptions away from empty shelves. Knowing how to grow is knowing how to survive.",
+    "card_id": "677cc5ba-73c4-4341-ae0e-5204f54d6ad7",
+    "care_about": "Treating the capacity to grow food as a shared infrastructure — not a lifestyle hobby but a serious community foundation.",
+    "color_key": "leaf",
+    "created_at": "2026-07-01T22:16:26.641000",
+    "drift_looks_like": "Community gardens that only the already-confident use. \"Local food\" as a premium product rather than a shared right.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The person who has never grown anything over the one who knows how.",
+    "is_current": true,
+    "looks_like": [
+     "Maintaining at least one communal bed per street",
+     "Sharing surplus harvest through the common drop-off rather than letting it rot",
+     "Teaching children to grow before they learn to buy"
+    ],
+    "needs_review": true,
+    "never_do": "Let knowledge about growing stay locked in one generation.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Soil and food as commons",
+    "user_id": "11111111-1111-1111-1111-111111111111"
+   },
+   {
+    "because": "Every skip full of usable things is a failure of connection between neighbours. We have more than enough; we have not yet learned to circulate it.",
+    "card_id": "b2e054d6-37e9-4809-b8be-b1ebfa1e3021",
+    "care_about": "Making the default assumption that what one household doesn't need, another does — and building the infrastructure for that exchange.",
+    "color_key": "moss",
+    "created_at": "2026-07-01T22:16:26.615000",
+    "drift_looks_like": "Hoarding under the name of \"preparedness\". Sharing only the things nobody would want anyway.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The collective sufficiency over the individual stockpile.",
+    "is_current": true,
+    "looks_like": [
+     "Posting what you're done with before buying new",
+     "Borrowing before purchasing for any task that comes up fewer than ten times a year",
+     "Fixing the broken thing before the new one arrives"
+    ],
+    "needs_review": true,
+    "never_do": "Discard something that a neighbour could use.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Nothing wasted, everything shared",
+    "user_id": "11111111-1111-1111-1111-111111111111"
+   }
+  ],
+  "values": [
+   "mutual aid",
+   "repair culture",
+   "food sovereignty",
+   "trust"
+  ]
+ },
+ {
+  "admin1": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "alliances": [
+   "Seed Keepers Alliance"
+  ],
+  "decision_policy": "majority",
+  "description": "A regenerative growing community restoring soil and pollinators. We swap heirloom seeds, share harvests, and govern the land together through liquid democracy.",
+  "has_image": false,
+  "image": null,
+  "is_public": false,
+  "is_sandbox": false,
+  "join_policy": "open",
+  "location": "Greenvale",
+  "meaning_graph": "#regenerative #seeds #pollinators #biodiversity",
+  "members": [
+   {
+    "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+    "name": "David Attenborough",
+    "role": "member"
+   },
+   {
+    "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+    "name": "Emma Watson",
+    "role": "member"
+   },
+   {
+    "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+    "name": "Marie Kondo",
+    "role": "member"
+   },
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "admin"
+   },
+   {
+    "id": "45d4a39e-a9a3-4c27-955a-6d056324c6fd",
+    "name": "Jordan Peterson",
+    "role": "member"
+   },
+   {
+    "id": "c58998de-48a9-4f9a-9e7a-2ec430fe6e09",
+    "name": "Jeff Goldblum",
+    "role": "member"
+   },
+   {
+    "id": "1be6b6df-d5f3-4d82-9e15-c3a8c78607dd",
+    "name": "Pope Francis",
+    "role": "member"
+   },
+   {
+    "id": "84a8f453-80f4-408f-b692-01bfcfeb7b10",
+    "name": "Morgan Freeman",
+    "role": "member"
+   }
+  ],
+  "name": "Earthsong Gardens",
+  "participant_names": [
+   "David Attenborough",
+   "Emma Watson",
+   "Marie Kondo",
+   "Joe Rogan",
+   "Jordan Peterson",
+   "Jeff Goldblum",
+   "Pope Francis",
+   "Morgan Freeman"
+  ],
+  "participants": [
+   "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+   "ff52c318-95e0-4f1f-89cc-62551c814a83",
+   "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+   "45d4a39e-a9a3-4c27-955a-6d056324c6fd",
+   "c58998de-48a9-4f9a-9e7a-2ec430fe6e09",
+   "1be6b6df-d5f3-4d82-9e15-c3a8c78607dd",
+   "84a8f453-80f4-408f-b692-01bfcfeb7b10"
+  ],
+  "projects": [
+   "Pollinator Corridor"
+  ],
+  "sphere_id": "33333333-3333-3333-3333-333333333333",
+  "value_cards": [
+   {
+    "because": "A monoculture requires constant defence. A diverse system defends itself. The garden that thrives with least intervention is the garden that works with nature, not against it.",
+    "card_id": "a7da97a5-c529-4eef-9988-05656647c50b",
+    "care_about": "Designing growing spaces where the cultivated and the wild support each other — not a garden that holds nature at bay but one that invites it in.",
+    "color_key": "sage",
+    "created_at": "2026-07-01T22:16:26.650000",
+    "drift_looks_like": "Aesthetics that eliminate wildness. Neatness as a value that crowds out biodiversity.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The insect over the weed-free path.",
+    "is_current": true,
+    "looks_like": [
+     "Leaving areas deliberately unmown and uncultivated",
+     "Choosing companion planting over pesticides",
+     "Planting for pollinators and birds as deliberately as planting for the table"
+    ],
+    "needs_review": true,
+    "never_do": "Remove a plant without first asking what depends on it.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Wild and cultivated in conversation",
+    "user_id": "33333333-3333-3333-3333-333333333333"
+   },
+   {
+    "because": "Industrial agriculture has depleted topsoil that took ten thousand years to build in a few decades. We are the generation that either reverses this or doesn't.",
+    "card_id": "fdbe2727-7e9c-4c1c-84c6-c8b05dfd3152",
+    "care_about": "Treating the living complexity of healthy soil as the most valuable asset a community can steward — more important than any yield it produces.",
+    "color_key": "moss",
+    "created_at": "2026-07-01T22:16:26.648000",
+    "drift_looks_like": "Optimising for visible yield at the cost of invisible soil health. Treating compost as a chore rather than a practice.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The soil community over this season's harvest.",
+    "is_current": true,
+    "looks_like": [
+     "Testing soil before adding anything to it",
+     "Composting all organic waste back into the beds",
+     "Leaving roots in the ground to feed the fungal web rather than pulling them"
+    ],
+    "needs_review": true,
+    "never_do": "Add a chemical to the soil without understanding what it does to the organisms in it.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Soil health as the foundation of everything",
+    "user_id": "33333333-3333-3333-3333-333333333333"
+   }
+  ],
+  "values": [
+   "regeneration",
+   "biodiversity",
+   "stewardship"
+  ]
+ }
+]

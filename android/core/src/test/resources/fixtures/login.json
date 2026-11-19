@@ -1,0 +1,14 @@
+{
+ "data": {
+  "email": "joe.rogan@example.com",
+  "is_platform_admin": true,
+  "location": null,
+  "name": "Joe Rogan",
+  "profile_picture": null,
+  "session_id": null,
+  "surname": null,
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ },
+ "message": "Login successful",
+ "session_id": "00000000-0000-4000-8000-000000000000"
+}

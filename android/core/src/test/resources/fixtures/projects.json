@@ -1,0 +1,366 @@
+[
+ {
+  "decision_policy": "majority",
+  "description": "Rooftop panels feeding a shared battery so the block keeps the lights on together. Surplus energy is gifted to households that need it most.",
+  "has_image": true,
+  "id": "bbbbbbbb-0000-0000-0000-000000000002",
+  "image": null,
+  "join_policy": "open",
+  "members": [
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "manager"
+   },
+   {
+    "id": "16f033ca-2b2c-4745-a537-82999209774c",
+    "name": "Steve Wozniak",
+    "role": "contributor"
+   }
+  ],
+  "name": "Neighbourhood Solar Microgrid",
+  "owner": "Joe Rogan",
+  "owner_alliance": "Repair Café Collective",
+  "owner_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "owner_name": "Joe Rogan",
+  "participants": [
+   "Joe Rogan",
+   "Steve Wozniak"
+  ],
+  "phase": "ongoing",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000002",
+  "sphere_id": "11111111-1111-1111-1111-111111111111",
+  "sphere_name": "Riverside Commons",
+  "status": "Initiated",
+  "value_cards": [
+   {
+    "because": "Energy is not a commodity in this grid; it is a form of care. The point of community infrastructure is to make the floor higher, not the ceiling.",
+    "card_id": "4de5d5be-f9d6-4cf0-afc8-ba07e49ffb57",
+    "care_about": "Building grid capacity so that the households most vulnerable to outages — elderly, medical equipment, young children — are the last to go dark.",
+    "color_key": "honey",
+    "created_at": "2026-07-01T22:16:26.676000",
+    "drift_looks_like": "Grid that distributes evenly regardless of need. Solar as a cost-saving measure that benefits those who can already afford panels.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The household that would lose heat or refrigerated medication over average distribution.",
+    "is_current": true,
+    "looks_like": [
+     "Prioritising battery allocation to highest-need households in a shortage",
+     "Designing the system so the most vulnerable are protected without having to ask",
+     "Publishing real-time generation and allocation data for all members"
+    ],
+    "needs_review": true,
+    "never_do": "Design the system in a way that benefits contributors more than the most vulnerable.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Energy resilience as mutual aid",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000002"
+   },
+   {
+    "because": "We built this together. The surplus belongs to whoever needs it most, not to whoever has the biggest array.",
+    "card_id": "b99710d4-746a-4f6c-b9ad-aaeb761dc4f7",
+    "care_about": "Routing any generation above collective needs to households experiencing hardship — not selling it back to the grid, giving it to neighbours.",
+    "color_key": "leaf",
+    "created_at": "2026-07-01T22:16:26.683000",
+    "drift_looks_like": "Treating surplus as a personal financial return. Exporting to the grid while a neighbour can't afford to heat their home.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The neighbour in difficulty over our own credit balance.",
+    "is_current": true,
+    "looks_like": [
+     "Establishing a \"gift pool\" for surplus rather than grid export by default",
+     "Reviewing allocation quarterly with the whole grid community",
+     "Making it easy to signal need without stigma"
+    ],
+    "needs_review": true,
+    "never_do": "Sell surplus while a member is rationing their own use.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Surplus energy as a gift",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000002"
+   }
+  ],
+  "values": [
+   "energy as commons",
+   "resilience"
+  ]
+ },
+ {
+  "decision_policy": "majority",
+  "description": "A community-run cluster of donated GPUs for open AI research. Time is allocated by the Open Compute Guild through transparent, member-led voting.",
+  "has_image": false,
+  "id": "bbbbbbbb-0000-0000-0000-000000000003",
+  "image": null,
+  "join_policy": "open",
+  "members": [
+   {
+    "id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+    "name": "Elon Musk",
+    "role": "manager"
+   },
+   {
+    "id": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+    "name": "Bill Gates",
+    "role": "contributor"
+   },
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "contributor"
+   }
+  ],
+  "name": "Open GPU Cluster",
+  "owner": "Elon Musk",
+  "owner_alliance": "Open Compute Guild",
+  "owner_id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+  "owner_name": "Elon Musk",
+  "participants": [
+   "Elon Musk",
+   "Bill Gates",
+   "Joe Rogan"
+  ],
+  "phase": "ongoing",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000003",
+  "sphere_id": "22222222-2222-2222-2222-222222222222",
+  "sphere_name": "AI Commons",
+  "status": "In Progress",
+  "value_cards": [
+   {
+    "because": "The history of science is a history of outsiders with better questions being kept out by insiders with credentials. This cluster exists to make that less true.",
+    "card_id": "01420dc6-f77e-408d-82f0-8f0b72072430",
+    "care_about": "Allocating cluster resources to the research most likely to produce open, shareable knowledge — regardless of who is asking.",
+    "color_key": "honey",
+    "created_at": "2026-07-01T22:16:26.685000",
+    "drift_looks_like": "Cluster that serves the established because they already know how to apply. Open compute that produces closed papers.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The proposal that will produce public knowledge over the one from the better-known lab.",
+    "is_current": true,
+    "looks_like": [
+     "Blind-reviewing proposals before learning who submitted them",
+     "Actively recruiting researchers from institutions with no existing cluster access",
+     "Refusing applications that would result in proprietary outputs"
+    ],
+    "needs_review": true,
+    "never_do": "Award time to a project whose outputs will be locked behind a paywall.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Compute time for the best questions",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000003"
+   },
+   {
+    "because": "The cluster exists because of community contributions. The outputs belong to the community. This is not complicated.",
+    "card_id": "ee2a8bd4-697b-4266-bfab-8149c960b728",
+    "care_about": "Producing all research, code, datasets and models under open licences — this is not a preference but a condition of access.",
+    "color_key": "leaf",
+    "created_at": "2026-07-01T22:16:26.687000",
+    "drift_looks_like": "Technically open licences that make the work practically unusable. \"Open access\" papers with datasets that are not released.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The community's access to the output over the researcher's comfort with sharing.",
+    "is_current": true,
+    "looks_like": [
+     "Checking licence status before any result is published or deployed",
+     "Actively depositing code and models to public repositories, not just making them \"available on request\"",
+     "Refusing extensions for teams that haven't met open-release commitments from prior allocations"
+    ],
+    "needs_review": true,
+    "never_do": "Approve a renewal for a team that hasn't delivered on prior open commitments.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Open by default, always",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000003"
+   }
+  ],
+  "values": [
+   "open research",
+   "compute commons"
+  ]
+ },
+ {
+  "decision_policy": "majority",
+  "description": "A free lending library of power tools, garden equipment and know-how. Borrow what you need, return it cared-for, teach the next person.",
+  "has_image": false,
+  "id": "bbbbbbbb-0000-0000-0000-000000000001",
+  "image": null,
+  "join_policy": "open",
+  "members": [
+   {
+    "id": "16f033ca-2b2c-4745-a537-82999209774c",
+    "name": "Steve Wozniak",
+    "role": "manager"
+   },
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "contributor"
+   },
+   {
+    "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+    "name": "Marie Kondo",
+    "role": "contributor"
+   }
+  ],
+  "name": "Community Tool Library",
+  "owner": "Steve Wozniak",
+  "owner_alliance": "Repair Café Collective",
+  "owner_id": "16f033ca-2b2c-4745-a537-82999209774c",
+  "owner_name": "Steve Wozniak",
+  "participants": [
+   "Steve Wozniak",
+   "Joe Rogan",
+   "Marie Kondo"
+  ],
+  "phase": "ongoing",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000001",
+  "sphere_id": "11111111-1111-1111-1111-111111111111",
+  "sphere_name": "Riverside Commons",
+  "status": "In Progress",
+  "value_cards": [
+   {
+    "because": "Common resources degrade unless everyone takes responsibility for them as if they were their own. The tool library works because every member acts as a steward, not just a user.",
+    "card_id": "1e2b09cc-fd48-47e3-a91e-9eb61a0611e7",
+    "care_about": "Returning tools in better condition than they were borrowed — cleaned, sharpened, with what was used replaced.",
+    "color_key": "honey",
+    "created_at": "2026-07-01T22:16:26.674000",
+    "drift_looks_like": "Returning things technically in one piece. Letting the collective absorb the cost of individual carelessness.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The condition for the next borrower over the inconvenience of the current one.",
+    "is_current": true,
+    "looks_like": [
+     "Cleaning and oiling before return, not after the next borrower complains",
+     "Noting wear or damage on the return so it can be addressed",
+     "Contributing one maintenance session per season to the collective stock"
+    ],
+    "needs_review": true,
+    "never_do": "Return something without saying if it developed a problem during use.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Care is part of the transaction",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000001"
+   },
+   {
+    "because": "The average drill is used for twelve minutes in its entire lifetime. Meanwhile the materials to make it were extracted, the worker who made it was paid, and a shelf holds it for decades. This is a solved problem.",
+    "card_id": "a706d2f5-3694-4401-b7bc-61b718075ad9",
+    "care_about": "Maintaining a shared library of tools so that no household needs to own equipment it uses a few times a year.",
+    "color_key": "terracotta",
+    "created_at": "2026-07-01T22:16:26.669000",
+    "drift_looks_like": "A tool library that fills with items nobody wants to borrow. Gatekeeping through complex lending rules.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The neighbour who needs the tool next over the one who has it now.",
+    "is_current": true,
+    "looks_like": [
+     "Adding any tool used fewer than twice a year to the shared pool",
+     "Tracking lending through the simplest possible system — a notebook is fine",
+     "Teaching basic use as part of every loan"
+    ],
+    "needs_review": true,
+    "never_do": "Refuse a loan because the borrower \"might not know how to use it.\"",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Tools are for using, not owning",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000001"
+   }
+  ],
+  "values": [
+   "sharing over owning",
+   "repair culture"
+  ]
+ },
+ {
+  "decision_policy": "majority",
+  "description": "A ribbon of wildflower meadows linking gardens across the valley so bees and butterflies can travel safely. Planted and tended by volunteers.",
+  "has_image": false,
+  "id": "bbbbbbbb-0000-0000-0000-000000000004",
+  "image": null,
+  "join_policy": "open",
+  "members": [
+   {
+    "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+    "name": "David Attenborough",
+    "role": "manager"
+   },
+   {
+    "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+    "name": "Emma Watson",
+    "role": "contributor"
+   }
+  ],
+  "name": "Pollinator Corridor",
+  "owner": "David Attenborough",
+  "owner_alliance": "Seed Keepers Alliance",
+  "owner_id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+  "owner_name": "David Attenborough",
+  "participants": [
+   "David Attenborough",
+   "Emma Watson"
+  ],
+  "phase": "ongoing",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000004",
+  "sphere_id": "33333333-3333-3333-3333-333333333333",
+  "sphere_name": "Earthsong Gardens",
+  "status": "Completed",
+  "value_cards": [
+   {
+    "because": "Millions of years of co-evolution produced insects that can extract nutrition from local plants and plants that need those insects to reproduce. That system is not improvable; it can only be disrupted or supported.",
+    "card_id": "05262c33-47c0-4500-a815-671198354cb9",
+    "care_about": "Treating native plant species as the default choice for all corridor planting — not because exotics are always wrong but because natives are always right.",
+    "color_key": "moss",
+    "created_at": "2026-07-01T22:16:26.691000",
+    "drift_looks_like": "Native plant sections next to exotic borders, cancelling each other's work. Rewilding with species that look wild but aren't local.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The native plant that feeds the local insect over the exotic that looks more impressive.",
+    "is_current": true,
+    "looks_like": [
+     "Sourcing all planting stock from native seed provenance",
+     "Removing invasive exotics before adding new plantings",
+     "Educating corridor landowners on the distinction between native and naturalised"
+    ],
+    "needs_review": true,
+    "never_do": "Plant an ornamental that will outcompete the natives around it.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Native plants as the baseline",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000004"
+   },
+   {
+    "because": "An isolated meadow helps the pollinators that can reach it. A connected corridor helps the whole landscape. The difference is not effort; it is coordination.",
+    "card_id": "786ad2b3-0758-4131-ba17-dca0641fa6e3",
+    "care_about": "Creating connected habitat so that pollinators can travel between areas without encountering lethal gaps — thinking in corridors, not patches.",
+    "color_key": "sage",
+    "created_at": "2026-07-01T22:16:26.689000",
+    "drift_looks_like": "Meadows that are local pride projects rather than linked habitat. Planting that maximises visible beauty over ecological function.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The corridor gap over the patch that is already good.",
+    "is_current": true,
+    "looks_like": [
+     "Mapping the corridor from the insect's perspective, not the land-owner's",
+     "Negotiating right-of-way planting across property lines",
+     "Measuring connectivity annually and targeting the gaps"
+    ],
+    "needs_review": true,
+    "never_do": "Plant a species that looks beautiful but provides nothing for pollinators.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Continuity across boundaries",
+    "user_id": "bbbbbbbb-0000-0000-0000-000000000004"
+   }
+  ],
+  "values": [
+   "biodiversity",
+   "stewardship"
+  ]
+ }
+]

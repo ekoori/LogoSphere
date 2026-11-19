@@ -1,0 +1,98 @@
+[
+ {
+  "because": "Most public discourse is performative. Real thinking happens in the space where no one is playing to an audience.",
+  "card_id": "1d094eaf-a4c6-4ed8-8e8e-0c3699658126",
+  "care_about": "EDITED: Long-form dialogue that takes ideas seriously.",
+  "color_key": "honey",
+  "created_at": "2026-07-04T23:17:09.789000",
+  "drift_looks_like": "Booking guests for their audience not their ideas. Cutting off a thread because it's getting uncomfortable.",
+  "endorsed": true,
+  "endorsed_at": "2026-09-11T12:21:13.897000",
+  "frankl_mode": "creative",
+  "in_conflict": "The quality of the conversation over the size of the audience.",
+  "is_current": true,
+  "looks_like": [
+   "Sitting with a guest for 3+ hours without cutting to a break",
+   "Letting an idea develop fully before pushing back",
+   "Saying 'I don't know' when I genuinely don't"
+  ],
+  "needs_review": false,
+  "never_do": "Fake agreement to avoid conflict.",
+  "replaces_card_id": "ba867cb9-6690-45a9-ac2e-b22e43eefebb",
+  "reviewed_at": "2026-09-11T12:21:13.897000",
+  "title": "Conversations that change minds",
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ },
+ {
+  "because": "Everyone has a world inside them that most people never ask about. Most interviewers ask questions they already know the answer to.",
+  "card_id": "57e974f2-b692-47e8-b2f2-51d2d4b798b6",
+  "care_about": "Finding what's actually interesting in every kind of person — the scientist, the comedian, the fighter, the philosopher.",
+  "color_key": "leaf",
+  "created_at": "2026-07-01T22:16:26.582000",
+  "drift_looks_like": "Only booking people I already like. Staying on safe topics because controversy is exhausting.",
+  "endorsed": false,
+  "endorsed_at": null,
+  "frankl_mode": "experiential",
+  "in_conflict": "The unexpected insight over the comfortable brand.",
+  "is_current": true,
+  "looks_like": [
+   "Researching a guest's work before the interview even if it's outside my comfort zone",
+   "Following a rabbit hole on air when something surprises me",
+   "Having guests I fundamentally disagree with and treating their ideas fairly"
+  ],
+  "needs_review": true,
+  "never_do": "Pretend to understand something I haven't thought about.",
+  "replaces_card_id": null,
+  "reviewed_at": null,
+  "title": "Genuine curiosity across the spectrum",
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ },
+ {
+  "because": "The atmosphere is a finite buffer. Every year of delay locks in compounding consequences. The technology exists; the bottleneck is manufacturing scale and political inertia.",
+  "card_id": "583e6c4b-ab92-48f8-82de-bd4dc237c1a4",
+  "care_about": "Moving civilisation off fossil fuels as fast as physically possible — not out of environmentalism but because sustainable energy is simply the correct long-term path.",
+  "color_key": "leaf",
+  "created_at": "2026-07-04T15:26:25.006000",
+  "drift_looks_like": "Treating sustainability as a marketing angle. Optimising vehicle range for luxury buyers over energy density for affordability.",
+  "endorsed": false,
+  "endorsed_at": null,
+  "frankl_mode": "attitudinal",
+  "in_conflict": "Speed of transition over profit margin on any single product.",
+  "is_current": true,
+  "looks_like": [
+   "Building the world's largest battery factories before there was demand",
+   "Treating the energy problem as a manufacturing problem first",
+   "Publishing Tesla's patents openly to accelerate the entire industry"
+  ],
+  "needs_review": true,
+  "never_do": "Pretend that incremental improvement is enough.",
+  "replaces_card_id": null,
+  "reviewed_at": null,
+  "title": "Accelerating the energy transition",
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ },
+ {
+  "because": "A sharp body makes a sharp mind. Comfort is entropy. The people I respect most take their physical practice seriously.",
+  "card_id": "6f77e11b-bda1-40e1-9877-eba648b80a96",
+  "care_about": "The discipline of keeping the body trained — martial arts, hunting, fitness — not for aesthetics but for clarity.",
+  "color_key": "terracotta",
+  "created_at": "2026-07-01T22:16:26.580000",
+  "drift_looks_like": "Skipping training because the podcast got busy. Using 'I deserve rest' as a cover for avoidance.",
+  "endorsed": false,
+  "endorsed_at": null,
+  "frankl_mode": "attitudinal",
+  "in_conflict": "The training over the convenience.",
+  "is_current": true,
+  "looks_like": [
+   "Training jiu-jitsu at least 4 days a week regardless of schedule",
+   "Taking a hunt seriously as a multi-day commitment",
+   "Treating sleep and nutrition as inputs, not luxuries"
+  ],
+  "needs_review": true,
+  "never_do": "Shame someone for where they are in their physical journey.",
+  "replaces_card_id": null,
+  "reviewed_at": null,
+  "title": "Physical presence as a practice",
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ }
+]

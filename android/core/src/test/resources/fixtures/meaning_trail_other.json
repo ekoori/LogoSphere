@@ -1,0 +1,140 @@
+[
+ {
+  "exchange_description": "Kicked off the Neighbourhood Solar Microgrid — mapping rooftops this month",
+  "exchange_id": "10000000-0000-0000-0000-000000000005",
+  "exchange_long_description": null,
+  "exchange_status": "Initiated",
+  "finished_at": null,
+  "gratitude_card_ids": [],
+  "gratitude_comment": null,
+  "gratitude_comment_cards": [],
+  "gratitude_comment_context": null,
+  "gratitude_comment_id": null,
+  "gratitude_comment_timestamp": null,
+  "gratitude_frankl_mode": null,
+  "has_image": false,
+  "in_progress_at": null,
+  "initiator_acting_user_id": null,
+  "initiator_acting_user_name": null,
+  "initiator_comment": null,
+  "initiator_comment_timestamp": null,
+  "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "initiator_kind": "user",
+  "initiator_name": "Joe Rogan",
+  "likes": {
+   "exchange": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "gratitude": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "other": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "user": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   }
+  },
+  "other_comment": null,
+  "other_comment_author_id": null,
+  "other_comment_author_name": null,
+  "other_comment_cards": [],
+  "other_comment_id": null,
+  "other_comment_timestamp": null,
+  "other_kind": "user",
+  "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
+  "other_user_name": "Steve Wozniak",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000002",
+  "project_name": "Neighbourhood Solar Microgrid",
+  "project_start_timestamp": "2026-06-24T09:00:00",
+  "receipted_at": null,
+  "recipient_acting_user_id": null,
+  "recipient_acting_user_name": null,
+  "recipient_comment": null,
+  "recipient_comment_timestamp": null,
+  "source_service_id": null,
+  "user_comment": null,
+  "user_comment_cards": [],
+  "user_comment_id": null,
+  "user_comment_timestamp": null,
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "viewer_is_initiator": false
+ },
+ {
+  "exchange_description": "Learned joinery and tool restoration from Steve at the Repair Café",
+  "exchange_id": "10000000-0000-0000-0000-000000000004",
+  "exchange_long_description": null,
+  "exchange_status": "Finished",
+  "finished_at": null,
+  "gratitude_card_ids": [],
+  "gratitude_comment": null,
+  "gratitude_comment_cards": [],
+  "gratitude_comment_context": null,
+  "gratitude_comment_id": null,
+  "gratitude_comment_timestamp": null,
+  "gratitude_frankl_mode": null,
+  "has_image": false,
+  "in_progress_at": null,
+  "initiator_acting_user_id": null,
+  "initiator_acting_user_name": null,
+  "initiator_comment": null,
+  "initiator_comment_timestamp": null,
+  "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "initiator_kind": "user",
+  "initiator_name": "Joe Rogan",
+  "likes": {
+   "exchange": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "gratitude": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "other": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   },
+   "user": {
+    "by": [],
+    "count": 0,
+    "liked": false
+   }
+  },
+  "other_comment": null,
+  "other_comment_author_id": null,
+  "other_comment_author_name": null,
+  "other_comment_cards": [],
+  "other_comment_id": null,
+  "other_comment_timestamp": null,
+  "other_kind": "user",
+  "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
+  "other_user_name": "Steve Wozniak",
+  "project_id": "bbbbbbbb-0000-0000-0000-000000000001",
+  "project_name": "Community Tool Library",
+  "project_start_timestamp": "2026-04-18T10:00:00",
+  "receipted_at": null,
+  "recipient_acting_user_id": null,
+  "recipient_acting_user_name": null,
+  "recipient_comment": null,
+  "recipient_comment_timestamp": null,
+  "source_service_id": null,
+  "user_comment": "Steve is endlessly patient. He taught me to sharpen a plane and to value fixing over buying. Paying it forward next week.",
+  "user_comment_cards": [],
+  "user_comment_id": "40000000-0000-0000-0000-000000000004",
+  "user_comment_timestamp": "2026-04-25T16:00:00",
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "viewer_is_initiator": false
+ }
+]

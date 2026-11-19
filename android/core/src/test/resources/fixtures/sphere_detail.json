@@ -1,0 +1,160 @@
+{
+ "admin1": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+ "alliance_list": [
+  {
+   "id": "aaaaaaaa-0000-0000-0000-000000000001",
+   "name": "Repair Café Collective"
+  }
+ ],
+ "alliances": [
+  "Repair Café Collective",
+  "Seed Keepers Alliance"
+ ],
+ "can_manage": true,
+ "decision_policy": "majority",
+ "description": "A solarpunk neighbourhood where tools, time and skills are shared freely. We grow food, repair what breaks, and look after one another — no money changes hands, only trust.",
+ "has_image": false,
+ "image": null,
+ "is_public": false,
+ "is_sandbox": false,
+ "join_policy": "open",
+ "location": "Riverside",
+ "meaning_graph": "#mutualaid #repair #gardens #localfirst",
+ "members": [
+  {
+   "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+   "name": "Joe Rogan",
+   "role": "admin"
+  },
+  {
+   "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "name": "Marie Kondo",
+   "role": "member"
+  },
+  {
+   "id": "16f033ca-2b2c-4745-a537-82999209774c",
+   "name": "Steve Wozniak",
+   "role": "member"
+  },
+  {
+   "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+   "name": "David Attenborough",
+   "role": "member"
+  },
+  {
+   "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+   "name": "Emma Watson",
+   "role": "member"
+  },
+  {
+   "id": "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
+   "name": "Neil deGrasse Tyson",
+   "role": "member"
+  },
+  {
+   "id": "6c1b8973-5ebd-4407-8817-02945bcfa561",
+   "name": "Jeff Bezos",
+   "role": "member"
+  },
+  {
+   "id": "a566548f-dc0f-46d8-aefb-e48f7d0b4af9",
+   "name": "Ada Lovelace",
+   "role": "member"
+  },
+  {
+   "id": "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
+   "name": "Richard Branson",
+   "role": "member"
+  },
+  {
+   "id": "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd",
+   "name": "Oprah Winfrey",
+   "role": "member"
+  }
+ ],
+ "name": "Riverside Commons",
+ "participants": [
+  "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+  "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+  "16f033ca-2b2c-4745-a537-82999209774c",
+  "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+  "ff52c318-95e0-4f1f-89cc-62551c814a83",
+  "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
+  "6c1b8973-5ebd-4407-8817-02945bcfa561",
+  "a566548f-dc0f-46d8-aefb-e48f7d0b4af9",
+  "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
+  "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd"
+ ],
+ "pending_members": [],
+ "project_list": [
+  {
+   "id": "bbbbbbbb-0000-0000-0000-000000000002",
+   "name": "Neighbourhood Solar Microgrid"
+  },
+  {
+   "id": "bbbbbbbb-0000-0000-0000-000000000001",
+   "name": "Community Tool Library"
+  }
+ ],
+ "projects": [
+  "Community Tool Library",
+  "Neighbourhood Solar Microgrid"
+ ],
+ "sphere_id": "11111111-1111-1111-1111-111111111111",
+ "value_cards": [
+  {
+   "because": "The supermarket is three supply-chain disruptions away from empty shelves. Knowing how to grow is knowing how to survive.",
+   "card_id": "677cc5ba-73c4-4341-ae0e-5204f54d6ad7",
+   "care_about": "Treating the capacity to grow food as a shared infrastructure — not a lifestyle hobby but a serious community foundation.",
+   "color_key": "leaf",
+   "created_at": "2026-07-01T22:16:26.641000",
+   "drift_looks_like": "Community gardens that only the already-confident use. \"Local food\" as a premium product rather than a shared right.",
+   "endorsed": false,
+   "endorsed_at": null,
+   "frankl_mode": "creative",
+   "in_conflict": "The person who has never grown anything over the one who knows how.",
+   "is_current": true,
+   "looks_like": [
+    "Maintaining at least one communal bed per street",
+    "Sharing surplus harvest through the common drop-off rather than letting it rot",
+    "Teaching children to grow before they learn to buy"
+   ],
+   "needs_review": true,
+   "never_do": "Let knowledge about growing stay locked in one generation.",
+   "replaces_card_id": null,
+   "reviewed_at": null,
+   "title": "Soil and food as commons",
+   "user_id": "11111111-1111-1111-1111-111111111111"
+  },
+  {
+   "because": "Every skip full of usable things is a failure of connection between neighbours. We have more than enough; we have not yet learned to circulate it.",
+   "card_id": "b2e054d6-37e9-4809-b8be-b1ebfa1e3021",
+   "care_about": "Making the default assumption that what one household doesn't need, another does — and building the infrastructure for that exchange.",
+   "color_key": "moss",
+   "created_at": "2026-07-01T22:16:26.615000",
+   "drift_looks_like": "Hoarding under the name of \"preparedness\". Sharing only the things nobody would want anyway.",
+   "endorsed": false,
+   "endorsed_at": null,
+   "frankl_mode": "attitudinal",
+   "in_conflict": "The collective sufficiency over the individual stockpile.",
+   "is_current": true,
+   "looks_like": [
+    "Posting what you're done with before buying new",
+    "Borrowing before purchasing for any task that comes up fewer than ten times a year",
+    "Fixing the broken thing before the new one arrives"
+   ],
+   "needs_review": true,
+   "never_do": "Discard something that a neighbour could use.",
+   "replaces_card_id": null,
+   "reviewed_at": null,
+   "title": "Nothing wasted, everything shared",
+   "user_id": "11111111-1111-1111-1111-111111111111"
+  }
+ ],
+ "values": [
+  "mutual aid",
+  "repair culture",
+  "food sovereignty",
+  "trust"
+ ]
+}

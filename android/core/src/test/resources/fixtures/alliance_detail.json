@@ -1,0 +1,97 @@
+{
+ "admin1": "16f033ca-2b2c-4745-a537-82999209774c",
+ "alliance_id": "aaaaaaaa-0000-0000-0000-000000000001",
+ "can_manage": true,
+ "confirm_policy": "board",
+ "decision_policy": "majority",
+ "description": "Neighbours who fix things together every Saturday - bikes, toasters, fences, friendships. Knowledge is shared, never sold.",
+ "has_image": false,
+ "id": "aaaaaaaa-0000-0000-0000-000000000001",
+ "image": null,
+ "join_policy": "open",
+ "meaning_graph": "#repair #skillshare",
+ "members": [
+  {
+   "id": "16f033ca-2b2c-4745-a537-82999209774c",
+   "name": "Steve Wozniak",
+   "role": "admin"
+  },
+  {
+   "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+   "name": "Joe Rogan",
+   "role": "member"
+  },
+  {
+   "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+   "name": "Marie Kondo",
+   "role": "steward"
+  }
+ ],
+ "name": "Repair Café Collective",
+ "participants": [
+  "Steve Wozniak",
+  "Joe Rogan",
+  "Marie Kondo"
+ ],
+ "pending_members": [],
+ "pm_policy": "single-pm",
+ "projects": [
+  "Community Tool Library"
+ ],
+ "sphere_id": "11111111-1111-1111-1111-111111111111",
+ "sphere_name": "Riverside Commons",
+ "value_cards": [
+  {
+   "because": "Expertise has been used as gatekeeping for too long. The person who teaches ten people to fix bikes has done more than the person who fixed a hundred.",
+   "card_id": "da91733d-fade-4702-8b5c-1533cae1e57d",
+   "care_about": "Treating technical skill as something to give away, not hoard — the highest act of skill is creating the conditions where you are no longer needed.",
+   "color_key": "honey",
+   "created_at": "2026-07-01T22:16:26.654000",
+   "drift_looks_like": "Expert capture — repairs that only one person can do, creating permanent dependency.",
+   "endorsed": false,
+   "endorsed_at": null,
+   "frankl_mode": "experiential",
+   "in_conflict": "The learner over the efficiency of the fix.",
+   "is_current": true,
+   "looks_like": [
+    "Welcoming complete beginners and giving them the first tool to try",
+    "Never making someone feel stupid for not knowing something technical",
+    "Writing guides in plain language and leaving them where others will find them"
+   ],
+   "needs_review": true,
+   "never_do": "Take over a repair from someone who is learning, just because it's faster.",
+   "replaces_card_id": null,
+   "reviewed_at": null,
+   "title": "Knowledge belongs to whoever needs it",
+   "user_id": "aaaaaaaa-0000-0000-0000-000000000001"
+  },
+  {
+   "because": "Every object that gets repaired rather than replaced is a material extracted from the earth, a worker paid to make it, and a landfill site it never fills.",
+   "card_id": "dea4d70f-ea24-4419-9b72-61b56af5e2d3",
+   "care_about": "Making the first response to any broken thing a serious attempt to fix it — and building the skills and tools to make that possible.",
+   "color_key": "terracotta",
+   "created_at": "2026-07-01T22:16:26.652000",
+   "drift_looks_like": "Repair Café as a feel-good event where the same five people fix things for admiring spectators.",
+   "endorsed": false,
+   "endorsed_at": null,
+   "frankl_mode": "creative",
+   "in_conflict": "The person who leaves knowing how over the person who leaves with a working thing.",
+   "is_current": true,
+   "looks_like": [
+    "Bringing the broken thing to the café before looking for a replacement",
+    "Documenting the repair so the next person can do it themselves",
+    "Teaching repair skills explicitly, not just doing the repair for someone"
+   ],
+   "needs_review": true,
+   "never_do": "Fix something without explaining what was broken and why.",
+   "replaces_card_id": null,
+   "reviewed_at": null,
+   "title": "Repair over replace",
+   "user_id": "aaaaaaaa-0000-0000-0000-000000000001"
+  }
+ ],
+ "values": [
+  "repair culture",
+  "skill sharing"
+ ]
+}

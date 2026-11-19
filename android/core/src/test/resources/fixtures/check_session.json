@@ -1,0 +1,14 @@
+{
+ "status": "active",
+ "user_data": {
+  "email": "joe.rogan@example.com",
+  "is_platform_admin": true,
+  "location": "USA",
+  "name": "Joe Rogan",
+  "profile_picture": null,
+  "session_id": null,
+  "surname": null,
+  "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+ },
+ "user_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad"
+}

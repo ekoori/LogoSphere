@@ -1,0 +1,281 @@
+[
+ {
+  "admin1": "16f033ca-2b2c-4745-a537-82999209774c",
+  "alliance_id": "aaaaaaaa-0000-0000-0000-000000000001",
+  "confirm_policy": "board",
+  "decision_policy": "majority",
+  "description": "Neighbours who fix things together every Saturday - bikes, toasters, fences, friendships. Knowledge is shared, never sold.",
+  "has_image": false,
+  "id": "aaaaaaaa-0000-0000-0000-000000000001",
+  "image": null,
+  "join_policy": "open",
+  "meaning_graph": "#repair #skillshare",
+  "members": [
+   {
+    "id": "16f033ca-2b2c-4745-a537-82999209774c",
+    "name": "Steve Wozniak",
+    "role": "admin"
+   },
+   {
+    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
+    "name": "Joe Rogan",
+    "role": "member"
+   },
+   {
+    "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
+    "name": "Marie Kondo",
+    "role": "steward"
+   }
+  ],
+  "name": "Repair Café Collective",
+  "participants": [
+   "Steve Wozniak",
+   "Joe Rogan",
+   "Marie Kondo"
+  ],
+  "pm_policy": "single-pm",
+  "projects": [
+   "Community Tool Library"
+  ],
+  "sphere_id": "11111111-1111-1111-1111-111111111111",
+  "sphere_name": "Riverside Commons",
+  "value_cards": [
+   {
+    "because": "Expertise has been used as gatekeeping for too long. The person who teaches ten people to fix bikes has done more than the person who fixed a hundred.",
+    "card_id": "da91733d-fade-4702-8b5c-1533cae1e57d",
+    "care_about": "Treating technical skill as something to give away, not hoard — the highest act of skill is creating the conditions where you are no longer needed.",
+    "color_key": "honey",
+    "created_at": "2026-07-01T22:16:26.654000",
+    "drift_looks_like": "Expert capture — repairs that only one person can do, creating permanent dependency.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "experiential",
+    "in_conflict": "The learner over the efficiency of the fix.",
+    "is_current": true,
+    "looks_like": [
+     "Welcoming complete beginners and giving them the first tool to try",
+     "Never making someone feel stupid for not knowing something technical",
+     "Writing guides in plain language and leaving them where others will find them"
+    ],
+    "needs_review": true,
+    "never_do": "Take over a repair from someone who is learning, just because it's faster.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Knowledge belongs to whoever needs it",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000001"
+   },
+   {
+    "because": "Every object that gets repaired rather than replaced is a material extracted from the earth, a worker paid to make it, and a landfill site it never fills.",
+    "card_id": "dea4d70f-ea24-4419-9b72-61b56af5e2d3",
+    "care_about": "Making the first response to any broken thing a serious attempt to fix it — and building the skills and tools to make that possible.",
+    "color_key": "terracotta",
+    "created_at": "2026-07-01T22:16:26.652000",
+    "drift_looks_like": "Repair Café as a feel-good event where the same five people fix things for admiring spectators.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The person who leaves knowing how over the person who leaves with a working thing.",
+    "is_current": true,
+    "looks_like": [
+     "Bringing the broken thing to the café before looking for a replacement",
+     "Documenting the repair so the next person can do it themselves",
+     "Teaching repair skills explicitly, not just doing the repair for someone"
+    ],
+    "needs_review": true,
+    "never_do": "Fix something without explaining what was broken and why.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Repair over replace",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000001"
+   }
+  ],
+  "values": [
+   "repair culture",
+   "skill sharing"
+  ]
+ },
+ {
+  "admin1": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+  "alliance_id": "aaaaaaaa-0000-0000-0000-000000000003",
+  "confirm_policy": "board",
+  "decision_policy": "majority",
+  "description": "Guardians of heirloom seed diversity. Members save, label and swap seeds so no variety is lost.",
+  "has_image": false,
+  "id": "aaaaaaaa-0000-0000-0000-000000000003",
+  "image": null,
+  "join_policy": "open",
+  "meaning_graph": "#seeds #biodiversity",
+  "members": [
+   {
+    "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
+    "name": "Emma Watson",
+    "role": "admin"
+   },
+   {
+    "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
+    "name": "David Attenborough",
+    "role": "steward"
+   }
+  ],
+  "name": "Seed Keepers Alliance",
+  "participants": [
+   "Emma Watson",
+   "David Attenborough"
+  ],
+  "pm_policy": "single-pm",
+  "projects": [
+   "Pollinator Corridor"
+  ],
+  "sphere_id": "33333333-3333-3333-3333-333333333333",
+  "sphere_name": "Earthsong Gardens",
+  "value_cards": [
+   {
+    "because": "The Irish potato famine killed a million people because one crop variety fed a nation. Biodiversity is not aesthetic richness; it is civilisational insurance.",
+    "card_id": "c53de57f-daff-482a-8731-567abf50c8fc",
+    "care_about": "Treating each seed variety as a unique living library — carrying adaptations, stories and potential that cannot be reconstructed once lost.",
+    "color_key": "sage",
+    "created_at": "2026-07-01T22:16:26.665000",
+    "drift_looks_like": "Seed banks that store seeds nobody is growing. Diversity on paper rather than in the soil.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The variety at risk of loss over the one already well-represented.",
+    "is_current": true,
+    "looks_like": [
+     "Maintaining at least three independent copies of every variety in the network",
+     "Growing-out rare varieties every three years so viability is tested and refreshed",
+     "Recording the story and origin of every variety alongside the seeds themselves"
+    ],
+    "needs_review": true,
+    "never_do": "Allow a variety to go below minimum viable population without raising the alarm.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Every variety is irreplaceable",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000003"
+   },
+   {
+    "because": "A seed without the knowledge of how to grow it is an archive without a reading room. The wisdom lives in growers, not databases, and it is equally at risk.",
+    "card_id": "c602ac92-f9ca-4b2a-87db-c890b339e41b",
+    "care_about": "Keeping the accumulated understanding of how to grow each variety — what soil it loves, when it bolts, how it has been used — as inseparable from the seed itself.",
+    "color_key": "moss",
+    "created_at": "2026-07-01T22:16:26.668000",
+    "drift_looks_like": "Extracting seeds without reciprocity. Treating traditional knowledge as raw material for our records.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "experiential",
+    "in_conflict": "The source community's access and agency over our archival completeness.",
+    "is_current": true,
+    "looks_like": [
+     "Recording grower interviews and stories alongside germination data",
+     "Visiting elder growers to learn what hasn't been written down",
+     "Returning seeds to communities of origin with the knowledge attached"
+    ],
+    "needs_review": true,
+    "never_do": "Take seeds from a community without asking what they need in return.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Traditional knowledge alongside the seed",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000003"
+   }
+  ],
+  "values": [
+   "seed sovereignty",
+   "biodiversity"
+  ]
+ },
+ {
+  "admin1": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+  "alliance_id": "aaaaaaaa-0000-0000-0000-000000000002",
+  "confirm_policy": "board",
+  "decision_policy": "majority",
+  "description": "Stewards of the shared GPU cluster. We allocate compute by need and contribution, decided by the members themselves.",
+  "has_image": false,
+  "id": "aaaaaaaa-0000-0000-0000-000000000002",
+  "image": null,
+  "join_policy": "open",
+  "meaning_graph": "#compute #governance",
+  "members": [
+   {
+    "id": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
+    "name": "Bill Gates",
+    "role": "admin"
+   },
+   {
+    "id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
+    "name": "Elon Musk",
+    "role": "steward"
+   },
+   {
+    "id": "7d6e67f2-5c64-4175-8330-a0d1b2b9c45f",
+    "name": "Stephen Hawking",
+    "role": "member"
+   }
+  ],
+  "name": "Open Compute Guild",
+  "participants": [
+   "Bill Gates",
+   "Elon Musk",
+   "Stephen Hawking"
+  ],
+  "pm_policy": "single-pm",
+  "projects": [
+   "Open GPU Cluster"
+  ],
+  "sphere_id": "22222222-2222-2222-2222-222222222222",
+  "sphere_name": "AI Commons",
+  "value_cards": [
+   {
+    "because": "Centralised control of scarce resources without accountability always drifts toward serving the powerful. Transparency is not optional; it is the mechanism.",
+    "card_id": "79d0e4b7-d296-498b-b1f8-174330e705ed",
+    "care_about": "Making every decision about who gets compute time visible, documented and contestable by any member.",
+    "color_key": "honey",
+    "created_at": "2026-07-01T22:16:26.655000",
+    "drift_looks_like": "Transparency theatre — publishing decisions after they are made without any genuine input mechanism.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "attitudinal",
+    "in_conflict": "The documented process over the trusted judgment of any individual.",
+    "is_current": true,
+    "looks_like": [
+     "Publishing the allocation queue and the criteria in full",
+     "Holding open monthly reviews where any member can challenge a decision",
+     "Recording the reasoning behind each allocation, not just the outcome"
+    ],
+    "needs_review": true,
+    "never_do": "Make an allocation decision in a private channel.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Transparent allocation",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000002"
+   },
+   {
+    "because": "A commons that drifts toward rewarding the already-powerful is not a commons. The allocation method is the values made concrete.",
+    "card_id": "f0d14545-8b04-4e6c-9815-71e10beb81d5",
+    "care_about": "Allocating the shared resource to those with the most valuable questions — not the most resources, the loudest voices, or the longest tenure.",
+    "color_key": "leaf",
+    "created_at": "2026-07-01T22:16:26.657000",
+    "drift_looks_like": "Allocation that consistently rewards the same institutions. A waiting list that only moves for people with connections.",
+    "endorsed": false,
+    "endorsed_at": null,
+    "frankl_mode": "creative",
+    "in_conflict": "The first-time researcher with an excellent question over the repeat user with a mediocre one.",
+    "is_current": true,
+    "looks_like": [
+     "Scoring proposals on research quality, not applicant reputation",
+     "Weighting contribution history but never letting it dominate over question quality",
+     "Maintaining a reserve for unfunded researchers with no existing track record"
+    ],
+    "needs_review": true,
+    "never_do": "Allow social relationships to influence allocation without documenting that they did.",
+    "replaces_card_id": null,
+    "reviewed_at": null,
+    "title": "Compute time by need and contribution",
+    "user_id": "aaaaaaaa-0000-0000-0000-000000000002"
+   }
+  ],
+  "values": [
+   "open compute",
+   "fair allocation"
+  ]
+ }
+]

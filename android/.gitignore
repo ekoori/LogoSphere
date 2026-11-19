@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+.kotlin/
+/local.properties
+/.idea/
+.DS_Store
+/build
+*/build/
+/captures
+.externalNativeBuild
+.cxx
+# Signing keys stay out of the repository.
+*.jks
+*.keystore
+*.p12
+
+# Screenshots from tools/droid.py
+tools/shots/

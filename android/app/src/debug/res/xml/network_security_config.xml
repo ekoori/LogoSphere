@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds may sign in to a local backend over plain HTTP (e.g. http://10.0.2.2:5000 from an
+     emulator, or a LAN address). Release builds use the HTTPS-only config in src/main. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

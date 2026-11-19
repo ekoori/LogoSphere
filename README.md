@@ -55,6 +55,7 @@ None of this is a rewrite of how people already give — it's a structure for na
 - **React** — frontend
 - **Flask** — RESTful APIs
 - **Cassandra** — database
+- **Kotlin + Jetpack Compose** — native Android client ([`android/`](android/README.md))
 
 ## Requirements
 

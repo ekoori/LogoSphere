@@ -1,0 +1,171 @@
+package com.krbavcic.logosphere.ui.people
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.krbavcic.logosphere.AppContainer
+import com.krbavcic.logosphere.core.model.Exchange
+import com.krbavcic.logosphere.core.model.LikeTarget
+import com.krbavcic.logosphere.core.model.Opening
+import com.krbavcic.logosphere.core.model.PublicUser
+import com.krbavcic.logosphere.core.model.ValueCard
+import com.krbavcic.logosphere.data.Change
+import com.krbavcic.logosphere.ui.Load
+import com.krbavcic.logosphere.ui.LoadViewModel
+import com.krbavcic.logosphere.ui.LocalAppContainer
+import com.krbavcic.logosphere.ui.LocalNavigator
+import com.krbavcic.logosphere.ui.common.Avatar
+import com.krbavcic.logosphere.ui.common.BackTopBar
+import com.krbavcic.logosphere.ui.common.EmptyNote
+import com.krbavcic.logosphere.ui.common.ExchangeCard
+import com.krbavcic.logosphere.ui.common.LoadContent
+import com.krbavcic.logosphere.ui.common.MetaText
+import com.krbavcic.logosphere.ui.common.OpeningCard
+import com.krbavcic.logosphere.ui.common.Refreshable
+import com.krbavcic.logosphere.ui.common.ScreenPadding
+import com.krbavcic.logosphere.ui.common.SectionHeading
+import com.krbavcic.logosphere.ui.common.SegmentedTabs
+import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.common.ValueChips
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
+data class PersonData(
+    val user: PublicUser,
+    val cards: List<ValueCard>,
+    val trail: List<Exchange>,
+    val openings: List<Opening>,
+)
+
+class PersonViewModel(private val app: AppContainer, private val id: String) : LoadViewModel<PersonData>() {
+    val viewerId: String? get() = app.session.user?.id
+    val isSelf: Boolean get() = viewerId == id
+
+    init {
+        load()
+        reloadOn(app.changes, Change.Openings, Change.Exchanges)
+    }
+
+    override suspend fun fetch(force: Boolean): PersonData = coroutineScope {
+        val user = async { app.api.user(id) }
+        val cards = async { runCatching { app.api.valueCards(id) }.getOrDefault(emptyList()) }
+        val trail = async { runCatching { app.api.trailOf(id) }.getOrDefault(emptyList()) }
+        val openings = async { runCatching { app.openings.list(force) }.getOrDefault(emptyList()) }
+        PersonData(
+            user = user.await(),
+            cards = cards.await(),
+            trail = trail.await(),
+            openings = openings.await().filter { it.providerId == id || it.actingUserId == id },
+        )
+    }
+
+    fun toggleFollow() = act {
+        val following = app.api.toggleFollow(id)
+        update { it.copy(user = it.user.copy(isFollowing = following)) }
+    }
+
+    fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
+        data.copy(trail = data.trail.map(f))
+    }
+
+    fun likeOpening(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
+        data.copy(openings = data.openings.map(f))
+    }
+}
+
+@Composable
+fun PersonScreen(id: String) {
+    val app = LocalAppContainer.current
+    val vm: PersonViewModel = viewModel(key = "person-$id") { PersonViewModel(app, id) }
+    val navigator = LocalNavigator.current
+    val state by vm.state.collectAsStateWithLifecycle()
+    val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    val snackbar = remember { SnackbarHostState() }
+    SnackbarMessages(vm.messages, snackbar)
+
+    Scaffold(
+        topBar = { BackTopBar("Member", navigator::back) },
+        snackbarHost = { SnackbarHost(snackbar) },
+    ) { padding ->
+        LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
+            Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
+                LazyColumn(
+                    contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 8.dp, bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    item(key = "head") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Avatar(data.user.userId, data.user.displayName, size = 72.dp)
+                            Spacer(Modifier.width(16.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(data.user.displayName, style = MaterialTheme.typography.headlineSmall)
+                                data.user.location?.let { MetaText("📍 $it") }
+                                MetaText("${data.trail.size} exchanges  ·  ${data.openings.size} openings")
+                            }
+                        }
+                    }
+                    item(key = "follow") {
+                        if (vm.isSelf) {
+                            MetaText("This is your public profile, as others see it.")
+                        } else if (data.user.isFollowing) {
+                            OutlinedButton(onClick = vm::toggleFollow, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("✓ Following") }
+                        } else {
+                            Button(onClick = vm::toggleFollow, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("+ Follow") }
+                        }
+                    }
+                    if (data.cards.isNotEmpty()) {
+                        item(key = "values") {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                SectionHeading("Values")
+                                ValueChips(data.cards)
+                            }
+                        }
+                    }
+                    item(key = "tabs") {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            SegmentedTabs(listOf("Meaning Trail", "Offers & Needs"), tab, { tab = it })
+                        }
+                    }
+                    if (tab == 0) {
+                        if (data.trail.isEmpty()) item { EmptyNote("No meaning trail recorded yet.") }
+                        items(data.trail, key = { "x-" + it.id }) { exchange ->
+                            ExchangeCard(exchange, vm.viewerId, onClick = { navigator.exchange(exchange.id) }, onLike = { vm.likeExchange(exchange) })
+                        }
+                    } else {
+                        if (data.openings.isEmpty()) item { EmptyNote("No offers or needs posted.") }
+                        items(data.openings, key = { "o-" + it.id }) { opening ->
+                            OpeningCard(opening, vm.viewerId, onClick = { navigator.opening(opening.id) }, onLike = { vm.likeOpening(opening) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
