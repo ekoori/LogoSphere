@@ -3,12 +3,24 @@
 Personas act only through the API, so every platform rule applies to them as
 to any member. The director talks to the backend on the same host.
 """
+import http.client
 import json
+import time
 import urllib.error
 import urllib.request
 import uuid
 
 from agents import config
+
+# How a connection drops when the backend restarts under it: refused while no
+# worker listens, reset when a stopping worker closes a request it never read.
+DROPPED = (ConnectionResetError, ConnectionRefusedError, BrokenPipeError, http.client.RemoteDisconnected)
+
+
+def _dropped(error):
+    """The dropped-connection error inside `error`, or None."""
+    reason = getattr(error, 'reason', error) if isinstance(error, urllib.error.URLError) else error
+    return reason if isinstance(reason, DROPPED) else None
 
 
 class PlatformError(Exception):
@@ -31,17 +43,26 @@ class Platform:
             data, headers['Content-Type'] = raw, content_type
         elif body is not None:
             data, headers['Content-Type'] = json.dumps(body).encode(), 'application/json'
-        req = urllib.request.Request(self.base + path, data=data, method=method, headers=headers)
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                text = r.read().decode('utf-8') or 'null'
-                return json.loads(text) if 'json' in (r.headers.get('Content-Type') or '') else text
-        except urllib.error.HTTPError as e:
+        for attempt in (1, 2):
+            req = urllib.request.Request(self.base + path, data=data, method=method, headers=headers)
             try:
-                message = json.loads(e.read().decode('utf-8')).get('message')
-            except Exception:
-                message = e.reason
-            raise PlatformError(e.code, message) from None
+                with urllib.request.urlopen(req, timeout=self.timeout) as r:
+                    text = r.read().decode('utf-8') or 'null'
+                    return json.loads(text) if 'json' in (r.headers.get('Content-Type') or '') else text
+            except urllib.error.HTTPError as e:
+                try:
+                    message = json.loads(e.read().decode('utf-8')).get('message')
+                except Exception:
+                    message = e.reason
+                raise PlatformError(e.code, message) from None
+            except (urllib.error.URLError, *DROPPED) as e:
+                # Send it once more when that can't do anything twice: a read
+                # always, a write only when it never got through (refused).
+                reason = _dropped(e)
+                if attempt == 2 or reason is None or (
+                        method != 'GET' and not isinstance(reason, ConnectionRefusedError)):
+                    raise
+                time.sleep(1)
 
     def get(self, path):
         return self._send('GET', path)

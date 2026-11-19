@@ -20,6 +20,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from agents import config
+from agents.clock import utcnow
 
 
 @dataclass(frozen=True)
@@ -88,7 +89,7 @@ def _later(rng, now, low_minutes, high_minutes):
 def plan(events, state, now=None, rng=None, sphere_personas=None):
     """-> list of Plans. `sphere_personas` maps a sphere id to the persona ids
     who belong to it (for choosing who responds)."""
-    now = now or datetime.utcnow()
+    now = now or utcnow()
     rng = rng or random.Random()
     sphere_personas = sphere_personas or {}
     plans = []

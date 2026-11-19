@@ -9,11 +9,11 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime
 
 import reactor  # noqa: F401 - picks the driver's event loop before it loads
 
 from agents import config, store  # noqa: E402
+from agents.clock import utcnow  # noqa: E402
 
 
 def status():
@@ -22,7 +22,7 @@ def status():
     print(f"queued: {store.pending_count()}")
     print(f"today: {used['actions']} actions, {used['claude_calls']} Claude calls "
           f"({used['claude_in']} in / {used['claude_out']} out tokens), {used['images']} images")
-    day = datetime.utcnow().strftime('%Y-%m-%d')
+    day = utcnow().strftime('%Y-%m-%d')
     rows = list(store.db.execute('SELECT at, action, detail FROM agent_log WHERE day = %s', [day]))
     for r in rows[-15:]:
         print(f'  {r.at:%H:%M} {r.action}: {r.detail}')

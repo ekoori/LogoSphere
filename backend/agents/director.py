@@ -8,13 +8,14 @@ ones that are due. Personas act only through the platform API.
 import logging
 import random
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from agents import config, store
 from agents.personas import load as load_personas
 from agents.platform import Platform, PlatformError
 from agents.rules import WRITING, Event, State, plan
 from agents.writer import WriterError
+from agents.clock import utcnow
 
 log = logging.getLogger('agents')
 
@@ -27,7 +28,7 @@ def _link_id(link):
 
 
 class Director:
-    def __init__(self, writer=None, illustrator=None, rng=None, clock=datetime.utcnow, personas=None):
+    def __init__(self, writer=None, illustrator=None, rng=None, clock=utcnow, personas=None):
         self.personas = {p.user_id: p for p in (personas if personas is not None else load_personas())}
         self.rng = rng or random.Random()
         self.clock = clock

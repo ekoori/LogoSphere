@@ -9,6 +9,7 @@
 import json
 import uuid
 from datetime import datetime, timedelta
+from agents.clock import utcnow
 
 from cassandra.util import uuid_from_time
 
@@ -60,7 +61,7 @@ def paused(now=None):
     if not until:
         return False
     try:
-        return datetime.fromisoformat(until) > (now or datetime.utcnow())
+        return datetime.fromisoformat(until) > (now or utcnow())
     except ValueError:
         return False
 
@@ -71,12 +72,12 @@ def is_done(key):
 
 
 def mark_done(key):
-    db.execute('INSERT INTO agent_done (key, done_at) VALUES (%s, %s)', [key, datetime.utcnow()])
+    db.execute('INSERT INTO agent_done (key, done_at) VALUES (%s, %s)', [key, utcnow()])
 
 
 # ── Queue ────────────────────────────────────────────────────────────────────
 def enqueue(due_at, persona_id, action, payload, origin='real', sphere_id=None):
-    task_id = uuid_from_time(datetime.utcnow())
+    task_id = uuid_from_time(utcnow())
     db.execute(
         'INSERT INTO agent_queue (bucket, due_at, task_id, persona_id, action, payload, origin, sphere_id) '
         'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
@@ -87,7 +88,7 @@ def enqueue(due_at, persona_id, action, payload, origin='real', sphere_id=None):
 
 def due(now=None, limit=10):
     rows = db.execute('SELECT due_at, task_id, persona_id, action, payload, origin, sphere_id FROM agent_queue '
-                      'WHERE bucket = %s AND due_at <= %s LIMIT %s', [QUEUE, now or datetime.utcnow(), limit])
+                      'WHERE bucket = %s AND due_at <= %s LIMIT %s', [QUEUE, now or utcnow(), limit])
     return [{'due_at': r.due_at, 'task_id': r.task_id, 'persona_id': str(r.persona_id), 'action': r.action,
              'payload': json.loads(r.payload or '{}'), 'origin': r.origin,
              'sphere_id': str(r.sphere_id) if r.sphere_id else None} for r in rows]
@@ -104,13 +105,13 @@ def remove(task):
 
 def postpone(task, minutes):
     remove(task)
-    enqueue(datetime.utcnow() + timedelta(minutes=minutes), task['persona_id'], task['action'],
+    enqueue(utcnow() + timedelta(minutes=minutes), task['persona_id'], task['action'],
             task['payload'], task['origin'], task['sphere_id'])
 
 
 # ── Log and usage ────────────────────────────────────────────────────────────
 def log_action(persona_id, action, detail, claude_in=0, claude_out=0, claude_calls=0, images=0, dry_run=False):
-    now = datetime.utcnow()
+    now = utcnow()
     db.execute(
         'INSERT INTO agent_log (day, at, entry_id, persona_id, action, detail, claude_in, claude_out, '
         'claude_calls, images, dry_run) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
@@ -119,7 +120,7 @@ def log_action(persona_id, action, detail, claude_in=0, claude_out=0, claude_cal
 
 
 def usage_today():
-    day = datetime.utcnow().strftime('%Y-%m-%d')
+    day = utcnow().strftime('%Y-%m-%d')
     total = {'claude_calls': 0, 'claude_in': 0, 'claude_out': 0, 'images': 0, 'actions': 0}
     for r in db.execute('SELECT claude_calls, claude_in, claude_out, images FROM agent_log WHERE day = %s', [day]):
         total['claude_calls'] += r.claude_calls or 0
@@ -138,10 +139,10 @@ def token_for(user_id, email, days=30):
     token = setting(key)
     if token:
         row = db.execute('SELECT expire_at FROM sessions WHERE session_id = %s', [uuid.UUID(token)]).one()
-        if row and row.expire_at and row.expire_at > datetime.utcnow() + timedelta(days=1):
+        if row and row.expire_at and row.expire_at > utcnow() + timedelta(days=1):
             return token
     token = str(uuid.uuid4())
-    now = datetime.utcnow()
+    now = utcnow()
     db.execute('INSERT INTO sessions (session_id, user_email, user_id, creation_time, last_access_time, '
                'expire_at, data) VALUES (%s, %s, %s, %s, %s, %s, %s)',
                [uuid.UUID(token), email, uuid.UUID(str(user_id)), now, now, now + timedelta(days=days), {}])
