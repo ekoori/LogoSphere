@@ -10,8 +10,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-from gevent import monkey  # noqa: E402
-monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 from cassandra.cluster import Cluster  # noqa: E402
 
 HOST = os.environ.get('CASSANDRA_HOST', '127.0.0.1')

@@ -14,22 +14,33 @@ from flask.sessions import SessionInterface, SessionMixin
 from app.db import session as _shared_session
 from flask import request
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
 
-_SELECT = "SELECT session_id, user_email, user_id, data, expire_at FROM sessions WHERE session_id = %s"
+_SELECT = ("SELECT session_id, user_email, user_id, data, expire_at, last_access_time "
+           "FROM sessions WHERE session_id = %s")
 _INSERT = ("INSERT INTO sessions (session_id, user_email, user_id, creation_time, "
            "last_access_time, expire_at, data) VALUES (%s, %s, %s, %s, %s, %s, %s)")
+# IF EXISTS: a session deleted by a concurrent logout must not come back as a
+# half-row.
+_TOUCH = ("UPDATE sessions SET last_access_time = %s, expire_at = %s, data = %s "
+          "WHERE session_id = %s IF EXISTS")
+
+# The expiry slides with use, but writing the row (and re-sending the cookie)
+# on every request was pure write load - and it overwrote creation_time.
+TOUCH_EVERY = timedelta(minutes=10)
 
 
 class CassandraSession(dict, SessionMixin):
-    """Custom session object for storing session data"""
-    def __init__(self, session_id, initial=None):
+    """Custom session object for storing session data. `last_access` is when
+    the stored row was last touched (None: this request created the session)."""
+    def __init__(self, session_id, initial=None, last_access=None):
         super().__init__(initial or {})
         self.session_id = session_id
         self.modified = False
+        self.last_access = last_access
 
 
 class CassandraSessionInterface(SessionInterface):
@@ -58,19 +69,18 @@ class CassandraSessionInterface(SessionInterface):
                     if result.data:
                         session_data.update(result.data)
 
-                    logger.debug(f'Retrieved existing session: {session_cookie}')
-                    return CassandraSession(str(session_uuid), initial=session_data)
+                    return CassandraSession(str(session_uuid), initial=session_data,
+                                            last_access=result.last_access_time or datetime.min)
 
             except Exception as e:
                 logger.error(f"Error retrieving session: {e}")
 
         # Create new session if none exists or retrieval failed
-        new_session_id = str(uuid.uuid4())
-        logger.debug(f'Created new session: {new_session_id}')
-        return CassandraSession(new_session_id)
+        return CassandraSession(str(uuid.uuid4()))
 
     def save_session(self, app, session, response):
-        """Save the session and set the cookie"""
+        """Slide the session's expiry (at most every TOUCH_EVERY) and refresh
+        the cookie when it does. Sessions without a user aren't stored."""
         if request.method == 'OPTIONS':
             return
 
@@ -79,7 +89,11 @@ class CassandraSessionInterface(SessionInterface):
         user_id = session.get('user_id')
 
         if not all([session_id, user_email, user_id]):
-            logger.debug('Missing required session data, skipping save')
+            return
+
+        now = datetime.utcnow()
+        last = getattr(session, 'last_access', None)
+        if last is not None and not session.modified and now - last < TOUCH_EVERY:
             return
 
         try:
@@ -88,15 +102,20 @@ class CassandraSessionInterface(SessionInterface):
             if isinstance(user_id, str):
                 user_id = uuid.UUID(user_id)
 
-            now = datetime.utcnow()
             expire_at = now + self.session_lifetime
 
             # Extract additional data, excluding standard fields
             session_data = {k: v for k, v in dict(session).items()
                             if k not in ['session_id', 'user_email', 'user_id']}
 
-            self.cassandra_session.execute(
-                _INSERT, (session_id, user_email, user_id, now, now, expire_at, session_data))
+            if last is None:
+                self.cassandra_session.execute(
+                    _INSERT, (session_id, user_email, user_id, now, now, expire_at, session_data))
+            else:
+                applied = self.cassandra_session.execute(
+                    _TOUCH, (now, expire_at, session_data, session_id)).one()
+                if not applied or not applied[0]:
+                    return          # logged out meanwhile: don't re-send its cookie
 
             # Set cookie if not already present
             if 'Set-Cookie' not in response.headers:

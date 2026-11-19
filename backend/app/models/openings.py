@@ -391,7 +391,16 @@ class Service:
         return out
 
     @classmethod
-    def activity_summary(cls, service_id, provider_id):
+    def all_acceptances(cls):
+        """{service_id: [acceptance dict, ...]} for every opening in one read -
+        the marketplace list used to query each opening separately."""
+        out = {}
+        for r in cassandra_session.execute(f"SELECT service_id, {cls._ACC_COLS} FROM opening_acceptances"):
+            out.setdefault(r.service_id, []).append(cls._acceptance_dict(r))
+        return out
+
+    @classmethod
+    def activity_summary(cls, service_id, provider_id, accs=None):
         """For a 'perpetual' opening, aggregate the many acceptances it has
         gathered into one activation date per progress-bar phase:
         - accepted:    latest acceptance of any status (someone said yes)
@@ -402,8 +411,10 @@ class Service:
                        track a dedicated "became Finished" moment)
         `provider_id` is the opening's provider = the initiator of every exchange
         it spawned, letting the completion lookup be a full-PK point read.
-        Returns None fields where that phase has never been reached."""
-        accs = cls.acceptances(service_id)
+        Returns None fields where that phase has never been reached.
+        `accs` may pass this opening's acceptances when already loaded."""
+        if accs is None:
+            accs = cls.acceptances(service_id)
         confirmed = [a for a in accs if a['status'] == 'confirmed' and a['exchange_id']]
 
         accepted_last = max((a['created_at'] for a in accs if a['created_at']), default=None)
@@ -501,6 +512,14 @@ class Service:
             "SELECT COUNT(*) AS n FROM opening_likes WHERE service_id = %s", [service_id]
         ).one()
         return int(row.n) if row else 0
+
+    @classmethod
+    def all_likes(cls):
+        """{service_id: [user_id, ...]} for every opening in one read."""
+        out = {}
+        for r in cassandra_session.execute("SELECT service_id, user_id FROM opening_likes"):
+            out.setdefault(r.service_id, []).append(r.user_id)
+        return out
 
     @classmethod
     def likers(cls, service_id, limit=50):

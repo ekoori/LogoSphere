@@ -7,8 +7,7 @@
 #
 # Run from backend/:
 #   CASSANDRA_HOST=127.0.0.1 .venv/Scripts/python -m pytest app/tests -q
-from gevent import monkey  # noqa: E402 - the driver's reactor needs this on py3.12+
-monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 
 import os
 import socket
@@ -176,7 +175,7 @@ def pytest_sessionfinish(session, exitstatus):
 
 def pytest_unconfigure(config):
     """The models open a live Cassandra connection at import time whose
-    background threads (under the gevent reactor) keep the interpreter from
+    background threads (the event loop's) keep the interpreter from
     exiting cleanly. Force exit once pytest has printed its summary,
     preserving its status code."""
     sys.stdout.flush()

@@ -32,7 +32,12 @@ from datetime import datetime, timedelta
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 _MIN_PASSWORD_LEN = 8
 
-from app.db import session as cassandra_session
+
+def normalize_email(value):
+    """Emails are matched and stored lower-case and trimmed."""
+    return (value or '').strip().lower()
+
+from app.db import session as cassandra_session, is_unavailable
 
 class User(UserMixin):
     def __init__(self, name, email, user_id, session_id=None):
@@ -78,7 +83,9 @@ class User(UserMixin):
             logging.error('Registration failed: no data provided')
             return None
         name = (data.get('name') or '').strip()
-        email = (data.get('email') or '').strip()
+        # Stored lower-case: an address is the same whatever its case, and
+        # sign-in matches it exactly.
+        email = normalize_email(data.get('email'))
         password = data.get('password') or ''
         if not name or not email or not password:
             logging.error('Registration failed: missing name, email or password')
@@ -116,8 +123,8 @@ class User(UserMixin):
 
     @classmethod
     def login(cls, data):
-        email = data['email']
-        password = data['password']
+        email = normalize_email(data.get('email'))
+        password = data.get('password') or ''
         logging.info(f'Attempting login for email: {email}')
 
         try:
@@ -145,6 +152,8 @@ class User(UserMixin):
             return None
 
         except Exception as e:
+            if is_unavailable(e):
+                raise       # an outage, not a wrong password
             logging.error(f'Error during login: {e}')
             return None
 
@@ -165,6 +174,8 @@ class User(UserMixin):
             logging.info('Session is inactive or expired')
             return None
         except Exception as e:
+            if is_unavailable(e):
+                raise       # an outage, not an expired session
             logging.error(f'Error during session check: {e}')
             return None
 
@@ -203,6 +214,8 @@ class User(UserMixin):
             logging.error(f'User not found with user_id: {user_id}')
             return None
         except Exception as e:
+            if is_unavailable(e):
+                raise       # an outage, not "no such user"
             logging.error(f'Error fetching user: {e}')
             return None
 
@@ -232,15 +245,17 @@ class User(UserMixin):
         update_fields = []
         update_values = []
         
-        if name:
+        # None = not sent, leave it. A name can't be blanked; surname and
+        # location can be cleared by sending them empty.
+        if name and name.strip():
             update_fields.append("name = %s")
-            update_values.append(name)
-        if surname:
+            update_values.append(name.strip())
+        if surname is not None:
             update_fields.append("surname = %s")
-            update_values.append(surname)
-        if location:
+            update_values.append(surname.strip() or None)
+        if location is not None:
             update_fields.append("location = %s")
-            update_values.append(location)
+            update_values.append(location.strip() or None)
         if profile_picture:
             update_fields.append("profile_picture = %s")
             update_values.append(profile_picture)

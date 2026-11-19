@@ -38,46 +38,51 @@ def get_session_token():
     return request.cookies.get('session_id')
 
 
+def _refused(message, status=401):
+    response = jsonify({'message': message})
+    response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response, status
+
+
 def validate_session(f):
+    """Runs the route with the session's user_id, or answers 401. Only the
+    session lookup is guarded here: an error inside the route used to come back
+    as 401 "Session validation failed" too, which signs clients out (the app on
+    any 401) for what was really a bug or a database outage."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if request.method == 'OPTIONS':
             return f(*args, **kwargs)
 
         session_id = get_session_token()
-        logger.debug('Validating session (token %s)', 'present' if session_id else 'absent')
-
         if not session_id:
-            logger.debug("No session token on request")
-            response = jsonify({'message': 'No session found'})
-            response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
-            return response, 401
+            return _refused('No session found')
+        try:
+            token = uuid.UUID(session_id)
+        except ValueError:
+            return _refused('Invalid or expired session')
 
         try:
             # session_id is the partition key, so look it up directly and check
             # expiry in Python (avoids a non-key range predicate / ALLOW FILTERING).
             result = current_app.session_interface.cassandra_session.execute(
                 "SELECT user_id, user_email, expire_at FROM sessions WHERE session_id = %s",
-                [uuid.UUID(session_id)]
+                [token]
             ).one()
-
-            if result and result.expire_at and result.expire_at > datetime.utcnow():
-                # Add user_id to kwargs
-                kwargs['user_id'] = result.user_id
-                return f(*args, **kwargs)
-            else:
-                logger.info("Invalid or expired session")
-                response = jsonify({'message': 'Invalid or expired session'})
-                response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
-                response.headers.add('Access-Control-Allow-Credentials', 'true')
-                return response, 401
-
         except Exception as e:
-            logger.error(f"Session validation error: {str(e)}")
-            response = jsonify({'message': 'Session validation failed'})
-            response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin'))
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
-            return response, 401
+            from app.db import is_unavailable, UNAVAILABLE
+            if is_unavailable(e):
+                logger.warning('Session lookup failed, database unavailable: %s', e)
+                return _refused(UNAVAILABLE['message'], 503)
+            logger.error(f"Session validation error: {e}")
+            return _refused('Session validation failed')
+
+        if not (result and result.expire_at and result.expire_at > datetime.utcnow()):
+            logger.info("Invalid or expired session")
+            return _refused('Invalid or expired session')
+
+        kwargs['user_id'] = result.user_id
+        return f(*args, **kwargs)
 
     return decorated_function

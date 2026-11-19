@@ -3,8 +3,7 @@
 # Run from the backend/ directory:
 #   PYTHONPATH=backend python seed_value_cards.py
 
-from gevent import monkey
-monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 
 import os, uuid, sys
 os.environ.setdefault('CASSANDRA_HOST', '127.0.0.1')

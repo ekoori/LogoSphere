@@ -10,8 +10,7 @@ import argparse
 import os
 import sys
 
-from gevent import monkey  # noqa: E402  (driver reactor on py3.12+)
-monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 from cassandra.cluster import Cluster  # noqa: E402
 
 ap = argparse.ArgumentParser()
@@ -37,7 +36,7 @@ if args.list:
 if not args.email:
     ap.error('email is required unless --list')
 
-row = session.execute('SELECT user_id FROM user_credentials WHERE email = %s', [args.email]).one()
+row = session.execute('SELECT user_id FROM user_credentials WHERE email = %s', [args.email.strip().lower()]).one()
 if not row:
     print(f'No account registered with {args.email}')
     sys.stdout.flush(); os._exit(1)

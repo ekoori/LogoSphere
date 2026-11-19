@@ -48,6 +48,19 @@ PROTOCOL_VERSION = int(os.environ.get('CASSANDRA_PROTOCOL_VERSION', '5'))
 
 # Errors that mean "the connection is gone", as opposed to a bad query.
 _DEAD = (NoHostAvailable, ConnectionException, ConnectionShutdown)
+
+
+UNAVAILABLE = {'message': 'The database is not answering right now - please try again in a minute.'}
+
+
+def is_unavailable(exc):
+    """True when `exc` means the database couldn't answer (down, timed out,
+    overloaded) rather than that the request was wrong. Callers report these
+    as 503, never as "not found" or "invalid credentials"."""
+    from cassandra import OperationTimedOut, ReadTimeout, WriteTimeout, Unavailable
+    from cassandra.protocol import OverloadedErrorMessage
+    return isinstance(exc, _DEAD + (OperationTimedOut, ReadTimeout, WriteTimeout, Unavailable,
+                                    OverloadedErrorMessage))
 # Don't (re)attempt a rebuild more often than this - a burst of failing
 # requests should share one rebuild, not trigger dozens.
 _REBUILD_COOLDOWN = 2.0
@@ -118,8 +131,9 @@ class _Backend:
                     c.shutdown()   # idempotent; no-op if unregister already did it
                 except Exception:
                     pass
-        logger.info('Cassandra connection ready (generation %d): hosts=%s keyspace=%s protocol=v%s',
-                    self.generation, CASSANDRA_HOSTS, KEYSPACE, PROTOCOL_VERSION)
+        logger.info('Cassandra connection ready (generation %d): hosts=%s keyspace=%s protocol=v%s reactor=%s',
+                    self.generation, CASSANDRA_HOSTS, KEYSPACE, PROTOCOL_VERSION,
+                    getattr(self.raw_cluster, 'connection_class', type(None)).__name__)
 
 
 _backend = _Backend()

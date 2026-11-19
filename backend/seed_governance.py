@@ -1,7 +1,7 @@
 # Seed governance roles for alliances/projects, update Joe Rogan's roles,
 # and seed entity value cards (spheres, alliances, projects all get value cards).
 
-from gevent import monkey; monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 import os, sys, uuid
 from datetime import datetime
 

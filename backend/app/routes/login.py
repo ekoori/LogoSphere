@@ -18,6 +18,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 
+from app.db import is_unavailable, UNAVAILABLE
 from flask import request, jsonify, session, make_response, current_app
 from flask_login import login_user, logout_user, current_user
 
@@ -112,6 +113,8 @@ def login():
             return response, 401
 
     except Exception as e:
+        if is_unavailable(e):
+            return jsonify(UNAVAILABLE), 503
         logger.error(f'Login error: {str(e)}')
         response = jsonify({'message': 'Internal server error during login'})
         return response, 500
@@ -130,13 +133,15 @@ def check_session():
             response = jsonify({'status': 'inactive', 'user_id': None})
             return response, 200
 
-        # Convert session_id to string before querying
-        session_id_str = str(session_id)
+        try:
+            token = uuid.UUID(str(session_id))
+        except ValueError:
+            return jsonify({'status': 'inactive', 'user_id': None}), 200
 
         # Query session directly
         result = current_app.session_interface.cassandra_session.execute(
             "SELECT user_id, user_email, expire_at FROM sessions WHERE session_id = %s",
-            [uuid.UUID(session_id_str)]
+            [token]
         ).one()
 
         if result and (result.expire_at is None or result.expire_at > datetime.utcnow()):
@@ -160,6 +165,8 @@ def check_session():
         return response, 200
 
     except Exception as e:
+        if is_unavailable(e):
+            return jsonify(UNAVAILABLE), 503
         logger.error(f'Session check error: {str(e)}')
         response = jsonify({'message': 'Internal server error during session check'})
         return response, 500

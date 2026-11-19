@@ -10,8 +10,7 @@
 # Run from backend/ directory:
 #   PYTHONPATH=backend python reseed_demo.py
 
-from gevent import monkey
-monkey.patch_all()
+import reactor  # noqa: F401 - picks the driver's event loop before it loads
 
 import os, uuid, sys
 from datetime import datetime

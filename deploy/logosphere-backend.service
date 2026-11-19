@@ -1,5 +1,5 @@
 [Unit]
-Description=LogoSphere backend (gunicorn + gevent)
+Description=LogoSphere backend (gunicorn, thread workers)
 After=network.target docker.service
 Wants=docker.service
 
@@ -9,7 +9,7 @@ Group=igor
 WorkingDirectory=/srv/logosphere/backend
 EnvironmentFile=/srv/logosphere/backend/prod.env
 ExecStartPre=/bin/bash -c 'for i in {1..40}; do (echo -n > /dev/tcp/127.0.0.1/9042) 2>/dev/null && exit 0; sleep 2; done; echo "cassandra not reachable"; exit 1'
-ExecStart=/srv/logosphere/backend/.venv/bin/gunicorn --worker-class gevent --workers 2 --bind 127.0.0.1:5000 --timeout 60 --max-requests 1000 --max-requests-jitter 100 wsgi:app
+ExecStart=/srv/logosphere/backend/.venv/bin/gunicorn --worker-class gthread --workers 2 --threads 8 --bind 127.0.0.1:5000 --timeout 60 --max-requests 1000 --max-requests-jitter 100 wsgi:app
 Restart=on-failure
 RestartSec=4
 

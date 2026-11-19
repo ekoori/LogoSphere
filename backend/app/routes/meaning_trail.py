@@ -183,9 +183,10 @@ def get_meaning_trail(user_id=None):
 
     # viewer (user_id) drives the "liked by me" flag on each target.
     trust_trail = MeaningTrail.get_meaning_trail(target_id, viewer_id=user_id)
-    # get_meaning_trail returns [] for an empty trail and None on error.
+    # get_meaning_trail returns [] for an empty trail and None on error (an
+    # outage raises, and the app answers 503). An error is not "not found".
     if trust_trail is None:
-        return jsonify({'message': 'Meaning trail not found'}), 404
+        return jsonify({'message': 'Could not load the Meaning Trail'}), 500
     return jsonify(trust_trail), 200
 
 

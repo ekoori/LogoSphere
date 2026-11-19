@@ -68,6 +68,9 @@ tags:
   - name: Openings
   - name: Value Cards
   - name: Notifications
+  - name: Governance
+  - name: Search
+  - name: Administration
 
 paths:
 
@@ -849,6 +852,17 @@ paths:
       tags: [Spheres]
 
   /api/spheres/{sphere_id}/image:
+    get:
+      summary: "The sphere's banner image (public, cacheable)"
+      operationId: getSphereImage
+      tags: [Spheres]
+      security: []
+      parameters:
+        - { name: sphere_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: The image., content: { 'image/*': {} } }
+        '404': { description: No image set. }
+        '500': { $ref: '#/components/responses/InternalError' }
     post:
       summary: Update a sphere's banner image
       operationId: updateSphereImage
@@ -991,6 +1005,17 @@ paths:
       tags: [Alliances]
 
   /api/alliances/{alliance_id}/image:
+    get:
+      summary: "The alliance's banner image (public, cacheable)"
+      operationId: getAllianceImage
+      tags: [Alliances]
+      security: []
+      parameters:
+        - { name: alliance_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: The image., content: { 'image/*': {} } }
+        '404': { description: No image set. }
+        '500': { $ref: '#/components/responses/InternalError' }
     post:
       summary: Update an alliance's banner image
       operationId: updateAllianceImage
@@ -1133,6 +1158,17 @@ paths:
       tags: [Projects]
 
   /api/projects/{project_id}/image:
+    get:
+      summary: "The project's banner image (public, cacheable)"
+      operationId: getProjectImage
+      tags: [Projects]
+      security: []
+      parameters:
+        - { name: project_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: The image., content: { 'image/*': {} } }
+        '404': { description: No image set. }
+        '500': { $ref: '#/components/responses/InternalError' }
     post:
       summary: Update a project's banner image
       operationId: updateProjectImage
@@ -1274,6 +1310,16 @@ paths:
       tags: [Openings]
 
   /api/openings/{service_id}:
+    patch:
+      summary: "Edit an opening (its provider); once it has exchanges the edit becomes a new version"
+      operationId: editOpening
+      tags: [Openings]
+      parameters:
+        - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
     get:
       summary: Get a single opening
       operationId: getOpening
@@ -1475,6 +1521,17 @@ paths:
       tags: [Openings]
 
   /api/openings/{service_id}/image:
+    get:
+      summary: "The opening's banner image (public, cacheable)"
+      operationId: getOpeningImage
+      tags: [Openings]
+      security: []
+      parameters:
+        - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: The image., content: { 'image/*': {} } }
+        '404': { description: No image set. }
+        '500': { $ref: '#/components/responses/InternalError' }
     post:
       summary: Update an opening's image
       operationId: updateOpeningImage
@@ -1825,6 +1882,540 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
       tags: [Notifications]
+
+  /api/admin/alliances/{entity_id}:
+    delete:
+      summary: "Delete a alliance and what hangs off it (platform admins; destructive)"
+      operationId: deleteAdminAlliance
+      tags: [Administration]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/alliances:
+    get:
+      summary: "List all alliances with their key facts (platform admins)"
+      operationId: listAdminAlliances
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/openings/{service_id}:
+    delete:
+      summary: "Delete a opening and what hangs off it (platform admins; destructive)"
+      operationId: deleteAdminOpening
+      tags: [Administration]
+      parameters:
+        - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/openings:
+    get:
+      summary: "List all openings with their key facts (platform admins)"
+      operationId: listAdminOpenings
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/overview:
+    get:
+      summary: "Platform overview: counts of users, groups, openings and exchanges (platform admins)"
+      operationId: getAdminOverview
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/projects/{entity_id}:
+    delete:
+      summary: "Delete a project and what hangs off it (platform admins; destructive)"
+      operationId: deleteAdminProject
+      tags: [Administration]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/projects:
+    get:
+      summary: "List all projects with their key facts (platform admins)"
+      operationId: listAdminProjects
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/spheres/{entity_id}:
+    delete:
+      summary: "Delete a sphere and what hangs off it (platform admins; destructive)"
+      operationId: deleteAdminSphere
+      tags: [Administration]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/spheres:
+    get:
+      summary: "List all spheres with their key facts (platform admins)"
+      operationId: listAdminSpheres
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/users/{target_id}:
+    patch:
+      summary: "Grant or revoke the platform-admin flag (never your own; one admin must remain)"
+      operationId: patchAdminUser
+      tags: [Administration]
+      parameters:
+        - { name: target_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      summary: "Delete a user and what hangs off it (platform admins; destructive)"
+      operationId: deleteAdminUser
+      tags: [Administration]
+      parameters:
+        - { name: target_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/users:
+    get:
+      summary: "List all users with their key facts (platform admins)"
+      operationId: listAdminUsers
+      tags: [Administration]
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/delegation:
+    post:
+      summary: "Delegate your vote to a member you trust, or take it back"
+      operationId: setAllianceDelegation
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/governance:
+    get:
+      summary: "Governance: policies, open proposals with tallies, your delegation"
+      operationId: getAllianceGovernance
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/proposals/{proposal_id}/close:
+    post:
+      summary: "Close a proposal; a passed policy change is applied"
+      operationId: closeAllianceProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/proposals/{proposal_id}/vote:
+    post:
+      summary: "Vote yes, no or abstain on an open proposal"
+      operationId: voteAllianceProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/proposals/{proposal_id}/withdraw:
+    post:
+      summary: "Withdraw your own open proposal"
+      operationId: withdrawAllianceProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}/proposals:
+    post:
+      summary: "Propose a policy change for members to vote on"
+      operationId: createAllianceProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/alliances/{entity_id}:
+    get:
+      summary: "Get a alliance with its members and roles"
+      operationId: getAlliance
+      tags: [Alliances]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      summary: "Update a alliance (its managers)"
+      operationId: updateAlliance
+      tags: [Alliances]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/entity_value_cards/{entity_id}/{card_id}/endorse:
+    post:
+      summary: "Endorse one of a group's value cards on reflection (its managers)"
+      operationId: endorseEntityValueCard
+      tags: [Value Cards]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: card_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/entity_value_cards/{entity_id}/{card_id}/review:
+    post:
+      summary: "Mark one of a group's value cards reviewed (its managers)"
+      operationId: reviewEntityValueCard
+      tags: [Value Cards]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: card_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/openings/{service_id}/cancel:
+    post:
+      summary: "Withdraw an opening: it leaves Openings and pending accepters are told"
+      operationId: cancelOpening
+      tags: [Openings]
+      parameters:
+        - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/delegation:
+    post:
+      summary: "Delegate your vote to a member you trust, or take it back"
+      operationId: setProjectDelegation
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/governance:
+    get:
+      summary: "Governance: policies, open proposals with tallies, your delegation"
+      operationId: getProjectGovernance
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/proposals/{proposal_id}/close:
+    post:
+      summary: "Close a proposal; a passed policy change is applied"
+      operationId: closeProjectProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/proposals/{proposal_id}/vote:
+    post:
+      summary: "Vote yes, no or abstain on an open proposal"
+      operationId: voteProjectProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/proposals/{proposal_id}/withdraw:
+    post:
+      summary: "Withdraw your own open proposal"
+      operationId: withdrawProjectProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}/proposals:
+    post:
+      summary: "Propose a policy change for members to vote on"
+      operationId: createProjectProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/projects/{entity_id}:
+    get:
+      summary: "Get a project with its members and roles"
+      operationId: getProject
+      tags: [Projects]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      summary: "Update a project (its managers)"
+      operationId: updateProject
+      tags: [Projects]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/public/spheres/{sphere_id}:
+    get:
+      summary: "A public sphere as visitors see it (no session needed)"
+      operationId: getPublicSphere
+      tags: [Spheres]
+      security: []
+      parameters:
+        - { name: sphere_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/search/vicinity:
+    get:
+      summary: "Rank people, groups and openings by how close their value graphs are to a text or to someone's cards"
+      operationId: searchVicinity
+      tags: [Search]
+      parameters:
+        - { name: q, in: query, required: false, schema: { type: string }, description: "Values described in words" }
+        - { name: around, in: query, required: false, schema: { type: string }, description: "Id of a user or group to search around (default: you)" }
+        - { name: kinds, in: query, required: false, schema: { type: string }, description: "Comma list of user,sphere,alliance,project,opening" }
+        - { name: limit, in: query, required: false, schema: { type: string }, description: "Items per group (default 8, max 50)" }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/search:
+    get:
+      summary: "Text search over names, titles, descriptions and value cards"
+      operationId: search
+      tags: [Search]
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string }, description: "Text to find (2+ characters)" }
+        - { name: kinds, in: query, required: false, schema: { type: string }, description: "Comma list of user,sphere,alliance,project,opening,card" }
+        - { name: limit, in: query, required: false, schema: { type: string }, description: "Items per group (default 8, max 50)" }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}/delegation:
+    post:
+      summary: "Delegate your vote to a member you trust, or take it back"
+      operationId: setSphereDelegation
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}/proposals/{proposal_id}/close:
+    post:
+      summary: "Close a proposal; a passed policy change is applied"
+      operationId: closeSphereProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}/proposals/{proposal_id}/vote:
+    post:
+      summary: "Vote yes, no or abstain on an open proposal"
+      operationId: voteSphereProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}/proposals/{proposal_id}/withdraw:
+    post:
+      summary: "Withdraw your own open proposal"
+      operationId: withdrawSphereProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: proposal_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}/proposals:
+    post:
+      summary: "Propose a policy change for members to vote on"
+      operationId: createSphereProposal
+      tags: [Governance]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{entity_id}:
+    get:
+      summary: "Get a sphere with its members and roles"
+      operationId: getSphere
+      tags: [Spheres]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      summary: "Update a sphere (its managers)"
+      operationId: updateSphere
+      tags: [Spheres]
+      parameters:
+        - { name: entity_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/spheres/{sphere_id}/governance:
+    post:
+      summary: "Set governance flags directly (sphere admins)"
+      operationId: updateSphereGovernance
+      tags: [Governance]
+      parameters:
+        - { name: sphere_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    get:
+      summary: "Governance: policies, open proposals with tallies, your delegation"
+      operationId: getSphereGovernance
+      tags: [Governance]
+      parameters:
+        - { name: sphere_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/value_cards/{card_id}/endorse:
+    post:
+      summary: "Endorse one of your value cards on reflection"
+      operationId: endorseValueCard
+      tags: [Value Cards]
+      parameters:
+        - { name: card_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/value_cards/{card_id}/review:
+    post:
+      summary: "Mark one of your value cards reviewed"
+      operationId: reviewValueCard
+      tags: [Value Cards]
+      parameters:
+        - { name: card_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No session, or it expired.' }
+        '500': { $ref: '#/components/responses/InternalError' }
 
 components:
   securitySchemes:

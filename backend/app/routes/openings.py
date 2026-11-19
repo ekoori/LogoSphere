@@ -68,14 +68,44 @@ def _project_is_closed(name=None, project_id=None):
     return False
 
 
-def _enrich_service(s, viewer, include_exchanges=False):
+class _ListContext:
+    """What the marketplace list needs, read once per request. Built opening
+    by opening it took ~5 queries each - over a second for the demo's ~130."""
+
+    def __init__(self, viewer):
+        from app.utils.names import resolve_user_names
+        self.viewer = viewer
+        self.admin = viewer is not None and is_platform_admin(viewer)
+        self.likes = Service.all_likes()
+        self.acceptances = Service.all_acceptances()
+        self.names = resolve_user_names({u for ids in self.likes.values() for u in ids})
+        self._party = {}
+
+    def is_party(self, s):
+        # Depends only on who provides it (and who posted for them).
+        key = (str(s.provider_id), str(getattr(s, 'acting_user_id', None)))
+        if key not in self._party:
+            self._party[key] = self.viewer is not None and _is_party(s, self.viewer)
+        return self._party[key]
+
+    def likers(self, sid):
+        return [{'id': str(u), 'name': self.names.get(u, 'Member')} for u in self.likes.get(sid, [])[:50]]
+
+
+def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     """Build the full dict for one service, including viewer-relative fields.
     Shared by the list and single-item endpoints. `include_exchanges` adds the
     confirmed exchanges spawned from this opening (single-opening page only —
-    it's an extra per-opening query we don't want in the marketplace list)."""
+    it's an extra per-opening query we don't want in the marketplace list).
+    `ctx` (a _ListContext) supplies preloaded likes and acceptances."""
     sid = s.service_id
-    is_party = viewer is not None and _is_party(s, viewer)
-    can_manage = is_party or (viewer is not None and is_platform_admin(viewer))
+    if ctx is not None:
+        is_party = ctx.is_party(s)
+        can_manage = is_party or ctx.admin
+    else:
+        is_party = viewer is not None and _is_party(s, viewer)
+        can_manage = is_party or (viewer is not None and is_platform_admin(viewer))
+    accs = ctx.acceptances.get(sid, []) if ctx is not None else None
     # The banner image is served separately via GET /api/openings/<id>/image
     # (see has_image) so it never bloats the list/detail JSON.
     d = s.to_dict(include_image=False)
@@ -83,10 +113,15 @@ def _enrich_service(s, viewer, include_exchanges=False):
     # admin can manage anyone's opening without being a party to it).
     d['is_provider'] = is_party
     d['can_manage'] = can_manage
-    d['liked_by'] = Service.likers(sid)
+    d['liked_by'] = ctx.likers(sid) if ctx is not None else Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False
-    pending = Service.acceptances(sid, status='pending') if can_manage else []
+    if not can_manage:
+        pending = []
+    elif accs is not None:
+        pending = [a for a in accs if a['status'] == 'pending']
+    else:
+        pending = Service.acceptances(sid, status='pending')
     # Your own acceptance is never yours to confirm (a platform admin can
     # manage other people's openings and accept them too); it reaches you as
     # my_acceptance instead.
@@ -94,8 +129,15 @@ def _enrich_service(s, viewer, include_exchanges=False):
                                 if viewer is None or str(viewer) not in (a['accepter_id'], a.get('acting_user_id'))]
     # Resolve the viewer's own acceptance even when they accepted on behalf of
     # an entity (the row is keyed by the entity, not the human).
-    d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer) if viewer else None
-    d['activity'] = Service.activity_summary(sid, s.provider_id) if s.cadence == 'perpetual' else None
+    if not viewer:
+        d['my_acceptance'] = None
+    elif accs is not None:
+        mine = [a for a in accs if a['accepter_id'] == str(viewer)] or \
+               [a for a in accs if a.get('acting_user_id') == str(viewer)]
+        d['my_acceptance'] = mine[0] if mine else None
+    else:
+        d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer)
+    d['activity'] = Service.activity_summary(sid, s.provider_id, accs=accs) if s.cadence == 'perpetual' else None
     if include_exchanges:
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
         # Previous versions of this opening (each frozen because it had a
@@ -215,13 +257,14 @@ def get_services(user_id=None):
         viewer = uuid.UUID(str(user_id)) if user_id else None
         joined_spheres = Sphere.member_sphere_ids(viewer)
         see_all = is_platform_admin(viewer)
+        ctx = _ListContext(viewer)
         services = []
         for s in Service.get_all():
             # Frozen historical versions (superseded by a newer edit) never
             # appear in the marketplace — only the current version does.
             if not s.is_current:
                 continue
-            is_provider = viewer is not None and _is_party(s, viewer)
+            is_provider = ctx.is_party(s)
 
             # A single opening disappears from the marketplace once it has been
             # confirmed (status advanced past Accepted). Its participants still
@@ -239,7 +282,7 @@ def get_services(user_id=None):
             if not see_all and s.sphere_id and s.sphere_id not in joined_spheres and not is_provider:
                 continue
 
-            services.append(_enrich_service(s, viewer))
+            services.append(_enrich_service(s, viewer, ctx=ctx))
         # Newest first: the table's own order is by partition-key token, which
         # reads as random to a person browsing the marketplace.
         services.sort(key=lambda d: d.get('created_at') or '', reverse=True)
@@ -494,6 +537,22 @@ def reject_service(service_id, user_id=None):
         if service.cadence != 'perpetual':
             Service.reopen(service_uuid)
 
+        # "X wants to accept your opening" no longer holds; a declined
+        # accepter hears about it (they used to be left waiting).
+        provider_human = getattr(service, 'acting_user_id', None) or service.provider_id
+        accepter_human = acceptance.get('acting_user_id') or acceptance['accepter_id']
+        link = f'/opening?id={service_id}'
+        Notification.withdraw(provider_human, 'opening_accepted', link, actor_id=accepter_human)
+        if not retracting:
+            decliner = User.get(str(user_id))
+            decliner_name = (f"{decliner.name or ''} {decliner.surname or ''}".strip() if decliner else '') or 'The provider'
+            Notification.create(
+                user_id=accepter_human, actor_id=user_id, actor_name=decliner_name,
+                type_='opening_declined',
+                message=f'{decliner_name} declined your acceptance of "{service.title}"',
+                link=link,
+            )
+
         logger.info(f"Opening {service_id} acceptance by {accepter_id} "
                     f"{'taken back' if retracting else 'declined'}")
         return jsonify({'message': 'Acceptance taken back' if retracting else 'Acceptance declined'}), 200
@@ -559,11 +618,18 @@ def like_service(service_id, user_id=None):
         return app.make_default_options_response(), 200
     try:
         service_uuid = uuid.UUID(service_id)
-        if not Service.get_by_id(service_uuid):
+        service = Service.get_by_id(service_uuid)
+        if not service:
             return jsonify({'message': 'Opening not found'}), 404
         # Prefer an explicit target state ({"liked": true|false}) so a retried
         # request is idempotent; fall back to toggling for older clients.
         data = request.get_json(silent=True) or {}
+        adding = data['liked'] if isinstance(data.get('liked'), bool) else \
+            not Service.is_liked_by(service_uuid, uuid.UUID(str(user_id)))
+        # Appreciation is a signal from others; your own doesn't count (an old
+        # self-like can still be taken off).
+        if adding and _is_party(service, user_id):
+            return jsonify({'message': "You can't appreciate your own opening"}), 403
         if isinstance(data.get('liked'), bool):
             liked, count = Service.set_like(service_uuid, uuid.UUID(str(user_id)), data['liked'])
         else:

@@ -64,6 +64,17 @@ def test_update_own_profile(api, keep_rows):
     assert profile['location'] == 'Kyoto (test)'
 
 
+def test_profile_fields_can_be_cleared(api, keep_rows):
+    """An empty surname or location used to be ignored, so neither could ever
+    be removed. A name can't be blanked."""
+    keep_rows('users', user_id=api.uid('marie'))
+    status, body = api.post('/api/updateuser', who='marie', json={'location': 'Kyoto (test)', 'surname': 'K (test)'})
+    assert status == 200 and body['location'] == 'Kyoto (test)'
+    status, body = api.post('/api/updateuser', who='marie', json={'location': '', 'surname': '', 'name': '  '})
+    assert status == 200 and body['location'] is None and body['surname'] is None
+    assert body['name'].startswith('Marie')
+
+
 @pytest.fixture
 def keep_marie_picture(api, db):
     """keep_rows leaves image blobs alone; this test uploads one, so put
@@ -145,3 +156,14 @@ def test_register_then_sign_in(app, new_member):
     r = client.get('/api/check_session', headers={'Authorization': f'Bearer {token}'})
     assert r.get_json()['status'] == 'active'
     client.post('/api/logout', headers={'Authorization': f'Bearer {token}'})
+
+
+def test_registration_stores_the_email_lower_case(app, db, new_member):
+    client = app.test_client()
+    r = client.post('/api/register', json={'name': 'Test Person', 'email': new_member.upper(), 'password': 'a-long-password'})
+    assert r.status_code == 200
+    row = db.execute('SELECT email FROM user_credentials WHERE email = %s', [new_member]).one()
+    assert row and row.email == new_member
+    # ...so the same address, typed any way, can't register twice.
+    r = client.post('/api/register', json={'name': 'Again', 'email': new_member.title(), 'password': 'a-long-password'})
+    assert r.status_code == 400

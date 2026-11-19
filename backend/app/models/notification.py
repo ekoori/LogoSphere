@@ -34,6 +34,27 @@ class Notification:
             logging.error(f'Error creating notification: {e}')
 
     @classmethod
+    def withdraw(cls, user_id, type_, link, actor_id=None):
+        """Delete user_id's notifications of this type and link (and actor)
+        that no longer hold - e.g. "X wants to accept your opening" once that
+        acceptance is taken back or declined. Returns how many went."""
+        try:
+            uid = uuid.UUID(str(user_id))
+            gone = 0
+            for r in cassandra_session.execute(
+                    "SELECT created_at, notification_id, type, link, actor_id FROM notifications "
+                    "WHERE user_id = %s", [uid]):
+                if r.type == type_ and r.link == link and (actor_id is None or str(r.actor_id) == str(actor_id)):
+                    cassandra_session.execute(
+                        "DELETE FROM notifications WHERE user_id = %s AND created_at = %s AND notification_id = %s",
+                        [uid, r.created_at, r.notification_id])
+                    gone += 1
+            return gone
+        except Exception as e:
+            logging.error(f'Error withdrawing notifications: {e}')
+            return 0
+
+    @classmethod
     def list_for_user(cls, user_id):
         try:
             rows = cassandra_session.execute(

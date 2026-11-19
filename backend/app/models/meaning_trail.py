@@ -389,6 +389,9 @@ class MeaningTrail(Model):
                 meaning_trail.append(cls._enrich(row, user_id, viewer_id, names, kinds))
             return meaning_trail
         except Exception as e:
+            from app.db import is_unavailable
+            if is_unavailable(e):
+                raise       # the route answers 503, not "not found"
             print(f"Error occurred while fetching trust trail: {str(e)}")
             return None
 

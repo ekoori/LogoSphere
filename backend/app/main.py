@@ -188,6 +188,21 @@ def internal_error(error):
     return jsonify({'message': 'Internal server error'}), 500
 
 
+@app.errorhandler(Exception)
+def unhandled(error):
+    """An exception no route caught. A database outage is a 503 the client can
+    retry, not a 500 (and never a 404 or "invalid credentials")."""
+    from werkzeug.exceptions import HTTPException
+    from app.db import is_unavailable, UNAVAILABLE
+    if isinstance(error, HTTPException):
+        return error
+    if is_unavailable(error):
+        logger.warning('Database unavailable: %s', error)
+        return jsonify(UNAVAILABLE), 503
+    logger.exception('Unhandled error')
+    return jsonify({'message': 'Internal server error'}), 500
+
+
 if __name__ == '__main__':
     # Development only - production runs under gunicorn (see run_local.py).
     app.run(debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true', host='0.0.0.0')

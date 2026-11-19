@@ -81,6 +81,14 @@ def test_likes_are_people_not_numbers(api, exchange):
     assert b3['likes'] == 0
 
 
+def test_your_own_opening_is_not_yours_to_appreciate(api, keep_rows):
+    keep_rows('opening_likes', service_id=OPENING, user_id=api.uid('joe'))
+    status, body = api.post(f'/api/openings/{OPENING}/like', who='joe', json={'liked': True})
+    assert status == 403, body
+    status, _ = api.post(f'/api/openings/{OPENING}/like', who='joe', json={'liked': False})
+    assert status == 200        # an old self-like can still come off
+
+
 def test_edit_after_exchange_branches_a_version(api, exchange):
     status, body = api.patch(f'/api/openings/{OPENING}', who='joe', json={'title': 'Sharing what I know (v2)'})
     assert status == 200 and body['versioned'] is True
@@ -128,6 +136,19 @@ def test_edit_without_exchange_updates_in_place(api, keep_rows):
 def test_only_the_provider_edits(api):
     status, _ = api.patch(f'/api/openings/{OPENING}', who='marie', json={'title': 'x'})
     assert status == 403
+
+
+def test_list_and_detail_agree(api):
+    """The list reads likes and acceptances in bulk, the detail page one
+    opening at a time: both must tell the viewer the same thing."""
+    _, items = api.get('/api/openings', who='joe')
+    keys = ('is_provider', 'can_manage', 'likes', 'liked_by_current_user',
+            'my_acceptance', 'pending_acceptances', 'activity')
+    sample = items[:12] + [o for o in items if o['id'] == OPENING or o.get('my_acceptance')]
+    for o in sample:
+        _, one = api.get(f"/api/openings/{o['id']}", who='joe')
+        for k in keys:
+            assert one[k] == o[k], (o['id'], k)
 
 
 def test_marketplace_lists_newest_first(api):
@@ -230,6 +251,12 @@ def test_provider_declines_an_acceptance(api, davids_opening):
     _, page = api.get(f'/api/openings/{sid}', who='marie')
     assert page['my_acceptance'] is None and page['status'] == 'Posted'      # open to others again
     assert api.post(f'/api/openings/{sid}/reject', who='david', json={'accepter_id': marie})[0] == 404
+    # Marie hears she was declined; David's "Marie wants to accept" is gone.
+    link = f'/opening?id={sid}'
+    _, inbox = api.get('/api/notifications', who='marie')
+    assert any(n['type'] == 'opening_declined' and n['link'] == link for n in inbox['notifications'])
+    _, inbox = api.get('/api/notifications', who='david')
+    assert not any(n['type'] == 'opening_accepted' and n['link'] == link for n in inbox['notifications'])
 
 
 def test_accepter_takes_their_acceptance_back(api, davids_opening):
@@ -241,8 +268,14 @@ def test_accepter_takes_their_acceptance_back(api, davids_opening):
     assert api.post(f'/api/openings/{sid}/accept', who='marie', json={})[0] == 200
     # Nobody else takes it back for her.
     assert api.post(f'/api/openings/{sid}/reject', who='elon', json={'accepter_id': marie})[0] == 403
+    link = f'/opening?id={sid}'
+    _, inbox = api.get('/api/notifications', who='david')
+    assert any(n['type'] == 'opening_accepted' and n['link'] == link for n in inbox['notifications'])
     status, body = api.post(f'/api/openings/{sid}/reject', who='marie', json={'accepter_id': marie})
     assert status == 200 and body['message'] == 'Acceptance taken back'
+    # David's "Marie wants to accept" no longer holds, so it's gone.
+    _, inbox = api.get('/api/notifications', who='david')
+    assert not any(n['type'] == 'opening_accepted' and n['link'] == link for n in inbox['notifications'])
     _, page = api.get(f'/api/openings/{sid}', who='marie')
     assert page['my_acceptance'] is None and page['status'] == 'Posted'      # open to others again
     # Once confirmed it is an exchange, and there is nothing left to take back.

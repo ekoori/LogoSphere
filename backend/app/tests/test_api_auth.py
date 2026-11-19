@@ -69,3 +69,78 @@ def test_platform_admin_flag_is_a_users_column_not_an_email(api, db):
     import uuid
     row = db.execute('SELECT is_platform_admin FROM users WHERE user_id = %s', [uuid.UUID(api.uid('joe'))]).one()
     assert row.is_platform_admin is True
+
+
+def test_cookie_requests_do_not_rewrite_the_session(app, db):
+    """Every cookie-authenticated request used to re-insert the whole session
+    row (moving creation_time each time) and send a fresh cookie. The row is
+    now touched at most every few minutes, and creation_time never moves."""
+    import uuid
+    from conftest import USERS
+    client = app.test_client()
+    https = {'base_url': 'https://localhost'}      # the cookie is Secure in production
+    r = client.post('/api/login', json={'email': USERS['marie'][0], 'password': USERS['marie'][1]}, **https)
+    token = r.get_json()['session_id']
+    read = lambda: db.execute('SELECT creation_time, last_access_time FROM sessions WHERE session_id = %s',
+                              [uuid.UUID(token)]).one()
+    try:
+        before = read()
+        for _ in range(3):
+            r = client.get('/api/user/profile', **https)
+            assert r.status_code == 200 and 'Set-Cookie' not in r.headers
+        after = read()
+        assert (after.creation_time, after.last_access_time) == (before.creation_time, before.last_access_time)
+    finally:
+        client.post('/api/logout', headers={'Authorization': f'Bearer {token}'}, **https)
+
+
+def test_errors_inside_a_route_are_not_sign_outs(app, api):
+    """validate_session used to wrap the route call itself, so any error inside
+    a route came back as 401 "Session validation failed" - and clients sign
+    out on 401. Only the session lookup may answer 401 now."""
+    from flask import Flask
+    from cassandra.cluster import NoHostAvailable
+    from app.middleware.session_middleware import validate_session
+
+    probe = Flask('probe')
+    probe.session_interface = app.session_interface
+
+    @probe.route('/bug')
+    @validate_session
+    def bug(user_id=None):
+        raise RuntimeError('a bug in the route')
+
+    @probe.route('/me')
+    @validate_session
+    def me(user_id=None):
+        return {'user_id': str(user_id)}
+
+    api.login('marie')
+    auth = {'Authorization': f"Bearer {api.tokens['marie']}"}
+    client = probe.test_client()
+    assert client.get('/bug', headers=auth).status_code == 500
+    assert client.get('/me', headers=auth).get_json() == {'user_id': api.uid('marie')}
+    assert client.get('/me', headers={'Authorization': 'Bearer not-a-token'}).status_code == 401
+    assert client.get('/me').status_code == 401
+
+
+def test_a_database_outage_is_503_not_a_sign_out(app, api, monkeypatch):
+    """A failed session lookup during an outage must not read as "expired"."""
+    from cassandra.cluster import NoHostAvailable
+    api.login('marie')
+    auth = {'Authorization': f"Bearer {api.tokens['marie']}"}
+
+    def down(*args, **kwargs):
+        raise NoHostAvailable('no hosts', {})
+
+    monkeypatch.setattr(app.session_interface.cassandra_session, 'execute', down)
+    r = app.test_client().get('/api/following', headers=auth)
+    assert r.status_code == 503 and 'try again' in r.get_json()['message']
+    r = app.test_client().get('/api/check_session', headers=auth)
+    assert r.status_code == 503
+
+
+def test_sign_in_ignores_email_case_and_spaces(api):
+    status, body = api.post('/api/login', json={'email': '  Joe.Rogan@Example.COM ', 'password': 'Joe'})
+    assert status == 200, body
+    api.logout_token(body['session_id'])
