@@ -120,7 +120,7 @@ fun DemoTag(modifier: Modifier = Modifier) {
 @Composable
 fun DemoNote(lead: String, modifier: Modifier = Modifier) {
     Text(
-        text = "$lead. The members here are AI personas: famous names playing everyday neighbours. " +
+        text = "$lead. Most members here are AI personas: famous names playing everyday neighbours. " +
             "Try anything; nothing here is real.",
         style = MaterialTheme.typography.bodyMedium,
         color = Brand.colors.onDemoWash,

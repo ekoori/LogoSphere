@@ -86,7 +86,7 @@ class Director:
     # ── One cycle ────────────────────────────────────────────────────────────
     def cycle(self):
         if store.paused(self.clock()):
-            log.info('Paused (the test suite is running)')
+            log.info('Paused until %s (agent_settings.paused_until)', store.setting('paused_until'))
             return
         events = []
         if self.due('members', 300) or not self.sphere_personas:

@@ -112,7 +112,7 @@ export default function EntityListPage({ kind }) {
                                 <div className="demo-section-head">
                                     <h2>Demo {copy.plural.toLowerCase()} <DemoTag /></h2>
                                     <p>
-                                        The people here are AI personas: famous names playing everyday
+                                        Most people here are AI personas: famous names playing everyday
                                         neighbours. Join in and try anything; nothing here is real.
                                     </p>
                                     {kind === 'sphere' && userId && !inAllDemo && (

@@ -201,7 +201,7 @@ export default function EntityPage({ kind }) {
                 <div className="demo-strip" role="note">
                     <span aria-hidden="true">✦</span>
                     <div>
-                        <strong>Demo {NOUN[kind].toLowerCase()}.</strong> The members here are AI personas:
+                        <strong>Demo {NOUN[kind].toLowerCase()}.</strong> Most members here are AI personas:
                         famous names playing everyday neighbours. Try anything; nothing here is real.
                     </div>
                 </div>

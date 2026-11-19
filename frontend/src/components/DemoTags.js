@@ -5,7 +5,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import '../styles/DemoTags.css';
 
-export function DemoTag({ title = 'From a demo sphere: the people here are AI personas' }) {
+export function DemoTag({ title = 'From a demo sphere: most people here are AI personas' }) {
     return <span className="demo-tag" title={title}>Demo</span>;
 }
 
