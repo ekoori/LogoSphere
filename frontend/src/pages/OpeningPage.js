@@ -381,9 +381,21 @@ function OpeningPage() {
                             </button>
                         )}
                         {!isOwnOpening && service.myAcceptance?.status === 'pending' && (
-                            <p style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', marginTop: '0.8em' }}>
-                                ⏳ Awaiting confirmation from {service.provider}
-                            </p>
+                            <>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', marginTop: '0.8em' }}>
+                                    ⏳ Awaiting confirmation from {service.provider}
+                                </p>
+                                {/* Changed your mind? Until the provider confirms, it's yours to take back. */}
+                                <button
+                                    type="button"
+                                    className="xc-action-btn xc-action-secondary"
+                                    style={{ marginTop: '0.5em' }}
+                                    disabled={busy}
+                                    onClick={() => handleReject(service.myAcceptance.accepter_id)}
+                                >
+                                    Take back my acceptance
+                                </button>
+                            </>
                         )}
                         {!isOwnOpening && service.myAcceptance?.status === 'confirmed' && service.myAcceptance.exchange_id && (
                             <button
@@ -408,6 +420,9 @@ function OpeningPage() {
                                 )}
                                 <button type="button" className="xc-action-btn xc-action-secondary" disabled={busy} onClick={handleCancel}>
                                     {confirmCancel ? 'Yes, withdraw this opening' : (service.type === 'need' ? 'Withdraw this need' : 'Withdraw this offer')}
+                                    {/* Someone else's opening: only the admin override allows this, and it
+                                        withdraws it for everyone - not just your own acceptance. */}
+                                    {!isOwnOpening && !confirmCancel && ' (platform admin)'}
                                 </button>
                                 {confirmCancel && (
                                     <p className="xc-cancel-hint">

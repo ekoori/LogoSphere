@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
+import { formatServerDate } from '../utils/dates';
 import '../styles/Admin.css';
 
 const TABS = [
@@ -29,11 +30,7 @@ const POLICIES_BY_KIND = {
     project: ['join_policy', 'decision_policy', 'phase'],
 };
 
-const fmtDate = (v) => {
-    if (!v) return '—';
-    const d = new Date(v);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-};
+const fmtDate = (v) => formatServerDate(v, { fallback: '—' });
 
 // Fetch one admin list; `reload` re-fetches after an action.
 function useAdminData(path) {

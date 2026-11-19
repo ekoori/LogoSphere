@@ -1,5 +1,6 @@
 // Shared mappers from API shapes to card props.
 // Used by Home, OpeningsPage, and UserPage.
+import { formatServerDate } from './dates';
 
 const IMAGE_BY_KEY = {
     gpu: '/static/h100_cpus.webp',
@@ -106,12 +107,10 @@ export function mapService(s) {
     };
 }
 
-// Format an RFC-1123 / ISO datetime into a short readable date.
+// Format an RFC-1123 / ISO datetime into a short readable date (zone-less
+// API datetimes are UTC - see utils/dates.js).
 export function fmtDate(value) {
-    if (!value) return '';
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return formatServerDate(value);
 }
 
 // Pick a fitting illustration from the bundled static assets based on description keywords.

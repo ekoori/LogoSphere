@@ -62,6 +62,11 @@
     inset: 0;
     background: linear-gradient(180deg, rgba(20, 24, 14, 0) 35%, rgba(20, 24, 14, 0.62) 100%);
 }
+/* A photo can be bright or busy right where the text sits - on a phone the
+   badges, title and description fill most of the banner - so darken all of it. */
+.ep-banner-img ~ .ep-banner-scrim {
+    background: linear-gradient(180deg, rgba(20, 24, 14, 0.42) 0%, rgba(20, 24, 14, 0.5) 45%, rgba(20, 24, 14, 0.78) 100%);
+}
 
 .ep-banner-content {
     position: relative;
@@ -94,6 +99,22 @@
 .ep-banner-content .ep-sphere-chip:hover {
     background: #fdfaf2;
     color: var(--moss-deep);
+}
+/* "Led by <alliance>" under a project's title. */
+.ep-banner-content .ep-lead-alliance {
+    color: rgba(247, 244, 232, 0.85);
+}
+.ep-banner-content .ep-alliance-link {
+    color: #fdfaf2;
+    text-decoration: underline;
+    text-decoration-color: rgba(247, 244, 232, 0.5);
+    text-underline-offset: 0.15em;
+}
+/* Status colours are tuned for the light page and vanish on a photo. */
+.ep-banner-content .ep-status-badge {
+    background: rgba(20, 24, 16, 0.45);
+    border-color: rgba(247, 244, 232, 0.55);
+    color: #fdfaf2;
 }
 
 /* OpeningPage reuses Exchange.css's xc-page-* classes inside the banner —

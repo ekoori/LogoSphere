@@ -6,26 +6,14 @@ import StatusProgression from '../components/StatusProgression';
 import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
 import Avatar from '../components/Avatar';
+import * as rules from '../utils/exchangeRules';
+import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchangeRules';
+import { formatServerDate } from '../utils/dates';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
-// Manual status advances stop at "Receipted"; the follow-up step is only ever
-// reached by actually adding a follow-up note, so it isn't part of XC_STEPS.
-const XC_STEPS = ['Initiated', 'In Progress', 'Finished', 'Receipted'];
-const XC_FOLLOWUP_STEP = 'Follow up added';
-const XC_FOLLOWUP_STATUS = 'Additional Comments Added';
-
-const xcIdx = (status) => {
-    const i = XC_STEPS.findIndex(s => s.toLowerCase() === (status || '').toLowerCase());
-    return i >= 0 ? i : 0;
-};
-
-const fmtDate = (val) => {
-    if (!val) return '';
-    const d = new Date(val);
-    return isNaN(d.getTime()) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-};
+const fmtDate = (val) => formatServerDate(val);
 
 // Author name + avatar, linked to the profile ("You" → own profile).
 const AuthorTag = ({ name, id }) => {
@@ -103,6 +91,8 @@ function ExchangePage() {
     const [gratitudePhotos, setGratitudePhotos] = useState([]);
     // Two-step cancel: first click asks, second confirms (no modal dialogs).
     const [confirmCancel, setConfirmCancel] = useState(false);
+    // The server's reason when a status change is refused, shown in Actions.
+    const [actionError, setActionError] = useState(null);
 
     // Exchange edit (title / description / image), allowed until finished.
     const [editing, setEditing] = useState(false);
@@ -190,9 +180,12 @@ function ExchangePage() {
     const canModify = isInitiator || isOtherUser;
     // Both sides have receipted → the receipt affordance becomes a lighter comment.
     const bothReceipted = !!(xc.gratitude_comment && xc.user_comment);
-    const isCancelled = xc.exchange_status === 'Cancelled';
-    const currentIdx = isCancelled ? xcIdx('Initiated') : xcIdx(xc.exchange_status);
-    const nextStatus = !isCancelled && currentIdx < XC_STEPS.length - 1 ? XC_STEPS[currentIdx + 1] : null;
+    // What may happen next (utils/exchangeRules.js — the backend's transitions).
+    const isCancelled = rules.isCancelled(xc);
+    const currentIdx = isCancelled ? 0 : rules.stepIndex(xc.exchange_status);
+    const nextStatus = rules.nextStatus(xc);
+    const canCancel = rules.canCancel(xc, isInitiator);
+    const awaitingReceipt = rules.awaitingReceipt(xc);
 
     const completed = ['Finished', 'Receipted', XC_FOLLOWUP_STATUS].includes(xc.exchange_status);
     const xcType = completed ? 'completed' : 'offer';
@@ -201,7 +194,7 @@ function ExchangePage() {
 
     // The follow-up step only appears once a follow-up note has been left; when
     // present it's the terminal state.
-    const hasFollowup = !!(xc.initiator_comment || xc.recipient_comment) || xc.exchange_status === XC_FOLLOWUP_STATUS;
+    const hasFollowup = rules.hasFollowup(xc);
     const stepLabels = hasFollowup ? [...XC_STEPS, XC_FOLLOWUP_STEP] : XC_STEPS;
     // Each stage shows the date it was reached (Initiated = when the exchange
     // was created; the rest from the per-stage transition timestamps).
@@ -217,22 +210,24 @@ function ExchangePage() {
 
     const handleAdvanceStatus = async () => {
         if (!nextStatus) return;
+        setActionError(null);
         try {
             await api.post(`/api/exchange/${xcId}/status`, { status: nextStatus });
             fetchXc();
         } catch (e) {
-            console.error('Failed to advance status:', e);
+            setActionError(e.response?.data?.message || 'Could not update the status. Please try again.');
         }
     };
 
     const handleCancel = async () => {
         if (!confirmCancel) { setConfirmCancel(true); return; }
         setConfirmCancel(false);
+        setActionError(null);
         try {
             await api.post(`/api/exchange/${xcId}/status`, { status: 'Cancelled' });
             fetchXc();
         } catch (e) {
-            console.error('Failed to cancel:', e);
+            setActionError(e.response?.data?.message || 'Could not cancel the exchange. Please try again.');
         }
     };
 
@@ -627,7 +622,7 @@ function ExchangePage() {
                                     Mark as {nextStatus}
                                 </button>
                             )}
-                            {isInitiator && (
+                            {canCancel && (
                                 <>
                                     {confirmCancel && (
                                         <button type="button" className="xc-action-btn" onClick={() => setConfirmCancel(false)}>
@@ -641,8 +636,11 @@ function ExchangePage() {
                             )}
                             {!nextStatus && (
                                 <p style={{ fontSize: '0.82rem', color: 'var(--ink-faint)', margin: 0, fontStyle: 'italic' }}>
-                                    Exchange is complete.
+                                    {awaitingReceipt ? 'Finished — waiting for the receipt.' : 'Exchange is complete.'}
                                 </p>
+                            )}
+                            {actionError && (
+                                <p className="form-error" role="alert" style={{ margin: 0 }}>{actionError}</p>
                             )}
                         </div>
                     )}

@@ -12,21 +12,10 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Avatar from './Avatar';
+import { timeAgo } from '../utils/dates';
 
 const MOBILE_QUERY = '(max-width: 900px)';
 
-function timeAgo(iso) {
-    if (!iso) return '';
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
-    return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
 
 // Where to put the panel: under the bell on desktop, a sheet under the header on mobile.
 function computePlacement() {

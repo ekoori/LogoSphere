@@ -250,6 +250,8 @@ const ProfilePage = () => {
     const [showNewCard, setShowNewCard] = useState(false);
     const [editingCard, setEditingCard] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    // Bumped after a new picture is saved so the avatar <img> refetches it.
+    const [avatarVersion, setAvatarVersion] = useState(0);
     const [editForm, setEditForm] = useState({ name: '', location: '' });
     const [saving, setSaving] = useState(false);
 
@@ -291,11 +293,9 @@ const ProfilePage = () => {
             const res = await api.post('/api/updateuser', fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            setProfileData(prev => ({
-                ...prev,
-                ...res.data,
-                profile_picture: res.data.profile_picture || prev?.profile_picture,
-            }));
+            setProfileData(prev => ({ ...prev, ...res.data }));
+            // A new picture has the same URL: bust the browser's cached copy.
+            if (imageFile) setAvatarVersion(Date.now());
             setIsEditing(false);
         } catch (_) {
             setError('Failed to save changes.');
@@ -323,9 +323,8 @@ const ProfilePage = () => {
 
     if (loading) return <div className="pf-loading">Loading profile…</div>;
 
-    const avatar = profileData?.profile_picture
-        ? `data:image/jpeg;base64,${profileData.profile_picture}`
-        : '/static/user-image.jpg';
+    // The picture is served by the avatar endpoint, never inlined in JSON.
+    const avatar = `/api/users/${profileData?.user_id}/avatar?v=${avatarVersion}`;
     const fullName = [profileData?.name, profileData?.surname].filter(Boolean).join(' ') || 'Your Profile';
     const initials = fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
@@ -336,7 +335,7 @@ const ProfilePage = () => {
             <header className="pf-hero">
                 <div className="pf-hero-inner">
                     <div className="pf-avatar-wrap">
-                        {profileData?.profile_picture
+                        {profileData?.has_picture
                             ? <img src={avatar} alt={fullName} className="pf-avatar" />
                             : <div className="pf-avatar pf-avatar--initials">{initials}</div>
                         }

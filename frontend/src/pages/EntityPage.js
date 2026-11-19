@@ -174,8 +174,8 @@ export default function EntityPage({ kind }) {
                     )}
                     {entity.is_public && kind === 'sphere' && <span className="ep-location-chip">Public</span>}
                     {perms.canManage && (
-                        <Link to={`/${kind}-management?id=${eid}`} className="ep-status-badge status--in-progress" style={{ textDecoration: 'none' }}>
-                            Manage {NOUN[kind]}
+                        <Link to={`/${kind}-management?id=${eid}`} className="ep-sphere-chip">
+                            ⚙ Manage {NOUN[kind]}
                         </Link>
                     )}
                 </div>
@@ -284,9 +284,13 @@ export default function EntityPage({ kind }) {
                         )}
 
                         {activeTab === 'meaning_trail' && (
-                            trail.length === 0
-                                ? <p className="empty-state">No meaning trail recorded yet for this {kind}.</p>
-                                : <MeaningTrail items={trail} />
+                            // A visitor of a public sphere can't load its trail (it's
+                            // members-only); don't tell them it's empty.
+                            anonymous
+                                ? <p className="empty-state"><Link to="/login">Log in</Link> to see this {kind}'s Meaning Trail.</p>
+                                : trail.length === 0
+                                    ? <p className="empty-state">No meaning trail recorded yet for this {kind}.</p>
+                                    : <MeaningTrail items={trail} />
                         )}
 
                         {activeTab === 'offers-needs' && (

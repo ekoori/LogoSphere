@@ -13,6 +13,7 @@ import api from '../api';
 import { useLogin } from '../App';
 import { useInvalidate, KIND_PATH } from '../utils/queries';
 import Avatar from './Avatar';
+import { formatServerDate } from '../utils/dates';
 import '../styles/Governance.css';
 
 const DECISION_COPY = {
@@ -29,7 +30,7 @@ const VALUE_LABELS = {
     ongoing: 'Ongoing', closed: 'Closed (archived)',
 };
 const label = (v) => VALUE_LABELS[v] || String(v).replace(/-/g, ' ');
-const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '');
+const fmt = (iso) => formatServerDate(iso, { year: false });
 
 function TallyBar({ tally }) {
     if (!tally) return null;

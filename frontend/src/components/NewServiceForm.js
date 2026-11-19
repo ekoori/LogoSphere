@@ -78,7 +78,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     return (
         <div className="card" style={{ padding: '1.2em 1.4em', marginBottom: '1.2em' }}>
             <h3 style={{ marginBottom: '0.9em' }}>
-                {actingAs ? `New Opening — posting as ${actingAs.name}` : 'New Service'}
+                {actingAs ? `New Opening — posting as ${actingAs.name}` : 'New Opening'}
             </h3>
             {success && <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: '0.5em' }}>✓ Posted!</p>}
             {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.5em' }}>{error}</p>}

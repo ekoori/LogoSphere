@@ -91,9 +91,8 @@ function UserPage() {
         </div>
     );
 
-    const avatar = user.profile_picture
-        ? `data:image/jpeg;base64,${user.profile_picture}`
-        : '/static/user-image.jpg';
+    // Served by the avatar endpoint (a photo, or generated initials).
+    const avatar = `/api/users/${user.user_id}/avatar`;
     const fullName = [user.name, user.surname].filter(Boolean).join(' ');
 
     return (

@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import api from '../api';
+import { parseServerDate } from '../utils/dates';
 import '../styles/ValueCardChip.css';
 
 function ValueCardState({ card, endpoints = null, onUpdated }) {
@@ -27,8 +28,8 @@ function ValueCardState({ card, endpoints = null, onUpdated }) {
         }
     };
 
-    const endorsedOn = card.endorsed_at ? new Date(card.endorsed_at) : null;
-    const reviewedOn = card.reviewed_at ? new Date(card.reviewed_at) : null;
+    const endorsedOn = parseServerDate(card.endorsed_at);
+    const reviewedOn = parseServerDate(card.reviewed_at);
     const fmt = (d) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 
     return (
