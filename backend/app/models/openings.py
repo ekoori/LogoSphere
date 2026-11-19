@@ -10,6 +10,7 @@ from app.utils.demo import is_agent
 from datetime import datetime
 
 from app.db import session as cassandra_session
+from app.utils import image_store
 
 
 class Service:
@@ -19,7 +20,7 @@ class Service:
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
                  acting_user_id=None, acting_user_name=None,
                  version=1, is_current=True, replaces_service_id=None,
-                 image_ref_service_id=None, has_image=None):
+                 image_ref_service_id=None, has_image=None, image_object=None):
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -55,6 +56,8 @@ class Service:
         # the row that holds it. get_image() follows the reference.
         self.image_ref_service_id = image_ref_service_id
         self._has_image = has_image
+        # The banner's key in the bucket (app/utils/image_store), when it is there.
+        self.image_object = image_object
 
     def to_dict(self, include_image=True):
         # `include_image=False` (used by the openings LIST) omits the base64
@@ -164,6 +167,7 @@ class Service:
             replaces_service_id=getattr(r, 'replaces_service_id', None),
             image_ref_service_id=getattr(r, 'image_ref_service_id', None),
             has_image=getattr(r, 'has_image', None),
+            image_object=getattr(r, 'image_object', None),
         )
 
     # Every column except the banner blob - the marketplace list never needs it.
@@ -171,7 +175,7 @@ class Service:
                   "sphere_name, status, values, likes, project_name, image_key, cadence, accepted_by, "
                   "accepted_by_name, created_at, accepted_at, in_progress_at, completed_at, "
                   "acting_user_id, acting_user_name, version, is_current, replaces_service_id, "
-                  "image_ref_service_id, has_image")
+                  "image_ref_service_id, has_image, image_object")
 
     @classmethod
     def get_all(cls):
@@ -191,22 +195,38 @@ class Service:
 
     @classmethod
     def set_image(cls, service_id, image_bytes):
+        obj, blob = image_store.store(image_bytes, 'banner')
         cassandra_session.execute(
-            "UPDATE services SET image = %s, has_image = true WHERE service_id = %s",
-            [image_bytes, service_id]
+            "UPDATE services SET image = %s, image_object = %s, has_image = true WHERE service_id = %s",
+            [blob, obj, service_id]
         )
+
+    @classmethod
+    def image_object_of(cls, service_id):
+        # The bucket key of the opening's banner, following a version's
+        # reference to the row that holds it; None when it has none there.
+        row = cassandra_session.execute(
+            "SELECT image_object, image_ref_service_id FROM services WHERE service_id = %s", [service_id]
+        ).one()
+        if not row:
+            return None
+        if getattr(row, 'image_object', None):
+            return row.image_object
+        ref = getattr(row, 'image_ref_service_id', None)
+        return cls.image_object_of(ref) if ref and ref != service_id else None
 
     @classmethod
     def get_image(cls, service_id):
         """Just the image bytes for one opening — a single-partition read that
         keeps the (potentially large) blob out of the openings list payload."""
         row = cassandra_session.execute(
-            "SELECT image, image_ref_service_id FROM services WHERE service_id = %s", [service_id]
+            "SELECT image, image_object, image_ref_service_id FROM services WHERE service_id = %s", [service_id]
         ).one()
         if not row:
             return None
-        if row.image:
-            return row.image
+        data = image_store.fetch(getattr(row, 'image_object', None), row.image)
+        if data:
+            return data
         ref = getattr(row, 'image_ref_service_id', None)
         if ref and ref != service_id:
             return cls.get_image(ref)
@@ -275,7 +295,8 @@ class Service:
         created_at = datetime.utcnow()
         # Point at whichever row actually holds the banner bytes (the root of
         # the chain) instead of duplicating the blob per version.
-        image_ref = old.image_ref_service_id if old.image_ref_service_id else (old.service_id if old.image else None)
+        image_ref = old.image_ref_service_id if old.image_ref_service_id else (
+            old.service_id if (old.image or old.image_object or old._has_image) else None)
         cassandra_session.execute(
             """INSERT INTO services (service_id, type, title, description, provider_id,
                provider_name, sphere_id, sphere_name, status, created_at, values, likes,

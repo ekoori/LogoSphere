@@ -1,5 +1,7 @@
 # Small input-validation helpers shared across routes.
 
+import io
+
 from flask import Response
 
 
@@ -30,9 +32,19 @@ def is_supported_image(data):
     images in there. Accepts JPEG, PNG, GIF, and WebP."""
     if not data or len(data) < 12:
         return False
-    return (
+    if not (
         data[:3] == b'\xff\xd8\xff'                      # JPEG
         or data[:8] == b'\x89PNG\r\n\x1a\n'              # PNG
         or data[:6] in (b'GIF87a', b'GIF89a')           # GIF
         or (data[:4] == b'RIFF' and data[8:12] == b'WEBP')  # WebP
-    )
+    ):
+        return False
+    # The right first bytes aren't enough: pictures are re-encoded when they
+    # are stored (app/utils/image_store), so they must really open.
+    try:
+        from PIL import Image
+        with Image.open(io.BytesIO(data)) as img:
+            img.verify()
+        return True
+    except Exception:  # noqa: BLE001 - Pillow raises many kinds
+        return False

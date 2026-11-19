@@ -11,3 +11,5 @@ gunicorn==23.0.0
 anthropic==2.10.0
 openai==3.55.1
 pillow==13.0.0
+# Pictures in object storage (app/utils/image_store; Pillow above normalises them).
+boto3==1.44.6

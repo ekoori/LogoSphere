@@ -21,3 +21,20 @@ cd frontend && npm run build && tar czf - build | ssh igor@45.79.237.252 'rm -rf
 ```
 
 After changing the nginx file: `sudo nginx -t && sudo systemctl reload nginx`.
+
+## Pictures
+
+Pictures live in the Linode Object Storage bucket `logosphere-images` (cluster
+`gb-lon-1`). The bucket is private (this endpoint has no per-object public
+access): the backend stores each picture once under a key made from its
+content, keeps the key in the row's `*_object` column, and serves pictures
+through its own endpoints from a disk cache (`IMAGE_CACHE_DIR`), going to the
+bucket only on a miss. See `backend/app/utils/image_store.py`.
+
+Settings in `backend/prod.env`: `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`,
+`S3_ACCESS_KEY`, `S3_SECRET_KEY`, `IMAGE_CACHE_DIR`. Without them (local
+development) pictures stay in their Cassandra blob columns.
+
+A new picture column needs its `ALTER TABLE` on the host before the backend
+restarts (copies in `backend/reseed_demo.py`). `backend/migrate_images_to_bucket.py`
+moves any blobs left in rows into the bucket, backing each one up first.

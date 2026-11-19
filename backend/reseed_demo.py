@@ -273,6 +273,12 @@ CREATE TABLE IF NOT EXISTS logosphere.receipt_photos (
 )
 """)
 print("[OK] Created receipt_photos")
+# Pictures live in the bucket (app/utils/image_store); rows keep only the object key.
+for t, col in [('services', 'image_object'), ('spheres', 'image_object'), ('alliances', 'image_object'),
+               ('projects', 'image_object'), ('meaning_trail', 'exchange_image_object'),
+               ('receipt_photos', 'image_object'), ('users', 'picture_object')]:
+    r = run(f"ALTER TABLE logosphere.{t} ADD {col} text")
+    print(f"[OK]   {t}: ADD {col} text" if r is True else f"[SKIP/WARN] {t} {col}: {r}")
 run("""
 CREATE TABLE IF NOT EXISTS logosphere.notifications (
     user_id uuid,

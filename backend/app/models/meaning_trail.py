@@ -30,6 +30,7 @@ from datetime import datetime
 # One shared driver session for the whole app (see app/db.py); cqlengine is
 # registered against it there too.
 from app.db import session as _raw_session
+from app.utils import image_store
 
 # Short-lived cache of the {user_id: display name} map. Every meaning-trail read
 # needs it to resolve counterparts, and it changes only when a user registers or
@@ -175,6 +176,7 @@ class MeaningTrail(Model):
     # Editable details (inherited from the opening, changeable until finished).
     exchange_long_description = columns.Text()
     exchange_image = columns.Blob()
+    exchange_image_object = columns.Text()     # its key in the bucket (app/utils/image_store)
     # Whether exchange_image is set. Reads never load the blob itself (see
     # _NO_BLOB): exchanges copy their opening's banner, so every trail row
     # used to drag megabytes through the driver - enough to stall the
@@ -199,7 +201,7 @@ class MeaningTrail(Model):
                            project_name=None, acting_user_id=None, acting_user_name=None,
                            long_description=None, image=None,
                            recipient_acting_user_id=None, recipient_acting_user_name=None,
-                           source_service_id=None):
+                           source_service_id=None, image_object=None):
         """Create a fully-populated Exchange row when an Opening is accepted.
         initiator_id is the opening's provider; other_user_id is the accepter.
         acting_user_* names the human when the provider is an entity;
@@ -208,6 +210,7 @@ class MeaningTrail(Model):
         opening's long description and banner image."""
         try:
             exchange_id = uuid.uuid4()
+            obj, blob = (image_object, None) if image_object else image_store.store(image, 'banner')
             cls.create(
                 user_id=UUID(str(initiator_id)),
                 exchange_id=exchange_id,
@@ -215,8 +218,9 @@ class MeaningTrail(Model):
                 other_user_name=other_user_name,
                 exchange_description=description,
                 exchange_long_description=long_description,
-                exchange_image=image,
-                has_image=bool(image),
+                exchange_image=blob,
+                exchange_image_object=obj,
+                has_image=bool(obj or blob),
                 exchange_status='Initiated',
                 project_name=project_name,
                 project_start_timestamp=datetime.utcnow(),
@@ -598,8 +602,10 @@ class MeaningTrail(Model):
             if long_description is not None:
                 fields['exchange_long_description'] = long_description
             if image is not None:
-                fields['exchange_image'] = image
-                fields['has_image'] = bool(image)
+                obj, blob = image_store.store(image, 'banner')
+                fields['exchange_image'] = blob
+                fields['exchange_image_object'] = obj
+                fields['has_image'] = bool(obj or blob)
             if fields:
                 rows[0].update(**fields)
             return True
@@ -613,9 +619,9 @@ class MeaningTrail(Model):
         try:
             rows = list(cls.objects.filter(
                 exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
-            if rows and rows[0].exchange_image:
-                return rows[0].exchange_image
-            return None
+            if not rows:
+                return None
+            return image_store.fetch(rows[0].exchange_image_object, rows[0].exchange_image)
         except Exception as e:
             print(f"Error getting exchange image: {e}")
             return None
@@ -628,9 +634,10 @@ class MeaningTrail(Model):
         try:
             _raw_session.execute("DELETE FROM receipt_photos WHERE exchange_id = %s", [ex])
             for i, img in enumerate((images or [])[:3]):
+                obj, blob = image_store.store(img, 'photo')
                 _raw_session.execute(
-                    "INSERT INTO receipt_photos (exchange_id, idx, image) VALUES (%s, %s, %s)",
-                    [ex, i, img])
+                    "INSERT INTO receipt_photos (exchange_id, idx, image, image_object) VALUES (%s, %s, %s, %s)",
+                    [ex, i, blob, obj])
             return True
         except Exception as e:
             print(f"Error storing receipt photos: {e}")
@@ -650,9 +657,9 @@ class MeaningTrail(Model):
     def get_receipt_photo(cls, exchange_id, idx):
         try:
             row = _raw_session.execute(
-                "SELECT image FROM receipt_photos WHERE exchange_id = %s AND idx = %s",
+                "SELECT image, image_object FROM receipt_photos WHERE exchange_id = %s AND idx = %s",
                 [UUID(str(exchange_id)), int(idx)]).one()
-            return row.image if row else None
+            return image_store.fetch(row.image_object, row.image) if row else None
         except Exception as e:
             print(f"Error getting receipt photo: {e}")
             return None

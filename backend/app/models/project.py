@@ -10,6 +10,7 @@ from app.utils.demo import agent_ids, is_demo_sphere
 from datetime import datetime
 
 from app.db import session as cassandra_session
+from app.utils import image_store
 from app.utils.names import resolve_user_names, dedupe
 
 
@@ -110,10 +111,10 @@ class Project:
         cassandra_session.execute(query, (
             project_id, name, description, owner, owner_alliance, status,
             sphere_id, sphere_name, datetime.utcnow(), participants, participant_names,
-            participant_roles, values, image
+            participant_roles, values, None
         ))
         if image:
-            cassandra_session.execute("UPDATE projects SET has_image = true WHERE project_id = %s", [project_id])
+            cls.set_image(project_id, image)     # the bucket (or the blob column), and has_image
         return cls(project_id, name, description, owner, owner_alliance, status,
                    sphere_id, sphere_name, participants, participant_names, values,
                    participant_roles=participant_roles, image=image, has_image=bool(image))
@@ -161,9 +162,10 @@ class Project:
 
     @classmethod
     def set_image(cls, project_id, image_bytes):
+        obj, blob = image_store.store(image_bytes, 'banner')
         cassandra_session.execute(
-            "UPDATE projects SET image = %s, has_image = true WHERE project_id = %s",
-            [image_bytes, project_id]
+            "UPDATE projects SET image = %s, image_object = %s, has_image = true WHERE project_id = %s",
+            [blob, obj, project_id]
         )
 
     @classmethod
@@ -171,9 +173,9 @@ class Project:
         """Just the image bytes for one project (served via a dedicated GET so
         the projects list needn't carry every banner blob)."""
         row = cassandra_session.execute(
-            "SELECT image FROM projects WHERE project_id = %s", [project_id]
+            "SELECT image, image_object FROM projects WHERE project_id = %s", [project_id]
         ).one()
-        return row.image if row and row.image else None
+        return image_store.fetch(getattr(row, 'image_object', None), row.image) if row else None
 
     @classmethod
     def set_role(cls, project_id, target_uuid, role):

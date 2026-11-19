@@ -5,6 +5,7 @@ from datetime import datetime
 import base64
 
 from app.db import session as cassandra_session
+from app.utils import image_store
 
 from app.utils.names import resolve_user_names as _resolve_user_names, dedupe as _dedupe
 from app.utils.demo import agent_ids
@@ -94,17 +95,18 @@ class Sphere:
         INSERT INTO spheres (sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cassandra_session.execute(query, (sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, datetime.utcnow()))
+        cassandra_session.execute(query, (sphere_id, name, description, meaning_graph, location, None, admin1, participants, alliances, projects, values, datetime.utcnow()))
         if image:
-            cassandra_session.execute("UPDATE spheres SET has_image = true WHERE sphere_id = %s", [sphere_id])
+            cls.set_image(sphere_id, image)     # the bucket (or the blob column), and has_image
 
         return cls(sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values)
 
     @classmethod
     def set_image(cls, sphere_id, image_bytes):
+        obj, blob = image_store.store(image_bytes, 'banner')
         cassandra_session.execute(
-            "UPDATE spheres SET image = %s, has_image = true WHERE sphere_id = %s",
-            [image_bytes, sphere_id]
+            "UPDATE spheres SET image = %s, image_object = %s, has_image = true WHERE sphere_id = %s",
+            [blob, obj, sphere_id]
         )
 
     @classmethod
@@ -112,9 +114,9 @@ class Sphere:
         """Just the image bytes for one sphere (served via a dedicated GET so
         the spheres list needn't carry every banner blob)."""
         row = cassandra_session.execute(
-            "SELECT image FROM spheres WHERE sphere_id = %s", [sphere_id]
+            "SELECT image, image_object FROM spheres WHERE sphere_id = %s", [sphere_id]
         ).one()
-        return row.image if row and row.image else None
+        return image_store.fetch(getattr(row, 'image_object', None), row.image) if row else None
 
     @classmethod
     def set_role(cls, sphere_id, target_uuid, role):

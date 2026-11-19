@@ -38,6 +38,7 @@ def normalize_email(value):
     return (value or '').strip().lower()
 
 from app.db import session as cassandra_session, is_unavailable
+from app.utils import image_store
 
 class User(UserMixin):
     def __init__(self, name, email, user_id, session_id=None):
@@ -203,7 +204,7 @@ class User(UserMixin):
         try:
             logging.info(f'user.py: Fetching user with user_id: {user_id}')
             # writetime() tells whether a picture is set without loading it.
-            query = ("SELECT user_id, email, name, surname, location, is_agent, writetime(profile_picture) AS picture_wt "
+            query = ("SELECT user_id, email, name, surname, location, is_agent, picture_object, writetime(profile_picture) AS picture_wt "
                      "FROM users WHERE user_id = %s")
             rows = cassandra_session.execute(query, (user_id,))
 
@@ -211,7 +212,7 @@ class User(UserMixin):
                 user = cls(name=row.name, email=row.email, user_id=row.user_id)
                 user.surname = row.surname
                 user.location = row.location
-                user.has_picture = row.picture_wt is not None
+                user.has_picture = row.picture_wt is not None or bool(getattr(row, 'picture_object', None))
                 user.is_agent = bool(getattr(row, 'is_agent', False))
                 return user
 
@@ -228,8 +229,9 @@ class User(UserMixin):
         """The stored profile picture's bytes, or None (for the avatar endpoint)."""
         try:
             row = cassandra_session.execute(
-                "SELECT profile_picture FROM users WHERE user_id = %s", [uuid.UUID(str(user_id))]).one()
-            return row.profile_picture if row else None
+                "SELECT profile_picture, picture_object FROM users WHERE user_id = %s",
+                [uuid.UUID(str(user_id))]).one()
+            return image_store.fetch(getattr(row, 'picture_object', None), row.profile_picture) if row else None
         except (ValueError, TypeError):
             return None
 
@@ -261,8 +263,9 @@ class User(UserMixin):
             update_fields.append("location = %s")
             update_values.append(location.strip() or None)
         if profile_picture:
-            update_fields.append("profile_picture = %s")
-            update_values.append(profile_picture)
+            obj, blob = image_store.store(profile_picture, 'avatar')
+            update_fields += ["profile_picture = %s", "picture_object = %s"]
+            update_values += [blob, obj]
         
         if not update_fields:
             logging.error('No fields provided to update')

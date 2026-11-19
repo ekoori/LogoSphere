@@ -11,6 +11,7 @@ from datetime import datetime
 import base64
 
 from app.db import session as cassandra_session
+from app.utils import image_store
 from app.utils.names import resolve_user_names, dedupe
 
 
@@ -107,10 +108,10 @@ class Alliance:
         """
         cassandra_session.execute(query, (
             alliance_id, name, description, admin1, sphere_id, sphere_name,
-            datetime.utcnow(), members, member_names, projects, values, meaning_graph, image
+            datetime.utcnow(), members, member_names, projects, values, meaning_graph, None
         ))
         if image:
-            cassandra_session.execute("UPDATE alliances SET has_image = true WHERE alliance_id = %s", [alliance_id])
+            cls.set_image(alliance_id, image)     # the bucket (or the blob column), and has_image
         return cls(alliance_id, name, description, admin1, sphere_id, sphere_name,
                    members, member_names, projects, values, meaning_graph, image, has_image=bool(image))
 
@@ -156,9 +157,10 @@ class Alliance:
 
     @classmethod
     def set_image(cls, alliance_id, image_bytes):
+        obj, blob = image_store.store(image_bytes, 'banner')
         cassandra_session.execute(
-            "UPDATE alliances SET image = %s, has_image = true WHERE alliance_id = %s",
-            [image_bytes, alliance_id]
+            "UPDATE alliances SET image = %s, image_object = %s, has_image = true WHERE alliance_id = %s",
+            [blob, obj, alliance_id]
         )
 
     @classmethod
@@ -166,9 +168,9 @@ class Alliance:
         """Just the image bytes for one alliance (served via a dedicated GET so
         the alliances list needn't carry every banner blob)."""
         row = cassandra_session.execute(
-            "SELECT image FROM alliances WHERE alliance_id = %s", [alliance_id]
+            "SELECT image, image_object FROM alliances WHERE alliance_id = %s", [alliance_id]
         ).one()
-        return row.image if row and row.image else None
+        return image_store.fetch(getattr(row, 'image_object', None), row.image) if row else None
 
     @classmethod
     def set_role(cls, alliance_id, target_uuid, role):
