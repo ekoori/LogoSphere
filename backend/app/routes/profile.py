@@ -24,7 +24,8 @@ def _initials_avatar_svg(name):
     place of a 404 when a user has no uploaded photo — so <img> tags never log a
     console 404 and everyone gets a consistent placeholder. Mirrors the frontend
     Avatar component's initials look."""
-    parts = [p for p in (name or '').split() if p]
+    # Words that start with a letter or digit: "Bruce (AI)" is B, not "B(".
+    parts = [p for p in (name or '').split() if p[0].isalnum()]
     initials = escape(''.join(p[0] for p in parts[:2]).upper() or '?')
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">'

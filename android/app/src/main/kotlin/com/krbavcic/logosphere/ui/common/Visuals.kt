@@ -56,8 +56,10 @@ import com.krbavcic.logosphere.ui.theme.Palette
 import com.krbavcic.logosphere.ui.theme.kindGradient
 import com.krbavcic.logosphere.ui.theme.valueCardAccent
 
+/** Words that start with a letter or digit: "Bruce (AI)" is B, not "B(". */
 private fun initials(name: String?): String =
-    name.orEmpty().split(' ').filter { it.isNotBlank() }.take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "·" }
+    name.orEmpty().split(' ').filter { it.firstOrNull()?.isLetterOrDigit() == true }
+        .take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "·" }
 
 /** A member's avatar: their photo, or the server's initials image; initials while it loads. */
 @Composable

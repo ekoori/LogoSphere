@@ -152,3 +152,10 @@ def test_registration_stores_the_email_lower_case(app, db, new_member):
     # ...so the same address, typed any way, can't register twice.
     r = client.post('/api/register', json={'name': 'Again', 'email': new_member.title(), 'password': 'a-long-password'})
     assert r.status_code == 400
+
+
+def test_initials_skip_bracketed_words():
+    from app.routes.profile import _initials_avatar_svg
+    assert '>B</text>' in _initials_avatar_svg('Bruce (AI)')
+    assert '>MK</text>' in _initials_avatar_svg('Marie Kondo')
+    assert '>?</text>' in _initials_avatar_svg('')
