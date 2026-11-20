@@ -31,6 +31,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class PersonRoute(val id: String)
 @Serializable data object SearchRoute
 @Serializable data object EditProfileRoute
+@Serializable data object AccountRoute
 
 /** Writes a value card — the member's own, or a group's ([groupKind]/[groupId]); [cardId] edits one. */
 @Serializable data class ValueCardEditorRoute(val groupKind: String? = null, val groupId: String? = null, val cardId: String? = null)
@@ -78,6 +79,8 @@ class Navigator(
     fun register() = controller.navigate(RegisterRoute)
 
     fun editProfile() = controller.navigate(EditProfileRoute)
+
+    fun account() = controller.navigate(AccountRoute)
 
     fun valueCardEditor(group: Community? = null, cardId: String? = null) =
         controller.navigate(ValueCardEditorRoute(group?.kind?.name, group?.id, cardId))

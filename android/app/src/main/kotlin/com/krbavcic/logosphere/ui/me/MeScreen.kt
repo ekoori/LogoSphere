@@ -14,7 +14,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.semantics.Role
+import com.krbavcic.logosphere.data.ThemeChoice
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material.icons.outlined.Handshake
@@ -121,6 +127,8 @@ fun MeScreen() {
     val user = app.session.user
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     var showLicences by rememberSaveable { mutableStateOf(false) }
+    var showAppearance by rememberSaveable { mutableStateOf(false) }
+    val theme by app.appearance.choice.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
     val actions = remember(vm) {
@@ -212,6 +220,8 @@ fun MeScreen() {
                             if (user?.isPlatformAdmin == true) {
                                 LinkRow(Icons.Outlined.AdminPanelSettings, "Platform administration") { navigator.admin() }
                             }
+                            LinkRow(Icons.Outlined.DarkMode, "Appearance", theme.label) { showAppearance = true }
+                            LinkRow(Icons.Outlined.Lock, "Password, data & account") { navigator.account() }
                             LinkRow(Icons.Outlined.Language, InfoPage.About.title) { navigator.info(InfoPage.About) }
                             LinkRow(Icons.AutoMirrored.Outlined.HelpOutline, InfoPage.HowItWorks.title) { navigator.info(InfoPage.HowItWorks) }
                             LinkRow(Icons.Outlined.Handshake, InfoPage.Contribute.title) { navigator.info(InfoPage.Contribute) }
@@ -240,6 +250,33 @@ fun MeScreen() {
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Stay") } },
         )
     }
+    if (showAppearance) {
+        AlertDialog(
+            onDismissRequest = { showAppearance = false },
+            title = { Text("Appearance") },
+            text = {
+                Column {
+                    ThemeChoice.entries.forEach { choice ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(selected = theme == choice, role = Role.RadioButton) {
+                                    app.appearance.choose(choice)
+                                    showAppearance = false
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = theme == choice, onClick = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text(choice.label, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showAppearance = false }) { Text("Close") } },
+        )
+    }
     if (showLicences) {
         AlertDialog(
             onDismissRequest = { showLicences = false },
@@ -258,9 +295,10 @@ fun MeScreen() {
 }
 
 @Composable
-private fun LinkRow(icon: ImageVector, label: String, onClick: () -> Unit) {
+private fun LinkRow(icon: ImageVector, label: String, detail: String? = null, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(label) },
+        supportingContent = detail?.let { { Text(it) } },
         leadingContent = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
         modifier = Modifier.clickable(onClick = onClick),

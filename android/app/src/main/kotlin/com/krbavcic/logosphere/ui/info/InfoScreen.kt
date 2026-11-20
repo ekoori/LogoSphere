@@ -139,5 +139,27 @@ private fun BlockView(block: Block, onPage: (InfoPage) -> Unit, onUrl: (String) 
             block.page != null -> LinkText(block.label, onClick = { onPage(block.page) })
             block.url != null -> OutlinedButton(onClick = { onUrl(block.url) }, modifier = Modifier.fillMaxWidth()) { Text(block.label) }
         }
+        is Block.Updated -> Text(block.text, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+        is Block.Glance -> BrandCard(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(block.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                block.items.forEach { item ->
+                    Row {
+                        Text("✓  ", style = MaterialTheme.typography.bodyMedium, color = colors.primary, fontWeight = FontWeight.Bold)
+                        Text(item, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+        is Block.Note -> Text(
+            block.text,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
+                .background(colors.secondaryContainer)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            color = colors.onSecondaryContainer,
+        )
     }
 }

@@ -9,6 +9,7 @@ import coil.disk.DiskCache
 import com.krbavcic.logosphere.core.api.BearerAuthInterceptor
 import com.krbavcic.logosphere.core.api.LogoSphereApi
 import com.krbavcic.logosphere.core.logic.AppLink
+import com.krbavcic.logosphere.data.Appearance
 import com.krbavcic.logosphere.data.ChangeBus
 import com.krbavcic.logosphere.data.CommunityRepository
 import com.krbavcic.logosphere.data.InboxRepository
@@ -48,6 +49,7 @@ class AppContainer(context: Context) {
     val inbox = InboxRepository(api)
     val changes = ChangeBus()
     val pictures = Pictures(appContext)
+    val appearance = Appearance(appContext)
 
     val session: SessionManager = SessionManager(
         store = sessionStore,
@@ -78,6 +80,12 @@ class AppContainer(context: Context) {
     private suspend fun forgetPush() {
         val current = Push.token(appContext) ?: return
         runCatching { api.forgetDevice(current) }
+    }
+
+    /** Writes [text] to a document the member chose in the system's save dialog. */
+    suspend fun saveText(uri: android.net.Uri, text: String) = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        appContext.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+            ?: throw com.krbavcic.logosphere.core.api.AppProblem("Couldn't write the file there.")
     }
 
     /** A notification arrived: the Inbox badge catches up. */

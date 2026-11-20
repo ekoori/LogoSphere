@@ -30,6 +30,7 @@ import com.krbavcic.logosphere.core.model.OpeningLikeResult
 import com.krbavcic.logosphere.core.model.OwnProfile
 import com.krbavcic.logosphere.core.model.PersonRef
 import com.krbavcic.logosphere.core.model.PublicUser
+import com.krbavcic.logosphere.core.model.ResetLink
 import com.krbavcic.logosphere.core.model.SearchResults
 import com.krbavcic.logosphere.core.model.SessionStatus
 import com.krbavcic.logosphere.core.model.ValueCard
@@ -168,6 +169,26 @@ class LogoSphereApi(
             addFormDataPart("location", location.trim())
             picture?.let { addPicture("profile_picture", it) }
         }
+    }
+
+    // ── Your account ────────────────────────────────────────────────────────
+
+    /** Changes your password; your other sessions end. Returns the server's message. */
+    suspend fun changePassword(current: String, new: String): String =
+        post<JsonObject>(
+            "/api/account/password",
+            buildJsonObject {
+                put("current_password", current)
+                put("new_password", new)
+            },
+        )["message"]?.jsonPrimitive?.content ?: "Password changed."
+
+    /** Everything LogoSphere holds about you, as the JSON file the server makes. */
+    suspend fun exportData(): String = text(url("/api/account/export"))
+
+    /** Deletes your account (your password confirms it); the session ends with it. */
+    suspend fun deleteAccount(password: String) {
+        post<JsonElement>("/api/account/delete", buildJsonObject { put("password", password) })
     }
 
     // ── Writing value cards: your own (groupId null) or a group's you manage ─
@@ -321,6 +342,11 @@ class LogoSphereApi(
     suspend fun join(kind: CommunityKind, id: String): JoinResult =
         post("/api/${kind.path}/$id/join", JsonObject(emptyMap()))
 
+    /** Leaves a group, or withdraws a request to join it (the founder can't leave). */
+    suspend fun leave(kind: CommunityKind, id: String): String =
+        post<JsonObject>("/api/${kind.path}/$id/leave", JsonObject(emptyMap()))["message"]?.jsonPrimitive?.content
+            ?: "You've left."
+
     /** Starts a group (the create call takes the core fields; a join policy other than open follows). */
     suspend fun createCommunity(new: NewCommunity, banner: Upload? = null): Community {
         val created = multipart<Community>("/api/${new.kind.path}") {
@@ -438,6 +464,10 @@ class LogoSphereApi(
         delete<JsonElement>("/api/admin/users/$id")
     }
 
+    /** A one-time password reset link for a member who forgot theirs (24 hours, used once). */
+    suspend fun adminResetLink(id: String): ResetLink =
+        post("/api/admin/users/$id/reset_link", JsonObject(emptyMap()))
+
     suspend fun adminGroups(kind: CommunityKind): List<AdminGroup> = get<AdminGroups>("/api/admin/${kind.path}").items
 
     suspend fun adminDeleteGroup(kind: CommunityKind, id: String) {
@@ -524,6 +554,11 @@ class LogoSphereApi(
 
     private suspend inline fun <reified T> get(url: HttpUrl): T =
         execute(Request.Builder().url(url).get().build())
+
+    /** A GET whose body is kept as text (a file to save), not decoded. */
+    private suspend fun text(url: HttpUrl): String = withContext(Dispatchers.IO) {
+        send(Request.Builder().url(url).get().build())
+    }
 
     private fun json(body: JsonElement): RequestBody =
         LogoSphereJson.encodeToString(JsonElement.serializer(), body).toRequestBody(jsonType)

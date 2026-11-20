@@ -24,10 +24,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -215,7 +217,7 @@ fun SignInScreen(notice: String?) {
     val busy by vm.busy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var serverText by rememberSaveable { mutableStateOf(if (server == BuildConfig.DEFAULT_SERVER_URL) "" else server) }
     val focus = LocalFocusManager.current
     val submit = {
@@ -253,6 +255,23 @@ fun SignInScreen(notice: String?) {
         TextButton(onClick = navigator::register, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("New to LogoSphere? Create an account", textAlign = TextAlign.Center)
         }
+        var forgot by rememberSaveable { mutableStateOf(false) }
+        TextButton(onClick = { forgot = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text("Forgot your password?", textAlign = TextAlign.Center)
+        }
+        if (forgot) {
+            AlertDialog(
+                onDismissRequest = { forgot = false },
+                title = { Text("Forgot your password?") },
+                text = {
+                    Text(
+                        "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
+                            "it works once, for 24 hours. If you don't know one, write to support@logosphere.net.",
+                    )
+                },
+                confirmButton = { TextButton(onClick = { forgot = false }) { Text("OK") } },
+            )
+        }
     }
 }
 
@@ -265,8 +284,8 @@ fun RegisterScreen() {
     val error by vm.error.collectAsStateWithLifecycle()
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-    var confirm by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
     var serverText by rememberSaveable { mutableStateOf(if (server == BuildConfig.DEFAULT_SERVER_URL) "" else server) }
     val focus = LocalFocusManager.current
     val submit = {

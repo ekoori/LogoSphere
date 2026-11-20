@@ -1,0 +1,189 @@
+package com.krbavcic.logosphere.ui.me
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.krbavcic.logosphere.AppContainer
+import com.krbavcic.logosphere.ui.LoadViewModel
+import com.krbavcic.logosphere.ui.LocalAppContainer
+import com.krbavcic.logosphere.ui.LocalNavigator
+import com.krbavcic.logosphere.ui.common.BackTopBar
+import com.krbavcic.logosphere.ui.common.BrandCard
+import com.krbavcic.logosphere.ui.common.MetaText
+import com.krbavcic.logosphere.ui.common.ScreenPadding
+import com.krbavcic.logosphere.ui.common.SectionHeading
+import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.common.readable
+import java.time.LocalDate
+
+/** The fewest characters a password may have (the server's rule). */
+private const val MIN_PASSWORD = 8
+
+class AccountViewModel(private val app: AppContainer) : LoadViewModel<Unit>() {
+    init {
+        load()
+    }
+
+    override suspend fun fetch(force: Boolean) = Unit
+
+    fun changePassword(current: String, new: String, onDone: () -> Unit) = act {
+        say(app.api.changePassword(current, new))
+        onDone()
+    }
+
+    fun export(uri: Uri) = act {
+        app.saveText(uri, app.api.exportData())
+        say("Your data was saved.")
+    }
+
+    fun deleteAccount(password: String) = act {
+        app.api.deleteAccount(password)
+        app.session.accountDeleted()
+    }
+}
+
+/** Your password, your data and your account (the web's Settings). */
+@Composable
+fun AccountScreen() {
+    val app = LocalAppContainer.current
+    val vm: AccountViewModel = viewModel { AccountViewModel(app) }
+    val navigator = LocalNavigator.current
+    val busy by vm.busy.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    SnackbarMessages(vm.messages, snackbar)
+
+    // Passwords stay in memory only: never in the saved state Android keeps for a screen.
+    var current by remember { mutableStateOf("") }
+    var new by remember { mutableStateOf("") }
+    var again by remember { mutableStateOf("") }
+    var deletePassword by remember { mutableStateOf("") }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    val saveTo = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let(vm::export)
+    }
+    val mismatch = again.isNotEmpty() && again != new
+    val tooShort = new.isNotEmpty() && new.length < MIN_PASSWORD
+
+    Scaffold(
+        topBar = { BackTopBar("Password, data & account", navigator::back) },
+        snackbarHost = { SnackbarHost(snackbar) },
+    ) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ScreenPadding, vertical = 8.dp)
+                .readable(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            BrandCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeading("Change your password")
+                    PasswordField(current, { current = it }, "Current password")
+                    PasswordField(new, { new = it }, "New password", if (tooShort) "At least $MIN_PASSWORD characters." else null)
+                    PasswordField(again, { again = it }, "New password again", if (mismatch) "The two don't match." else null)
+                    Button(
+                        onClick = { vm.changePassword(current, new) { current = ""; new = ""; again = "" } },
+                        enabled = !busy && current.isNotEmpty() && new.length >= MIN_PASSWORD && new == again,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Change password") }
+                    MetaText("Your other phones and browsers are signed out; this one stays signed in.", maxLines = 2)
+                }
+            }
+            BrandCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeading("Your data")
+                    Text(
+                        "Everything LogoSphere holds about you — profile, value cards, memberships, openings, exchanges, " +
+                            "follows, votes and notifications — in one file you can keep.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    OutlinedButton(
+                        onClick = { saveTo.launch("logosphere-data-${LocalDate.now()}.json") },
+                        enabled = !busy,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Download your data") }
+                }
+            }
+            BrandCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeading("Delete your account")
+                    Text(
+                        "Your profile, value cards, notifications, follows and memberships are removed, and your open " +
+                            "openings are withdrawn. Exchanges you took part in stay as history for the other people in " +
+                            "them. This can't be undone.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    PasswordField(deletePassword, { deletePassword = it }, "Your password, to confirm")
+                    Button(
+                        onClick = { confirmDelete = true },
+                        enabled = !busy && deletePassword.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Delete my account") }
+                }
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text("Delete your account?") },
+            text = { Text("This can't be undone. You'll be signed out on every device.") },
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false; vm.deleteAccount(deletePassword) }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep it") } },
+        )
+    }
+}
+
+@Composable
+private fun PasswordField(value: String, onChange: (String) -> Unit, label: String, error: String? = null) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        singleLine = true,
+        isError = error != null,
+        supportingText = error?.let { { Text(it) } },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}

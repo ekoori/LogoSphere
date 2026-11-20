@@ -107,6 +107,11 @@ class SessionManager(
         }
     }
 
+    /** The account is gone (the server ended its sessions with it): forget it here, with a word why. */
+    fun accountDeleted() {
+        scope.launch { end("Your account was deleted.") }
+    }
+
     /** Called by the HTTP layer, from any thread, when the server rejects the session. */
     fun onUnauthorized() {
         if (state.value !is AuthState.SignedIn) return

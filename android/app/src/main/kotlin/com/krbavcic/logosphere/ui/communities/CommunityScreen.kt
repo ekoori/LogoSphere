@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -56,6 +58,7 @@ import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.EmptyNote
 import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.GroupAvatar
+import com.krbavcic.logosphere.ui.common.LinkText
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningCard
@@ -153,6 +156,16 @@ class CommunityViewModel(
         reload()
     }
 
+    /** Leaves the group, or withdraws a request to join it. */
+    fun leave() = act {
+        val message = app.api.leave(kind, id)
+        app.communities.invalidate(kind)
+        app.openings.invalidate()
+        app.changes.emit(Change.Communities)
+        say(message)
+        reload()
+    }
+
     /** Approves or declines a request, promotes, demotes or removes a member. */
     fun setRole(memberId: String, role: String) = act(onSuccess = {
         app.communities.invalidate(kind)
@@ -209,6 +222,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
     val canSetRoles = Membership.canSetRoles(c, me, isAdmin)
     val members = c.members.filter { it.role != "pending" }
     var tab by rememberSaveable { mutableIntStateOf(TABS.indexOf(initialTab ?: "").coerceAtLeast(0)) }
+    var confirmLeave by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item(key = "banner") {
@@ -274,6 +288,13 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     OutlinedButton(onClick = { navigator.manageCommunity(c.kind, c.id) }, modifier = Modifier.fillMaxWidth()) {
                         Text("⚙ Manage ${c.kind.noun.lowercase()}" + if (isAdmin && !Membership.managesItself(c, me)) " (platform admin)" else "")
                     }
+                }
+                if (Membership.canLeave(c, me)) {
+                    LinkText(
+                        if (role == "pending") "Withdraw my request to join" else "Leave this ${c.kind.noun.lowercase()}",
+                        onClick = { confirmLeave = true },
+                        enabled = !busy,
+                    )
                 }
                 if (canSetRoles && c.pendingMembers.isNotEmpty()) {
                     TextButton(onClick = { tab = TABS.indexOf("people") }, contentPadding = PaddingValues(0.dp)) {
@@ -346,6 +367,27 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                 Charter(data, Modifier.padding(horizontal = ScreenPadding), onEdit = if (canManage) ({ navigator.manageCommunity(c.kind, c.id) }) else null)
             }
         }
+    }
+
+    if (confirmLeave) {
+        val noun = c.kind.noun.lowercase()
+        AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            title = { Text(if (role == "pending") "Withdraw your request?" else "Leave ${c.name}?") },
+            text = {
+                Text(
+                    if (role == "pending") "You can ask to join again later."
+                    else "You'll stop seeing its members-only activity. You can join again later" +
+                        if (c.joinPolicy == "approval") ", with a manager's approval." else ".",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmLeave = false; vm.leave() }) {
+                    Text(if (role == "pending") "Withdraw" else "Leave the $noun")
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Stay") } },
+        )
     }
 }
 

@@ -39,6 +39,17 @@ object Membership {
     fun managesItself(community: Community, userId: String?): Boolean =
         isFounder(community, userId) || role(community, userId) in MANAGE_ROLES.getValue(community.kind)
 
+    /**
+     * May leave (or withdraw a request): a member or requester who isn't the founder — admin1, or
+     * an alliance's Lead or a project's manager. A sphere can have several admins; only admin1 stays.
+     */
+    fun canLeave(community: Community, userId: String?): Boolean {
+        if (userId == null) return false
+        val role = role(community, userId) ?: return false
+        if (community.admin1 == userId) return false
+        return community.kind == CommunityKind.Sphere || role != Roles.founderRole(community.kind)
+    }
+
     /** Only the top role (or a platform admin) may change other members' roles and approve requests. */
     fun canSetRoles(community: Community, userId: String?, isPlatformAdmin: Boolean): Boolean =
         userId != null && (isPlatformAdmin || isFounder(community, userId))

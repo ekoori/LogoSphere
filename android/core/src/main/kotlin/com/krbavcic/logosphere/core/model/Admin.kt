@@ -114,3 +114,11 @@ data class AdminOpening(
 
 @Serializable
 data class AdminOpenings(val items: List<AdminOpening> = emptyList())
+
+/** `POST /api/admin/users/<id>/reset_link`: [path] goes after the site's address. */
+@Serializable
+data class ResetLink(
+    val message: String? = null,
+    val path: String,
+    @SerialName("expires_at") val expiresAt: String? = null,
+)

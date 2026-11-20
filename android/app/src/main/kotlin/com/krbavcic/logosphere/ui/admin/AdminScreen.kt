@@ -1,6 +1,12 @@
 package com.krbavcic.logosphere.ui.admin
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,6 +109,14 @@ class AdminUsersViewModel(private val app: AppContainer) : LoadViewModel<List<Ad
     }
 
     fun delete(u: AdminUser) = run("Deleted ${u.label}'s account.") { app.api.adminDeleteUser(u.id) }
+
+    /** The last reset link made here: whose, and the whole address to pass on. */
+    val resetLink = MutableStateFlow<Pair<AdminUser, String>?>(null)
+
+    fun makeResetLink(u: AdminUser) = act {
+        val link = app.api.adminResetLink(u.id)
+        resetLink.value = u to app.api.webUrl(link.path)
+    }
 }
 
 class AdminGroupsViewModel(private val app: AppContainer, private val kind: CommunityKind) : LoadViewModel<List<AdminGroup>>() {
@@ -312,6 +326,13 @@ private fun UsersTab(snackbar: SnackbarHostState) {
                             busy = busy,
                             menu = buildList {
                                 add("Edit profile" to { editing = u })
+                                add("Password reset link" to {
+                                    ask = Ask(
+                                        "Make a password reset link for ${u.label}?",
+                                        "For when they've forgotten their password. The link works once, for 24 hours, and signs them out everywhere when used. You pass it on to them yourself.",
+                                        "Make link",
+                                    ) { vm.makeResetLink(u) }
+                                })
                                 if (!u.isYou) {
                                     add(
                                         (if (u.isPlatformAdmin) "Revoke admin" else "Make admin") to {
@@ -347,6 +368,8 @@ private fun UsersTab(snackbar: SnackbarHostState) {
         }
     }
     AskDialog(ask) { ask = null }
+    val link by vm.resetLink.collectAsStateWithLifecycle()
+    link?.let { (u, url) -> ResetLinkDialog(u.label, url) { vm.resetLink.value = null } }
     editing?.let { u ->
         var name by remember(u.id) { mutableStateOf(u.name.orEmpty()) }
         var surname by remember(u.id) { mutableStateOf(u.surname.orEmpty()) }
@@ -551,6 +574,37 @@ private fun RowCard(
             }
         }
     }
+}
+
+/** The link, to copy or send on; it isn't shown again once closed. */
+@Composable
+private fun ResetLinkDialog(who: String, url: String, onClose: () -> Unit) {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("Reset link for $who") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Send it to them yourself — it works once, for the next 24 hours.", style = MaterialTheme.typography.bodyMedium)
+                SelectionContainer {
+                    Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url)
+                context.startActivity(Intent.createChooser(send, "Send the reset link"))
+            }) { Text("Share") }
+        },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { clipboard.setText(AnnotatedString(url)) }) { Text("Copy") }
+                TextButton(onClick = onClose) { Text("Close") }
+            }
+        },
+    )
 }
 
 @Composable

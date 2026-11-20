@@ -19,6 +19,15 @@ sealed interface Block {
     /** A value card's fields, as an example. */
     data class ExampleCard(val fields: List<Pair<String, String>>) : Block
     data class Link(val label: String, val url: String? = null, val page: InfoPage? = null) : Block
+
+    /** "Last updated …" under a document's title. */
+    data class Updated(val text: String) : Block
+
+    /** The few points that matter most, in a card at the top. */
+    data class Glance(val items: List<String>, val title: String = "At a glance") : Block
+
+    /** A callout inside a section. */
+    data class Note(val text: String) : Block
 }
 
 /**
@@ -124,8 +133,9 @@ object InfoContent {
         ),
         Block.Heading("Woven into the platform", "05"),
         Block.Para(
-            "None of this is a rewrite. LogoSphere already speaks in profiles, Receipts, acknowledgements, spheres, and a " +
-                "gift-economy openings. A meaning lens simply lets each primitive carry more of the truth it was always reaching for.",
+            "None of this is a rewrite. LogoSphere already speaks in profiles, receipts, acknowledgements, spheres and a " +
+                "gift-economy board of offers and needs. A meaning lens simply lets each of them carry more of the truth it was " +
+                "always reaching for.",
         ),
         Block.Terms(
             listOf(
@@ -134,6 +144,27 @@ object InfoContent {
                 "Acknowledgement → Light signal" to "Public thanks stays lightweight — warmth, not currency. The weight-bearing work belongs to receipts.",
                 "Sphere & Project → Norm bundle + drift clause" to "A community declares its shared values — and a “we’re drifting if…” clause to catch its own slide.",
                 "Openings → Meaning-tagged exchange" to "Offers and needs carry the values they serve; matching favours overlaps that are endorsed and evidenced.",
+            ),
+        ),
+        Block.Heading("What you can do here today", "06"),
+        Block.Para("The ideas above aren’t a roadmap. They’re working parts, on the web and in this app."),
+        Block.Terms(
+            listOf(
+                "◍ Offers & needs" to "Ask for a hand or offer one. Someone accepts, you confirm, and an exchange begins.",
+                "✓ Receipts" to "The person helped says what happened and what it meant — with photos if they like. Both sides can add a note.",
+                "✶ Meaning Graph" to "Value cards: what you care about, why, what it looks like, and what drift looks like. Endorse them, review them.",
+                "✦ Spheres & groups" to "Your group’s own space. Alliances bring groups together; projects gather shared work.",
+                "△ Deciding together" to "Propose a change, vote on it, or lend your vote to someone you trust. Policies that pass apply themselves.",
+                "❍ Demo spheres" to "Practice spaces where AI personas play everyday neighbours — clearly labelled — so you can try everything first.",
+            ),
+        ),
+        Block.Heading("What we won’t do", "07"),
+        Block.Terms(
+            listOf(
+                "No ads, no tracking." to "Nothing here is paid for by watching you, and nothing about you is ever sold.",
+                "No scores." to "No points, ranks or leaderboards: receipts and reasons, not numbers to chase.",
+                "No AI posing as people." to "AI personas live only in the demo spheres, and every one is labelled.",
+                "No lock-in." to "Download everything we hold about you, or delete your account, whenever you like.",
             ),
         ),
         Block.Quote("If meaning becomes a currency, it will be optimised."),
@@ -198,7 +229,7 @@ object InfoContent {
             "That’s it. Two neighbours, one fence, one honest thank-you — and now it’s a permanent part of both of their trails, " +
                 "visible to everyone in Oakview Neighbours.",
         ),
-        Block.Heading("Six words you’ll see in the app"),
+        Block.Heading("The words you’ll see in the app"),
         Block.Terms(
             listOf(
                 "Offers & Needs" to "The board. Say what you can give, or what you’re looking for.",
@@ -207,6 +238,25 @@ object InfoContent {
                 "Receipt" to "A real thank-you with substance — what happened and what it meant. Not a star rating.",
                 "Meaning Trail" to "Your history — everything you’ve given and received, in order, visible to your group.",
                 "Value Card" to "Optional. A short note on what you personally care about, so people find kindred spirits, not just favours.",
+                "Alliance & Project" to "An alliance joins groups inside a sphere; a project gathers people around a piece of shared work.",
+                "Governance" to "How your group decides: anyone can propose a change, everyone can vote — or lend their vote to someone they trust.",
+            ),
+        ),
+        Block.Heading("Working together, deciding together"),
+        Block.Para("Alliances and projects"),
+        Block.Bullets(
+            listOf(
+                "Several groups in a sphere can form an alliance — a tool library run by three congregations, say.",
+                "A project gathers people around one piece of work, with its own offers, needs and trail.",
+                "A group can post an opening as itself, so the help is the group’s, not one person’s.",
+            ),
+        ),
+        Block.Para("Decisions without the politics"),
+        Block.Bullets(
+            listOf(
+                "Anyone can propose a change — who can join, how decisions pass — or put a question to the group.",
+                "Everyone votes, or lends their vote to someone they trust; voting yourself always counts first.",
+                "When a policy proposal passes, LogoSphere applies it. No minutes to chase.",
             ),
         ),
         Block.Heading("What you actually get out of it"),
@@ -245,6 +295,9 @@ object InfoContent {
                 "Do I have to write a receipt every single time?" to "No — but it’s the whole mechanism. It’s how the person who helped actually gets seen, and how your group’s trail grows into something worth looking at.",
                 "Is any of this visible outside our group?" to "Not unless your group chooses it. A Sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet — unless the sphere’s admin explicitly switches on “public activity”, in which case its projects, alliances and openings become viewable by anyone.",
                 "What if I just want to watch for now?" to "That’s completely fine. You can see what’s being offered and needed before you ever post anything yourself.",
+                "What are the demo spheres, and who are the “AI personas”?" to "Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real.",
+                "Is there a phone app?" to "Yes — this Android app does everything the website does. On other phones, the website works in your browser.",
+                "Can I leave a group, or delete my account?" to "Any time. Leave a group from its page; download your data or delete your account on the Me tab, under Password, data & account.",
                 "Isn’t this just one more app to manage?" to "It’s meant to replace the digging-through-the-group-chat step, not add to it — one place where who-needs-what and who’s-already-helping actually lives.",
             ),
         ),
@@ -254,138 +307,252 @@ object InfoContent {
     )
 
     private val contribute = listOf(
-        Block.Title("Contribute to LogoSphere"),
+        Block.Eyebrow("Contribute"),
+        Block.Title("Help build LogoSphere"),
         Block.Lead(
-            "LogoSphere is an open-source project aimed at building a social network and gift economy platform. We welcome " +
-                "contributions from developers, designers, and anyone interested in making a positive impact. Join us in creating " +
-                "a community-driven platform that fosters trust, collaboration, and mutual support.",
+            "LogoSphere is open source, built by volunteers and shaped by the groups that use it. There’s a place for you " +
+                "whether or not you write code.",
         ),
-        Block.Heading("Technologies We Use"),
-        Block.Terms(listOf("Frontend" to "React", "Backend" to "Flask (Python)", "Database" to "Cassandra", "Version Control" to "Git")),
-        Block.Heading("Current Development Phase"),
-        Block.Para(
-            "We are currently in the phase of fine-tuning the mockup and translating it into precise requirements for the " +
-                "frontend, data model, database configuration, and backend functionality. Our goal is to close the development " +
-                "loop one class at a time and define unit tests to ensure the robustness of our platform.",
+        Block.Heading("Ways to help", "01"),
+        Block.Terms(
+            listOf(
+                "◍ Bring your group" to "Use it for real with the people you already help, and tell us what got in the way. That shapes LogoSphere more than anything else.",
+                "✓ Test it" to "Try the website and this app. When something breaks or confuses you, open an issue with what you did and what you saw.",
+                "✎ Words and design" to "Clearer wording, kinder empty states, better pages, more accessible screens — all welcome.",
+                "{ } Code" to "The backend, the website and the Android app all live in one repository, with tests for each.",
+            ),
         ),
-        Block.Heading("Get Involved"),
-        Block.Para(
-            "Our project is hosted on GitHub. You can find the repository, contribute to the code, report issues, and join discussions:",
+        Block.Heading("What it’s built with", "02"),
+        Block.Terms(
+            listOf(
+                "Server" to "Python and Flask, with Cassandra 5 for storage and pictures in object storage.",
+                "Website" to "React, built with Vite; one design system, in light and dark.",
+                "Android app" to "Kotlin and Jetpack Compose, talking to the same API as the website.",
+                "The API" to "Described in LogoSphereAPI.yaml (OpenAPI); a test keeps it in step with the code.",
+                "Demo spheres" to "AI personas written with Anthropic’s Claude, their pictures drawn with an OpenAI image model.",
+            ),
         ),
-        Block.Link("Visit our GitHub Repository", url = "https://github.com/ekoori/LogoSphere"),
-        Block.Heading("Join Our Community"),
-        Block.Para(
-            "Interested in contributing? Join our community of developers and collaborators. Whether you're a seasoned " +
-                "developer or just getting started, your contributions are valuable to us.",
+        Block.Heading("How we work", "03"),
+        Block.Bullets(
+            listOf(
+                "Small, careful changes, each with tests: pytest for the server, Vitest for the website, JUnit for the app.",
+                "Words for people: messages say what happened and what to do next, in plain language.",
+                "Private by default: no tracking, no ads, and only what a feature needs.",
+                "Every screen in both light and dark, at phone width and with a screen reader.",
+            ),
         ),
+        Block.Heading("Get started", "04"),
+        Block.Para("The code is on GitHub. Its README explains how to run everything on your own computer."),
+        Block.Para("Not sure where to begin? Open an issue saying what you’d like to work on, or what you wish LogoSphere did — we’ll help you find a good first step."),
+        Block.Link("Visit the repository", url = "https://github.com/ekoori/LogoSphere"),
     )
 
     private val donate = listOf(
-        Block.Title("Support LogoSphere"),
-        Block.Lead(
-            "LogoSphere relies on the generous support of its members to continue building a community-driven platform. Your " +
-                "donations help us improve the platform, add new features, and maintain our services. Any contribution, big or " +
-                "small, is greatly appreciated.",
+        Block.Eyebrow("Donate"),
+        Block.Title("Keep LogoSphere running"),
+        Block.Lead("It runs on donations and volunteers’ time, so it can stay free, ad-free and on the side of the groups that use it."),
+        Block.Heading("What it costs", "01"),
+        Block.Para("LogoSphere has no ads and sells nothing — your data least of all. What it does cost:"),
+        Block.Bullets(
+            listOf(
+                "A server, and storage for everyone’s pictures.",
+                "The AI services that write the AI personas in the demo spheres, so anyone can try LogoSphere before bringing their group.",
+                "The address, certificates and upkeep that keep it all reachable and safe.",
+            ),
         ),
-        Block.Heading("How to Donate"),
-        Block.Para("You can make a donation using PayPal. The button below opens PayPal in your browser."),
+        Block.Para("Donations pay for these, so more groups can use LogoSphere freely."),
+        Block.Heading("How to give", "02"),
+        Block.Para("Donations go through PayPal: you can pay with a PayPal account or a card. PayPal handles the payment; we receive only what PayPal shares about it."),
         Block.Link(
             "Donate with PayPal",
             url = "https://www.paypal.com/donate?business=donate%40logosphere.net&no_recurring=0&item_name=Support+LogoSphere&currency_code=USD",
         ),
-        Block.Heading("Thank You!"),
-        Block.Para(
-            "We deeply appreciate your support. Your donation helps us continue our mission to foster trust, collaboration, " +
-                "and mutual support within our community.",
+        Block.Heading("Other ways to help", "03"),
+        Block.Bullets(
+            listOf(
+                "Bring your group — LogoSphere is worth the most when it’s used.",
+                "Give your time — testing, writing, design or code (see Contribute).",
+                "Tell someone who runs a group that could use it.",
+            ),
         ),
+        Block.Link("Contribute →", page = InfoPage.Contribute),
+        Block.Heading("Thank you", "04"),
+        Block.Para("Every gift — money, time or a word to a friend — keeps a little more help from getting lost in a chat thread. We’re grateful."),
     )
 
     private val privacy = listOf(
-        Block.Title("Privacy Policy"),
-        Block.Lead(
-            "Your privacy is important to us. This privacy policy explains what personal data LogoSphere collects from you, " +
-                "how we use that data, and your rights regarding your personal information.",
+        Block.Eyebrow("Privacy"),
+        Block.Title("What we keep, and why"),
+        Block.Lead("LogoSphere keeps what it needs to remember the help your group gives and receives — and nothing to sell, track or advertise with."),
+        Block.Updated("Last updated 21 November 2026"),
+        Block.Glance(
+            listOf(
+                "No ads, no analytics, no tracking — and we never sell your data.",
+                "Your group sees what happens in your group; your email stays private.",
+                "AI personas live only in the labelled demo spheres.",
+                "Download everything we hold about you, or delete your account, yourself.",
+            ),
         ),
-        Block.Heading("Data Collection"),
-        Block.Para("We collect the following types of data:"),
+        Block.Heading("What we keep", "01"),
         Block.Terms(
             listOf(
-                "Personal Information" to "Name, email address, and other contact details provided during registration.",
-                "Usage Data" to "Information about how you use our platform, including the pages you visit, the features you use, and the actions you take.",
-                "Device Data" to "Information about the device you use to access our platform, including your IP address, browser type, and operating system.",
+                "Your account" to "Your name and email address, and your password — stored only as a one-way hash, so nobody (us included) can read it.",
+                "Your profile" to "Whatever you add: a surname, where you are, a photo, and the value cards on your Meaning Graph.",
+                "What you do here" to "The openings you post and accept; the exchanges you take part in, with their receipts, photos, notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and governance proposals, votes and the members you lend your vote to.",
+                "Notifications" to "The messages LogoSphere writes for you when something happens that concerns you.",
+                "Keeping you signed in" to "A random session identifier — in a cookie on the web, on your phone in the app — that lasts up to 30 days or until you sign out. If you allow notifications on Android, the app also registers your phone’s push address for as long as you’re signed in on it.",
+                "Server records" to "Like any website, the server notes requests (including your IP address) to keep it secure and fix problems. These records are kept for a short time.",
             ),
         ),
-        Block.Heading("Data Usage"),
-        Block.Para("We use your data for the following purposes:"),
+        Block.Para("We don’t use analytics, advertising or tracking of any kind, and we never sell or rent anything about you."),
+        Block.Heading("Who sees what", "02"),
         Block.Bullets(
             listOf(
-                "To provide and maintain our services",
-                "To improve and personalize your experience",
-                "To communicate with you, including sending updates and notifications",
-                "To analyze usage patterns and improve our platform",
-                "To comply with legal obligations",
+                "Members see your name, photo, location and value cards.",
+                "Your groups see what happens in them: a sphere’s openings, exchanges, receipts and people are for its members — unless its managers switch on public activity, which lets anyone, even visitors without an account, see its projects, alliances and openings.",
+                "Your email address is never shown to other members.",
+                "Platform administrators — the few people who run LogoSphere — can see everything, including email addresses, so they can keep the platform working and safe. They use that access only for that.",
             ),
         ),
-        Block.Heading("Data Sharing"),
-        Block.Para("We do not sell or rent your personal information to third parties. We may share your data with:"),
+        Block.Para("Exchanges belong to both people in them, so an exchange stays in the other person’s trail as well as yours."),
+        Block.Heading("Demo spheres and AI personas", "03"),
+        Block.Para(
+            "The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters with famous " +
+                "names, playing everyday neighbours, whose posts and replies are written by AI models — text by Anthropic’s Claude, " +
+                "pictures by OpenAI. They are not the real people, and every one of them is labelled.",
+        ),
+        Block.Note(
+            "To write the personas’ replies, what happens in the demo spheres — including what you post there — is sent to " +
+                "Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real spheres is sent to " +
+                "write them. If you’d rather not, simply don’t join the demo spheres.",
+        ),
+        Block.Heading("Who helps us run it", "04"),
+        Block.Para("A few services do part of the work. Each gets only what its job needs:"),
+        Block.Terms(
+            listOf(
+                "Linode (Akamai Cloud)" to "Runs the server and stores pictures, in a private storage bucket in London.",
+                "Google Fonts" to "Serves the website’s two typefaces, so your browser contacts Google to load them. (This app carries its fonts inside.)",
+                "Anthropic and OpenAI" to "Write the AI personas in the demo spheres (see above).",
+                "Google Firebase" to "Delivers push notifications to Android phones, once they’re switched on, with only a notification’s text and link.",
+                "PayPal" to "Handles donations, if you make one. We get only what PayPal shares about a payment.",
+            ),
+        ),
+        Block.Heading("How long we keep it", "05"),
+        Block.Para(
+            "For as long as you have an account. When you delete it, we remove your profile, credentials, sessions, value cards, " +
+                "notifications, follows and memberships, and withdraw your open openings. Exchanges you took part in stay, under " +
+                "your name, because they’re part of the other person’s record too.",
+        ),
+        Block.Para("Backup copies of the database may hold your data for a while longer before they’re replaced."),
+        Block.Heading("Your choices", "06"),
         Block.Bullets(
             listOf(
-                "Service providers who assist us in operating our platform",
-                "Legal authorities if required by law or to protect our rights",
+                "Change your name, place and photo any time, on the Me tab (or in Settings on the website).",
+                "Take a copy of everything we hold about you: Me → Password, data & account.",
+                "Leave any group from its page.",
+                "Delete your account yourself, in the same place.",
+                "Ask us anything, or for anything those don’t cover, at privacy@logosphere.net.",
             ),
         ),
-        Block.Heading("Your Rights"),
-        Block.Para("You have the following rights regarding your personal data:"),
-        Block.Bullets(
-            listOf(
-                "The right to access and update your information",
-                "The right to request the deletion of your data",
-                "The right to object to or restrict the processing of your data",
-                "The right to data portability",
-                "The right to withdraw consent at any time",
-            ),
+        Block.Para("LogoSphere is meant for adults and for families who use it together; it isn’t designed for children on their own."),
+        Block.Heading("Changes to this policy", "07"),
+        Block.Para(
+            "When how we handle data changes, we’ll update this page and its date. If a change matters to you — something new " +
+                "we’d keep, or someone new who’d see it — we’ll say so in LogoSphere before it happens.",
         ),
-        Block.Para("If you have any questions or concerns about your privacy, please contact us at privacy@logosphere.net."),
+        Block.Link("Read the terms →", page = InfoPage.Terms),
     )
 
     private val terms = listOf(
-        Block.Title("Terms of Service"),
-        Block.Lead(
-            "Welcome to LogoSphere. By using our platform, you agree to comply with and be bound by the following terms and " +
-                "conditions of service. Please review the following terms carefully.",
+        Block.Eyebrow("Terms of service"),
+        Block.Title("The terms, in plain words"),
+        Block.Lead("What you can expect from LogoSphere, and what LogoSphere and its members expect of you."),
+        Block.Updated("Last updated 21 November 2026"),
+        Block.Glance(
+            listOf(
+                "Help here is a gift: nothing is bought or sold.",
+                "What you post stays yours; your group gets to see it.",
+                "Be honest, be kind, respect privacy, be yourself.",
+                "Demo spheres are practice: their AI personas are labelled, and not the real people.",
+            ),
         ),
-        Block.Heading("Acceptance of Terms"),
+        Block.Heading("What LogoSphere is", "01"),
         Block.Para(
-            "By accessing and using LogoSphere, you accept and agree to be bound by the terms and provision of this agreement. " +
-                "In addition, when using LogoSphere's services, you shall be subject to any posted guidelines or rules applicable " +
-                "to such services. Any participation in this service will constitute acceptance of this agreement. If you do not " +
-                "agree to abide by the above, please do not use this service.",
+            "LogoSphere is a place for groups — neighbourhoods, clubs, congregations, teams — to ask for help, offer it, keep an " +
+                "honest record of what happened, and decide things together. It’s a gift economy: no money changes hands " +
+                "through LogoSphere, and nothing here is for sale.",
         ),
-        Block.Heading("Changes to Terms"),
+        Block.Para("By creating an account or using LogoSphere, you agree to these terms. If you don’t, please don’t use it."),
+        Block.Heading("Your account", "02"),
+        Block.Bullets(
+            listOf(
+                "Use your own name and a real email address; one person per account.",
+                "Keep your password to yourself. You’re responsible for what’s done with your account.",
+                "If you think someone else has used it, change your password (Me → Password, data & account) — that signs out every other device — and tell us at support@logosphere.net.",
+            ),
+        ),
+        Block.Heading("What you post", "03"),
         Block.Para(
-            "LogoSphere reserves the right to update or modify these terms at any time without prior notice. Your continued use " +
-                "of the service following any such change constitutes your agreement to follow and be bound by the terms as " +
-                "changed. For this reason, we encourage you to review these terms whenever you use the service.",
+            "What you write and the photos you add stay yours. By posting them you let LogoSphere store them and show them to the " +
+                "people who can see that place — your group’s members, or everyone if its managers have made its activity public " +
+                "— and keep exchanges as shared history for both people in them.",
         ),
-        Block.Heading("User Responsibilities"),
+        Block.Para("Only post what’s yours to share: no one else’s photos, words or private details without their agreement."),
+        Block.Heading("How we treat each other", "04"),
+        Block.Terms(
+            listOf(
+                "Be honest." to "Offer what you can really give; ask for what you really need; write receipts that say what happened.",
+                "Keep it a gift." to "No selling, bartering for money, advertising or fundraising through openings.",
+                "Be kind." to "No harassment, threats, hate or discrimination — in posts, receipts, acknowledgements or anywhere else.",
+                "Respect privacy." to "Don’t share someone’s personal details, or what they told you in confidence.",
+                "Be yourself." to "Don’t pretend to be someone else — another member, a famous person, or an AI persona.",
+                "Keep it legal and safe." to "Nothing illegal, dangerous or exploitative.",
+            ),
+        ),
+        Block.Note(
+            "LogoSphere doesn’t check members or guarantee that help will happen. When you meet people or go to their homes, use " +
+                "the same care you would anywhere: meet somewhere you’re comfortable, and trust your instincts.",
+        ),
+        Block.Heading("Groups and the people who run them", "05"),
         Block.Para(
-            "As a user of LogoSphere, you agree to use the platform responsibly and ethically. You are responsible for " +
-                "maintaining the confidentiality of your account information and for all activities that occur under your account. " +
-                "You agree to notify LogoSphere immediately of any unauthorized use of your account or any other breach of security.",
+            "Spheres, alliances and projects set their own rules — who may join, how decisions pass — and members can change them " +
+                "by proposal and vote. A group’s managers can approve and remove members and edit the group.",
         ),
-        Block.Heading("Content Ownership"),
         Block.Para(
-            "All content provided on LogoSphere is the intellectual property of LogoSphere or the content creators. You may not " +
-                "modify, publish, transmit, participate in the transfer or sale of, reproduce, create derivative works from, " +
-                "distribute, perform, display, or in any way exploit any of the content in whole or in part.",
+            "Platform administrators may remove content or close accounts that break these terms or put people at risk, and can " +
+                "see everything on the platform so they can keep it running. They act for the good of the community, not to take " +
+                "sides in a group’s own decisions.",
         ),
-        Block.Heading("Limitation of Liability"),
+        Block.Heading("Demo spheres and AI personas", "06"),
         Block.Para(
-            "LogoSphere is not liable for any direct, indirect, incidental, consequential, or punitive damages arising out of or " +
-                "related to your use of the service. This includes, but is not limited to, damages for errors, omissions, " +
-                "interruptions, defects, delays in operation or transmission, computer virus, or loss of data.",
+            "The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters with famous " +
+                "names, playing everyday neighbours, written by AI. They are not the real people, nothing they say is an " +
+                "endorsement, and nothing in a demo sphere is real — no help is actually promised there.",
         ),
-        Block.Heading("Contact Information"),
-        Block.Para("If you have any questions about these Terms of Service, please contact us at support@logosphere.net."),
+        Block.Para("What you post in a demo sphere is processed by AI services to write the personas’ replies — see the privacy policy."),
+        Block.Heading("Leaving", "07"),
+        Block.Para(
+            "You can leave any group from its page, and delete your account yourself, any time. We may close an account that " +
+                "seriously or repeatedly breaks these terms; where we can, we’ll tell you why first.",
+        ),
+        Block.Heading("What we can and can’t promise", "08"),
+        Block.Para(
+            "LogoSphere is run by a small, volunteer-built project. We work to keep it running and your data safe, but we provide " +
+                "it as it is, without guarantees that it will always be available, free of mistakes, or suitable for any " +
+                "particular purpose.",
+        ),
+        Block.Para(
+            "As far as the law allows, we aren’t responsible for indirect losses, or for what members do or agree between " +
+                "themselves, on LogoSphere or off it. Nothing in these terms takes away rights that the law where you live gives " +
+                "you and that can’t be signed away.",
+        ),
+        Block.Heading("Changes to these terms", "09"),
+        Block.Para(
+            "If we change these terms, we’ll update this page and its date, and for changes that matter we’ll tell members in " +
+                "LogoSphere before they take effect. Using LogoSphere after that means you accept the new terms.",
+        ),
+        Block.Heading("Questions", "10"),
+        Block.Para("Write to support@logosphere.net."),
+        Block.Link("Read the privacy policy →", page = InfoPage.Privacy),
     )
 }

@@ -67,6 +67,7 @@ import com.krbavcic.logosphere.ui.communities.NewCommunityScreen
 import com.krbavcic.logosphere.ui.exchange.ExchangeScreen
 import com.krbavcic.logosphere.ui.inbox.InboxScreen
 import com.krbavcic.logosphere.ui.info.InfoScreen
+import com.krbavcic.logosphere.ui.me.AccountScreen
 import com.krbavcic.logosphere.ui.me.EditProfileScreen
 import com.krbavcic.logosphere.ui.me.MeScreen
 import com.krbavcic.logosphere.ui.values.ValueCardEditorScreen
@@ -243,6 +244,7 @@ fun LogoSphereRoot() {
                     composable<PersonRoute> { PersonScreen(it.toRoute<PersonRoute>().id) }
                     composable<SearchRoute> { SearchScreen() }
                     composable<EditProfileRoute> { EditProfileScreen() }
+                    composable<AccountRoute> { AccountScreen() }
                     composable<ValueCardEditorRoute> {
                         val route = it.toRoute<ValueCardEditorRoute>()
                         ValueCardEditorScreen(route.groupKind?.let(CommunityKind::valueOf), route.groupId, route.cardId)
