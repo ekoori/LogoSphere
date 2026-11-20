@@ -208,7 +208,7 @@
     text-transform: none;
 }
 .xc-section-receipt > span:first-child { color: var(--leaf); }
-.xc-section-acknowledgement  > span:first-child  { color: var(--honey-deep); }
+.xc-section-acknowledgement  > span:first-child  { color: var(--honey-ink); }
 
 .xc-empty-section {
     font-size: 0.83rem;
@@ -265,7 +265,7 @@
 .xc-add-acknowledgement {
     background: rgba(217, 162, 63, 0.1);
     border-color: var(--honey);
-    color: var(--honey-deep);
+    color: var(--honey-ink);
 }
 .xc-add-acknowledgement:hover { background: var(--honey); color: var(--on-honey); }
 

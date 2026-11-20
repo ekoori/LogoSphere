@@ -53,7 +53,7 @@
 .adm-table tr.is-closed td { color: var(--ink-faint); }
 .adm-table a { color: var(--ink); font-weight: 600; text-decoration: none; }
 .adm-table a:hover { color: var(--moss-deep); text-decoration: underline; }
-.adm-you { margin-left: 0.4rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--honey-deep); }
+.adm-you { margin-left: 0.4rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--honey-ink); }
 .adm-badge { display: inline-block; margin-left: 0.4rem; font-size: 0.7rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); }
 .adm-badge--admin { background: rgba(111, 138, 79, 0.18); color: var(--moss-deep); margin-left: 0; font-weight: 700; }
 

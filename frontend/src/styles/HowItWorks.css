@@ -277,7 +277,7 @@
 }
 .hiw-mock-pill--need { background: rgba(194, 100, 60, 0.14); color: var(--terracotta-deep); }
 .hiw-mock-pill--accept { background: rgba(111, 138, 79, 0.16); color: var(--moss-deep); }
-.hiw-mock-pill--receipt { background: rgba(217, 162, 63, 0.2); color: var(--honey-deep); }
+.hiw-mock-pill--receipt { background: rgba(217, 162, 63, 0.2); color: var(--honey-ink); }
 .hiw-mock-title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; color: var(--moss-deep); }
 .hiw-mock-body { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--ink-soft); }
 .hiw-mock-quote { font-style: italic; color: var(--ink); }

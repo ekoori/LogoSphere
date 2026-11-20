@@ -24,6 +24,7 @@
     --terracotta-deep:   #a64f2c;
     --honey:             #d9a23f;  /* secondary accent — sun              */
     --honey-deep:        #c2882a;
+    --honey-ink:         #7f5810;  /* honey for text: readable on paper and on honey tints */
 
     --border:       #ddd2b4;   /* hairline borders                        */
     --border-soft:  #e7ddc6;
@@ -107,6 +108,7 @@
     --terracotta-deep:   #f2b190;
     --honey:             #e9be6a;
     --honey-deep:        #f2d08f;
+    --honey-ink:         #f2d08f;
 
     --border:       #3d4636;
     --border-soft:  #313a2b;
@@ -151,6 +153,7 @@
         --terracotta-deep:   #f2b190;
         --honey:             #e9be6a;
         --honey-deep:        #f2d08f;
+        --honey-ink:         #f2d08f;
 
         --border:       #3d4636;
         --border-soft:  #313a2b;
@@ -380,7 +383,7 @@ input[type="file"]::file-selector-button:hover { border-color: var(--sage); }
 }
 .pill-leaf  { background: rgba(111, 138, 79, 0.16); color: var(--moss-deep); border-color: rgba(111, 138, 79, 0.34); }
 .pill-clay  { background: rgba(194, 100, 60, 0.14); color: var(--terracotta-deep); border-color: rgba(194, 100, 60, 0.30); }
-.pill-honey { background: rgba(217, 162, 63, 0.18); color: var(--honey-deep); border-color: rgba(217, 162, 63, 0.40); }
+.pill-honey { background: rgba(217, 162, 63, 0.18); color: var(--honey-ink); border-color: rgba(217, 162, 63, 0.40); }
 
 /* ---- Custom scrollbar ----------------------------------------------------- */
 * { scrollbar-width: thin; scrollbar-color: var(--sage) transparent; }

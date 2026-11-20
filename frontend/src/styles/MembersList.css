@@ -33,7 +33,7 @@
     color: var(--ink-faint);
 }
 .member-role.role--admin, .member-role.role--manager { color: var(--terracotta-deep); }
-.member-role.role--steward { color: var(--honey-deep); }
+.member-role.role--steward { color: var(--honey-ink); }
 
 .member-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; min-width: 0; flex-shrink: 1; }
 .member-role-btn {

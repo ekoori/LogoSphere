@@ -89,7 +89,7 @@
 .entity-card-values > span {
     display: inline-block;
     background: rgba(217, 162, 63, 0.16);
-    color: var(--honey-deep);
+    color: var(--honey-ink);
     border: 1px solid rgba(217, 162, 63, 0.36);
     padding: 0.28em 0.7em;
     border-radius: var(--r-pill);

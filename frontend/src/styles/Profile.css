@@ -532,6 +532,6 @@
     background: var(--surface);
     border: 1px solid var(--border-soft);
 }
-.pf-legend--creative     { border-color: rgba(217, 162, 63, 0.4); color: var(--honey-deep); }
+.pf-legend--creative     { border-color: rgba(217, 162, 63, 0.4); color: var(--honey-ink); }
 .pf-legend--experiential { border-color: rgba(111, 138, 79, 0.4); color: var(--leaf); }
 .pf-legend--attitudinal  { border-color: rgba(194, 100, 60, 0.4); color: var(--terracotta-deep); }

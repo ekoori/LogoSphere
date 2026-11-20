@@ -28,7 +28,7 @@
 .detail-values { display: flex; flex-wrap: wrap; gap: 0.45em; margin: 1.2em 0 0; }
 .detail-values span {
     background: rgba(217, 162, 63, 0.16);
-    color: var(--honey-deep);
+    color: var(--honey-ink);
     border: 1px solid rgba(217, 162, 63, 0.36);
     padding: 0.28em 0.7em; border-radius: var(--r-pill);
     font-size: 0.8rem; font-weight: 600;
@@ -187,12 +187,12 @@ nav ul {
     font-size: 0.85rem;
     padding: 0.5em 0.95em;
     border-radius: var(--r-pill);
-    color: var(--honey-deep);
+    color: var(--honey-ink);
     background: rgba(217, 162, 63, 0.16);
     border: 1px solid rgba(217, 162, 63, 0.45);
     transition: background-color 0.2s var(--ease), transform 0.2s var(--ease);
 }
-.donate-link:hover { background: rgba(217, 162, 63, 0.28); color: var(--honey-deep); transform: translateY(-1px); }
+.donate-link:hover { background: rgba(217, 162, 63, 0.28); color: var(--honey-ink); transform: translateY(-1px); }
 
 /* Notification bell */
 .theme-toggle {

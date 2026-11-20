@@ -74,7 +74,7 @@
 .search-kind { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-faint); }
 .search-kind--sphere { color: var(--moss-deep); background: rgba(111, 138, 79, 0.16); }
 .search-kind--alliance { color: var(--terracotta-deep); background: rgba(194, 100, 60, 0.14); }
-.search-kind--project { color: var(--honey-deep); background: rgba(217, 162, 63, 0.18); }
+.search-kind--project { color: var(--honey-ink); background: rgba(217, 162, 63, 0.18); }
 .search-kind--opening { color: var(--moss-deep); background: rgba(111, 138, 79, 0.12); }
 .search-result-summary { margin: 0.3rem 0 0; color: var(--ink-soft); font-size: 0.92rem; }
 .search-result-meta { margin: 0.25rem 0 0; color: var(--ink-faint); font-size: 0.82rem; }
@@ -84,7 +84,7 @@
 .search-cards { margin: 0.45rem 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 .search-cards-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-right: 0.2rem; }
 .search-chip { font-size: 0.8rem; padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid transparent; }
-.search-chip--honey { background: rgba(217, 162, 63, 0.18); color: var(--honey-deep); border-color: rgba(217, 162, 63, 0.40); }
+.search-chip--honey { background: rgba(217, 162, 63, 0.18); color: var(--honey-ink); border-color: rgba(217, 162, 63, 0.40); }
 .search-chip--leaf { background: rgba(111, 138, 79, 0.16); color: var(--moss-deep); border-color: rgba(111, 138, 79, 0.34); }
 .search-chip--terracotta { background: rgba(194, 100, 60, 0.14); color: var(--terracotta-deep); border-color: rgba(194, 100, 60, 0.30); }
 .search-chip--sage { background: rgba(140, 160, 130, 0.2); color: var(--moss-deep); border-color: rgba(140, 160, 130, 0.4); }
