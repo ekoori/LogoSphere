@@ -407,6 +407,135 @@ paths:
 
   # ─────────────────────────── Meaning Trail ───────────────────────────
 
+  /api/account/password:
+    post:
+      summary: Change your password
+      description: >-
+        Needs the current password. Every other session of yours ends; this one
+        stays signed in.
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Changed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  signed_out: { type: integer, description: How many other sessions ended }
+        '400':
+          description: The new password is too short, or the same as the old one.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: The current password is wrong.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [User Management]
+
+  /api/account/export:
+    get:
+      summary: Download everything LogoSphere holds about you
+      description: >-
+        A JSON file (Content-Disposition attachment): profile, value cards,
+        memberships, openings, exchanges, follows, governance votes and
+        proposals, notifications. Never the password hash or session tokens;
+        pictures are flagged, not embedded.
+      operationId: exportAccount
+      responses:
+        '200':
+          description: The file.
+          content:
+            application/json:
+              schema: { type: object }
+        '401':
+          description: No session, or it expired.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [User Management]
+
+  /api/account/delete:
+    post:
+      summary: Delete your account
+      description: >-
+        Needs your password. Removes your profile, credentials, sessions, value
+        cards, notifications, follows and memberships and withdraws your
+        openings; exchanges stay as history under your name. The last platform
+        administrator can't delete their account.
+      operationId: deleteAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        '200':
+          description: Deleted; the session cookie is cleared.
+          content:
+            application/json:
+              schema: { type: object, properties: { message: { type: string } } }
+        '400':
+          description: The only platform administrator.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: Wrong password.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [User Management]
+
+  /api/password/reset:
+    post:
+      summary: Set a new password with a reset link
+      description: >-
+        Redeems a one-time token from a reset link a platform administrator
+        issued (POST /api/admin/users/{target_id}/reset_link). Works once,
+        within 24 hours; every session of the member ends. No sign-in needed.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Changed.
+          content:
+            application/json:
+              schema: { type: object, properties: { message: { type: string } } }
+        '400':
+          description: The link expired or was used, or the password is too short.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Authentication]
+
   /api/meaning_trail:
     get:
       summary: Get a user's meaning trail (exchange history)
@@ -851,6 +980,35 @@ paths:
           $ref: '#/components/responses/InternalError'
       tags: [Spheres]
 
+  /api/spheres/{sphere_id}/leave:
+    post:
+      summary: Leave a sphere, or withdraw a request to join it
+      description: The founder can't leave (there is no handover yet).
+      operationId: leaveSphere
+      parameters:
+        - $ref: '#/components/parameters/SphereId'
+      responses:
+        '200':
+          description: Left (or the request was withdrawn).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  left: { type: boolean, example: true }
+        '400':
+          description: The founder can't leave.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Not a member (or no such sphere).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Spheres]
+
   /api/spheres/{sphere_id}/image:
     get:
       summary: "The sphere's banner image (public, cacheable)"
@@ -1004,6 +1162,35 @@ paths:
           $ref: '#/components/responses/InternalError'
       tags: [Alliances]
 
+  /api/alliances/{alliance_id}/leave:
+    post:
+      summary: Leave a alliance, or withdraw a request to join it
+      description: The founder can't leave (there is no handover yet).
+      operationId: leaveAlliance
+      parameters:
+        - $ref: '#/components/parameters/AllianceId'
+      responses:
+        '200':
+          description: Left (or the request was withdrawn).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  left: { type: boolean, example: true }
+        '400':
+          description: The founder can't leave.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Not a member (or no such alliance).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [Alliances]
+
   /api/alliances/{alliance_id}/image:
     get:
       summary: "The alliance's banner image (public, cacheable)"
@@ -1155,6 +1342,35 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
         '500':
           $ref: '#/components/responses/InternalError'
+      tags: [Projects]
+
+  /api/projects/{project_id}/leave:
+    post:
+      summary: Leave a project, or withdraw a request to join it
+      description: The founder can't leave (there is no handover yet).
+      operationId: leaveProject
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Left (or the request was withdrawn).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  left: { type: boolean, example: true }
+        '400':
+          description: The founder can't leave.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: Not a member (or no such project).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
       tags: [Projects]
 
   /api/projects/{project_id}/image:
@@ -2084,6 +2300,31 @@ paths:
         '200': { description: OK }
         '401': { description: 'No session, or it expired.' }
         '500': { $ref: '#/components/responses/InternalError' }
+
+  /api/admin/users/{target_id}/reset_link:
+    post:
+      summary: Make a one-time password reset link for a member
+      description: >-
+        For a member who forgot their password (there is no email yet: the
+        admin passes the link on). Valid for 24 hours and once. The token is in
+        the URL fragment, so it never reaches server logs.
+      operationId: createResetLink
+      tags: [Administration]
+      parameters:
+        - { name: target_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: The link's path, to put after the site's address.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  path: { type: string, example: '/reset-password#token=…' }
+                  expires_at: { type: string, format: date-time }
+        '403': { description: Platform administrators only. }
+        '404': { description: No such member. }
 
   /api/admin/users:
     get:

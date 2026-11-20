@@ -8,6 +8,7 @@
 #   GET    /api/<kind>s/<id>                       detail (+members, value cards)
 #   PATCH  /api/<kind>s/<id>                       name / description / join_policy
 #   POST   /api/<kind>s/<id>/join                  join (or request to join)
+#   POST   /api/<kind>s/<id>/leave                 leave (or withdraw a request)
 #   POST   /api/<kind>s/<id>/members/<uid>/role    set role / approve / remove
 #   GET    /api/<kind>s/<id>/image                 banner (public, cacheable)
 #   POST   /api/<kind>s/<id>/image                 upload banner
@@ -238,6 +239,39 @@ def join_entity(kind, entity_id, user_id=None):
 
 
 @validate_session
+def leave_entity(kind, entity_id, user_id=None):
+    """Leave a group, or withdraw a request to join it. The founder stays:
+    they're the one person the group can't lose (no handover exists yet)."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    try:
+        k = _kind(kind)
+        eid = uuid.UUID(str(entity_id))
+        uid = uuid.UUID(str(user_id))
+        entity = k['model'].get_by_id(eid)
+        if not entity:
+            return jsonify({'message': f'{k["noun"].capitalize()} not found'}), 404
+        roles = _roles(entity, k)
+        member = uid in _members(entity, k)
+        if not member and uid not in roles:
+            return jsonify({'message': f"You're not a member of this {k['noun']}"}), 404
+        # The founder: admin1, or the top role where that role isn't assignable (an
+        # alliance's Lead, a project's manager). A sphere may have several admins.
+        founder_role = {'alliance': 'admin', 'project': 'manager'}.get(k['noun'])
+        if uid == getattr(entity, 'admin1', None) or (founder_role and roles.get(uid) == founder_role):
+            return jsonify({'message': f"The founder can't leave the {k['noun']}."}), 400
+        _remove_member(entity, k, uid)
+        if member:
+            return jsonify({'message': f"You've left the {k['noun']}.", 'left': True}), 200
+        return jsonify({'message': 'Your request to join was withdrawn.', 'left': True}), 200
+    except (KeyError, ValueError):
+        return jsonify({'message': 'Not found'}), 404
+    except Exception as e:
+        logger.error(f'Error in leave_entity: {e}')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
 def set_entity_role(kind, entity_id, target_id, user_id=None):
     """Set a member's role. Also approves a pending join request (any
     assignable role) or, with role='remove', declines it / removes a member."""
@@ -330,6 +364,7 @@ def register(app_):
         app_.add_url_rule(f'{p}/<entity_id>', endpoint=f'get_{kind}', view_func=get_entity, defaults=d, methods=['GET', 'OPTIONS'])
         app_.add_url_rule(f'{p}/<entity_id>', endpoint=f'patch_{kind}', view_func=patch_entity, defaults=d, methods=['PATCH'])
         app_.add_url_rule(f'{p}/<entity_id>/join', endpoint=f'join_{kind}', view_func=join_entity, defaults=d, methods=['POST', 'OPTIONS'])
+        app_.add_url_rule(f'{p}/<entity_id>/leave', endpoint=f'leave_{kind}', view_func=leave_entity, defaults=d, methods=['POST', 'OPTIONS'])
         app_.add_url_rule(f'{p}/<entity_id>/members/<target_id>/role', endpoint=f'role_{kind}', view_func=set_entity_role, defaults=d, methods=['POST', 'OPTIONS'])
         app_.add_url_rule(f'{p}/<entity_id>/image', endpoint=f'image_get_{kind}', view_func=get_entity_image, defaults=d, methods=['GET'])
         app_.add_url_rule(f'{p}/<entity_id>/image', endpoint=f'image_put_{kind}', view_func=update_entity_image, defaults=d, methods=['POST', 'OPTIONS'])

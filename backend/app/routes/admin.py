@@ -27,8 +27,10 @@ from app.models.openings import Service
 from app.models.project import Project
 from app.models.spheres import Sphere
 from app.models.value_card import ValueCard
-from app.routes.entities import KINDS, _members, _roles, _remove_member
+from app.routes.entities import KINDS, _members, _roles
+from app.utils.accounts import remove_account
 from app.utils.permissions import is_platform_admin, forget_admin_flag
+from app.utils.password_reset import issue_reset_token
 from app.utils.search_vectors import invalidate_index
 
 logger = logging.getLogger(__name__)
@@ -176,33 +178,29 @@ def delete_user(target_id, user_id=None):
         return jsonify({'message': 'User not found'}), 404
     if getattr(row, 'is_platform_admin', False):
         return jsonify({'message': 'Revoke their administrator flag first'}), 400
-
-    # Memberships (participants / members lists + role maps) in every entity.
-    for kind, k in KINDS.items():
-        for entity in k['model'].get_all():
-            if tid in _members(entity, k) or tid in _roles(entity, k):
-                _remove_member(entity, k, tid)
-    # Their current openings are withdrawn (acceptances cleared with them).
-    for s in Service.get_all():
-        if s.is_current and s.provider_id == tid and s.status not in ('Cancelled', 'Completed'):
-            Service.cancel(s.service_id)
-            for a in Service.acceptances(s.service_id, status='pending'):
-                Service.remove_acceptance(s.service_id, uuid.UUID(a['accepter_id']))
-    # Follows in both directions (followee side needs a scan - the table is small).
-    session.execute("DELETE FROM follows WHERE follower_id = %s", [tid])
-    for r in session.execute("SELECT follower_id, followee_id FROM follows"):
-        if r.followee_id == tid:
-            session.execute("DELETE FROM follows WHERE follower_id = %s AND followee_id = %s", [r.follower_id, tid])
-    for r in session.execute("SELECT session_id FROM sessions WHERE user_id = %s", [tid]):
-        session.execute("DELETE FROM sessions WHERE session_id = %s", [r.session_id])
-    session.execute("DELETE FROM value_cards WHERE user_id = %s", [tid])
-    session.execute("DELETE FROM notifications WHERE user_id = %s", [tid])
-    session.execute("DELETE FROM user_credentials WHERE user_id = %s", [tid])
-    session.execute("DELETE FROM users WHERE user_id = %s", [tid])
-    forget_admin_flag(tid)
-    invalidate_index()
+    remove_account(tid)
     logger.info(f"Admin {user_id} deleted user {tid}")
     return jsonify({'message': 'User deleted'}), 200
+
+
+@admin_only
+def create_reset_link(target_id, user_id=None):
+    """A one-time password reset link for a member who forgot theirs. There's
+    no email yet, so the admin passes it on however they talk; it works once,
+    for 24 hours, and signs the member out everywhere when used. The token
+    rides in the URL fragment, which browsers never send to the server, so it
+    stays out of access logs."""
+    tid = uuid.UUID(str(target_id))
+    row = session.execute("SELECT user_id, name, surname FROM users WHERE user_id = %s", [tid]).one()
+    if not row:
+        return jsonify({'message': 'User not found'}), 404
+    token, expires_at = issue_reset_token(tid, created_by=uuid.UUID(str(user_id)))
+    logger.info(f"Admin {user_id} issued a password reset link for {tid}")
+    return jsonify({
+        'message': f'A reset link for {_full_name(row)}, valid for 24 hours and once.',
+        'path': f'/reset-password#token={token}',
+        'expires_at': expires_at.isoformat(),
+    }), 200
 
 
 # ── Spheres / alliances / projects ───────────────────────────────────────────
@@ -338,6 +336,7 @@ def register(app_):
     app_.add_url_rule('/api/admin/users', view_func=list_users, methods=['GET', 'OPTIONS'])
     app_.add_url_rule('/api/admin/users/<target_id>', view_func=patch_user, methods=['PATCH', 'OPTIONS'])
     app_.add_url_rule('/api/admin/users/<target_id>', endpoint='admin_delete_user', view_func=delete_user, methods=['DELETE'])
+    app_.add_url_rule('/api/admin/users/<target_id>/reset_link', view_func=create_reset_link, methods=['POST', 'OPTIONS'])
     for kind, k in KINDS.items():
         app_.add_url_rule(f"/api/admin/{k['table']}", endpoint=f'admin_list_{kind}', view_func=list_entities,
                           defaults={'kind': kind}, methods=['GET', 'OPTIONS'])
