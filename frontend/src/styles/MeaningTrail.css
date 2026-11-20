@@ -44,6 +44,7 @@
 }
 
 /* Title column — takes remaining space */
+.xc-title-col > .demo-tag { margin-left: 0; }
 .xc-title-col {
     flex: 1;
     min-width: 0;
@@ -266,7 +267,7 @@
     border-color: var(--honey);
     color: var(--honey-deep);
 }
-.xc-add-acknowledgement:hover { background: var(--honey); color: var(--moss-deep); }
+.xc-add-acknowledgement:hover { background: var(--honey); color: var(--on-honey); }
 
 /* ── Acknowledgement form (NewAcknowledgementForm) ───────────────────────────────────── */
 #save-acknowledgement-btn, #cancel-acknowledgement-btn {
@@ -334,6 +335,7 @@
     .xc-summary .type-pill { order: 0; }
     .xc-summary .xc-summary-meta { order: 1; margin-left: auto; }
     .xc-summary .xc-expand-btn { order: 1; }
+    .xc-summary .like-timestamp { min-width: 0; } /* a lone heart needn't hold 70px open */
     .xc-summary .xc-title-col { order: 2; flex: 1 1 100%; }
     .exchange.collapsed .xc-summary .xc-title {
         white-space: normal;

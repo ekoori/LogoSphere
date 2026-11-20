@@ -192,7 +192,7 @@
     border: 1px dashed var(--border-soft);
     border-radius: var(--r-pill);
 }
-.service-view-exchange { background: var(--honey); color: var(--ink); }
+.service-view-exchange { background: var(--honey); color: var(--on-honey); }
 .service-view-exchange:hover:not(:disabled) { background: var(--terracotta); color: var(--on-fill); }
 
 /* Provider view: pending acceptances to confirm */

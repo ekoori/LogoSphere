@@ -14,6 +14,8 @@
     line-height: 1.5;
     white-space: nowrap;
     text-transform: none;
+    width: max-content; /* a flex column would otherwise stretch it across the row */
+    max-width: 100%;
 }
 
 .demo-tag {

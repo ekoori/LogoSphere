@@ -33,7 +33,7 @@ function LikeTimestamp({ likedByCurrentUser, likesCount = 0, likedBy = null, tim
                 aria-pressed={likedByCurrentUser}
                 title={likedByCurrentUser ? 'You appreciated this' : 'Appreciate this'}
             >
-                {likedByCurrentUser ? '❤️' : '🖤'}
+                {likedByCurrentUser ? '❤️' : '♡'}
             </button>}
             {parts.length > 0 && (
                 <span className="likes-by">

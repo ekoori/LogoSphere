@@ -42,6 +42,7 @@
     --on-fill:        #f7f4e8;
     --on-fill-strong: #ffffff;
     --on-accent:      #fff7ef;
+    --on-honey:       #2f3d27;
     --glass:          rgba(250, 246, 235, 0.82);
     --demo-ink:       #6b3f9e;
     --persona-ink:    #2f5d7c;
@@ -115,6 +116,7 @@
     --on-fill:        #1a2014;
     --on-fill-strong: #10140c;
     --on-accent:      #2a1208;
+    --on-honey:       #1a2014;
     --glass:          rgba(23, 28, 19, 0.84);
     --demo-ink:       #d3b8f2;
     --persona-ink:    #aed3ef;
@@ -158,6 +160,7 @@
         --on-fill:        #1a2014;
         --on-fill-strong: #10140c;
         --on-accent:      #2a1208;
+        --on-honey:       #1a2014;
         --glass:          rgba(23, 28, 19, 0.84);
         --demo-ink:       #d3b8f2;
         --persona-ink:    #aed3ef;
@@ -296,12 +299,15 @@ button.btn {
 }
 .btn-accent:hover { background: var(--terracotta-deep); color: var(--on-fill-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
-.btn-ghost {
+/* `button.btn` above outranks a bare `.btn-ghost`, which left ghost <button>s without their outline. */
+.btn-ghost,
+button.btn-ghost {
     background: transparent;
     color: var(--moss-deep);
     border-color: var(--border);
 }
-.btn-ghost:hover { background: var(--surface-2); border-color: var(--sage); }
+.btn-ghost:hover,
+button.btn-ghost:hover { background: var(--surface-2); border-color: var(--sage); }
 
 .btn-block { display: flex; width: 100%; }
 
@@ -339,6 +345,22 @@ input:focus, textarea:focus, select:focus {
     box-shadow: var(--ring);
 }
 label { font-weight: 600; font-size: var(--fs-sm); color: var(--ink-soft); }
+
+/* Picture pickers: the browser's own grey button doesn't follow the theme. */
+input[type="file"] { font-family: var(--font-body); font-size: 0.85rem; color: var(--ink-soft); }
+input[type="file"]::file-selector-button {
+    font: inherit;
+    font-weight: 600;
+    margin-right: 0.8em;
+    padding: 0.45em 1em;
+    color: var(--moss-deep);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: border-color 0.18s var(--ease);
+}
+input[type="file"]::file-selector-button:hover { border-color: var(--sage); }
 
 /* ============================================================================
    Tags / pills

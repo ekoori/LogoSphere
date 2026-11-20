@@ -315,7 +315,7 @@
 .xc-submit-receipt { background: var(--leaf); color: var(--on-fill); }
 .xc-submit-receipt:not(:disabled):hover { background: var(--moss); transform: translateY(-1px); }
 
-.xc-submit-acknowledgement { background: var(--honey); color: var(--moss-deep); }
+.xc-submit-acknowledgement { background: var(--honey); color: var(--on-honey); }
 .xc-submit-acknowledgement:not(:disabled):hover { background: var(--honey-deep); transform: translateY(-1px); }
 
 /* ── Follow-up comments — deliberately quieter than receipts ───────────────── */
@@ -395,7 +395,8 @@
 
 /* ── Exchange editing + inherited image + receipt context/photos ──────────── */
 .xc-about-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5em; }
-.xc-edit-btn { padding: 0.35em 0.9em; font-size: 0.8rem; }
+.xc-edit-btn { padding: 0.35em 0.9em; font-size: 0.8rem; background: transparent; color: var(--moss-deep); border-color: var(--border); }
+.xc-edit-btn:hover { background: var(--surface-2); border-color: var(--sage); }
 .xc-exchange-image {
     width: 100%;
     max-height: 320px;

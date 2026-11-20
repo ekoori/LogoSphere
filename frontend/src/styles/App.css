@@ -645,9 +645,10 @@ footer ul li a:hover { color: var(--honey); }
 /* ============================================================================
    Misc utilities (likes, timestamps, banners)
    ========================================================================== */
-.like-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; transition: transform 0.15s var(--ease); }
+.like-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; line-height: 1; color: var(--terracotta); transition: transform 0.15s var(--ease); }
+.like-btn:not(.liked) { font-size: 1.45em; } /* the outline heart is a text glyph, smaller than the emoji */
 .like-btn:hover { transform: scale(1.18); }
-.like-timestamp { width: 70px; }
+.like-timestamp { min-width: 70px; max-width: 6.5rem; } /* room for "Appreciated by" without splitting words */
 .like-btn-disabled { cursor: pointer; color: var(--ink-faint); }
 .like-btn.clicked { color: var(--terracotta); cursor: default; }
 .likes-count { font-size: 0.8em; color: var(--ink-soft); }
