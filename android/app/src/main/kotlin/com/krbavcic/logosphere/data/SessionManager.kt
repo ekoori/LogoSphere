@@ -53,6 +53,12 @@ class SessionManager(
         }
     }
 
+    /** Re-reads who is signed in (after a profile edit, say), keeping the session. */
+    fun refresh() {
+        if (user == null) return
+        scope.launch { verify() }
+    }
+
     private suspend fun verify() {
         try {
             val status = api().checkSession()

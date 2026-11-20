@@ -53,16 +53,23 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.krbavcic.logosphere.core.logic.InfoPage
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.data.AuthState
 import com.krbavcic.logosphere.push.Push
+import com.krbavcic.logosphere.ui.admin.AdminScreen
 import com.krbavcic.logosphere.ui.auth.RegisterScreen
 import com.krbavcic.logosphere.ui.auth.SignInScreen
 import com.krbavcic.logosphere.ui.communities.CommunitiesScreen
 import com.krbavcic.logosphere.ui.communities.CommunityScreen
+import com.krbavcic.logosphere.ui.communities.ManageCommunityScreen
+import com.krbavcic.logosphere.ui.communities.NewCommunityScreen
 import com.krbavcic.logosphere.ui.exchange.ExchangeScreen
 import com.krbavcic.logosphere.ui.inbox.InboxScreen
+import com.krbavcic.logosphere.ui.info.InfoScreen
+import com.krbavcic.logosphere.ui.me.EditProfileScreen
 import com.krbavcic.logosphere.ui.me.MeScreen
+import com.krbavcic.logosphere.ui.values.ValueCardEditorScreen
 import com.krbavcic.logosphere.ui.openings.NewOpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningsScreen
@@ -219,14 +226,29 @@ fun LogoSphereRoot() {
                     composable<InboxRoute> { InboxScreen() }
                     composable<MeRoute> { MeScreen() }
                     composable<OpeningRoute> { OpeningScreen(it.toRoute<OpeningRoute>().id) }
-                    composable<NewOpeningRoute> { NewOpeningScreen() }
+                    composable<NewOpeningRoute> {
+                        val route = it.toRoute<NewOpeningRoute>()
+                        NewOpeningScreen(route.actingAsKind?.let(CommunityKind::valueOf), route.actingAsId)
+                    }
                     composable<ExchangeRoute> { ExchangeScreen(it.toRoute<ExchangeRoute>().id) }
                     composable<CommunityRoute> {
                         val route = it.toRoute<CommunityRoute>()
-                        CommunityScreen(CommunityKind.valueOf(route.kind), route.id)
+                        CommunityScreen(CommunityKind.valueOf(route.kind), route.id, route.tab)
                     }
+                    composable<ManageCommunityRoute> {
+                        val route = it.toRoute<ManageCommunityRoute>()
+                        ManageCommunityScreen(CommunityKind.valueOf(route.kind), route.id)
+                    }
+                    composable<NewCommunityRoute> { NewCommunityScreen(CommunityKind.valueOf(it.toRoute<NewCommunityRoute>().kind)) }
                     composable<PersonRoute> { PersonScreen(it.toRoute<PersonRoute>().id) }
                     composable<SearchRoute> { SearchScreen() }
+                    composable<EditProfileRoute> { EditProfileScreen() }
+                    composable<ValueCardEditorRoute> {
+                        val route = it.toRoute<ValueCardEditorRoute>()
+                        ValueCardEditorScreen(route.groupKind?.let(CommunityKind::valueOf), route.groupId, route.cardId)
+                    }
+                    composable<AdminRoute> { AdminScreen() }
+                    composable<InfoRoute> { InfoScreen(InfoPage.valueOf(it.toRoute<InfoRoute>().page)) }
                 }
             }
         }

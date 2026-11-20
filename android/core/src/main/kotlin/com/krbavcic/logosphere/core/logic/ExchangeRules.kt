@@ -40,6 +40,10 @@ object ExchangeRules {
 
     fun canAdvance(detail: ExchangeDetail): Boolean = isParticipant(detail) && nextStatus(detail.exchange) != null
 
+    /** Title, description and banner: either side, until it's finished (and, as on the web, not once cancelled). */
+    fun canEdit(detail: ExchangeDetail): Boolean =
+        isParticipant(detail) && !detail.exchange.isFinished && !isCancelled(detail.exchange)
+
     fun canCancel(detail: ExchangeDetail): Boolean =
         detail.isInitiator && status(detail.exchange) in setOf(INITIATED, IN_PROGRESS)
 

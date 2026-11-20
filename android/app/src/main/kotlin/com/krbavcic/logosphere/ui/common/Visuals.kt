@@ -45,12 +45,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.krbavcic.logosphere.core.api.pictureSideFor
+import com.krbavcic.logosphere.core.api.userMessage
 import com.krbavcic.logosphere.core.logic.Dates
+import com.krbavcic.logosphere.core.logic.Membership
 import com.krbavcic.logosphere.core.logic.Progress
+import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.FranklMode
 import com.krbavcic.logosphere.core.model.ValueCard
+import com.krbavcic.logosphere.data.Change
 import com.krbavcic.logosphere.ui.LocalAppContainer
+import com.krbavcic.logosphere.ui.values.ValueCardStateRow
+import androidx.compose.material3.Button
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 import com.krbavcic.logosphere.ui.theme.FrauncesDisplay
 import com.krbavcic.logosphere.ui.theme.Palette
 import com.krbavcic.logosphere.ui.theme.kindGradient
@@ -64,7 +74,8 @@ private fun initials(name: String?): String =
 /** A member's avatar: their photo, or the server's initials image; initials while it loads. */
 @Composable
 fun Avatar(userId: String?, name: String?, size: Dp = 40.dp, modifier: Modifier = Modifier) {
-    val api = LocalAppContainer.current.api
+    val app = LocalAppContainer.current
+    val api = app.api
     val side = pictureSideFor(with(LocalDensity.current) { size.roundToPx() })
     val placeholder = @Composable {
         Box(
@@ -86,7 +97,7 @@ fun Avatar(userId: String?, name: String?, size: Dp = 40.dp, modifier: Modifier 
             placeholder()
         } else {
             SubcomposeAsyncImage(
-                model = api.avatarUrl(userId, side),
+                model = app.pictures.of(api.avatarUrl(userId, side)),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -124,6 +135,7 @@ fun Banner(
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val glyph = kind?.glyph ?: "◍"
+    val pictures = LocalAppContainer.current.pictures
     val fallback = @Composable {
         Box(
             Modifier
@@ -143,7 +155,7 @@ fun Banner(
             fallback()
         } else {
             SubcomposeAsyncImage(
-                model = imageUrl,
+                model = pictures.of(imageUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -226,12 +238,8 @@ fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String 
                 )
             }
             Text(card.title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
-            val state = when {
-                card.endorsed == true -> "Endorsed on reflection"
-                card.needsReview -> "Due for review"
-                else -> null
-            }
-            state?.let { QuietPill(it) }
+            // Snapshots quoted in receipts carry no state; live cards do.
+            if (card.endorsed != null || card.needsReview) ValueCardStateRow(card, actions = null, busy = false)
             CardField(subjectLabel, card.careAbout)
             CardField("Because", card.because)
             if (card.looksLike.isNotEmpty()) {
@@ -240,6 +248,63 @@ fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String 
             CardField("Drift looks like", card.driftLooksLike, tint = Palette.HoneyDeep)
             CardField("When in conflict, choose", card.inConflict)
             CardField("Never do", card.neverDo, tint = MaterialTheme.colorScheme.error)
+            CloneSection(card)
+        }
+    }
+}
+
+/** "Make this yours": copies someone else's card onto your Meaning Graph, or a group's you manage. */
+@Composable
+private fun CloneSection(card: ValueCard) {
+    val app = LocalAppContainer.current
+    val me = app.session.user?.id ?: return
+    if (card.ownerId == me || card.careAbout.isNullOrBlank()) return
+    var groups by remember { mutableStateOf<List<Community>>(emptyList()) }
+    LaunchedEffect(me) {
+        groups = runCatching { Membership.managed(app.communities.all(), me, isPlatformAdmin = false) }
+            .getOrDefault(emptyList())
+            .filter { it.id != card.ownerId }
+    }
+    var target by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var note by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("MAKE THIS YOURS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+        MetaText("Copy this value onto your own Meaning Graph — or one you manage.", maxLines = 2)
+        if (groups.isNotEmpty()) {
+            Picker(
+                label = "Copy to",
+                choices = listOf(Choice(null, "My Meaning Graph")) + groups.map { Choice(it.id, "${it.name} (${it.kind.noun.lowercase()})") },
+                selected = target,
+                onSelect = { target = it; note = null },
+            )
+        }
+        Button(
+            onClick = {
+                scope.launch {
+                    busy = true
+                    note = try {
+                        app.api.cloneValueCard(card, target ?: me)
+                        app.changes.emit(Change.ValueCards)
+                        groups.firstOrNull { it.id == target }?.let {
+                            app.communities.invalidate(it.kind)
+                            app.changes.emit(Change.Communities)
+                        }
+                        true to "✓ Added to the Meaning Graph"
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        false to e.userMessage("Couldn't copy this card.")
+                    } finally {
+                        busy = false
+                    }
+                }
+            },
+            enabled = !busy,
+        ) { Text("+ Copy") }
+        note?.let { (ok, text) ->
+            Text(text, style = MaterialTheme.typography.bodyMedium, color = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
         }
     }
 }

@@ -78,7 +78,62 @@ data class ValueCard(
     @SerialName("color_key") val colorKey: String? = null,
     val endorsed: Boolean? = null,
     @SerialName("needs_review") val needsReview: Boolean = false,
+    @SerialName("endorsed_at") val endorsedAt: String? = null,
+    @SerialName("reviewed_at") val reviewedAt: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
 )
+
+/**
+ * A value card as its editor holds it, for `POST`/`PATCH` (a person's or a group's). Editing never
+ * overwrites: the server writes a new card and marks the old one superseded, so anything that
+ * quoted the old wording keeps it.
+ */
+data class ValueCardDraft(
+    val title: String = "",
+    val careAbout: String = "",
+    val because: String = "",
+    /** One behaviour per line, as typed. */
+    val looksLike: String = "",
+    val driftLooksLike: String = "",
+    val inConflict: String = "",
+    val neverDo: String = "",
+    val franklMode: String = "creative",
+    val colorKey: String = "honey",
+) {
+    /** The behaviours, one per non-blank line. */
+    val looksLikeLines: List<String> get() = looksLike.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+    companion object {
+        val COLOURS = listOf("honey", "leaf", "terracotta", "sage", "moss")
+
+        fun of(card: ValueCard) = ValueCardDraft(
+            title = card.title,
+            careAbout = card.careAbout.orEmpty(),
+            because = card.because.orEmpty(),
+            looksLike = card.looksLike.joinToString("\n"),
+            driftLooksLike = card.driftLooksLike.orEmpty(),
+            inConflict = card.inConflict.orEmpty(),
+            neverDo = card.neverDo.orEmpty(),
+            franklMode = card.franklMode ?: "creative",
+            colorKey = card.colorKey ?: "honey",
+        )
+    }
+}
+
+/** The signed-in member's own profile (`GET /api/user/profile`): unlike [PublicUser], it has the email. */
+@Serializable
+data class OwnProfile(
+    @SerialName("user_id") val userId: String,
+    val name: String? = null,
+    val surname: String? = null,
+    val email: String? = null,
+    val location: String? = null,
+    @SerialName("has_picture") val hasPicture: Boolean = false,
+    @SerialName("is_platform_admin") val isPlatformAdmin: Boolean = false,
+) {
+    val displayName: String
+        get() = listOfNotNull(name, surname).joinToString(" ").trim().ifEmpty { email ?: "Member" }
+}
 
 // ── Openings (offers and needs) ─────────────────────────────────────────────
 
@@ -167,6 +222,16 @@ data class NewOpening(
     val sphereId: String?,
     val sphereName: String?,
     val projectName: String?,
+    /** Posted on behalf of a sphere, alliance or project the member manages. */
+    val actingAsId: String? = null,
+)
+
+/** `PATCH /api/openings/<id>`: once an exchange links to an opening, an edit makes a new version. */
+@Serializable
+data class OpeningEditResult(
+    val message: String? = null,
+    val versioned: Boolean = false,
+    val service: Opening? = null,
 )
 
 // ── Exchanges (Meaning Trail rows) ──────────────────────────────────────────
@@ -340,6 +405,15 @@ data class Community(
     /** A demo sphere, or a group inside one: its members are AI personas. */
     @SerialName("is_demo") val isDemo: Boolean = false,
     @SerialName("join_policy") val joinPolicy: String? = null,
+    @SerialName("decision_policy") val decisionPolicy: String? = null,
+    /** Alliance: who manages its projects (single-pm, board). */
+    @SerialName("pm_policy") val pmPolicy: String? = null,
+    /** Alliance: who confirms acceptances of its openings (lead, board, any-member). */
+    @SerialName("confirm_policy") val confirmPolicy: String? = null,
+    /** Sphere: every new member is enrolled in it. */
+    @SerialName("is_sandbox") val isSandbox: Boolean = false,
+    /** Detail endpoint, managers only: join requests awaiting approval. */
+    @SerialName("pending_members") val pendingMembers: List<PersonRef> = emptyList(),
     val admin1: String? = null,
     /** Sphere: its alliances' names. */
     val alliances: List<String> = emptyList(),
@@ -376,6 +450,19 @@ data class JoinResult(
     val message: String? = null,
     val pending: Boolean = false,
     @SerialName("already_member") val alreadyMember: Boolean = false,
+)
+
+/** A new sphere, alliance or project. An alliance or project lives in a sphere its founder belongs to. */
+data class NewCommunity(
+    val kind: CommunityKind,
+    val name: String,
+    val description: String,
+    val location: String = "",
+    val sphereId: String? = null,
+    val sphereName: String? = null,
+    /** A project may be run on behalf of an alliance its founder manages. */
+    val ownerAllianceId: String? = null,
+    val joinPolicy: String = "open",
 )
 
 // ── Notifications ───────────────────────────────────────────────────────────

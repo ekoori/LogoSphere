@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -105,6 +107,14 @@ fun CommunitiesScreen() {
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = {
+            val kind = CommunityKind.entries[tab]
+            ExtendedFloatingActionButton(
+                onClick = { navigator.newCommunity(kind) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("Start ${if (kind == CommunityKind.Alliance) "an" else "a"} ${kind.noun.lowercase()}") },
+            )
+        },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { lists ->
             val kind = CommunityKind.entries[tab]
@@ -115,7 +125,8 @@ fun CommunitiesScreen() {
             val inAllDemo = demo.isNotEmpty() && demo.all { Membership.isMember(it, vm.viewerId) }
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(
-                    contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 32.dp),
+                    // Room at the bottom so the last card clears the "Start a …" button.
+                    contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     item(key = "tabs") {
@@ -197,7 +208,7 @@ fun CommunityCard(community: Community, viewerId: String?, onClick: () -> Unit) 
                     listOfNotNull(
                         "$members member${if (members == 1) "" else "s"}",
                         community.sphereName?.takeIf { community.kind != CommunityKind.Sphere }?.let { "✦ $it" },
-                        community.location?.takeIf { community.kind == CommunityKind.Sphere },
+                        community.location?.takeIf { community.kind == CommunityKind.Sphere && it.isNotBlank() },
                         if (community.isClosed) "Closed" else null,
                     ).joinToString("  ·  "),
                 )

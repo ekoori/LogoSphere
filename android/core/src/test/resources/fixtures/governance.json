@@ -1,0 +1,62 @@
+{
+  "kind": "sphere",
+  "entity_id": "11111111-1111-1111-1111-111111111111",
+  "decision_policy": "majority",
+  "policies": {
+    "join_policy": {"value": null, "label": "Membership join policy", "options": ["open", "approval"]},
+    "decision_policy": {"value": "majority", "label": "How decisions pass", "options": ["majority", "supermajority", "consensus"]},
+    "is_public": {"value": "false", "label": "Public activity", "options": ["true", "false"]}
+  },
+  "can_manage": true,
+  "is_member": true,
+  "members": [
+    {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Igor K"},
+    {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Kondo"},
+    {"id": "aaaaaaaa-0000-0000-0000-000000000003", "name": "Quentin Blake"}
+  ],
+  "my_delegate": {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Kondo"},
+  "delegated_to_me": [{"id": "aaaaaaaa-0000-0000-0000-000000000003", "name": "Quentin Blake"}],
+  "proposals": [
+    {
+      "proposal_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "entity_id": "11111111-1111-1111-1111-111111111111",
+      "kind": "policy",
+      "title": "Membership join policy: approval",
+      "description": "Keep the garden for neighbours.",
+      "policy_key": "join_policy",
+      "policy_value": "approval",
+      "policy_label": "Membership join policy",
+      "status": "open",
+      "created_by": "aaaaaaaa-0000-0000-0000-000000000001",
+      "created_at": "2026-11-19T10:00:00",
+      "closes_at": "2026-11-26T10:00:00",
+      "closed_at": null,
+      "decision_policy": "majority",
+      "result": null,
+      "tally": {"yes": 2, "no": 0, "abstain": 0, "eligible": 3, "unrepresented": 1, "direct_votes": 1},
+      "would_pass": true,
+      "my_vote": "yes",
+      "created_by_name": "Igor K"
+    },
+    {
+      "proposal_id": "bbbbbbbb-0000-0000-0000-000000000002",
+      "entity_id": "11111111-1111-1111-1111-111111111111",
+      "kind": "motion",
+      "title": "Hold the swap on Saturdays",
+      "description": "",
+      "policy_key": null,
+      "policy_value": null,
+      "policy_label": null,
+      "status": "rejected",
+      "created_by": "aaaaaaaa-0000-0000-0000-000000000002",
+      "created_at": "2026-11-01T09:00:00",
+      "closes_at": "2026-11-08T09:00:00",
+      "closed_at": "2026-11-08T09:00:05",
+      "decision_policy": "majority",
+      "result": {"yes": 0, "no": 1, "abstain": 1, "eligible": 3, "unrepresented": 1, "direct_votes": 2},
+      "tally": {"yes": 0, "no": 1, "abstain": 1, "eligible": 3, "unrepresented": 1, "direct_votes": 2},
+      "my_vote": null,
+      "created_by_name": "Marie Kondo"
+    }
+  ]
+}

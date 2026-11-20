@@ -13,6 +13,7 @@ import com.krbavcic.logosphere.data.ChangeBus
 import com.krbavcic.logosphere.data.CommunityRepository
 import com.krbavcic.logosphere.data.InboxRepository
 import com.krbavcic.logosphere.data.OpeningsRepository
+import com.krbavcic.logosphere.data.Pictures
 import com.krbavcic.logosphere.data.SessionManager
 import com.krbavcic.logosphere.data.SessionStore
 import com.krbavcic.logosphere.push.Push
@@ -46,6 +47,7 @@ class AppContainer(context: Context) {
     val openings = OpeningsRepository(api)
     val inbox = InboxRepository(api)
     val changes = ChangeBus()
+    val pictures = Pictures(appContext)
 
     val session: SessionManager = SessionManager(
         store = sessionStore,

@@ -58,8 +58,14 @@ import com.krbavcic.logosphere.core.model.ExchangeDetail
 import com.krbavcic.logosphere.core.model.FranklMode
 import com.krbavcic.logosphere.core.model.LikeTarget
 import com.krbavcic.logosphere.core.model.LikeInfo
+import android.net.Uri
+import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.NewComment
 import com.krbavcic.logosphere.core.model.ValueCard
+import com.krbavcic.logosphere.ui.common.BannerField
+import com.krbavcic.logosphere.ui.common.LinkText
+import com.krbavcic.logosphere.ui.common.rememberPicturePicker
+import com.krbavcic.logosphere.ui.common.rememberPicturesPicker
 import com.krbavcic.logosphere.data.Change
 import com.krbavcic.logosphere.ui.Load
 import com.krbavcic.logosphere.ui.LoadViewModel
@@ -130,10 +136,34 @@ class ExchangeViewModel(private val app: AppContainer, private val id: String) :
 
     fun cancel() = act(onSuccess = { changed() }) { app.api.setExchangeStatus(id, ExchangeRules.CANCELLED) }
 
-    fun write(comment: NewComment, onDone: () -> Unit) = act(onSuccess = {
+    /** Adds what was written; a receipt may bring up to three photos (read first, so a bad file stops it all). */
+    fun write(comment: NewComment, photos: List<Uri>, onDone: () -> Unit) = act(onSuccess = {
         onDone()
         changed()
-    }) { app.api.addComment(id, comment) }
+    }) {
+        val uploads = photos.take(3).map { app.pictures.read(it) }
+        app.api.addComment(id, comment)
+        if (uploads.isNotEmpty()) {
+            app.api.addReceiptPhotos(id, uploads)
+            repeat(3) { app.pictures.replaced(app.api.receiptPhotoUrl(id, it)) }
+        }
+    }
+
+    fun edit(title: String, description: String, banner: Uri?, onDone: () -> Unit) {
+        if (title.isBlank()) {
+            say("The title can't be empty.")
+            return
+        }
+        act(onSuccess = {
+            onDone()
+            changed()
+            say("Exchange updated.")
+        }) {
+            val upload = banner?.let { app.pictures.read(it) }
+            app.api.editExchange(id, title, description, upload)
+            if (upload != null) app.pictures.replaced(app.api.exchangeImageUrl(id))
+        }
+    }
 
     fun like(target: LikeTarget) {
         val exchange = current?.detail?.exchange ?: return
@@ -184,6 +214,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
     val recipient = Parties.recipient(x, me)
     val cancelled = ExchangeRules.isCancelled(x)
     var confirmCancel by rememberSaveable { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(
         contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 32.dp),
@@ -197,13 +228,20 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                     Spacer(Modifier.weight(1f))
                     LikeControl(x.likesFor(LikeTarget.Exchange), { vm.like(LikeTarget.Exchange) })
                 }
+                if (editing) {
+                    EditExchangeForm(x, busy, onSave = { title, description, banner -> vm.edit(title, description, banner) { editing = false } }, onCancel = { editing = false })
+                    return@Column
+                }
                 Text(x.title ?: "An exchange of trust", style = MaterialTheme.typography.headlineSmall)
                 MetaText(
                     listOfNotNull(Dates.day(x.startedAt).ifEmpty { null }, x.projectName?.let { "Part of $it" }).joinToString("  ·  "),
                 )
+                if (ExchangeRules.canEdit(detail)) {
+                    LinkText("✎ Edit title, description and picture", onClick = { editing = true })
+                }
                 if (x.hasImage) {
                     AsyncImage(
-                        model = app.api.exchangeImageUrl(x.id),
+                        model = app.pictures.of(app.api.exchangeImageUrl(x.id)),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -287,7 +325,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 repeat(x.receiptPhotoCount) { index ->
                                     AsyncImage(
-                                        model = app.api.receiptPhotoUrl(x.id, index),
+                                        model = app.pictures.of(app.api.receiptPhotoUrl(x.id, index)),
                                         contentDescription = "Receipt photo ${index + 1}",
                                         contentScale = ContentScale.Crop,
                                         modifier = Modifier
@@ -430,6 +468,38 @@ private fun PartyRow(party: Party, role: String, onClick: () -> Unit) {
     }
 }
 
+/** Title, description and banner picture, edited in place by either side until the exchange is finished. */
+@Composable
+private fun EditExchangeForm(x: Exchange, busy: Boolean, onSave: (String, String, Uri?) -> Unit, onCancel: () -> Unit) {
+    val app = LocalAppContainer.current
+    var title by rememberSaveable(x.id) { mutableStateOf(x.title.orEmpty()) }
+    var description by rememberSaveable(x.id) { mutableStateOf(x.longDescription.orEmpty()) }
+    var banner by rememberSaveable(x.id) { mutableStateOf<Uri?>(null) }
+    val pick = rememberPicturePicker { banner = it }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Title") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+        )
+        BannerField(banner, if (x.hasImage) app.api.exchangeImageUrl(x.id) else null, kind = null, onPick = pick)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onSave(title, description, banner) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
+            TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
+        }
+    }
+}
+
 /** A receipt, note or acknowledgement as written. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -489,7 +559,7 @@ private fun Composer(
     prompt: String,
     myCards: List<ValueCard>,
     busy: Boolean,
-    onSubmit: (NewComment, () -> Unit) -> Unit,
+    onSubmit: (NewComment, List<Uri>, () -> Unit) -> Unit,
     theirCards: List<ValueCard> = emptyList(),
     theirLabel: String = "Their values",
 ) {
@@ -498,6 +568,11 @@ private fun Composer(
     var context by rememberSaveable { mutableStateOf("") }
     var mode by rememberSaveable { mutableStateOf<String?>(null) }
     val selected = remember { mutableStateListOf<String>() }
+    val photos = remember { mutableStateListOf<Uri>() }
+    val pickPhotos = rememberPicturesPicker(3) { picked ->
+        photos.clear()
+        photos.addAll(picked)
+    }
 
     if (!expanded) {
         Button(
@@ -563,6 +638,23 @@ private fun Composer(
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
             )
+            Text("Photos (up to 3)", style = MaterialTheme.typography.labelLarge)
+            if (photos.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    photos.forEach { uri ->
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(72.dp).clip(MaterialTheme.shapes.medium),
+                        )
+                    }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = pickPhotos) { Text(if (photos.isEmpty()) "Add photos" else "Choose others") }
+                if (photos.isNotEmpty()) TextButton(onClick = { photos.clear() }) { Text("Remove") }
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Button(
@@ -576,11 +668,13 @@ private fun Composer(
                             franklMode = FranklMode.of(mode),
                             context = context.takeIf { type == CommentType.Receipt },
                         ),
+                        if (type == CommentType.Receipt) photos.toList() else emptyList(),
                     ) {
                         text = ""
                         context = ""
                         mode = null
                         selected.clear()
+                        photos.clear()
                         expanded = false
                     }
                 },

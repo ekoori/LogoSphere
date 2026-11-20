@@ -30,6 +30,14 @@ object Dates {
         parse(value)?.let { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).format(it.atZone(zone)) }
             .orEmpty()
 
+    /** "Nov 2026": when a value card was endorsed or last reviewed. */
+    fun monthYear(value: String?, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = Locale.getDefault()): String =
+        parse(value)?.let { DateTimeFormatter.ofPattern("MMM yyyy", locale).format(it.atZone(zone)) }.orEmpty()
+
+    /** "26 Nov": a proposal's opening or closing day, without the year. */
+    fun shortDay(value: String?, zone: ZoneId = ZoneId.systemDefault(), locale: Locale = Locale.getDefault()): String =
+        parse(value)?.let { DateTimeFormatter.ofPattern("d MMM", locale).format(it.atZone(zone)) }.orEmpty()
+
     /** "just now", "5m ago", "3h ago", "2d ago", then the date. */
     fun ago(
         value: String?,

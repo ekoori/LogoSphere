@@ -52,9 +52,18 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
 
-data class PostingPlaces(val spheres: List<Community>, val projects: List<Community>)
+/** Where an opening may go; [actingAs] is the group it's posted for, when it isn't the member's own. */
+data class PostingPlaces(val spheres: List<Community>, val projects: List<Community>, val actingAs: Community? = null) {
+    /** A group's opening lives in its sphere (a sphere's, in itself) and a project's in that project. */
+    val fixedSphereId: String? get() = actingAs?.let { if (it.kind == CommunityKind.Sphere) it.id else it.parentSphereId }
+    val fixedProjectName: String? get() = actingAs?.takeIf { it.kind == CommunityKind.Project }?.name
+}
 
-class NewOpeningViewModel(private val app: AppContainer) : LoadViewModel<PostingPlaces>() {
+class NewOpeningViewModel(
+    private val app: AppContainer,
+    private val actingAsKind: CommunityKind?,
+    private val actingAsId: String?,
+) : LoadViewModel<PostingPlaces>() {
     private val _posted = Channel<Unit>(Channel.BUFFERED)
     val posted = _posted.receiveAsFlow()
 
@@ -66,11 +75,18 @@ class NewOpeningViewModel(private val app: AppContainer) : LoadViewModel<Posting
         val user = app.session.user
         val spheres = async { app.communities.list(CommunityKind.Sphere, force) }
         val projects = async { app.communities.list(CommunityKind.Project, force) }
+        val actingAs = async { if (actingAsKind != null && actingAsId != null) app.api.community(actingAsKind, actingAsId) else null }
+        val group = actingAs.await()
         PostingPlaces(
-            // Post where you belong (a platform admin may post anywhere).
-            spheres = spheres.await().filter { user?.isPlatformAdmin == true || Membership.isMember(it, user?.id) },
+            // Post where you belong (a platform admin may post anywhere); a group posts in its own sphere.
+            spheres = spheres.await().filter {
+                user?.isPlatformAdmin == true || Membership.isMember(it, user?.id) || it.id == group?.let { g ->
+                    if (g.kind == CommunityKind.Sphere) g.id else g.parentSphereId
+                }
+            },
             // Closed projects take no new openings.
             projects = projects.await().filter { !it.isClosed },
+            actingAs = group,
         )
     }
 
@@ -88,9 +104,9 @@ class NewOpeningViewModel(private val app: AppContainer) : LoadViewModel<Posting
 }
 
 @Composable
-fun NewOpeningScreen() {
+fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = null) {
     val app = LocalAppContainer.current
-    val vm: NewOpeningViewModel = viewModel { NewOpeningViewModel(app) }
+    val vm: NewOpeningViewModel = viewModel(key = "new-opening-$actingAsId") { NewOpeningViewModel(app, actingAsKind, actingAsId) }
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -110,6 +126,10 @@ fun NewOpeningScreen() {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { places ->
+            LaunchedEffect(places.actingAs) {
+                places.fixedSphereId?.let { sphereId = it }
+                places.fixedProjectName?.let { projectName = it }
+            }
             val sphere = places.spheres.firstOrNull { it.id == sphereId }
             // Projects of the chosen sphere; all open projects when none is chosen.
             val projects = places.projects.filter { sphereId == null || it.parentSphereId == sphereId }
@@ -122,6 +142,13 @@ fun NewOpeningScreen() {
                     .readable(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                places.actingAs?.let { group ->
+                    Text(
+                        "Posting as ${group.kind.glyph} ${group.name}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 SegmentedTabs(listOf("Offer", "Need"), type, { type = it })
                 Text(
                     if (type == 0) "Something you can give — goods, skills or time." else "Something you or your community is asking for.",
@@ -156,6 +183,7 @@ fun NewOpeningScreen() {
                     label = "Sphere",
                     choices = listOf(Choice(null, "None — visible to everyone")) + places.spheres.map { Choice(it.id, it.name) },
                     selected = sphereId,
+                    enabled = places.fixedSphereId == null,
                     onSelect = {
                         sphereId = it
                         // A project from another sphere no longer fits.
@@ -168,6 +196,7 @@ fun NewOpeningScreen() {
                     label = "Project (optional)",
                     choices = listOf(Choice(null, "None")) + projects.map { Choice(it.name, it.name) },
                     selected = projectName,
+                    enabled = places.fixedProjectName == null,
                     onSelect = { projectName = it },
                 )
                 PrimaryAction(
@@ -184,6 +213,7 @@ fun NewOpeningScreen() {
                                 sphereId = sphere?.id,
                                 sphereName = sphere?.name,
                                 projectName = projectName,
+                                actingAsId = places.actingAs?.id,
                             ),
                         )
                     },

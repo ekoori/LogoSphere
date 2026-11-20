@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -94,7 +95,7 @@ class CommunityViewModel(
 
     init {
         load()
-        reloadOn(app.changes, Change.Openings, Change.Exchanges)
+        reloadOn(app.changes, Change.Openings, Change.Exchanges, Change.Communities, Change.ValueCards)
     }
 
     override suspend fun fetch(force: Boolean): CommunityData = coroutineScope {
@@ -152,6 +153,13 @@ class CommunityViewModel(
         reload()
     }
 
+    /** Approves or declines a request, promotes, demotes or removes a member. */
+    fun setRole(memberId: String, role: String) = act(onSuccess = {
+        app.communities.invalidate(kind)
+        app.changes.emit(Change.Communities)
+        reload()
+    }) { app.api.setMemberRole(kind, id, memberId, role) }
+
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
         data.copy(trail = data.trail.map(f))
     }
@@ -162,7 +170,7 @@ class CommunityViewModel(
 }
 
 @Composable
-fun CommunityScreen(kind: CommunityKind, id: String) {
+fun CommunityScreen(kind: CommunityKind, id: String, initialTab: String? = null) {
     val app = LocalAppContainer.current
     val vm: CommunityViewModel = viewModel(key = "community-$kind-$id") { CommunityViewModel(app, kind, id) }
     val navigator = LocalNavigator.current
@@ -178,21 +186,18 @@ fun CommunityScreen(kind: CommunityKind, id: String) {
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
-                CommunityContent(data, vm, busy)
+                CommunityContent(data, vm, busy, snackbar, initialTab)
             }
         }
     }
 }
 
-private val ROLE_TIERS = mapOf(
-    CommunityKind.Sphere to listOf("admin" to "Admins", "member" to "Members"),
-    CommunityKind.Alliance to listOf("admin" to "Lead", "steward" to "Board members", "member" to "Members"),
-    CommunityKind.Project to listOf("manager" to "Manager", "steward" to "Stewards", "contributor" to "Contributors", "observer" to "Observers"),
-)
+/** The tabs, by the names links use (`?tab=governance`). */
+private val TABS = listOf("trail", "openings", "people", "governance", "charter")
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: Boolean) {
+private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: Boolean, snackbar: SnackbarHostState, initialTab: String?) {
     val app = LocalAppContainer.current
     val navigator = LocalNavigator.current
     val c = data.community
@@ -201,8 +206,9 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
     val role = Membership.role(c, me)
     val isMember = Membership.isMember(c, me)
     val canManage = Membership.canManage(c, me, isAdmin)
+    val canSetRoles = Membership.canSetRoles(c, me, isAdmin)
     val members = c.members.filter { it.role != "pending" }
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableIntStateOf(TABS.indexOf(initialTab ?: "").coerceAtLeast(0)) }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item(key = "banner") {
@@ -230,7 +236,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (c.isDemo) DemoTag()
                     QuietPill("${members.size} member${if (members.size == 1) "" else "s"}")
-                    c.location?.takeIf { c.kind == CommunityKind.Sphere }?.let { QuietPill(it) }
+                    c.location?.takeIf { c.kind == CommunityKind.Sphere && it.isNotBlank() }?.let { QuietPill(it) }
                     if (c.kind == CommunityKind.Sphere && c.isPublic) QuietPill("Public")
                     if (c.kind == CommunityKind.Project) QuietPill(if (c.isClosed) "Closed" else c.status ?: "Ongoing")
                     if (c.joinPolicy == "approval") QuietPill("Joining needs approval")
@@ -265,8 +271,13 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
                 if (canManage) {
-                    TextButton(onClick = { navigator.web("/${c.kind.name.lowercase()}-management?id=${c.id}") }, contentPadding = PaddingValues(0.dp)) {
-                        Text("Manage ${c.kind.noun.lowercase()} on the web →")
+                    OutlinedButton(onClick = { navigator.manageCommunity(c.kind, c.id) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("⚙ Manage ${c.kind.noun.lowercase()}" + if (isAdmin && !Membership.managesItself(c, me)) " (platform admin)" else "")
+                    }
+                }
+                if (canSetRoles && c.pendingMembers.isNotEmpty()) {
+                    TextButton(onClick = { tab = TABS.indexOf("people") }, contentPadding = PaddingValues(0.dp)) {
+                        Text("${c.pendingMembers.size} waiting for approval →")
                     }
                 }
             }
@@ -281,7 +292,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
         }
 
         item(key = "tabs") {
-            ScrollingTabs(listOf("Trail", "Openings", "People", "Charter"), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
+            ScrollingTabs(listOf("Trail", "Openings", "People (${members.size})", "Governance", "Charter"), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
         }
         when (tab) {
             0 -> if (data.trail.isEmpty()) {
@@ -297,14 +308,20 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
             }
-            1 -> if (data.openings.isEmpty()) {
-                item {
+            1 -> {
+                if (canManage && !c.isClosed) {
+                    item(key = "post-as") {
+                        OutlinedButton(onClick = { navigator.newOpening(c) }, modifier = Modifier.padding(horizontal = ScreenPadding).fillMaxWidth()) {
+                            Text("+ Post an opening as ${c.name}")
+                        }
+                    }
+                }
+                if (data.openings.isEmpty()) item {
                     EmptyNote(
                         if (c.isClosed) "This project is closed — it takes no new openings."
                         else "No offers or needs posted for this ${c.kind.noun.lowercase()} yet.",
                     )
                 }
-            } else {
                 items(data.openings, key = { "o-" + it.id }) { opening ->
                     OpeningCard(
                         opening,
@@ -315,52 +332,36 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
             }
-            2 -> {
-                val tiers = ROLE_TIERS.getValue(c.kind)
-                val known = tiers.map { it.first }.toSet()
-                tiers.forEach { (roleKey, label) ->
-                    val people = members.filter { it.role == roleKey || (roleKey == tiers.last().first && it.role !in known) }
-                    if (people.isNotEmpty()) {
-                        item(key = "tier-$roleKey") {
-                            SectionHeading("$label (${people.size})", Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp))
-                        }
-                        items(people, key = { "m-$roleKey-" + it.id }) { member -> MemberRow(member) }
-                    }
-                }
-                if (members.isEmpty()) item { EmptyNote("No members yet.") }
+            2 -> memberItems(c, me, canSetRoles, busy, onSetRole = vm::setRole, onOpen = navigator::person)
+            3 -> item(key = "governance") {
+                GovernancePanel(
+                    c.kind,
+                    c.id,
+                    snackbar,
+                    onManage = if (canManage) ({ navigator.manageCommunity(c.kind, c.id) }) else null,
+                    modifier = Modifier.padding(horizontal = ScreenPadding),
+                )
             }
-            else -> item(key = "charter") { Charter(data, Modifier.padding(horizontal = ScreenPadding)) }
+            else -> item(key = "charter") {
+                Charter(data, Modifier.padding(horizontal = ScreenPadding), onEdit = if (canManage) ({ navigator.manageCommunity(c.kind, c.id) }) else null)
+            }
         }
-    }
-}
-
-@Composable
-private fun MemberRow(member: Member) {
-    val navigator = LocalNavigator.current
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable { navigator.person(member.id) }
-            .padding(horizontal = ScreenPadding, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Avatar(member.id, member.name, size = 36.dp)
-        Spacer(Modifier.width(12.dp))
-        Text(member.name ?: "Member", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-        if (member.isAgent) PersonaTag(compact = true)
     }
 }
 
 /** What the group stands for: its values, value cards, and (for a sphere) what it holds. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Charter(data: CommunityData, modifier: Modifier = Modifier) {
+private fun Charter(data: CommunityData, modifier: Modifier = Modifier, onEdit: (() -> Unit)? = null) {
     val navigator = LocalNavigator.current
     val c = data.community
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (c.valueCards.isNotEmpty()) {
-            SectionHeading("Meaning Graph")
-            ValueChips(c.valueCards, subjectLabel = "We care about")
+        if (c.valueCards.isNotEmpty() || onEdit != null) {
+            SectionHeading("Meaning Graph") {
+                if (onEdit != null) TextButton(onClick = onEdit) { Text(if (c.valueCards.isEmpty()) "+ Add values" else "Edit") }
+            }
+            if (c.valueCards.isNotEmpty()) ValueChips(c.valueCards, subjectLabel = "We care about")
+            else MetaText("No value cards yet. Add the values this group holds itself to.", maxLines = 2)
         }
         if (c.values.isNotEmpty()) {
             SectionHeading("Values")
@@ -381,7 +382,7 @@ private fun Charter(data: CommunityData, modifier: Modifier = Modifier) {
                 GroupRow(CommunityKind.Project, ref.name ?: "Project") { navigator.community(CommunityKind.Project, ref.id) }
             }
         }
-        if (c.valueCards.isEmpty() && c.values.isEmpty() && data.alliances.isEmpty() && projects.isEmpty()) {
+        if (onEdit == null && c.valueCards.isEmpty() && c.values.isEmpty() && data.alliances.isEmpty() && projects.isEmpty()) {
             EmptyNote("No charter written yet.")
         }
     }

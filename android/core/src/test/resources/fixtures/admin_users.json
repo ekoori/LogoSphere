@@ -1,0 +1,4 @@
+{"users": [
+  {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Igor", "surname": "K", "full_name": "Igor K", "email": "igor@example.com", "location": "Melbourne", "is_platform_admin": true, "is_agent": false, "joined_at": "2026-07-02T10:00:00", "sphere_count": 4, "card_count": 3, "is_you": true},
+  {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie", "surname": "Kondo", "full_name": "Marie Kondo", "email": "marie.kondo@example.com", "location": null, "is_platform_admin": false, "is_agent": true, "joined_at": null, "sphere_count": 1, "card_count": 2, "is_you": false}
+]}

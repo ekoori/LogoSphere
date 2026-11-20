@@ -3,6 +3,8 @@ package com.krbavcic.logosphere.ui
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation.NavHostController
 import com.krbavcic.logosphere.core.logic.AppLink
+import com.krbavcic.logosphere.core.logic.InfoPage
+import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
 import kotlinx.serialization.Serializable
 
@@ -19,11 +21,21 @@ import kotlinx.serialization.Serializable
 @Serializable data object MeRoute
 
 @Serializable data class OpeningRoute(val id: String)
-@Serializable data object NewOpeningRoute
+
+/** A new opening; [actingAsKind]/[actingAsId] post it on behalf of a group the member manages. */
+@Serializable data class NewOpeningRoute(val actingAsKind: String? = null, val actingAsId: String? = null)
 @Serializable data class ExchangeRoute(val id: String)
-@Serializable data class CommunityRoute(val kind: String, val id: String)
+@Serializable data class CommunityRoute(val kind: String, val id: String, val tab: String? = null)
+@Serializable data class ManageCommunityRoute(val kind: String, val id: String)
+@Serializable data class NewCommunityRoute(val kind: String)
 @Serializable data class PersonRoute(val id: String)
 @Serializable data object SearchRoute
+@Serializable data object EditProfileRoute
+
+/** Writes a value card — the member's own, or a group's ([groupKind]/[groupId]); [cardId] edits one. */
+@Serializable data class ValueCardEditorRoute(val groupKind: String? = null, val groupId: String? = null, val cardId: String? = null)
+@Serializable data object AdminRoute
+@Serializable data class InfoRoute(val page: String)
 
 /** The bottom bar's destinations. */
 enum class Tab(val route: Any, val label: String) {
@@ -49,11 +61,15 @@ class Navigator(
 
     fun opening(id: String) = controller.navigate(OpeningRoute(id))
 
-    fun newOpening() = controller.navigate(NewOpeningRoute)
+    fun newOpening(actingAs: Community? = null) = controller.navigate(NewOpeningRoute(actingAs?.kind?.name, actingAs?.id))
 
     fun exchange(id: String) = controller.navigate(ExchangeRoute(id))
 
-    fun community(kind: CommunityKind, id: String) = controller.navigate(CommunityRoute(kind.name, id))
+    fun community(kind: CommunityKind, id: String, tab: String? = null) = controller.navigate(CommunityRoute(kind.name, id, tab))
+
+    fun manageCommunity(kind: CommunityKind, id: String) = controller.navigate(ManageCommunityRoute(kind.name, id))
+
+    fun newCommunity(kind: CommunityKind) = controller.navigate(NewCommunityRoute(kind.name))
 
     fun person(id: String) = controller.navigate(PersonRoute(id))
 
@@ -61,15 +77,34 @@ class Navigator(
 
     fun register() = controller.navigate(RegisterRoute)
 
-    /** A page of the web app, for what the phone leaves to the web. */
+    fun editProfile() = controller.navigate(EditProfileRoute)
+
+    fun valueCardEditor(group: Community? = null, cardId: String? = null) =
+        controller.navigate(ValueCardEditorRoute(group?.kind?.name, group?.id, cardId))
+
+    fun admin() = controller.navigate(AdminRoute)
+
+    fun info(page: InfoPage) = controller.navigate(InfoRoute(page.name))
+
+    /** This screen gives way to another (a new version of an opening, a group just started). */
+    fun replace(open: Navigator.() -> Unit) {
+        controller.popBackStack()
+        open()
+    }
+
+    /** A page of the web app, for anything the phone has no screen for. */
     fun web(path: String) = openWeb(path)
 
     fun link(link: AppLink) = when (link) {
         is AppLink.Opening -> opening(link.id)
         is AppLink.Exchange -> exchange(link.id)
-        is AppLink.Community -> community(link.kind, link.id)
+        is AppLink.Community -> community(link.kind, link.id, link.tab)
+        is AppLink.Manage -> manageCommunity(link.kind, link.id)
         is AppLink.Person -> person(link.id)
         AppLink.Me -> tab(Tab.Me)
+        AppLink.EditProfile -> editProfile()
+        AppLink.Admin -> admin()
+        is AppLink.Info -> info(link.page)
         is AppLink.Web -> web(link.path)
     }
 }

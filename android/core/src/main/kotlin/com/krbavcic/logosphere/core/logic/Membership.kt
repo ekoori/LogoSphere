@@ -31,6 +31,18 @@ object Membership {
         return role(community, userId) in MANAGE_ROLES.getValue(community.kind)
     }
 
+    /** The founder: admin1, or the kind's top role (a sphere's or alliance's admin, a project's manager). */
+    fun isFounder(community: Community, userId: String?): Boolean =
+        userId != null && (community.admin1 == userId || role(community, userId) == Roles.founderRole(community.kind))
+
+    /** Manages through a role of their own, not only through the platform-admin override. */
+    fun managesItself(community: Community, userId: String?): Boolean =
+        isFounder(community, userId) || role(community, userId) in MANAGE_ROLES.getValue(community.kind)
+
+    /** Only the top role (or a platform admin) may change other members' roles and approve requests. */
+    fun canSetRoles(community: Community, userId: String?, isPlatformAdmin: Boolean): Boolean =
+        userId != null && (isPlatformAdmin || isFounder(community, userId))
+
     /** Trail, openings and people are for members — and everyone, on a public sphere. */
     fun canViewActivity(community: Community, userId: String?, isPlatformAdmin: Boolean): Boolean =
         isMember(community, userId) || isPlatformAdmin ||

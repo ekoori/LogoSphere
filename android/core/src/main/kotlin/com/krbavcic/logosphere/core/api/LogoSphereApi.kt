@@ -1,5 +1,12 @@
 package com.krbavcic.logosphere.core.api
 
+import com.krbavcic.logosphere.core.model.AdminGroup
+import com.krbavcic.logosphere.core.model.AdminGroups
+import com.krbavcic.logosphere.core.model.AdminOpening
+import com.krbavcic.logosphere.core.model.AdminOpenings
+import com.krbavcic.logosphere.core.model.AdminOverview
+import com.krbavcic.logosphere.core.model.AdminUser
+import com.krbavcic.logosphere.core.model.AdminUsers
 import com.krbavcic.logosphere.core.model.AppNotification
 import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
@@ -8,28 +15,36 @@ import com.krbavcic.logosphere.core.model.ConfirmResult
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.ExchangeDetail
 import com.krbavcic.logosphere.core.model.ExchangeLikeResult
+import com.krbavcic.logosphere.core.model.GroupGovernance
 import com.krbavcic.logosphere.core.model.JoinResult
 import com.krbavcic.logosphere.core.model.LikeTarget
 import com.krbavcic.logosphere.core.model.LoginResponse
 import com.krbavcic.logosphere.core.model.NewComment
+import com.krbavcic.logosphere.core.model.NewCommunity
 import com.krbavcic.logosphere.core.model.NewOpening
+import com.krbavcic.logosphere.core.model.NewProposal
 import com.krbavcic.logosphere.core.model.NotificationInbox
 import com.krbavcic.logosphere.core.model.Opening
+import com.krbavcic.logosphere.core.model.OpeningEditResult
 import com.krbavcic.logosphere.core.model.OpeningLikeResult
+import com.krbavcic.logosphere.core.model.OwnProfile
 import com.krbavcic.logosphere.core.model.PersonRef
 import com.krbavcic.logosphere.core.model.PublicUser
 import com.krbavcic.logosphere.core.model.SearchResults
 import com.krbavcic.logosphere.core.model.SessionStatus
 import com.krbavcic.logosphere.core.model.ValueCard
+import com.krbavcic.logosphere.core.model.ValueCardDraft
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.JsonPrimitive
@@ -39,8 +54,10 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
@@ -139,6 +156,51 @@ class LogoSphereApi(
     /** The value cards on a person's, sphere's, alliance's or project's Meaning Graph. */
     suspend fun valueCards(ownerId: String): List<ValueCard> = get("/api/value_cards/$ownerId")
 
+    // ── Your profile ────────────────────────────────────────────────────────
+
+    suspend fun ownProfile(): OwnProfile = get("/api/user/profile")
+
+    /** Name, surname and location; a new photo too when [picture] is given. */
+    suspend fun updateProfile(name: String, surname: String, location: String, picture: Upload? = null) {
+        multipart<JsonElement>("/api/updateuser") {
+            addFormDataPart("name", name.trim())
+            addFormDataPart("surname", surname.trim())
+            addFormDataPart("location", location.trim())
+            picture?.let { addPicture("profile_picture", it) }
+        }
+    }
+
+    // ── Writing value cards: your own (groupId null) or a group's you manage ─
+
+    /** Writes a new card, or — with [cardId] — edits one (the server keeps the old wording as history). */
+    suspend fun saveValueCard(groupId: String?, cardId: String?, draft: ValueCardDraft): ValueCard {
+        val base = cardsPath(groupId)
+        return if (cardId == null) post(base, draft.toJson()) else patch("$base/$cardId", draft.toJson())
+    }
+
+    suspend fun deleteValueCard(groupId: String?, cardId: String) {
+        delete<JsonElement>("${cardsPath(groupId)}/$cardId")
+    }
+
+    /** CLEAR's E: re-read it, and if it still holds after reflection, endorse it. */
+    suspend fun endorseValueCard(groupId: String?, cardId: String): ValueCard =
+        post("${cardsPath(groupId)}/$cardId/endorse", JsonObject(emptyMap()))
+
+    /** CLEAR's R: it still holds — reviewed (the server asks again after 90 days). */
+    suspend fun reviewValueCard(groupId: String?, cardId: String): ValueCard =
+        post("${cardsPath(groupId)}/$cardId/review", JsonObject(emptyMap()))
+
+    /** Copies someone else's card onto your Meaning Graph ([targetId] = you) or a group's you manage. */
+    suspend fun cloneValueCard(card: ValueCard, targetId: String): ValueCard = post(
+        "/api/value_cards/clone",
+        buildJsonObject {
+            put("source", LogoSphereJson.encodeToJsonElement(card))
+            put("target_id", targetId)
+        },
+    )
+
+    private fun cardsPath(groupId: String?) = if (groupId == null) "/api/value_cards" else "/api/entity_value_cards/$groupId"
+
     // ── Meaning Trail and exchanges ─────────────────────────────────────────
 
     /** The signed-in member's own trail. */
@@ -172,6 +234,24 @@ class LogoSphereApi(
     suspend fun likeExchange(id: String, target: LikeTarget): ExchangeLikeResult =
         post("/api/exchange/$id/like", buildJsonObject { put("comment_type", target.key) })
 
+    /** Title, description and (with [banner]) the picture — by either side, until it's finished. */
+    suspend fun editExchange(id: String, title: String, description: String, banner: Upload? = null) {
+        multipart<JsonElement>("/api/exchange/$id/edit") {
+            addFormDataPart("title", title.trim())
+            addFormDataPart("description", description.trim())
+            banner?.let { addPicture("image", it) }
+        }
+    }
+
+    /** Up to three photos with the receipt (the recipient's). Returns how many were kept. */
+    suspend fun addReceiptPhotos(id: String, photos: List<Upload>): Int {
+        require(photos.isNotEmpty()) { "no photos" }
+        val result = multipart<JsonObject>("/api/exchange/$id/receipt_photos") {
+            photos.take(3).forEach { addPicture("photos", it) }
+        }
+        return result["count"]?.jsonPrimitive?.intOrNull ?: 0
+    }
+
     // ── Openings ────────────────────────────────────────────────────────────
 
     suspend fun openings(): List<Opening> = get("/api/openings")
@@ -188,8 +268,22 @@ class LogoSphereApi(
             put("sphere_name", opening.sphereName)
             put("project_name", opening.projectName)
             put("status", "Posted")
+            opening.actingAsId?.let { put("acting_as_id", it) }
         }
         post<JsonElement>("/api/openings", body)
+    }
+
+    /** Title and description. Once an exchange links to the opening, this makes a new version. */
+    suspend fun editOpening(id: String, title: String, description: String): OpeningEditResult = patch(
+        "/api/openings/$id",
+        buildJsonObject {
+            put("title", title.trim())
+            put("description", description)
+        },
+    )
+
+    suspend fun setOpeningImage(id: String, picture: Upload) {
+        multipart<JsonElement>("/api/openings/$id/image") { addPicture("image", picture) }
     }
 
     /** Step one of two: signal acceptance, as yourself or as an alliance/project you manage. */
@@ -226,6 +320,141 @@ class LogoSphereApi(
 
     suspend fun join(kind: CommunityKind, id: String): JoinResult =
         post("/api/${kind.path}/$id/join", JsonObject(emptyMap()))
+
+    /** Starts a group (the create call takes the core fields; a join policy other than open follows). */
+    suspend fun createCommunity(new: NewCommunity, banner: Upload? = null): Community {
+        val created = multipart<Community>("/api/${new.kind.path}") {
+            addFormDataPart("name", new.name.trim())
+            addFormDataPart("description", new.description.trim())
+            addFormDataPart("location", new.location.trim())
+            if (new.kind != CommunityKind.Sphere) {
+                addFormDataPart("sphere_id", new.sphereId.orEmpty())
+                addFormDataPart("sphere_name", new.sphereName.orEmpty())
+            }
+            if (new.kind == CommunityKind.Project) new.ownerAllianceId?.let { addFormDataPart("owner_alliance_id", it) }
+            banner?.let { addPicture("image", it) }
+        }.copy(kind = new.kind)
+        if (new.joinPolicy != "open" && created.id.isNotEmpty()) {
+            return updateCommunity(new.kind, created.id, mapOf("join_policy" to new.joinPolicy))
+        }
+        return created
+    }
+
+    /** Name, description and policies (join_policy, decision_policy, pm_policy, confirm_policy, phase). */
+    suspend fun updateCommunity(kind: CommunityKind, id: String, changes: Map<String, String>): Community =
+        patch<Community>("/api/${kind.path}/$id", JsonObject(changes.mapValues { JsonPrimitive(it.value) })).copy(kind = kind)
+
+    suspend fun setCommunityImage(kind: CommunityKind, id: String, picture: Upload) {
+        multipart<JsonElement>("/api/${kind.path}/$id/image") { addPicture("image", picture) }
+    }
+
+    /** A sphere's flags: public activity (its managers), sandbox enrolment (platform admins only). */
+    suspend fun setSphereFlags(id: String, isPublic: Boolean? = null, isSandbox: Boolean? = null) {
+        post<JsonElement>(
+            "/api/spheres/$id/governance",
+            buildJsonObject {
+                isPublic?.let { put("is_public", it) }
+                isSandbox?.let { put("is_sandbox", it) }
+            },
+        )
+    }
+
+    /** Sets a member's role; approves a request (any role) or, with `remove`, declines or removes. */
+    suspend fun setMemberRole(kind: CommunityKind, id: String, memberId: String, role: String) {
+        post<JsonElement>("/api/${kind.path}/$id/members/$memberId/role", buildJsonObject { put("role", role) })
+    }
+
+    // ── Governance ──────────────────────────────────────────────────────────
+
+    suspend fun governance(kind: CommunityKind, id: String): GroupGovernance = get("/api/${kind.path}/$id/governance")
+
+    suspend fun propose(kind: CommunityKind, id: String, proposal: NewProposal) {
+        post<JsonElement>(
+            "/api/${kind.path}/$id/proposals",
+            buildJsonObject {
+                put("kind", proposal.kind)
+                put("title", proposal.title.trim())
+                put("description", proposal.description.trim())
+                put("days", proposal.days)
+                if (proposal.kind == "policy") {
+                    put("policy_key", proposal.policyKey)
+                    put("policy_value", proposal.policyValue)
+                }
+            },
+        )
+    }
+
+    /** yes, no or abstain; voting again changes your vote. */
+    suspend fun vote(kind: CommunityKind, id: String, proposalId: String, choice: String) {
+        post<JsonElement>("/api/${kind.path}/$id/proposals/$proposalId/vote", buildJsonObject { put("choice", choice) })
+    }
+
+    /** A manager counts the votes now instead of waiting for the closing date. */
+    suspend fun closeProposal(kind: CommunityKind, id: String, proposalId: String) {
+        post<JsonElement>("/api/${kind.path}/$id/proposals/$proposalId/close", JsonObject(emptyMap()))
+    }
+
+    suspend fun withdrawProposal(kind: CommunityKind, id: String, proposalId: String) {
+        post<JsonElement>("/api/${kind.path}/$id/proposals/$proposalId/withdraw", JsonObject(emptyMap()))
+    }
+
+    /** Lends your vote to [delegateId]; null votes for yourself again. */
+    suspend fun delegateVote(kind: CommunityKind, id: String, delegateId: String?) {
+        post<JsonElement>(
+            "/api/${kind.path}/$id/delegation",
+            buildJsonObject { put("delegate_id", delegateId?.let { JsonPrimitive(it) } ?: JsonNull) },
+        )
+    }
+
+    // ── Platform administration (platform admins only) ───────────────────────
+
+    suspend fun adminOverview(): AdminOverview = get("/api/admin/overview")
+
+    suspend fun adminUsers(): List<AdminUser> = get<AdminUsers>("/api/admin/users").users
+
+    /** Grants or revokes the administrator flag, or marks someone an AI persona (or a person again). */
+    suspend fun adminSetUserFlags(id: String, isPlatformAdmin: Boolean? = null, isAgent: Boolean? = null) {
+        patch<JsonElement>(
+            "/api/admin/users/$id",
+            buildJsonObject {
+                isPlatformAdmin?.let { put("is_platform_admin", it) }
+                isAgent?.let { put("is_agent", it) }
+            },
+        )
+    }
+
+    suspend fun adminEditUser(id: String, name: String, surname: String, location: String) {
+        patch<JsonElement>(
+            "/api/admin/users/$id",
+            buildJsonObject {
+                put("name", name.trim())
+                put("surname", surname.trim())
+                put("location", location.trim())
+            },
+        )
+    }
+
+    suspend fun adminDeleteUser(id: String) {
+        delete<JsonElement>("/api/admin/users/$id")
+    }
+
+    suspend fun adminGroups(kind: CommunityKind): List<AdminGroup> = get<AdminGroups>("/api/admin/${kind.path}").items
+
+    suspend fun adminDeleteGroup(kind: CommunityKind, id: String) {
+        delete<JsonElement>("/api/admin/${kind.path}/$id")
+    }
+
+    /** A demo sphere: its members are AI personas, and it and everything in it is labelled Demo. */
+    suspend fun adminSetDemo(sphereId: String, isDemo: Boolean) {
+        patch<JsonElement>("/api/admin/spheres/$sphereId", buildJsonObject { put("is_demo", isDemo) })
+    }
+
+    suspend fun adminOpenings(): List<AdminOpening> = get<AdminOpenings>("/api/admin/openings").items
+
+    /** Only an opening no exchange came from can be deleted; others are withdrawn instead. */
+    suspend fun adminDeleteOpening(id: String) {
+        delete<JsonElement>("/api/admin/openings/$id")
+    }
 
     // ── Notifications ───────────────────────────────────────────────────────
 
@@ -296,13 +525,42 @@ class LogoSphereApi(
     private suspend inline fun <reified T> get(url: HttpUrl): T =
         execute(Request.Builder().url(url).get().build())
 
+    private fun json(body: JsonElement): RequestBody =
+        LogoSphereJson.encodeToString(JsonElement.serializer(), body).toRequestBody(jsonType)
+
     private suspend inline fun <reified T> post(path: String, body: JsonElement): T =
+        execute(Request.Builder().url(url(path)).post(json(body)).build())
+
+    private suspend inline fun <reified T> patch(path: String, body: JsonElement): T =
+        execute(Request.Builder().url(url(path)).patch(json(body)).build())
+
+    private suspend inline fun <reified T> delete(path: String): T =
+        execute(Request.Builder().url(url(path)).delete().build())
+
+    /** A `multipart/form-data` POST: text fields and picture files (uploads). */
+    private suspend inline fun <reified T> multipart(path: String, parts: MultipartBody.Builder.() -> Unit): T =
         execute(
             Request.Builder()
                 .url(url(path))
-                .post(LogoSphereJson.encodeToString(JsonElement.serializer(), body).toRequestBody(jsonType))
+                .post(MultipartBody.Builder().setType(MultipartBody.FORM).apply(parts).build())
                 .build(),
         )
+
+    private fun MultipartBody.Builder.addPicture(name: String, upload: Upload) {
+        addFormDataPart(name, upload.fileName, upload.bytes.toRequestBody(upload.mimeType.toMediaType()))
+    }
+
+    private fun ValueCardDraft.toJson(): JsonObject = buildJsonObject {
+        put("title", title.trim())
+        put("care_about", careAbout.trim())
+        put("because", because.trim())
+        put("looks_like", buildJsonArray { looksLikeLines.forEach { add(JsonPrimitive(it)) } })
+        put("drift_looks_like", driftLooksLike.trim())
+        put("in_conflict", inConflict.trim())
+        put("never_do", neverDo.trim())
+        put("frankl_mode", franklMode)
+        put("color_key", colorKey)
+    }
 
     /**
      * Runs the call, then reads and decodes the body on [Dispatchers.IO]: OkHttp hands back the

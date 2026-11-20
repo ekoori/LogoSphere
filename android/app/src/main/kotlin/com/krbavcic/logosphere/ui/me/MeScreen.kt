@@ -12,19 +12,28 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Gavel
+import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -32,6 +41,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,8 +52,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krbavcic.logosphere.AppContainer
 import com.krbavcic.logosphere.BuildConfig
+import com.krbavcic.logosphere.core.logic.InfoPage
 import com.krbavcic.logosphere.core.logic.Membership
 import com.krbavcic.logosphere.core.model.Community
+import com.krbavcic.logosphere.core.model.OwnProfile
 import com.krbavcic.logosphere.core.model.ValueCard
 import com.krbavcic.logosphere.data.Change
 import com.krbavcic.logosphere.ui.LoadViewModel
@@ -58,23 +70,40 @@ import com.krbavcic.logosphere.ui.common.QuietPill
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SectionHeading
-import com.krbavcic.logosphere.ui.common.ValueChips
+import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.values.FranklLegend
+import com.krbavcic.logosphere.ui.values.ValueCardActions
+import com.krbavcic.logosphere.ui.values.ValueCardItem
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-data class MeData(val cards: List<ValueCard>, val communities: List<Community>)
+data class MeData(val profile: OwnProfile?, val cards: List<ValueCard>, val communities: List<Community>)
 
 class MeViewModel(private val app: AppContainer) : LoadViewModel<MeData>() {
     init {
         load()
-        reloadOn(app.changes, Change.Communities)
+        reloadOn(app.changes, Change.Communities, Change.ValueCards, Change.Profile)
     }
 
     override suspend fun fetch(force: Boolean): MeData = coroutineScope {
         val me = app.session.user?.id
+        val profile = async { runCatching { app.api.ownProfile() }.getOrNull() }
         val cards = async { me?.let { app.api.valueCards(it) }.orEmpty() }
         val communities = async { runCatching { app.communities.all(force) }.getOrDefault(emptyList()) }
-        MeData(cards.await(), communities.await().filter { Membership.isMember(it, me) })
+        MeData(profile.await(), cards.await(), communities.await().filter { Membership.isMember(it, me) })
+    }
+
+    private fun replace(card: ValueCard) = update { data -> data.copy(cards = data.cards.map { if (it.id == card.id) card else it }) }
+
+    fun endorse(card: ValueCard) = card.id?.let { id -> act { replace(app.api.endorseValueCard(null, id)) } }
+
+    fun review(card: ValueCard) = card.id?.let { id -> act { replace(app.api.reviewValueCard(null, id)) } }
+
+    fun delete(card: ValueCard) = card.id?.let { id ->
+        act(onSuccess = { say("The card was removed.") }) {
+            app.api.deleteValueCard(null, id)
+            update { data -> data.copy(cards = data.cards.filter { it.id != id }) }
+        }
     }
 
     fun signOut() = app.session.signOut()
@@ -88,9 +117,20 @@ fun MeScreen() {
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
     val user = app.session.user
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     var showLicences by rememberSaveable { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    SnackbarMessages(vm.messages, snackbar)
+    val actions = remember(vm) {
+        ValueCardActions(
+            onEdit = { navigator.valueCardEditor(cardId = it.id) },
+            onDelete = { vm.delete(it) },
+            onEndorse = { vm.endorse(it) },
+            onReview = { vm.review(it) },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -99,31 +139,51 @@ fun MeScreen() {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     item(key = "head") {
-                        Row(Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Avatar(user?.id, user?.name, size = 64.dp)
-                            Spacer(Modifier.width(16.dp))
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(user?.name ?: "", style = MaterialTheme.typography.headlineSmall)
-                                if (user?.isPlatformAdmin == true) QuietPill("Platform admin")
+                        Column(Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Avatar(user?.id, user?.name, size = 72.dp)
+                                Spacer(Modifier.width(16.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(data.profile?.displayName ?: user?.name.orEmpty(), style = MaterialTheme.typography.headlineSmall)
+                                    data.profile?.location?.takeIf { it.isNotBlank() }?.let { MetaText("📍 $it") }
+                                    if (user?.isPlatformAdmin == true) QuietPill("Platform admin")
+                                }
+                            }
+                            OutlinedButton(onClick = navigator::editProfile, modifier = Modifier.fillMaxWidth()) { Text("Edit profile") }
+                        }
+                    }
+                    item(key = "values-head") {
+                        Column(Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            SectionHeading("Your Meaning Graph") {
+                                if (data.cards.isNotEmpty()) TextButton(onClick = { navigator.valueCardEditor() }) { Text("+ Add card") }
+                            }
+                            MetaText("What you care about and why, in a form that can't easily be optimised away.", maxLines = 2)
+                        }
+                    }
+                    if (data.cards.isEmpty()) {
+                        item(key = "values-empty") {
+                            Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text(
+                                    "No value cards yet. A value card captures one thing you genuinely care about — not a hashtag, " +
+                                        "but a reason, a behaviour, and a drift signal. Start with one value you'd recognise yourself by.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Button(onClick = { navigator.valueCardEditor() }) { Text("Write your first card") }
                             }
                         }
                     }
-                    item(key = "values") {
-                        Column(Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SectionHeading("Your values") {
-                                TextButton(onClick = { navigator.web("/profile") }) { Text("Edit on the web") }
-                            }
-                            if (data.cards.isEmpty()) {
-                                MetaText("No value cards yet. A value card says what you care about, and why.", maxLines = 2)
-                            } else {
-                                ValueChips(data.cards)
-                            }
-                        }
+                    items(data.cards, key = { "card-" + it.id }) { card ->
+                        ValueCardItem(card, "I care about", actions, busy, Modifier.padding(horizontal = ScreenPadding))
+                    }
+                    if (data.cards.isNotEmpty()) {
+                        item(key = "legend") { FranklLegend(Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp)) }
                     }
                     item(key = "communities-head") {
                         SectionHeading("Your communities", Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp))
@@ -135,7 +195,7 @@ fun MeScreen() {
                         ListItem(
                             headlineContent = { Text(c.name, style = MaterialTheme.typography.titleSmall) },
                             supportingContent = {
-                                val role = Membership.role(c, user?.id)?.replaceFirstChar { it.uppercase() }
+                                val role = Membership.role(c, user?.id)?.let { com.krbavcic.logosphere.core.logic.Roles.label(c.kind, it) }
                                 Text(listOfNotNull(c.kind.noun, role).joinToString(" · "))
                             },
                             leadingContent = { GroupAvatar(c.kind, size = 36.dp) },
@@ -149,8 +209,15 @@ fun MeScreen() {
                             user?.id?.let { id ->
                                 LinkRow(Icons.Outlined.Person, "Your public profile") { navigator.person(id) }
                             }
-                            LinkRow(Icons.Outlined.Tune, "Profile, values & settings on the web") { navigator.web("/settings") }
-                            LinkRow(Icons.Outlined.Language, "About LogoSphere") { navigator.web("/about") }
+                            if (user?.isPlatformAdmin == true) {
+                                LinkRow(Icons.Outlined.AdminPanelSettings, "Platform administration") { navigator.admin() }
+                            }
+                            LinkRow(Icons.Outlined.Language, InfoPage.About.title) { navigator.info(InfoPage.About) }
+                            LinkRow(Icons.AutoMirrored.Outlined.HelpOutline, InfoPage.HowItWorks.title) { navigator.info(InfoPage.HowItWorks) }
+                            LinkRow(Icons.Outlined.Handshake, InfoPage.Contribute.title) { navigator.info(InfoPage.Contribute) }
+                            LinkRow(Icons.Outlined.Favorite, InfoPage.Donate.title) { navigator.info(InfoPage.Donate) }
+                            LinkRow(Icons.Outlined.PrivacyTip, InfoPage.Privacy.title) { navigator.info(InfoPage.Privacy) }
+                            LinkRow(Icons.Outlined.Gavel, InfoPage.Terms.title) { navigator.info(InfoPage.Terms) }
                             LinkRow(Icons.Outlined.Info, "Fonts & licences") { showLicences = true }
                             LinkRow(Icons.AutoMirrored.Outlined.Logout, "Sign out") { confirmSignOut = true }
                             MetaText(

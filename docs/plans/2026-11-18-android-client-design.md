@@ -43,6 +43,7 @@ In:
 Out (stays on the web; the Me tab links there): entity management and roles,
 governance proposals and voting, value-card authoring/editing/cloning, profile
 editing, all image uploads, the admin console, About/How it works.
+(All of these came to the app on 2026-11-20: docs/plans/2026-11-20-android-parity.md.)
 
 ## Architecture
 

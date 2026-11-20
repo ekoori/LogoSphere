@@ -2,28 +2,40 @@
 
 A native Android client for LogoSphere — Kotlin, Jetpack Compose and Material 3 — that talks to the
 same API as the web app (`https://ts.krbavcic.com` by default). Design notes:
-[`docs/plans/2026-11-18-android-client-design.md`](../docs/plans/2026-11-18-android-client-design.md).
+[`docs/plans/2026-11-18-android-client-design.md`](../docs/plans/2026-11-18-android-client-design.md)
+(the first version) and
+[`docs/plans/2026-11-20-android-parity.md`](../docs/plans/2026-11-20-android-parity.md) (everything
+else the web does).
 
 ## What it does
 
+Everything the website does, apart from the public sphere page for signed-out visitors:
+
 - **Trail** — your Meaning Trail, your own openings, the people you follow.
-- **Openings** — browse offers and needs (by type and sphere), post one, like, accept (as yourself
-  or as an alliance/project you manage), confirm or decline acceptances, withdraw.
-- **Exchange** — status timeline and actions, receipts (Frankl mode, value cards, context, photos),
-  the initiator's note, follow-ups, acknowledgements, likes.
-- **Communities** — spheres, alliances and projects: join, their trail, openings, people, charter.
-- **People** — profiles, values, trails; follow and unfollow.
+- **Openings** — browse offers and needs (by type and sphere), post one (as yourself or for a group
+  you manage), like, accept (as yourself or as an alliance/project you manage), confirm or decline
+  acceptances, withdraw; edit one (a new version once an exchange links to it) and set its picture.
+- **Exchange** — status timeline and actions, receipts (Frankl mode, value cards, context, up to
+  three photos), the initiator's note, follow-ups, acknowledgements, likes; edit its title,
+  description and banner until it's finished.
+- **Communities** — spheres, alliances and projects: start one, join, their trail, openings,
+  people, charter; **governance** (policies, lending your vote, proposals and voting); and for
+  managers a console — settings and policies, banner, the group's Meaning Graph, approving
+  requests and setting roles.
+- **People** — profiles, values, trails; follow and unfollow; copy someone's value card onto your
+  graph or a group's.
+- **Me** — your Meaning Graph (write, edit, endorse, review, remove cards), your profile and photo,
+  the information pages (About, How it works, Contribute, Donate, Privacy, Terms).
 - **Inbox** — notifications with an unread badge; tapping one opens what it's about.
 - **Search** — text search and "near my values".
-
-Management, governance, value-card editing, image uploads and the admin console stay on the web;
-the app links there.
+- **Platform administration** — for platform admins: overview, users, spheres, alliances,
+  projects and openings.
 
 ## Layout
 
 | Module | What |
 |---|---|
-| `core` | Plain Kotlin/JVM: API models, the HTTP client (`LogoSphereApi`, OkHttp + kotlinx.serialization), and the lifecycle rules (`OpeningRules`, `ExchangeRules`, `Membership`, `Links`, `Dates`). |
+| `core` | Plain Kotlin/JVM: API models, the HTTP client (`LogoSphereApi`, OkHttp + kotlinx.serialization), and the rules screens ask (`OpeningRules`, `ExchangeRules`, `Membership`, `Roles`, `Policies`, `Links`, `Dates`). |
 | `app` | The Android app: Compose screens and ViewModels, navigation, session storage (DataStore), images (Coil). |
 
 The rules in `core` follow the backend's guards (`backend/app/routes/openings.py`,

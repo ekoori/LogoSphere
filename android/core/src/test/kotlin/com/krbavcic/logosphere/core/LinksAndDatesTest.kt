@@ -2,6 +2,7 @@ package com.krbavcic.logosphere.core
 
 import com.krbavcic.logosphere.core.logic.AppLink
 import com.krbavcic.logosphere.core.logic.Dates
+import com.krbavcic.logosphere.core.logic.InfoPage
 import com.krbavcic.logosphere.core.logic.Links
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.NotificationInbox
@@ -20,15 +21,22 @@ class LinksTest {
         assertEquals(AppLink.Exchange("x1"), Links.parse("/exchange?id=x1"))
         assertEquals(AppLink.Person("u1"), Links.parse("/user?id=u1"))
         assertEquals(AppLink.Community(CommunityKind.Sphere, "s1"), Links.parse("/sphere?id=s1"))
-        assertEquals(AppLink.Community(CommunityKind.Alliance, "a1"), Links.parse("/alliance?tab=x&id=a1"))
+        assertEquals(AppLink.Community(CommunityKind.Alliance, "a1", tab = "governance"), Links.parse("/alliance?tab=governance&id=a1"))
         assertEquals(AppLink.Community(CommunityKind.Project, "p1"), Links.parse("/project?id=p1#top"))
         assertEquals(AppLink.Me, Links.parse("/profile"))
+        // What used to open on the web now has screens of its own.
+        assertEquals(AppLink.Manage(CommunityKind.Alliance, "a1"), Links.parse("/alliance-management?id=a1"))
+        assertEquals(AppLink.EditProfile, Links.parse("/settings"))
+        assertEquals(AppLink.Admin, Links.parse("/admin?tab=users"))
+        assertEquals(AppLink.Info(InfoPage.HowItWorks), Links.parse("/how-it-works"))
+        assertEquals(AppLink.Info(InfoPage.Terms), Links.parse("/tos"))
     }
 
     @Test
     fun anythingElseOpensOnTheWeb() {
         assertEquals(AppLink.Web("/sphere?name=Riverside%20Commons"), Links.parse("/sphere?name=Riverside%20Commons"))
-        assertEquals(AppLink.Web("/alliance-management?id=a1"), Links.parse("/alliance-management?id=a1"))
+        assertEquals(AppLink.Web("/alliance-management"), Links.parse("/alliance-management"))
+        assertEquals(AppLink.Web("/somewhere-new"), Links.parse("/somewhere-new"))
         assertNull(Links.parse(""))
         assertNull(Links.parse(null))
     }

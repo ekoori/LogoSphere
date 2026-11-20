@@ -345,6 +345,23 @@ fun LikeControl(info: LikeInfo, onToggle: () -> Unit, modifier: Modifier = Modif
     if (info.canLike) LikeButton(info.liked, info.count, onToggle, modifier) else LikeCount(info.count, modifier)
 }
 
+/**
+ * A text link that may wrap: a TextButton's pill shape clips the corners of a second line, so
+ * links that can run long are plain clickable text.
+ */
+@Composable
+fun LinkText(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .padding(vertical = 10.dp),
+    )
+}
+
 /** A full-width primary action, the web's `.btn-primary`. */
 @Composable
 fun PrimaryAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, busy: Boolean = false) {

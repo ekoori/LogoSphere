@@ -1,5 +1,6 @@
 package com.krbavcic.logosphere.ui.openings
 
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,10 +11,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -141,6 +147,42 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
         val opening = current?.opening ?: return
         toggleOpeningLike(app.api, opening) { data, f -> data.copy(opening = f(data.opening)) }
     }
+
+    private val _replaced = Channel<String>(Channel.BUFFERED)
+
+    /** A new version replaced this one: the screen moves to it. */
+    val replaced = _replaced.receiveAsFlow()
+
+    /** Once an exchange links to the opening, the server keeps it as it was and saves the edit as a new version. */
+    fun edit(title: String, description: String, onDone: () -> Unit) {
+        if (title.isBlank()) {
+            say("The title can't be empty.")
+            return
+        }
+        act {
+            val result = app.api.editOpening(id, title, description)
+            onDone()
+            app.openings.invalidate()
+            app.changes.emit(Change.Openings)
+            val newId = result.service?.id
+            if (result.versioned && newId != null && newId != id) {
+                _replaced.send(newId)
+            } else {
+                reload()
+                say("Opening updated.")
+            }
+        }
+    }
+
+    fun setPicture(uri: Uri) = act(onSuccess = {
+        app.openings.invalidate()
+        app.changes.emit(Change.Openings)
+        reload()
+        say("The picture was updated.")
+    }) {
+        app.api.setOpeningImage(id, app.pictures.read(uri))
+        app.pictures.replaced(app.api.openingImageUrl(id))
+    }
 }
 
 @Composable
@@ -154,6 +196,7 @@ fun OpeningScreen(id: String) {
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
     LaunchedEffect(vm) { vm.openExchange.collect { navigator.exchange(it) } }
+    LaunchedEffect(vm) { vm.replaced.collect { newId -> navigator.replace { opening(newId) } } }
 
     Scaffold(
         // The title is the banner's; the bar names what this is.
@@ -179,6 +222,11 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
     val opening = data.opening
     val me = vm.viewerId
     var confirmWithdraw by rememberSaveable { mutableStateOf(false) }
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val canManage = OpeningRules.mayManage(opening, me)
+    val isOwn = OpeningRules.isOwn(opening, me)
+    val cancelled = opening.status == "Cancelled"
+    val pickPicture = rememberPicturePicker { vm.setPicture(it) }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(key = "banner") {
@@ -249,8 +297,22 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         )
                     }
                 }
-                opening.description?.takeIf { it.isNotBlank() }?.let {
-                    Text(it, style = MaterialTheme.typography.bodyLarge)
+                if (editing) {
+                    EditOpeningForm(opening, busy, onSave = { title, description -> vm.edit(title, description) { editing = false } }, onCancel = { editing = false })
+                } else {
+                    opening.description?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyLarge)
+                    }
+                    if (canManage && !cancelled) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            // A platform admin may change anyone's opening: say so.
+                            val asAdmin = if (isOwn || opening.isProvider) "" else " (admin)"
+                            if (opening.isCurrent) TextButton(onClick = { editing = true }) { Text("✎ Edit$asAdmin") }
+                            TextButton(onClick = pickPicture, enabled = !busy) {
+                                Text((if (opening.hasImage) "Change picture" else "Add a picture") + asAdmin)
+                            }
+                        }
+                    }
                 }
                 if (opening.values.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -388,6 +450,38 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
                     Text(if (OpeningRules.isOwn(opening, me)) "Withdraw opening" else "Withdraw (platform admin)")
                 }
             }
+        }
+    }
+}
+
+/** Title and description, edited in place (the web's inline form). */
+@Composable
+private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, String) -> Unit, onCancel: () -> Unit) {
+    var title by rememberSaveable(opening.id) { mutableStateOf(opening.title) }
+    var description by rememberSaveable(opening.id) { mutableStateOf(opening.description.orEmpty()) }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Title") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+        )
+        MetaText(
+            "Once an exchange has come from this opening, saving keeps this version as it was and makes a new one.",
+            maxLines = 3,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { onSave(title, description) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
+            TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
         }
     }
 }
