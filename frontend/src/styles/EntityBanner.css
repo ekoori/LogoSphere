@@ -5,6 +5,13 @@
    ========================================================================== */
 
 .ep-banner {
+    /* A banner reads like a photo — light words on deep colour — in both
+       themes, so its wash uses the brand's fixed colours, not the theme's. */
+    --bn-honey: #d9a23f;
+    --bn-terracotta: #c2643c;
+    --bn-moss: #46583a;
+    --bn-moss-deep: #2f3d27;
+    --bn-leaf: #6f8a4f;
     position: relative;
     width: 100%;
     min-height: clamp(220px, 32vw, 320px);
@@ -35,16 +42,16 @@
 }
 
 .ep-banner--sphere .ep-banner-fallback {
-    background: linear-gradient(135deg, var(--honey) 0%, var(--terracotta) 55%, var(--moss-deep) 130%);
+    background: linear-gradient(135deg, var(--bn-honey) 0%, var(--bn-terracotta) 55%, var(--bn-moss-deep) 130%);
 }
 .ep-banner--alliance .ep-banner-fallback {
-    background: linear-gradient(135deg, var(--moss) 0%, var(--moss-deep) 60%, #26311e 130%);
+    background: linear-gradient(135deg, var(--bn-moss) 0%, var(--bn-moss-deep) 60%, #26311e 130%);
 }
 .ep-banner--project .ep-banner-fallback {
-    background: linear-gradient(135deg, var(--leaf) 0%, var(--moss) 65%, var(--moss-deep) 130%);
+    background: linear-gradient(135deg, var(--bn-leaf) 0%, var(--bn-moss) 65%, var(--bn-moss-deep) 130%);
 }
 .ep-banner--opening .ep-banner-fallback {
-    background: linear-gradient(135deg, var(--terracotta) 0%, var(--honey) 60%, var(--moss-deep) 130%);
+    background: linear-gradient(135deg, var(--bn-terracotta) 0%, var(--bn-honey) 60%, var(--bn-moss-deep) 130%);
 }
 
 .ep-banner-glyph {
@@ -98,7 +105,7 @@
 }
 .ep-banner-content .ep-sphere-chip:hover {
     background: #fdfaf2;
-    color: var(--moss-deep);
+    color: var(--bn-moss-deep);
 }
 /* "Led by <alliance>" under a project's title. */
 .ep-banner-content .ep-lead-alliance {
@@ -195,3 +202,19 @@
 @media (max-width: 640px) {
     .ep-banner { border-radius: 0 0 var(--r-md) var(--r-md); }
 }
+
+/* Leaving a group: quiet on the banner, and asked twice. */
+.ep-banner-content .ep-leave-btn {
+    margin-top: 0.6rem;
+    background: transparent;
+    color: rgba(247, 244, 232, 0.85);
+    border: 1px solid rgba(247, 244, 232, 0.45);
+    border-radius: var(--r-pill);
+    padding: 0.4em 1em;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.ep-banner-content .ep-leave-btn:hover:not(:disabled) { background: rgba(20, 24, 16, 0.35); color: #fdfaf2; }
+.ep-banner-content .ep-leave-btn.is-armed { background: rgba(177, 68, 47, 0.85); border-color: transparent; color: #fdfaf2; }

@@ -85,7 +85,7 @@
 }
 .project-link a:hover,
 .service .project-link a:hover,
-.service-card .project-link a:hover { background: var(--moss); color: #f7f4e8; }
+.service-card .project-link a:hover { background: var(--moss); color: var(--on-fill); }
 
 /* Project indication on a service card (read-only, not a control) */
 .service-project {
@@ -139,7 +139,7 @@
     width: 100%;
     padding: 0.7em 1em;
     background: var(--leaf);
-    color: #f7f4e8;
+    color: var(--on-fill);
     border: none;
     border-radius: var(--r-pill);
     font-family: var(--font-body);
@@ -193,7 +193,7 @@
     border-radius: var(--r-pill);
 }
 .service-view-exchange { background: var(--honey); color: var(--ink); }
-.service-view-exchange:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; }
+.service-view-exchange:hover:not(:disabled) { background: var(--terracotta); color: var(--on-fill); }
 
 /* Provider view: pending acceptances to confirm */
 .service-pending {
@@ -225,7 +225,7 @@
 .service-confirm-btn {
     padding: 0.5em 0.9em;
     background: var(--leaf);
-    color: #f7f4e8;
+    color: var(--on-fill);
     border: none;
     border-radius: var(--r-pill);
     font-family: var(--font-body);
@@ -250,7 +250,7 @@
     white-space: nowrap;
     transition: background-color 0.18s var(--ease), color 0.18s var(--ease), border-color 0.18s var(--ease);
 }
-.service-reject-btn:hover:not(:disabled) { background: var(--terracotta); color: #f7f4e8; border-color: var(--terracotta); }
+.service-reject-btn:hover:not(:disabled) { background: var(--terracotta); color: var(--on-fill); border-color: var(--terracotta); }
 .service-reject-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Sphere | project pipe in the header eyebrow line */
@@ -285,7 +285,7 @@
     margin-top: 1em;
     padding: 0.75em;
     background: var(--terracotta);
-    color: #fff7ef;
+    color: var(--on-accent);
     border: none;
     border-radius: var(--r-pill);
     cursor: pointer;
@@ -311,8 +311,8 @@
     font-size: 0.82em;
     font-weight: 600;
 }
-.step.completed { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
-.step.in-progress { background: var(--terracotta); color: #fff7ef; border-color: var(--terracotta); }
+.step.completed { background: var(--moss); color: var(--on-fill); border-color: var(--moss); }
+.step.in-progress { background: var(--terracotta); color: var(--on-accent); border-color: var(--terracotta); }
 
 /* "Joe on behalf of <Entity>" attribution */
 .on-behalf-of {

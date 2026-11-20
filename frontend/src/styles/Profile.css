@@ -83,7 +83,7 @@
     align-items: center;
     justify-content: center;
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
     font-family: var(--font-display);
     font-weight: 600;
     font-size: clamp(1.5rem, 4vw, 2.4rem);
@@ -383,7 +383,7 @@
 }
 .vc-delete-yes {
     background: var(--danger, #b94040);
-    color: #fff;
+    color: var(--on-fill-strong);
     border-color: var(--danger, #b94040);
 }
 .vc-delete-yes:hover { background: #8c2020; border-color: #8c2020; }
@@ -392,7 +392,7 @@
     color: var(--moss);
     border-color: var(--border-soft);
 }
-.vc-delete-no:hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.vc-delete-no:hover { background: var(--moss); color: var(--on-fill); border-color: var(--moss); }
 
 /* Title */
 .vc-title {

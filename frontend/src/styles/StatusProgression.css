@@ -48,16 +48,16 @@
 }
 .status-progression .phase-done {
     background: var(--leaf);
-    color: #f4f7ec;
+    color: var(--on-fill);
 }
 .status-progression .phase-active {
     background: var(--terracotta);
-    color: #fff7ef;
+    color: var(--on-accent);
     box-shadow: 0 2px 8px rgba(194, 100, 60, 0.3);
 }
 .status-progression .phase-cancelled {
     background: var(--danger);
-    color: #fff;
+    color: var(--on-fill-strong);
 }
 
 @media (max-width: 520px) {

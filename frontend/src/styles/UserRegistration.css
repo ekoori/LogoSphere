@@ -23,7 +23,7 @@
   
   .register-form button {
     background-color: var(--leaf); /* darker blue */
-    color: white;
+    color: var(--on-fill-strong);
     border: none;
     cursor: pointer;
 }

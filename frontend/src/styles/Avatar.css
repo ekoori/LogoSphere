@@ -12,7 +12,7 @@
 }
 
 .avatar--initials {
-    color: #f7f4e8;
+    color: var(--on-fill);
     font-family: var(--font-body);
     font-weight: 700;
     line-height: 1;

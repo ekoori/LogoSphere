@@ -260,7 +260,7 @@
     border-color: var(--leaf);
     color: var(--moss-deep);
 }
-.xc-add-receipt:hover { background: var(--leaf); color: #f7f4e8; }
+.xc-add-receipt:hover { background: var(--leaf); color: var(--on-fill); }
 .xc-add-acknowledgement {
     background: rgba(217, 162, 63, 0.1);
     border-color: var(--honey);
@@ -275,7 +275,7 @@
     border: none;
     border-radius: var(--r-pill);
     cursor: pointer;
-    color: #f7f4e8;
+    color: var(--on-fill);
     width: 100%;
     font-family: var(--font-body);
     font-weight: 600;
@@ -301,7 +301,7 @@
     border: none;
     border-radius: var(--r-pill);
     cursor: pointer;
-    color: #f7f4e8;
+    color: var(--on-fill);
     width: 100%;
     font-family: var(--font-body);
     font-weight: 600;

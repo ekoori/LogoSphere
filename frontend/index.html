@@ -5,6 +5,15 @@
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#46583a" />
+    <!-- The chosen theme (src/utils/theme.js), applied before the first paint. -->
+    <script>
+      try {
+        var t = localStorage.getItem('logosphere-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var dark = t === 'dark' || (t !== 'light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#171c13');
+      } catch (e) {}
+    </script>
     <meta
       name="description"
       content="LogoSphere — a community platform built on the gift economy and liquid democracy."

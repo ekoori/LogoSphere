@@ -90,7 +90,7 @@
 .status {
     padding: 0.2em 0.5em;
     border-radius: 4px;
-    color: white;
+    color: var(--on-fill-strong);
 }
 
 .status.active {
@@ -99,7 +99,7 @@
 
 .btn-orange {
     background-color: var(--terracotta);
-    color: white;
+    color: var(--on-fill-strong);
     border: none;
     padding: 0.5em 1em;
     border-radius: 4px;

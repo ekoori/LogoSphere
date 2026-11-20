@@ -61,7 +61,7 @@
 .settings-actions { margin-top: 1.2rem; }
 .settings-card .btn-orange {
     background: var(--terracotta);
-    color: #fff7ef;
+    color: var(--on-accent);
     border: none;
     padding: 0.75em 1.4em;
     min-height: 44px;
@@ -75,6 +75,55 @@
 .settings-card .btn-orange:hover:not(:disabled) { background: var(--terracotta-deep); transform: translateY(-1px); }
 .settings-card .btn-orange:disabled { opacity: 0.6; cursor: default; }
 .settings-coming-soon p { color: var(--ink-faint); font-size: 0.9rem; margin: 0; }
+
+/* Jump links under the heading. */
+.settings-jump { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.9rem; font-size: 0.9rem; }
+.settings-jump a { color: var(--terracotta-deep); }
+.settings-sub { margin: -0.4rem 0 1rem; color: var(--ink-soft); font-size: 0.92rem; }
+.settings-hint--err { color: var(--danger); }
+.settings-actions .settings-hint { margin-top: 0.6rem; }
+
+/* Appearance: three choices, each with a little swatch of the page it gives. */
+.settings-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.6rem; }
+.settings-choice {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.95rem; font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.settings-choice:hover { border-color: var(--sage); }
+.settings-choice.is-on { border-color: var(--moss); box-shadow: var(--ring); }
+.settings-choice input { accent-color: var(--moss); margin: 0; }
+.settings-swatch {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--border);
+    flex: none;
+}
+.settings-swatch--light { background: linear-gradient(135deg, #f3ecda 50%, #46583a 50%); }
+.settings-swatch--dark { background: linear-gradient(135deg, #171c13 50%, #a9c08a 50%); }
+.settings-swatch--system { background: linear-gradient(135deg, #f3ecda 50%, #171c13 50%); }
+
+/* Deleting the account: set apart, and a red button. */
+.settings-card--danger { border-color: color-mix(in srgb, var(--danger) 45%, var(--border-soft)); }
+.settings-card--danger h3 { color: var(--danger); }
+.btn-danger {
+    background: var(--danger);
+    color: var(--on-fill-strong);
+    border: none;
+    padding: 0.75em 1.4em;
+    min-height: 44px;
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-danger:disabled { opacity: 0.55; cursor: default; }
+.btn-danger + .settings-hint { margin-top: 0.6rem; }
 
 @media (max-width: 640px) {
     .settings-card .btn-orange { width: 100%; }

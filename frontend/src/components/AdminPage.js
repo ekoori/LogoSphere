@@ -132,6 +132,21 @@ function UsersTab({ notify }) {
     const [filter, setFilter] = useState('');
     const [editing, setEditing] = useState(null);   // {id, name, surname, location}
     const [busyId, setBusyId] = useState(null);
+    const [reset, setReset] = useState(null);       // {id, name, url} - the link just made
+    const [copied, setCopied] = useState(false);
+
+    const makeResetLink = async (u) => {
+        setBusyId(u.id);
+        try {
+            const r = await api.post(`/api/admin/users/${u.id}/reset_link`);
+            setReset({ id: u.id, name: u.full_name, url: window.location.origin + r.data.path });
+            setCopied(false);
+        } catch (e) {
+            notify({ ok: false, text: e.response?.data?.message || 'Could not make a reset link.' });
+        } finally {
+            setBusyId(null);
+        }
+    };
 
     const act = async (id, fn, okMsg) => {
         setBusyId(id);
@@ -196,6 +211,12 @@ function UsersTab({ notify }) {
                                                     u.is_agent ? `${u.full_name} is no longer an AI persona.` : `${u.full_name} is now an AI persona.`)}
                                             />
                                         )}
+                                        <TwoStep
+                                            label="Reset link"
+                                            confirmLabel="Make reset link"
+                                            disabled={busyId === u.id}
+                                            onConfirm={() => makeResetLink(u)}
+                                        />
                                         {!u.is_you && !u.is_platform_admin && (
                                             <TwoStep
                                                 className="adm-btn--danger"
@@ -207,6 +228,26 @@ function UsersTab({ notify }) {
                                         )}
                                     </td>
                                 </tr>
+                                {reset?.id === u.id && (
+                                    <tr className="adm-editor-row">
+                                        <td colSpan={7}>
+                                            <div className="adm-reset">
+                                                <p className="adm-muted">
+                                                    A password reset link for <b>{reset.name}</b>. Send it to them yourself: it works once,
+                                                    for the next 24 hours, and signs them out everywhere when used. It isn't shown again.
+                                                </p>
+                                                <div className="adm-reset-row">
+                                                    <input readOnly value={reset.url} onFocus={(e) => e.target.select()} aria-label="Reset link" />
+                                                    <button type="button" className="adm-btn adm-btn--primary"
+                                                            onClick={() => navigator.clipboard?.writeText(reset.url).then(() => setCopied(true))}>
+                                                        {copied ? 'Copied' : 'Copy'}
+                                                    </button>
+                                                    <button type="button" className="adm-btn" onClick={() => setReset(null)}>Done</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
                                 {editing?.id === u.id && (
                                     <tr className="adm-editor-row">
                                         <td colSpan={7}>

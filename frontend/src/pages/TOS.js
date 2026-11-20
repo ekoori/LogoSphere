@@ -1,41 +1,166 @@
+// Terms — the agreement for using LogoSphere, in plain words: what it is, your
+// account, what you post, how members treat each other, groups and their
+// managers, the demo spheres, and the limits of what a small project promises.
 import React from 'react';
-import '../styles/Pages.css';
+import { Link } from 'react-router-dom';
+import DocPage from '../components/DocPage';
 
-const TOS = () => {
-  return (
-    <div className="container doc-page">
-      <main>
-        <section className="tos-intro">
-          <h1>Terms of Service</h1>
-          <p>Welcome to LogoSphere. By using our platform, you agree to comply with and be bound by the following terms and conditions of service. Please review the following terms carefully.</p>
-        </section>
-        <section className="tos-acceptance">
-          <h2>Acceptance of Terms</h2>
-          <p>By accessing and using LogoSphere, you accept and agree to be bound by the terms and provision of this agreement. In addition, when using LogoSphere's services, you shall be subject to any posted guidelines or rules applicable to such services. Any participation in this service will constitute acceptance of this agreement. If you do not agree to abide by the above, please do not use this service.</p>
-        </section>
-        <section className="tos-changes">
-          <h2>Changes to Terms</h2>
-          <p>LogoSphere reserves the right to update or modify these terms at any time without prior notice. Your continued use of the service following any such change constitutes your agreement to follow and be bound by the terms as changed. For this reason, we encourage you to review these terms whenever you use the service.</p>
-        </section>
-        <section className="tos-responsibilities">
-          <h2>User Responsibilities</h2>
-          <p>As a user of LogoSphere, you agree to use the platform responsibly and ethically. You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify LogoSphere immediately of any unauthorized use of your account or any other breach of security.</p>
-        </section>
-        <section className="tos-ownership">
-          <h2>Content Ownership</h2>
-          <p>All content provided on LogoSphere is the intellectual property of LogoSphere or the content creators. You may not modify, publish, transmit, participate in the transfer or sale of, reproduce, create derivative works from, distribute, perform, display, or in any way exploit any of the content in whole or in part.</p>
-        </section>
-        <section className="tos-liability">
-          <h2>Limitation of Liability</h2>
-          <p>LogoSphere is not liable for any direct, indirect, incidental, consequential, or punitive damages arising out of or related to your use of the service. This includes, but is not limited to, damages for errors, omissions, interruptions, defects, delays in operation or transmission, computer virus, or loss of data.</p>
-        </section>
-        <section className="tos-contact">
-          <h2>Contact Information</h2>
-          <p>If you have any questions about these Terms of Service, please contact us at <a href="mailto:support@logosphere.net">support@logosphere.net</a>.</p>
-        </section>
-      </main>
-    </div>
-  );
-};
+export const TERMS_UPDATED = '21 November 2026';
 
-export default TOS;
+const sections = [
+    {
+        id: 'what-it-is',
+        title: 'What LogoSphere is',
+        body: (
+            <>
+                <p>
+                    LogoSphere is a place for groups — neighbourhoods, clubs, congregations, teams — to ask for help, offer
+                    it, keep an honest record of what happened, and decide things together. It's a gift economy:
+                    <strong> no money changes hands through LogoSphere</strong>, and nothing here is for sale.
+                </p>
+                <p>By creating an account or using LogoSphere, you agree to these terms. If you don't, please don't use it.</p>
+            </>
+        ),
+    },
+    {
+        id: 'your-account',
+        title: 'Your account',
+        body: (
+            <ul>
+                <li>Use your own name and a real email address; one person per account.</li>
+                <li>Keep your password to yourself. You're responsible for what's done with your account.</li>
+                <li>
+                    If you think someone else has used it, change your password in <Link to="/settings">Settings</Link> —
+                    that signs out every other device — and tell us at <a href="mailto:support@logosphere.net">support@logosphere.net</a>.
+                </li>
+            </ul>
+        ),
+    },
+    {
+        id: 'what-you-post',
+        title: 'What you post',
+        body: (
+            <>
+                <p>
+                    What you write and the photos you add stay <strong>yours</strong>. By posting them you let LogoSphere
+                    store them and show them to the people who can see that place — your group's members, or everyone if its
+                    managers have made its activity public — and keep exchanges as shared history for both people in them.
+                </p>
+                <p>Only post what's yours to share: no one else's photos, words or private details without their agreement.</p>
+            </>
+        ),
+    },
+    {
+        id: 'how-we-treat-each-other',
+        title: 'How we treat each other',
+        body: (
+            <>
+                <ul>
+                    <li><strong>Be honest.</strong> Offer what you can really give; ask for what you really need; write receipts that say what happened.</li>
+                    <li><strong>Keep it a gift.</strong> No selling, bartering for money, advertising or fundraising through openings.</li>
+                    <li><strong>Be kind.</strong> No harassment, threats, hate or discrimination — in posts, receipts, acknowledgements or anywhere else.</li>
+                    <li><strong>Respect privacy.</strong> Don't share someone's personal details, or what they told you in confidence.</li>
+                    <li><strong>Be yourself.</strong> Don't pretend to be someone else — another member, a famous person, or an AI persona.</li>
+                    <li><strong>Keep it legal and safe.</strong> Nothing illegal, dangerous or exploitative.</li>
+                </ul>
+                <p className="dp-note">
+                    LogoSphere doesn't check members or guarantee that help will happen. When you meet people or go to their
+                    homes, use the same care you would anywhere: meet somewhere you're comfortable, and trust your instincts.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'groups',
+        title: 'Groups and the people who run them',
+        body: (
+            <>
+                <p>
+                    Spheres, alliances and projects set their own rules — who may join, how decisions pass — and members can
+                    change them by proposal and vote. A group's managers can approve and remove members and edit the group.
+                </p>
+                <p>
+                    Platform administrators may remove content or close accounts that break these terms or put people at
+                    risk, and can see everything on the platform so they can keep it running. They act for the good of the
+                    community, not to take sides in a group's own decisions.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'demo-spheres',
+        title: 'Demo spheres and AI personas',
+        body: (
+            <>
+                <p>
+                    The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters
+                    with famous names, playing everyday neighbours, written by AI. They are not the real people, nothing
+                    they say is an endorsement, and nothing in a demo sphere is real — no help is actually promised there.
+                </p>
+                <p>What you post in a demo sphere is processed by AI services to write the personas' replies — see the <Link to="/privacy">privacy policy</Link>.</p>
+            </>
+        ),
+    },
+    {
+        id: 'leaving',
+        title: 'Leaving',
+        body: (
+            <p>
+                You can leave any group from its page, and delete your account yourself, any time. We may close
+                an account that seriously or repeatedly breaks these terms; where we can, we'll tell you why first.
+            </p>
+        ),
+    },
+    {
+        id: 'promises',
+        title: 'What we can and can\'t promise',
+        body: (
+            <>
+                <p>
+                    LogoSphere is run by a small, volunteer-built project. We work to keep it running and your data safe, but we
+                    provide it <strong>as it is</strong>, without guarantees that it will always be available, free of
+                    mistakes, or suitable for any particular purpose.
+                </p>
+                <p>
+                    As far as the law allows, we aren't responsible for indirect losses, or for what members do or agree
+                    between themselves, on LogoSphere or off it. Nothing in these terms takes away rights that the law where
+                    you live gives you and that can't be signed away.
+                </p>
+            </>
+        ),
+    },
+    {
+        id: 'changes',
+        title: 'Changes to these terms',
+        body: (
+            <p>
+                If we change these terms, we'll update this page and its date, and for changes that matter we'll tell members in
+                LogoSphere before they take effect. Using LogoSphere after that means you accept the new terms.
+            </p>
+        ),
+    },
+    {
+        id: 'contact',
+        title: 'Questions',
+        body: <p>Write to <a href="mailto:support@logosphere.net">support@logosphere.net</a>.</p>,
+    },
+];
+
+export default function TOS() {
+    return (
+        <DocPage
+            eyebrow="Terms of service"
+            title="The terms, in plain words"
+            lede="What you can expect from LogoSphere, and what LogoSphere and its members expect of you."
+            updated={TERMS_UPDATED}
+            glance={[
+                'Help here is a gift: nothing is bought or sold.',
+                'What you post stays yours; your group gets to see it.',
+                'Be honest, be kind, respect privacy, be yourself.',
+                'Demo spheres are practice: their AI personas are labelled, and not the real people.',
+            ]}
+            sections={sections}
+            actions={<Link to="/privacy" className="btn btn-ghost">Read the privacy policy</Link>}
+        />
+    );
+}

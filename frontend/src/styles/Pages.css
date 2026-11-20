@@ -70,7 +70,7 @@
 .btn-join, .btn-github {
     padding: 0.72em 1.3em;
     background: var(--terracotta);
-    color: #fff7ef;
+    color: var(--on-accent);
     border: 1px solid transparent;
     border-radius: var(--r-pill);
     cursor: pointer;
@@ -85,11 +85,11 @@
 }
 .btn-join:hover, .btn-github:hover {
     background: var(--terracotta-deep);
-    color: #fff;
+    color: var(--on-fill-strong);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
-.btn-github { background: var(--moss); color: #f7f4e8; }
+.btn-github { background: var(--moss); color: var(--on-fill); }
 .btn-github:hover { background: var(--moss-deep); }
 
 .doc-page .paypal-button { margin-top: 1.2em; }

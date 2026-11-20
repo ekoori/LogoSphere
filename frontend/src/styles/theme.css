@@ -36,6 +36,23 @@
     --primary:      var(--moss);
     --accent:       var(--terracotta);
 
+    /* ---- Text on brand fills, glass, the demo/persona inks ------------------
+       In dark mode the brand colours turn light (so text in them stays
+       readable on dark paper) and what sits on them turns dark. */
+    --on-fill:        #f7f4e8;
+    --on-fill-strong: #ffffff;
+    --on-accent:      #fff7ef;
+    --glass:          rgba(250, 246, 235, 0.82);
+    --demo-ink:       #6b3f9e;
+    --persona-ink:    #2f5d7c;
+    --page-glow-1:    rgba(217, 162, 63, 0.22);
+    --page-glow-2:    rgba(111, 138, 79, 0.16);
+    --page-top:       #f5eede;
+    --page-bottom:    #efe6cf;
+    --footer-bg:      #2f3d27;
+
+    color-scheme: light;
+
     /* ---- Typography ------------------------------------------------------ */
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
     --font-body:    'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -66,6 +83,101 @@
     --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* ---- Dark mode -------------------------------------------------------------
+   Chosen in Settings (or the header's sun/moon), else the device's setting.
+   <html data-theme="dark|light"> pins a choice; without it the device decides. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper:        #171c13;
+    --paper-deep:   #12160f;
+    --surface:      #1e251a;
+    --surface-2:    #262f20;
+
+    --ink:          #ece6d4;
+    --ink-soft:     #c3c0a6;
+    --ink-faint:    #918f76;
+
+    --moss:         #a9c08a;
+    --moss-deep:    #d5e6bd;
+    --leaf:         #9cbb78;
+    --sage:         #6f8059;
+
+    --terracotta:        #e8956e;
+    --terracotta-deep:   #f2b190;
+    --honey:             #e9be6a;
+    --honey-deep:        #f2d08f;
+
+    --border:       #3d4636;
+    --border-soft:  #313a2b;
+    --danger:       #f0a08f;
+    --success:      #a9c08a;
+
+    --on-fill:        #1a2014;
+    --on-fill-strong: #10140c;
+    --on-accent:      #2a1208;
+    --glass:          rgba(23, 28, 19, 0.84);
+    --demo-ink:       #d3b8f2;
+    --persona-ink:    #aed3ef;
+    --page-glow-1:    rgba(217, 162, 63, 0.08);
+    --page-glow-2:    rgba(111, 138, 79, 0.10);
+    --page-top:       #1b2116;
+    --page-bottom:    #141910;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.40), 0 10px 28px rgba(0, 0, 0, 0.30);
+    --shadow-lg: 0 12px 34px rgba(0, 0, 0, 0.50), 0 28px 70px rgba(0, 0, 0, 0.40);
+    --ring: 0 0 0 3px rgba(169, 192, 138, 0.38);
+}
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --paper:        #171c13;
+        --paper-deep:   #12160f;
+        --surface:      #1e251a;
+        --surface-2:    #262f20;
+
+        --ink:          #ece6d4;
+        --ink-soft:     #c3c0a6;
+        --ink-faint:    #918f76;
+
+        --moss:         #a9c08a;
+        --moss-deep:    #d5e6bd;
+        --leaf:         #9cbb78;
+        --sage:         #6f8059;
+
+        --terracotta:        #e8956e;
+        --terracotta-deep:   #f2b190;
+        --honey:             #e9be6a;
+        --honey-deep:        #f2d08f;
+
+        --border:       #3d4636;
+        --border-soft:  #313a2b;
+        --danger:       #f0a08f;
+        --success:      #a9c08a;
+
+        --on-fill:        #1a2014;
+        --on-fill-strong: #10140c;
+        --on-accent:      #2a1208;
+        --glass:          rgba(23, 28, 19, 0.84);
+        --demo-ink:       #d3b8f2;
+        --persona-ink:    #aed3ef;
+        --page-glow-1:    rgba(217, 162, 63, 0.08);
+        --page-glow-2:    rgba(111, 138, 79, 0.10);
+        --page-top:       #1b2116;
+        --page-bottom:    #141910;
+
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.40), 0 10px 28px rgba(0, 0, 0, 0.30);
+        --shadow-lg: 0 12px 34px rgba(0, 0, 0, 0.50), 0 28px 70px rgba(0, 0, 0, 0.40);
+        --ring: 0 0 0 3px rgba(169, 192, 138, 0.38);
+    }
+}
+/* Grain lightens instead of darkening on dark paper. */
+:root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.03; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body::before { mix-blend-mode: screen; opacity: 0.03; }
+}
+
 /* ---- Reset / base --------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -92,9 +204,9 @@ body {
     background-color: var(--paper);
     /* Sunlit atmosphere: a warm radial glow over layered linen tones. */
     background-image:
-        radial-gradient(1200px 620px at 78% -8%, rgba(217, 162, 63, 0.22), transparent 60%),
-        radial-gradient(980px 540px at 6% 4%, rgba(111, 138, 79, 0.16), transparent 55%),
-        linear-gradient(180deg, #f5eede 0%, var(--paper) 38%, #efe6cf 100%);
+        radial-gradient(1200px 620px at 78% -8%, var(--page-glow-1), transparent 60%),
+        radial-gradient(980px 540px at 6% 4%, var(--page-glow-2), transparent 55%),
+        linear-gradient(180deg, var(--page-top) 0%, var(--paper) 38%, var(--page-bottom) 100%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -172,17 +284,17 @@ button.btn {
 
 .btn-primary {
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
     box-shadow: var(--shadow-sm);
 }
-.btn-primary:hover { background: var(--moss-deep); color: #fff; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn-primary:hover { background: var(--moss-deep); color: var(--on-fill-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
 .btn-accent {
     background: var(--terracotta);
-    color: #fff7ef;
+    color: var(--on-accent);
     box-shadow: var(--shadow-sm);
 }
-.btn-accent:hover { background: var(--terracotta-deep); color: #fff; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.btn-accent:hover { background: var(--terracotta-deep); color: var(--on-fill-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
 .btn-ghost {
     background: transparent;
@@ -263,4 +375,10 @@ label { font-weight: 600; font-size: var(--fs-sm); color: var(--ink-soft); }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* The footer stays a dark band in dark mode too: darker than the page. */
+:root[data-theme="dark"] { --footer-bg: #0e120b; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --footer-bg: #0e120b; }
 }

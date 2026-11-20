@@ -37,7 +37,7 @@
     font-size: 1rem;
     font-family: var(--font-body);
     font-weight: 700;
-    color: #f7f4e8;
+    color: var(--on-fill);
     background: var(--moss);
     border: none;
     border-radius: var(--r-pill);
@@ -83,4 +83,27 @@
     width: 100%;
     padding: 0.8rem 0.9rem;
     font-size: 1rem;
+}
+
+/* "Forgot your password?" reads as a link, not another big button. */
+.login-form button.auth-link-btn {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9rem;
+    color: var(--moss);
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.login-form button.auth-link-btn:hover { background: none; transform: none; box-shadow: none; text-decoration: underline; color: var(--moss-deep); }
+.auth-forgot {
+    margin: 0.2rem 0 0;
+    padding: 0.7em 0.9em;
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    line-height: 1.5;
 }

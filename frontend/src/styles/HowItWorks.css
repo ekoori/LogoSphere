@@ -290,7 +290,7 @@
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 0.75rem;
-    color: #f7f4e8;
+    color: var(--on-fill);
     background: radial-gradient(circle at 30% 25%, var(--leaf), var(--moss));
 }
 .hiw-mock-name { font-size: 0.8rem; color: var(--ink-faint); font-weight: 600; }

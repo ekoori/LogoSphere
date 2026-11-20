@@ -68,6 +68,24 @@ const MAPPING = [
     },
 ];
 
+// What a member can do today (06).
+const FEATURES = [
+    { tag: 'Offers & needs', glyph: '◍', d: 'Ask for a hand or offer one. Someone accepts, you confirm, and an exchange begins.' },
+    { tag: 'Receipts', glyph: '✓', d: 'The person helped says what happened and what it meant — with photos if they like. Both sides can add a note.' },
+    { tag: 'Meaning Graph', glyph: '✶', d: 'Value cards: what you care about, why, what it looks like, and what drift looks like. Endorse them, review them.' },
+    { tag: 'Spheres & groups', glyph: '✦', d: 'Your group’s own space. Alliances bring groups together; projects gather shared work.' },
+    { tag: 'Deciding together', glyph: '△', d: 'Propose a change, vote on it, or lend your vote to someone you trust. Policies that pass apply themselves.' },
+    { tag: 'Demo spheres', glyph: '❍', d: 'Practice spaces where AI personas play everyday neighbours — clearly labelled — so you can try everything first.' },
+];
+
+// The lines we hold (07).
+const PRINCIPLES = [
+    { k: 'No ads, no tracking.', d: 'Nothing here is paid for by watching you, and nothing about you is ever sold.' },
+    { k: 'No scores.', d: 'No points, ranks or leaderboards: receipts and reasons, not numbers to chase.' },
+    { k: 'No AI posing as people.', d: 'AI personas live only in the demo spheres, and every one is labelled.' },
+    { k: 'No lock-in.', d: 'Download everything we hold about you, or delete your account, whenever you like.' },
+];
+
 // The CLEAR mnemonic — the anatomy of a Value Card.
 const CLEAR = [
     { l: 'C', w: 'Concrete', d: 'behaviours you can actually see' },
@@ -347,9 +365,9 @@ const About = () => {
                 </div>
                 <div className="ab-prose">
                     <p>
-                        None of this is a rewrite. LogoSphere already speaks in profiles, Receipts,
-                        acknowledgements, spheres, and a gift-economy openings. A meaning lens simply lets each
-                        primitive carry more of the truth it was always reaching for.
+                        None of this is a rewrite. LogoSphere already speaks in profiles, receipts,
+                        acknowledgements, spheres and a gift-economy board of offers and needs. A meaning lens
+                        simply lets each of them carry more of the truth it was always reaching for.
                     </p>
                 </div>
 
@@ -365,7 +383,40 @@ const About = () => {
                 </ul>
             </section>
 
-            {/* ── 06 · Endorsed, not performed ───────────────────────────── */}
+            {/* ── 06 · What's here today ─────────────────────────────────── */}
+            <section className="ab-section ab-reveal">
+                <div className="ab-section-head">
+                    <span className="ab-num">06</span>
+                    <h2>What you can do here today</h2>
+                </div>
+                <div className="ab-prose">
+                    <p>The ideas above aren’t a roadmap. They’re working parts, on the web and in the Android app.</p>
+                </div>
+                <div className="ab-modes ab-features">
+                    {FEATURES.map((f, i) => (
+                        <article key={f.tag} className="ab-mode" style={{ '--i': i }}>
+                            <span className="ab-mode-glyph" aria-hidden="true">{f.glyph}</span>
+                            <h3>{f.tag}</h3>
+                            <p className="ab-mode-ex">{f.d}</p>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
+            {/* ── 07 · What we won't do ──────────────────────────────────── */}
+            <section className="ab-section ab-reveal">
+                <div className="ab-section-head">
+                    <span className="ab-num">07</span>
+                    <h2>What we won’t do</h2>
+                </div>
+                <ul className="ab-principles">
+                    {PRINCIPLES.map((p) => (
+                        <li key={p.k}><strong>{p.k}</strong> {p.d}</li>
+                    ))}
+                </ul>
+            </section>
+
+            {/* ── Endorsed, not performed ────────────────────────────────── */}
             <section className="ab-section ab-section--quote ab-reveal">
                 <blockquote className="ab-quote">
                     <p>“If meaning becomes a currency, it will be optimised.”</p>

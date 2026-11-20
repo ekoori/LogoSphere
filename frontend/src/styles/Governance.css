@@ -47,8 +47,8 @@
 
 .gov-proposal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.7rem; }
 .gov-vote-btn { border: 1px solid var(--border); background: var(--surface); border-radius: var(--r-pill); padding: 0.35em 0.9em; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-transform: capitalize; }
-.gov-vote-btn--yes.is-mine { background: var(--leaf); color: #f7f4e8; border-color: var(--leaf); }
-.gov-vote-btn--no.is-mine { background: var(--terracotta); color: #fff7ef; border-color: var(--terracotta); }
+.gov-vote-btn--yes.is-mine { background: var(--leaf); color: var(--on-fill); border-color: var(--leaf); }
+.gov-vote-btn--no.is-mine { background: var(--terracotta); color: var(--on-accent); border-color: var(--terracotta); }
 .gov-vote-btn--abstain.is-mine { background: var(--honey); color: #2b2417; border-color: var(--honey); }
 .gov-vote-btn:hover:not(:disabled) { border-color: var(--moss); }
 .gov-would { font-size: 0.8rem; color: var(--ink-faint); margin-left: auto; }

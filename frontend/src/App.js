@@ -31,6 +31,7 @@ import OpeningsPage from './pages/OpeningsPage';
 import OpeningPage from './pages/OpeningPage';
 import ExchangePage from './pages/ExchangePage';
 import SettingsPage from './pages/Settings';
+import ResetPassword from './pages/ResetPassword';
 import SearchPage from './pages/SearchPage';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
@@ -79,8 +80,9 @@ function AppContent() {
         <Route path="/how-it-works" element={<HowItWorks/>}/>
         <Route path="/register" element={<div className='container'><UserRegistration/></div>}/>
         <Route path="/login" element={<div className='container'><UserLogin/></div>}/>
-        <Route path="/privacy" element={<div className='container'><Privacy/></div>}/>
-        <Route path="/tos" element={<div className='container'><TOS/></div>}/>
+        <Route path="/reset-password" element={<div className='container'><ResetPassword/></div>}/>
+        <Route path="/privacy" element={<Privacy/>}/>
+        <Route path="/tos" element={<TOS/>}/>
         
         {/* Protected Routes — gated by ProtectedRoute (redirects to /login) */}
         <Route path="/profile" element={<ErrorBoundary><ProtectedRoute><ProfilePage/></ProtectedRoute></ErrorBoundary>} />
@@ -104,14 +106,8 @@ function AppContent() {
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/search" element={<ErrorBoundary><ProtectedRoute><SearchPage/></ProtectedRoute></ErrorBoundary>} />
-        <Route 
-          path="/contribute" 
-          element={<div className='container'><Contribute/></div>}
-        />
-        <Route 
-          path="/donate" 
-          element={<div className='container'><Donate/></div>}
-        />
+        <Route path="/contribute" element={<Contribute/>}/>
+        <Route path="/donate" element={<Donate/>}/>
         
         {/* 404 Route */}
         <Route path="*" element={<div className='container'><NotFound/></div>} />

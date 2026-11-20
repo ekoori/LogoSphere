@@ -30,7 +30,7 @@
 .search-form input:focus { outline: none; box-shadow: var(--ring); border-color: var(--moss); }
 .search-go {
     border: 0; border-radius: var(--r-md, 12px); padding: 0 1.3rem; font: inherit; font-weight: 700;
-    background: var(--moss); color: #f7f4e8; cursor: pointer; box-shadow: var(--shadow-sm);
+    background: var(--moss); color: var(--on-fill); cursor: pointer; box-shadow: var(--shadow-sm);
 }
 .search-go:hover { background: var(--moss-deep); }
 .search-explainer { color: var(--ink-faint); font-size: 0.88rem; margin: 0.7rem 0 0.9rem; max-width: 70ch; }
@@ -40,7 +40,7 @@
     border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft);
     border-radius: 999px; padding: 0.3rem 0.8rem; font: inherit; font-size: 0.85rem; cursor: pointer;
 }
-.search-scope.is-active { background: var(--moss); border-color: var(--moss); color: #f7f4e8; }
+.search-scope.is-active { background: var(--moss); border-color: var(--moss); color: var(--on-fill); }
 
 .search-anchor { color: var(--ink-soft); margin: 0 0 1rem; }
 .search-status, .search-error { color: var(--ink-faint); margin: 1rem 0; }

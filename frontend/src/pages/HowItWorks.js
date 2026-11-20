@@ -56,6 +56,8 @@ const TERMS = [
     { term: 'Receipt', gloss: 'A real thank-you with substance — what happened and what it meant. Not a star rating.' },
     { term: 'Meaning Trail', gloss: 'Your history — everything you’ve given and received, in order, visible to your group.' },
     { term: 'Value Card', gloss: 'Optional. A short note on what you personally care about, so people find kindred spirits, not just favours.' },
+    { term: 'Alliance & Project', gloss: 'An alliance joins groups inside a sphere; a project gathers people around a piece of shared work.' },
+    { term: 'Governance', gloss: 'How your group decides: anyone can propose a change, everyone can vote — or lend their vote to someone they trust.' },
 ];
 
 const COMPARE = [
@@ -81,6 +83,18 @@ const FAQ = [
     {
         q: 'What if I just want to watch for now?',
         a: 'That’s completely fine. You can see what’s being offered and needed before you ever post anything yourself.',
+    },
+    {
+        q: 'What are the demo spheres, and who are the “AI personas”?',
+        a: 'Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real.',
+    },
+    {
+        q: 'Is there a phone app?',
+        a: 'Yes — an Android app does everything the website does. On other phones, the website works in your browser.',
+    },
+    {
+        q: 'Can I leave a group, or delete my account?',
+        a: 'Any time. Leave a group from its page; download your data or delete your account in Settings (or on the Me tab in the app).',
     },
     {
         q: 'Isn’t this just one more app to manage?',
@@ -240,7 +254,7 @@ const HowItWorks = () => {
             <section className="hiw-section ts-rise" style={{ '--i': 4 }}>
                 <div className="hiw-section-head">
                     <span className="hiw-kicker">The moving parts</span>
-                    <h2>Six words you’ll see in the app</h2>
+                    <h2>The words you’ll see in the app</h2>
                 </div>
 
                 <ul className="hiw-terms">
@@ -251,6 +265,33 @@ const HowItWorks = () => {
                         </li>
                     ))}
                 </ul>
+            </section>
+
+            {/* ── Beyond one group ─────────────────────────────────────────── */}
+            <section className="hiw-section ts-rise" style={{ '--i': 5 }}>
+                <div className="hiw-section-head">
+                    <span className="hiw-kicker">As your group grows</span>
+                    <h2>Working together, deciding together</h2>
+                </div>
+
+                <div className="hiw-benefit-columns">
+                    <div className="hiw-benefit-col">
+                        <h3>Alliances and projects</h3>
+                        <ul>
+                            <li>Several groups in a sphere can form an alliance — a tool library run by three congregations, say.</li>
+                            <li>A project gathers people around one piece of work, with its own offers, needs and trail.</li>
+                            <li>A group can post an opening as itself, so the help is the group’s, not one person’s.</li>
+                        </ul>
+                    </div>
+                    <div className="hiw-benefit-col">
+                        <h3>Decisions without the politics</h3>
+                        <ul>
+                            <li>Anyone can propose a change — who can join, how decisions pass — or put a question to the group.</li>
+                            <li>Everyone votes, or lends their vote to someone they trust; voting yourself always counts first.</li>
+                            <li>When a policy proposal passes, LogoSphere applies it. No minutes to chase.</li>
+                        </ul>
+                    </div>
+                </div>
             </section>
 
             {/* ── Benefits: members / organizers ───────────────────────────── */}

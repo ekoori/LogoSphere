@@ -42,7 +42,7 @@
 
 .exchange {
     padding: 1em;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border);
     border-radius: 4px;
     background-color: var(--surface-2);
     margin-bottom: 1em;
@@ -67,7 +67,7 @@
 .exchange-status-btn {
     padding: 0.2em 0.5em;
     background-color: var(--moss);
-    color: white;
+    color: var(--on-fill-strong);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -153,12 +153,12 @@
 
 .time {
     font-size: 0.8em;
-    color: #5a5a5a;
+    color: var(--ink-soft);
 }
 
 .btn-orange {
     background-color: var(--terracotta);
-    color: white;
+    color: var(--on-fill-strong);
     border: none;
     padding: 0.5em 1em;
     border-radius: 4px;
@@ -173,7 +173,7 @@
 .status {
     padding: 0.2em 0.5em;
     border-radius: 4px;
-    color: white;
+    color: var(--on-fill-strong);
 }
 
 .status.in-progress {

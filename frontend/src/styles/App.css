@@ -105,7 +105,7 @@ header.site-header {
     align-items: center;
     gap: var(--sp-5);
     padding: 0.7em clamp(1em, 4vw, 2.5em);
-    background: rgba(250, 246, 235, 0.82);
+    background: var(--glass);
     backdrop-filter: saturate(140%) blur(14px);
     -webkit-backdrop-filter: saturate(140%) blur(14px);
     border-bottom: 1px solid var(--border);
@@ -182,6 +182,7 @@ nav ul {
 }
 
 .donate-link {
+    white-space: nowrap;
     font-weight: 700;
     font-size: 0.85rem;
     padding: 0.5em 0.95em;
@@ -194,6 +195,22 @@ nav ul {
 .donate-link:hover { background: rgba(217, 162, 63, 0.28); color: var(--honey-deep); transform: translateY(-1px); }
 
 /* Notification bell */
+.theme-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--moss-deep);
+    width: 40px; height: 40px;
+    border-radius: var(--r-pill);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.theme-toggle:hover { background: var(--surface-2); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.theme-toggle:focus-visible { outline: none; box-shadow: var(--ring); }
 .notification-icon { position: relative; display: flex; }
 #notification-bell {
     background: var(--surface);
@@ -215,7 +232,7 @@ nav ul {
     padding: 0 4px;
     border-radius: var(--r-pill);
     background: var(--terracotta, #c15b3c);
-    color: #fff;
+    color: var(--on-fill-strong);
     font-size: 0.65rem;
     font-weight: 700;
     line-height: 18px;
@@ -245,7 +262,7 @@ nav ul {
     width: 28px; height: 28px;
     border-radius: var(--r-pill);
     background: radial-gradient(circle at 30% 25%, var(--leaf), var(--moss));
-    color: #f7f4e8;
+    color: var(--on-fill);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -288,18 +305,19 @@ nav ul {
 
 /* Login / Logout primary action */
 .auth-action {
+    white-space: nowrap;
     font-weight: 700;
     font-size: 0.9rem;
     padding: 0.55em 1.1em;
     border-radius: var(--r-pill);
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
     border: 1px solid transparent;
     cursor: pointer;
     font-family: var(--font-body);
     transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
-.auth-action:hover { background: var(--moss-deep); color: #fff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.auth-action:hover { background: var(--moss-deep); color: var(--on-fill-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 /* ============================================================================
    Mobile nav (hamburger + drawer) — hidden on desktop, activated below 900px
@@ -498,9 +516,9 @@ aside .btn-purple {
     font-size: 0.92rem;
     transition: background-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
-aside .btn-orange { background: var(--terracotta); color: #fff7ef; box-shadow: var(--shadow-sm); }
+aside .btn-orange { background: var(--terracotta); color: var(--on-accent); box-shadow: var(--shadow-sm); }
 aside .btn-orange:hover { background: var(--terracotta-deep); transform: translateY(-1px); box-shadow: var(--shadow-md); }
-aside .btn-purple { background: var(--moss); color: #f7f4e8; box-shadow: var(--shadow-sm); }
+aside .btn-purple { background: var(--moss); color: var(--on-fill); box-shadow: var(--shadow-sm); }
 aside .btn-purple:hover { background: var(--moss-deep); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 aside .search-box { margin-bottom: 1em; }
@@ -522,7 +540,7 @@ aside .search-box { margin-bottom: 1em; }
     transition: background-color 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 .filters button:hover { background: rgba(111, 138, 79, 0.14); color: var(--moss-deep); border-color: var(--sage); }
-.filters button.active { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.filters button.active { background: var(--moss); color: var(--on-fill); border-color: var(--moss); }
 
 .opening-sphere-filter { margin-top: 0.9em; }
 .opening-sphere-filter label {
@@ -562,7 +580,7 @@ aside .sphere-list a, aside .active-offers a, aside .active-needs a {
     transition: background-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.2s var(--ease);
 }
 aside .sphere-list a:hover, aside .active-offers a:hover, aside .active-needs a:hover {
-    background: var(--moss); color: #f7f4e8; transform: translateX(3px);
+    background: var(--moss); color: var(--on-fill); transform: translateX(3px);
 }
 
 /* MeaningTrail / Offers tab selector (used on Home) */
@@ -600,7 +618,9 @@ aside .sphere-list a:hover, aside .active-offers a:hover, aside .active-needs a:
    ========================================================================== */
 footer {
     margin-top: auto;
-    background: var(--moss-deep);
+    /* A dark band in both themes (light text on it): its own token, not moss-deep,
+       which turns light in dark mode. */
+    background: var(--footer-bg);
     color: #e7e3cf;
     padding: 1.6em 1em;
     text-align: center;
@@ -653,7 +673,7 @@ footer ul li a:hover { color: var(--honey); }
 }
 .banner-image { width: 100%; height: 100%; object-fit: cover; }
 .set-image-btn {
-    background: rgba(253, 250, 242, 0.85);
+    background: var(--glass);
     color: var(--moss-deep);
     border: 1px solid var(--border);
     padding: 0.55em 1.1em;
@@ -665,7 +685,7 @@ footer ul li a:hover { color: var(--honey); }
     transition: opacity 0.3s var(--ease), background-color 0.2s var(--ease);
 }
 .sphere-banner:hover .set-image-btn { opacity: 1; }
-.set-image-btn:hover { background: #fff; }
+.set-image-btn:hover { background: var(--surface); }
 
 /* ============================================================================
    Responsive
@@ -711,6 +731,22 @@ footer ul li a:hover { color: var(--honey); }
         border-radius: var(--r-md);
     }
     .nav-primary a::after { display: none; }        /* drop the hover underline in the drawer */
+    /* The theme switch lives in the drawer on narrow screens (the bar is full). */
+    .nav-primary .nav-drawer-theme {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.85em 1em;
+        font: inherit;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--ink-soft);
+        background: none;
+        border: none;
+        border-radius: var(--r-md);
+        cursor: pointer;
+    }
+    .nav-primary .nav-drawer-theme:hover { background: var(--surface-2); color: var(--moss-deep); }
 
     .nav-scrim {
         display: block;
@@ -749,7 +785,7 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
     font-family: var(--font-body);
     font-weight: 700;
     font-size: 0.9rem;
-    color: #f7f4e8;
+    color: var(--on-fill);
     background: var(--moss);
     border: 1px solid transparent;
     border-radius: var(--r-pill);
@@ -845,7 +881,7 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
         min-height: 44px;
     }
     .search-scope, .adm-btn, .xc-inline-edit-btn, .cadence-badge, .pill { min-height: 0; }
-    #notification-bell, .account-toggle, .nav-toggle { min-width: 44px; min-height: 44px; }
+    #notification-bell, .theme-toggle, .account-toggle, .nav-toggle { min-width: 44px; min-height: 44px; }
 }
 
 /* ── Phone drawer: rows span the full width so the whole row is the tap

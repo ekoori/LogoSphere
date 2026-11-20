@@ -7,6 +7,7 @@ import '../styles/App.css';
 import { useLogin } from '../App';  // Import the useLogin hook from App.js
 import NotificationPanel from './NotificationPanel';
 import api from '../api';
+import { useTheme } from '../utils/theme';
 
 // The search box in the top bar (and in the mobile drawer). Submitting goes to
 // the search page, which does the actual searching.
@@ -47,6 +48,7 @@ const BrandMark = () => (
 
 const Header = () => {
     const { isLoggedIn, userName, handleLogout, isPlatformAdmin, authChecked } = useLogin();
+    const { effective: effectiveTheme, setTheme } = useTheme();
     // Until the session check answers, offer neither "Log in" nor the
     // account: a signed-in member used to see "Log in" flash on every load.
     const signedOut = authChecked && !isLoggedIn;
@@ -146,6 +148,12 @@ const Header = () => {
                     <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
                     <li className="nav-drawer-only"><Link to="/how-it-works" onClick={closeMenu}>How it Works</Link></li>
                     <li className="nav-drawer-only"><Link to="/about" onClick={closeMenu}>About</Link></li>
+                    <li className="nav-drawer-only">
+                        <button type="button" className="nav-drawer-theme"
+                                onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}>
+                            {effectiveTheme === 'dark' ? '☀ Light mode' : '☾ Dark mode'}
+                        </button>
+                    </li>
                     {signedOut && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
                 </ul>
             </nav>
@@ -154,6 +162,14 @@ const Header = () => {
                 {isLoggedIn && <div className="nav-bar-only nav-search-slot"><SearchForm compact /></div>}
                 <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>
 
+                <button
+                    className="theme-toggle nav-bar-only"
+                    onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}
+                    aria-label={effectiveTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    title={effectiveTheme === 'dark' ? 'Light mode' : 'Dark mode'}
+                >
+                    <span aria-hidden="true">{effectiveTheme === 'dark' ? '☀' : '☾'}</span>
+                </button>
                 <div className="notification-icon">
                     <button id="notification-bell" onClick={toggleNotifications} aria-label="Toggle notifications">
                         🔔

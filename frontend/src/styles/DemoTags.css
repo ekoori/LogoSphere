@@ -17,13 +17,13 @@
 }
 
 .demo-tag {
-    color: #6b3f9e;
+    color: var(--demo-ink);
     background: rgba(140, 90, 200, 0.12);
     border: 1px solid rgba(140, 90, 200, 0.45);
 }
 
 .persona-tag {
-    color: #2f5d7c;
+    color: var(--persona-ink);
     background: rgba(70, 130, 180, 0.12);
     border: 1px solid rgba(70, 130, 180, 0.45);
 }

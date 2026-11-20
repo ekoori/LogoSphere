@@ -22,6 +22,7 @@ const UserLogin = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [forgot, setForgot] = useState(false);
     const { setIsLoggedIn, setUserId, setUserName, setIsPlatformAdmin } = useLogin();
     const navigate = useNavigate();
 
@@ -79,6 +80,18 @@ const UserLogin = () => {
                 <p className="auth-alt">
                     New to LogoSphere? <Link to="/register">Create an account</Link>
                 </p>
+                <p className="auth-alt">
+                    <button type="button" className="auth-link-btn" onClick={() => setForgot((v) => !v)} aria-expanded={forgot}>
+                        Forgot your password?
+                    </button>
+                </p>
+                {forgot && (
+                    <p className="auth-forgot" role="note">
+                        LogoSphere can't send email yet. Ask a platform administrator for a password reset link — it
+                        works once, for 24 hours. If you don't know one, write to{' '}
+                        <a href="mailto:support@logosphere.net">support@logosphere.net</a>.
+                    </p>
+                )}
             </form>
         </div>
     );

@@ -113,7 +113,7 @@
 
 .ep-sphere-chip:hover {
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
 }
 
 .ep-location-chip {
@@ -362,7 +362,7 @@
     height: 26px;
     border-radius: 50%;
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
     font-size: 0.7rem;
     font-weight: 700;
     font-family: var(--font-display);
@@ -575,10 +575,10 @@
     padding: 0.15em 0.5em; border-radius: var(--r-sm); border: 1px solid; cursor: pointer;
     transition: background-color 0.12s, color 0.12s;
 }
-.vc-delete-yes { background: var(--danger, #b94040); color: #fff; border-color: var(--danger, #b94040); }
+.vc-delete-yes { background: var(--danger, #b94040); color: var(--on-fill-strong); border-color: var(--danger, #b94040); }
 .vc-delete-yes:hover { background: #8c2020; border-color: #8c2020; }
 .vc-delete-no { background: transparent; color: var(--moss); border-color: var(--border-soft); }
-.vc-delete-no:hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.vc-delete-no:hover { background: var(--moss); color: var(--on-fill); border-color: var(--moss); }
 
 /* ── Entity value card form ───────────────────────────────────────────────── */
 .vc-new-form {

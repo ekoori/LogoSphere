@@ -87,6 +87,7 @@ export default function EntityPage({ kind }) {
     const [showNewOpening, setShowNewOpening] = useState(false);
     const [joining, setJoining] = useState(false);
     const [joinNote, setJoinNote] = useState(null);
+    const [leaveArmed, setLeaveArmed] = useState(false);
 
     const eid = entity ? (entity[ID_KEY[kind]] || entity.id) : null;
 
@@ -159,6 +160,26 @@ export default function EntityPage({ kind }) {
         }
     };
 
+    // The founder stays (the server's rule): admin1, an alliance's Lead, a project's manager.
+    const isFounder = String(entity.admin1 || '') === String(userId)
+        || (kind === 'alliance' && perms.role === 'admin') || (kind === 'project' && perms.role === 'manager');
+    const handleLeave = async () => {
+        if (joining) return;
+        if (!leaveArmed) { setLeaveArmed(true); return; }
+        setJoining(true);
+        setJoinNote(null);
+        try {
+            const res = await api.post(`/api/${kind}s/${eid}/leave`);
+            setJoinNote({ ok: true, text: res.data?.message || `You've left the ${kind}.` });
+            await Promise.all([invalidate.entity(kind, eid), invalidate.openings()]);
+        } catch (e) {
+            setJoinNote({ ok: false, text: e.response?.data?.message || `Could not leave this ${kind}.` });
+        } finally {
+            setJoining(false);
+            setLeaveArmed(false);
+        }
+    };
+
     const refresh = () => Promise.all([invalidate.entity(kind, eid), invalidate.openings()]);
 
     return (
@@ -192,6 +213,12 @@ export default function EntityPage({ kind }) {
                 {!perms.isMember && userId && (
                     <button className="btn btn-accent" onClick={handleJoin} disabled={joining} style={{ marginTop: '0.6rem' }}>
                         {joining ? 'Joining…' : `+ Join this ${NOUN[kind]}`}
+                    </button>
+                )}
+                {perms.isMember && userId && !isFounder && (
+                    <button className={`ep-leave-btn ${leaveArmed ? 'is-armed' : ''}`} onClick={handleLeave} disabled={joining}
+                            onBlur={() => setLeaveArmed(false)}>
+                        {joining ? 'Leaving…' : leaveArmed ? `Really leave ${entity.name}?` : `Leave this ${NOUN[kind].toLowerCase()}`}
                     </button>
                 )}
                 {joinNote && <p className={joinNote.ok ? 'ep-empty' : 'ep-not-found'} style={{ marginTop: '0.4rem' }}>{joinNote.text}</p>}

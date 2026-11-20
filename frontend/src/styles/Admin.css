@@ -64,11 +64,11 @@
 }
 .adm-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
 .adm-btn:disabled { opacity: 0.55; cursor: default; }
-.adm-btn--primary { background: var(--moss); border-color: var(--moss); color: #f7f4e8; }
-.adm-btn--primary:hover:not(:disabled) { background: var(--moss-deep); color: #fff; }
+.adm-btn--primary { background: var(--moss); border-color: var(--moss); color: var(--on-fill); }
+.adm-btn--primary:hover:not(:disabled) { background: var(--moss-deep); color: var(--on-fill-strong); }
 .adm-btn--danger { color: var(--terracotta-deep); border-color: rgba(194, 100, 60, 0.35); }
-.adm-btn--armed { background: var(--terracotta); border-color: var(--terracotta); color: #fff7ef; }
-.adm-btn--armed:hover:not(:disabled) { background: var(--terracotta-deep); color: #fff; }
+.adm-btn--armed { background: var(--terracotta); border-color: var(--terracotta); color: var(--on-accent); }
+.adm-btn--armed:hover:not(:disabled) { background: var(--terracotta-deep); color: var(--on-fill-strong); }
 
 .adm-policies { display: flex; flex-wrap: wrap; gap: 0.35rem 0.6rem; }
 .adm-policy { display: inline-flex; flex-direction: column; gap: 0.1rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); }
@@ -87,3 +87,9 @@
     .adm-panel { padding: 0.7rem; }
     .adm-table { font-size: 0.84rem; }
 }
+
+/* A password reset link, just made: shown once, to copy. */
+.adm-reset { display: grid; gap: 0.5rem; }
+.adm-reset p { margin: 0; }
+.adm-reset-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.adm-reset-row input { flex: 1 1 320px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }

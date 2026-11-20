@@ -377,7 +377,7 @@
     display: inline-flex; align-items: center; justify-content: center;
     font-family: var(--font-display);
     font-weight: 600;
-    color: #fff7ef;
+    color: var(--on-accent);
     background: var(--leaf);
     border-radius: var(--r-sm);
     font-size: 0.95rem;
@@ -553,3 +553,35 @@
     .ab-graph-nodes circle { animation: none; }
     .ab-valuecard { transform: none; }
 }
+
+/* 06 · What's here today: the mode cards, six of them, as features. */
+.ab-features { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.ab-features .ab-mode-ex { font-style: normal; }
+
+/* 07 · What we won't do. */
+.ab-principles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 0.9rem;
+}
+.ab-principles li {
+    position: relative;
+    padding: 1rem 1.1rem 1rem 2.8rem;
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+    line-height: 1.55;
+    color: var(--ink-soft);
+}
+.ab-principles li::before {
+    content: "✕";
+    position: absolute;
+    left: 1.05rem; top: 0.95rem;
+    font-weight: 800;
+    color: var(--terracotta);
+}
+.ab-principles strong { color: var(--moss-deep); }

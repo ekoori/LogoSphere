@@ -192,7 +192,7 @@
     transition: background-color 0.18s var(--ease);
     white-space: nowrap;
 }
-.vc-clone-btn:hover:not(:disabled) { background: var(--leaf); color: #f7f4e8; }
+.vc-clone-btn:hover:not(:disabled) { background: var(--leaf); color: var(--on-fill); }
 .vc-clone-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .vc-clone-msg { margin: 0.55rem 0 0; font-size: 0.8rem; font-weight: 600; }
 .vc-clone-msg--ok { color: var(--moss-deep); }

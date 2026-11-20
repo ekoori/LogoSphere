@@ -187,7 +187,7 @@
 
 .xc-action-advance {
     background: var(--moss);
-    color: #f7f4e8;
+    color: var(--on-fill);
 }
 .xc-action-advance:hover { background: var(--moss-deep); transform: translateY(-1px); }
 
@@ -312,7 +312,7 @@
 }
 .xc-comment-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.xc-submit-receipt { background: var(--leaf); color: #f7f4e8; }
+.xc-submit-receipt { background: var(--leaf); color: var(--on-fill); }
 .xc-submit-receipt:not(:disabled):hover { background: var(--moss); transform: translateY(-1px); }
 
 .xc-submit-acknowledgement { background: var(--honey); color: var(--moss-deep); }
@@ -374,7 +374,7 @@
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.xc-followup-submit:not(:disabled):hover { background: var(--moss); color: #f7f4e8; border-color: var(--moss); }
+.xc-followup-submit:not(:disabled):hover { background: var(--moss); color: var(--on-fill); border-color: var(--moss); }
 .xc-followup-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Loading / error states ───────────────────────────────────────────────── */
