@@ -93,10 +93,15 @@ class SessionManager(
         onSignedIn()
     }
 
-    suspend fun register(name: String, email: String, password: String, server: String? = null) {
+    /**
+     * True when there's only a link in the inbox so far (email is on: no [password] was needed);
+     * otherwise the account is made and signed in.
+     */
+    suspend fun register(name: String, email: String, password: String?, server: String? = null): Boolean {
         if (server != null && server != store.server) store.setServer(server)
-        api().register(name.trim(), email.trim(), password)
-        signIn(email, password)
+        if (api().register(name.trim(), email.trim(), password).confirmEmail) return true
+        if (password != null) signIn(email, password)
+        return false
     }
 
     /** Simple or Advanced: saved to the account, then shown. Throws if it didn't save. */

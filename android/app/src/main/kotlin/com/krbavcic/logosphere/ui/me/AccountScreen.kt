@@ -46,16 +46,34 @@ import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.readable
 import java.time.LocalDate
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.Switch
+import androidx.compose.ui.Alignment
+import com.krbavcic.logosphere.core.model.EmailSettings
+import com.krbavcic.logosphere.ui.Load
+import com.krbavcic.logosphere.ui.common.LinkText
 
 /** The fewest characters a password may have (the server's rule). */
 private const val MIN_PASSWORD = 8
 
-class AccountViewModel(private val app: AppContainer) : LoadViewModel<Unit>() {
+class AccountViewModel(private val app: AppContainer) : LoadViewModel<EmailSettings>() {
     init {
         load()
     }
 
-    override suspend fun fetch(force: Boolean) = Unit
+    // Only the Email card waits on this: the rest of the screen works without it.
+    override suspend fun fetch(force: Boolean): EmailSettings = app.api.emailSettings()
+
+    fun toggleTopic(key: String) {
+        val was = current ?: return
+        act {
+            val saved = app.api.chooseEmailTopics(was.toggled(key))
+            update { saved }
+            if (saved.confirmationSent) say("Saved. Now open the link we emailed you to confirm the address.")
+        }
+    }
+
+    fun sendConfirmation() = act { say(app.api.sendEmailConfirmation()) }
 
     fun changePassword(current: String, new: String, onDone: () -> Unit) = act {
         say(app.api.changePassword(current, new))
@@ -80,6 +98,7 @@ fun AccountScreen() {
     val vm: AccountViewModel = viewModel { AccountViewModel(app) }
     val navigator = LocalNavigator.current
     val busy by vm.busy.collectAsStateWithLifecycle()
+    val email by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -96,7 +115,7 @@ fun AccountScreen() {
     val tooShort = new.isNotEmpty() && new.length < MIN_PASSWORD
 
     Scaffold(
-        topBar = { BackTopBar("Password, data & account", navigator::back) },
+        topBar = { BackTopBar("Password, email, data & account", navigator::back) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(
@@ -108,6 +127,7 @@ fun AccountScreen() {
                 .readable(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            EmailCard(email, busy, onToggle = vm::toggleTopic, onConfirm = vm::sendConfirmation, onRetry = vm::load)
             BrandCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeading("Change your password")
@@ -170,6 +190,47 @@ fun AccountScreen() {
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Keep it") } },
         )
+    }
+}
+
+/** Which notifications also come by email: all off until switched on. */
+@Composable
+private fun EmailCard(state: Load<EmailSettings>, busy: Boolean, onToggle: (String) -> Unit, onConfirm: () -> Unit, onRetry: () -> Unit) {
+    BrandCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SectionHeading("Email")
+            MetaText("Your notifications can come by email too. Nothing does unless you switch it on.", maxLines = 3)
+            when (state) {
+                Load.Loading -> MetaText("Loading…")
+                is Load.Failed -> LinkText("Your email settings didn't load. Try again", onRetry)
+                is Load.Ready -> {
+                    val mail = state.value
+                    when {
+                        !mail.on -> MetaText("LogoSphere can't send email yet.")
+                        !mail.canReceive -> MetaText("This account's address can't receive email.", maxLines = 2)
+                        else -> {
+                            MetaText("To ${mail.email}" + if (mail.confirmed) " (confirmed)" else " (not confirmed yet)", maxLines = 2)
+                            if (!mail.confirmed) {
+                                LinkText("Nothing is sent until you confirm it. Email me the link", onConfirm, enabled = !busy)
+                            }
+                            mail.choices.forEach { topic ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(topic.label, style = MaterialTheme.typography.titleSmall)
+                                        MetaText(topic.about, maxLines = 3)
+                                    }
+                                    Switch(
+                                        checked = topic.key in mail.topics,
+                                        onCheckedChange = { onToggle(topic.key) },
+                                        enabled = !busy && mail.mayToggle(topic.key),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

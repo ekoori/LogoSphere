@@ -215,7 +215,8 @@ fun CommunityCard(community: Community, viewerId: String?, onClick: () -> Unit) 
                     listOfNotNull(
                         "$members member${if (members == 1) "" else "s"}",
                         community.sphereName?.takeIf { community.kind != CommunityKind.Sphere }?.let { "✦ $it" },
-                        community.location?.takeIf { community.kind == CommunityKind.Sphere && it.isNotBlank() },
+                        community.location?.takeIf { it.isNotBlank() },
+                        community.distance?.text,
                         if (community.isClosed) "Closed" else null,
                     ).joinToString("  ·  "),
                 )

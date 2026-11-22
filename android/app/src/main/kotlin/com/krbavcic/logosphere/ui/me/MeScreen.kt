@@ -87,6 +87,7 @@ import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.ui.common.UiModeDialog
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.NearMe
 
 data class MeData(val profile: OwnProfile?, val cards: List<ValueCard>, val communities: List<Community>)
 
@@ -214,6 +215,9 @@ fun MeScreen() {
                     if (!simple && data.cards.isNotEmpty()) {
                         item(key = "legend") { FranklLegend(Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp)) }
                     }
+                    item(key = "near") {
+                        LinkRow(Icons.Outlined.NearMe, "Near you", "Who and what is around you, as rough distances") { navigator.nearby() }
+                    }
                     item(key = "communities-head") {
                         SectionHeading("Your communities", Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp))
                     }
@@ -245,7 +249,7 @@ fun MeScreen() {
                                 showMode = true
                             }
                             LinkRow(Icons.Outlined.DarkMode, "Appearance", theme.label) { showAppearance = true }
-                            LinkRow(Icons.Outlined.Lock, "Password, data & account") { navigator.account() }
+                            LinkRow(Icons.Outlined.Lock, "Password, email, data & account") { navigator.account() }
                             LinkRow(Icons.Outlined.Language, InfoPage.About.title) { navigator.info(InfoPage.About) }
                             LinkRow(Icons.AutoMirrored.Outlined.HelpOutline, InfoPage.HowItWorks.title) { navigator.info(InfoPage.HowItWorks) }
                             LinkRow(Icons.Outlined.Handshake, InfoPage.Contribute.title) { navigator.info(InfoPage.Contribute) }

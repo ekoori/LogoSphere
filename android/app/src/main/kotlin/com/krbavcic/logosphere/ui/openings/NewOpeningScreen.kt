@@ -60,6 +60,10 @@ import com.krbavcic.logosphere.ui.common.AiPictureButton
 import com.krbavcic.logosphere.ui.common.BannerField
 import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
+import com.krbavcic.logosphere.ui.common.PlacePicker
 
 /** Where an opening may go; [actingAs] is the group it's posted for, when it isn't the member's own. */
 data class PostingPlaces(val spheres: List<Community>, val projects: List<Community>, val actingAs: Community? = null) {
@@ -73,8 +77,8 @@ class NewOpeningViewModel(
     private val actingAsKind: CommunityKind?,
     private val actingAsId: String?,
 ) : LoadViewModel<PostingPlaces>() {
-    /** Posted; false when it was, but its picture wasn't. */
-    private val _posted = Channel<Boolean>(Channel.BUFFERED)
+    /** Posted, with what of it didn't save (its place, its picture). */
+    private val _posted = Channel<List<String>>(Channel.BUFFERED)
     val posted = _posted.receiveAsFlow()
 
     init {
@@ -100,29 +104,39 @@ class NewOpeningViewModel(
         )
     }
 
-    fun post(opening: NewOpening, picture: Uri?) {
+    fun post(opening: NewOpening, picture: Uri?, place: PlaceDraft) {
         if (opening.title.isBlank()) {
             say("Give it a title.")
             return
         }
-        var pictureSaved = true
+        place.problem?.let { return say(it) }
+        val lost = mutableListOf<String>()
         act(onSuccess = {
             app.openings.invalidate()
             app.changes.emit(Change.Openings)
-            _posted.send(pictureSaved)
+            _posted.send(lost)
         }) {
             // Read first, so a bad file stops it before anything is posted.
             val upload = picture?.let { app.pictures.read(it) }
             val id = app.api.createOpening(opening)
+            if (place.changed) {
+                try {
+                    app.api.savePlace(Places.OPENINGS, id, place)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logFailure("opening place", e)
+                    lost += "where it is"
+                }
+            }
             if (upload != null) {
-                pictureSaved = try {
+                try {
                     app.api.setOpeningImage(id, upload)
-                    true
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     logFailure("opening picture", e)
-                    false
+                    lost += "the picture"
                 }
             }
         }
@@ -140,9 +154,10 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
     SnackbarMessages(vm.messages, snackbar)
     val context = LocalContext.current
     LaunchedEffect(vm) {
-        vm.posted.collect { pictureSaved ->
-            if (!pictureSaved) {
-                Toast.makeText(context, "Posted, but the picture didn't save. You can add one from its page.", Toast.LENGTH_LONG).show()
+        vm.posted.collect { lost ->
+            if (lost.isNotEmpty()) {
+                val what = lost.joinToString(" and ")
+                Toast.makeText(context, "Posted, but $what didn't save. You can add that from its page.", Toast.LENGTH_LONG).show()
             }
             navigator.back()
         }
@@ -158,6 +173,7 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
     var description by rememberSaveable { mutableStateOf("") }
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var projectName by rememberSaveable { mutableStateOf<String?>(null) }
+    var where by rememberSaveable(stateSaver = PlaceDraftSaver) { mutableStateOf(PlaceDraft()) }
 
     Scaffold(
         topBar = { BackTopBar("New opening", navigator::back) },
@@ -230,6 +246,7 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                         }
                     },
                 )
+                PlacePicker(where.place, { where = where.copy(place = it) }, "Where (optional)")
                 if (!LocalSimple.current || places.fixedProjectName != null) Picker(
                     label = "Project (optional)",
                     choices = listOf(Choice(null, "None")) + projects.map { Choice(it.name, it.name) },
@@ -256,6 +273,7 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                                 actingAsId = places.actingAs?.id,
                             ),
                             picture,
+                            where,
                         )
                     },
                 )

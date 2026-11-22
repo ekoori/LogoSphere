@@ -189,6 +189,7 @@ fun OpeningCard(
                     modifier = Modifier.weight(1f),
                 )
             }
+            WhereLine(opening.location, opening.distance)
             opening.description?.takeIf { it.isNotBlank() }?.let {
                 Text(
                     it,

@@ -44,8 +44,17 @@ import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.core.model.CommunityKind
+import com.krbavcic.logosphere.core.model.PlaceSettings
+import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
+import com.krbavcic.logosphere.ui.common.PlaceFields
 
-class EditProfileViewModel(private val app: AppContainer) : LoadViewModel<OwnProfile>() {
+/** [place] is null when it didn't load: then it's left as it is. */
+data class EditableProfile(val profile: OwnProfile, val place: PlaceSettings?)
+
+class EditProfileViewModel(private val app: AppContainer) : LoadViewModel<EditableProfile>() {
     private val _saved = Channel<Unit>(Channel.BUFFERED)
     val saved = _saved.receiveAsFlow()
 
@@ -53,21 +62,35 @@ class EditProfileViewModel(private val app: AppContainer) : LoadViewModel<OwnPro
         load()
     }
 
-    override suspend fun fetch(force: Boolean): OwnProfile = app.api.ownProfile()
+    override suspend fun fetch(force: Boolean): EditableProfile {
+        val profile = app.api.ownProfile()
+        return EditableProfile(profile, runCatching { app.api.place(Places.PEOPLE, profile.userId) }.getOrNull())
+    }
 
-    fun save(name: String, surname: String, location: String, photo: Uri?) {
+    fun save(name: String, surname: String, place: PlaceDraft?, photo: Uri?) {
         if (name.isBlank()) {
             say("Your first name can't be empty.")
             return
         }
+        place?.problem?.let { return say(it) }
+        val moved = place?.changed == true
         act(onSuccess = {
             app.session.refresh()
             app.changes.emit(Change.Profile)
+            if (moved) {
+                // Every distance follows from where you are.
+                app.openings.invalidate()
+                app.communities.invalidate(CommunityKind.Sphere)
+                app.changes.emit(Change.Openings)
+                app.changes.emit(Change.Communities)
+            }
             _saved.send(Unit)
         }) {
+            val me = current?.profile?.userId
             val picture = photo?.let { app.pictures.read(it) }
-            app.api.updateProfile(name, surname, location, picture)
-            current?.userId?.let { if (picture != null) app.pictures.replaced(app.api.avatarUrl(it)) }
+            app.api.updateProfile(name, surname, picture)
+            if (moved && me != null) app.api.savePlace(Places.PEOPLE, me, place)
+            if (me != null && picture != null) app.pictures.replaced(app.api.avatarUrl(me))
         }
     }
 }
@@ -88,10 +111,13 @@ fun EditProfileScreen() {
         topBar = { BackTopBar("Edit profile", navigator::back) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { profile ->
+        LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
+            val profile = data.profile
             var name by rememberSaveable { mutableStateOf(profile.name.orEmpty()) }
             var surname by rememberSaveable { mutableStateOf(profile.surname.orEmpty()) }
-            var location by rememberSaveable { mutableStateOf(profile.location.orEmpty()) }
+            var place by rememberSaveable(stateSaver = PlaceDraftSaver) {
+                mutableStateOf(data.place?.let { PlaceDraft.of(it, person = true) } ?: PlaceDraft(person = true))
+            }
             var photo by rememberSaveable { mutableStateOf<Uri?>(null) }
             val pick = rememberPicturePicker { photo = it }
             val take = rememberPhotoTaker { photo = it }
@@ -121,15 +147,7 @@ fun EditProfileScreen() {
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("Location") },
-                    placeholder = { Text("City, Country") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                PlaceFields(place.takeIf { data.place != null }, { place = it }, "Where you are")
                 OutlinedTextField(
                     value = profile.email.orEmpty(),
                     onValueChange = {},
@@ -139,7 +157,7 @@ fun EditProfileScreen() {
                     supportingText = { Text("Email can't be changed here.") },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                PrimaryAction("Save changes", busy = busy, enabled = name.isNotBlank(), onClick = { vm.save(name, surname, location, photo) })
+                PrimaryAction("Save changes", busy = busy, enabled = name.isNotBlank(), onClick = { vm.save(name, surname, place.takeIf { data.place != null }, photo) })
                 MetaText("Everything else about you lives on your Meaning Graph, on the Me tab.", maxLines = 2)
             }
         }

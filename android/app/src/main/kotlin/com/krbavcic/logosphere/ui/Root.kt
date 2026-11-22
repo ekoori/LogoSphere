@@ -75,6 +75,7 @@ import com.krbavcic.logosphere.ui.values.ValueCardEditorScreen
 import com.krbavcic.logosphere.ui.openings.NewOpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningsScreen
+import com.krbavcic.logosphere.ui.people.NearbyScreen
 import com.krbavcic.logosphere.ui.people.PersonScreen
 import com.krbavcic.logosphere.ui.search.SearchScreen
 import com.krbavcic.logosphere.ui.trail.TrailScreen
@@ -251,6 +252,7 @@ fun LogoSphereRoot() {
                         PersonScreen(route.id, route.tab)
                     }
                     composable<SearchRoute> { SearchScreen() }
+                    composable<NearbyRoute> { NearbyScreen() }
                     composable<GraphRoute> { GraphScreen(it.toRoute<GraphRoute>().owner) }
                     composable<EditProfileRoute> { EditProfileScreen() }
                     composable<AccountRoute> { AccountScreen() }

@@ -63,12 +63,67 @@ import kotlin.coroutines.cancellation.CancellationException
 
 private val EMAIL = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
-class AuthViewModel(private val session: SessionManager) : ViewModel() {
+class AuthViewModel(private val session: SessionManager, private val api: LogoSphereApi) : ViewModel() {
+    private val _mailOn = MutableStateFlow<Boolean?>(null)
+
+    /** Whether LogoSphere can send email, which decides these forms; null until known. */
+    val mailOn: StateFlow<Boolean?> = _mailOn.asStateFlow()
+
+    private val _linkSentTo = MutableStateFlow<String?>(null)
+
+    /** Joining by email: where the link went. */
+    val linkSentTo: StateFlow<String?> = _linkSentTo.asStateFlow()
+
+    private val _forgot = MutableStateFlow<String?>(null)
+
+    /** The answer to "email me a reset link". */
+    val forgot: StateFlow<String?> = _forgot.asStateFlow()
+
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _mailOn.value = try {
+                api.mailOn()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
+    fun emailResetLink(email: String) {
+        if (email.isBlank()) {
+            _forgot.value = "Type your email address on the sign-in screen first."
+            return
+        }
+        if (_busy.value) return
+        _busy.value = true
+        viewModelScope.launch {
+            try {
+                _forgot.value = api.forgotPassword(email)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _forgot.value = e.userMessage("That didn't send. Please try again.")
+            } finally {
+                _busy.value = false
+            }
+        }
+    }
+
+    fun closeForgot() {
+        _forgot.value = null
+    }
+
+    fun joinAgain() {
+        _linkSentTo.value = null
+    }
 
     fun signIn(email: String, password: String, server: String?) = submit {
         if (email.isBlank() || password.isEmpty()) return@submit "Enter your email and password."
@@ -77,13 +132,15 @@ class AuthViewModel(private val session: SessionManager) : ViewModel() {
     }
 
     fun register(name: String, email: String, password: String, confirm: String, server: String?) = submit {
+        val withPassword = mailOn.value != true
         when {
             name.isBlank() -> return@submit "Please enter your name."
             !EMAIL.matches(email.trim()) -> return@submit "Please enter a valid email address."
-            password.length < 8 -> return@submit "Password must be at least 8 characters."
-            password != confirm -> return@submit "Passwords do not match."
+            withPassword && password.length < 8 -> return@submit "Password must be at least 8 characters."
+            withPassword && password != confirm -> return@submit "Passwords do not match."
         }
-        session.register(name, email, password, normalised(server) ?: return@submit "That server address doesn't look right.")
+        val address = normalised(server) ?: return@submit "That server address doesn't look right."
+        if (session.register(name, email, password.takeIf { withPassword }, address)) _linkSentTo.value = email.trim()
         null
     }
 
@@ -116,7 +173,7 @@ class AuthViewModel(private val session: SessionManager) : ViewModel() {
 @Composable
 private fun authViewModel(): AuthViewModel {
     val container = LocalAppContainer.current
-    return viewModel { AuthViewModel(container.session) }
+    return viewModel { AuthViewModel(container.session, container.api) }
 }
 
 @Composable
@@ -260,16 +317,37 @@ fun SignInScreen(notice: String?) {
             Text("Forgot your password?", textAlign = TextAlign.Center)
         }
         if (forgot) {
+            val mailOn by vm.mailOn.collectAsStateWithLifecycle()
+            val said by vm.forgot.collectAsStateWithLifecycle()
+            val close = {
+                forgot = false
+                vm.closeForgot()
+            }
             AlertDialog(
-                onDismissRequest = { forgot = false },
+                onDismissRequest = close,
                 title = { Text("Forgot your password?") },
                 text = {
                     Text(
-                        "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
-                            "it works once, for 24 hours. If you don't know one, write to support@logosphere.net.",
+                        said ?: when (mailOn) {
+                            true -> "We'll email a link to ${email.trim().ifEmpty { "the address you type on the sign-in screen" }}. " +
+                                "It works once, for 2 hours, and opens in your browser."
+                            else -> "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
+                                "it works once, for 24 hours. If you don't know one, write to support@logosphere.net."
+                        },
                     )
                 },
-                confirmButton = { TextButton(onClick = { forgot = false }) { Text("OK") } },
+                confirmButton = {
+                    if (mailOn == true && said == null) {
+                        TextButton(onClick = { vm.emailResetLink(email) }, enabled = !busy) { Text("Email me a link") }
+                    } else {
+                        TextButton(onClick = close) { Text("OK") }
+                    }
+                },
+                dismissButton = if (mailOn == true && said == null) {
+                    { TextButton(onClick = close) { Text("Cancel") } }
+                } else {
+                    null
+                },
             )
         }
     }
@@ -293,7 +371,27 @@ fun RegisterScreen() {
         vm.register(name, email, password, confirm, serverText)
     }
 
+    val mailOn by vm.mailOn.collectAsStateWithLifecycle()
+    val sentTo by vm.linkSentTo.collectAsStateWithLifecycle()
+
     AuthFrame {
+        sentTo?.let { address ->
+            Text("Check your email", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "We sent a link to $address. Open it to choose your password, then sign in here.",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                "It can take a few minutes: look in spam too. The link works for a day.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            PrimaryAction("Back to sign in", onClick = navigator::back)
+            TextButton(onClick = vm::joinAgain, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Text("Send it again, or use another address")
+            }
+            return@AuthFrame
+        }
         Text("Join LogoSphere", style = MaterialTheme.typography.headlineMedium)
         ErrorText(error)
         OutlinedTextField(
@@ -314,10 +412,24 @@ fun RegisterScreen() {
             keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
             modifier = Modifier.fillMaxWidth(),
         )
-        PasswordField(password, { password = it }, "Password (at least 8 characters)", ImeAction.Next)
-        PasswordField(confirm, { confirm = it }, "Confirm password", ImeAction.Done, onDone = submit)
+        if (mailOn == false) {
+            PasswordField(password, { password = it }, "Password (at least 8 characters)", ImeAction.Next)
+            PasswordField(confirm, { confirm = it }, "Confirm password", ImeAction.Done, onDone = submit)
+        }
         ServerField(serverText) { serverText = it }
-        PrimaryAction("Create account", onClick = submit, busy = busy)
+        if (mailOn == true) {
+            Text(
+                "You choose your password from the link we email you.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        PrimaryAction(
+            if (mailOn == true) "Email me a link to join" else "Create account",
+            onClick = submit,
+            enabled = mailOn != null,
+            busy = busy,
+        )
         TextButton(onClick = navigator::back, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Already have an account? Sign in")
         }

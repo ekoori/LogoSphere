@@ -81,6 +81,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.AiPictureButton
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.ui.common.ExactSpot
+import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
+import com.krbavcic.logosphere.ui.common.PlaceFields
+import com.krbavcic.logosphere.ui.common.WhereLine
+import kotlin.coroutines.cancellation.CancellationException
 
 data class OpeningData(
     val opening: Opening,
@@ -156,23 +163,34 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
     /** A new version replaced this one: the screen moves to it. */
     val replaced = _replaced.receiveAsFlow()
 
-    /** Once an exchange links to the opening, the server keeps it as it was and saves the edit as a new version. */
-    fun edit(title: String, description: String, onDone: () -> Unit) {
+    /**
+     * Once an exchange links to the opening, the server keeps it as it was and saves the edit as a
+     * new version, whether the words changed or only the place: follow to whichever is current.
+     */
+    fun edit(title: String, description: String, place: PlaceDraft?, onDone: () -> Unit) {
         if (title.isBlank()) {
             say("The title can't be empty.")
             return
         }
+        place?.problem?.let { return say(it) }
+        val was = current?.opening ?: return
         act {
-            val result = app.api.editOpening(id, title, description)
-            onDone()
-            app.openings.invalidate()
-            app.changes.emit(Change.Openings)
-            val newId = result.service?.id
-            if (result.versioned && newId != null && newId != id) {
-                _replaced.send(newId)
-            } else {
-                reload()
-                say("Opening updated.")
+            var latest = id
+            try {
+                if (title.trim() != was.title || description != was.description.orEmpty()) {
+                    val result = app.api.editOpening(id, title, description)
+                    if (result.versioned) result.service?.id?.let { latest = it }
+                }
+                if (place?.changed == true) app.api.savePlace(Places.OPENINGS, latest, place).id?.let { latest = it }
+                onDone()
+                if (latest == id) {
+                    reload()
+                    say("Opening updated.")
+                }
+            } finally {
+                app.openings.invalidate()
+                app.changes.emit(Change.Openings)
+                if (latest != id) _replaced.trySend(latest)
             }
         }
     }
@@ -279,6 +297,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                             if (opening.providerIsAgent && !OpeningRules.isOwn(opening, me)) PersonaTag()
                         }
                         MetaText("Posted ${Dates.day(opening.createdAt)}")
+                        WhereLine(opening.location, opening.distance, maxLines = 2)
                     }
                     // Your own opening isn't yours to appreciate (an old self-like can come off).
                     if (!OpeningRules.isOwn(opening, me) || opening.likedByMe) {
@@ -303,11 +322,17 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                     }
                 }
                 if (editing) {
-                    EditOpeningForm(opening, busy, onSave = { title, description -> vm.edit(title, description) { editing = false } }, onCancel = { editing = false })
+                    EditOpeningForm(
+                        opening,
+                        busy,
+                        onSave = { title, description, place -> vm.edit(title, description, place) { editing = false } },
+                        onCancel = { editing = false },
+                    )
                 } else {
                     opening.description?.takeIf { it.isNotBlank() }?.let {
                         Text(it, style = MaterialTheme.typography.bodyLarge)
                     }
+                    ExactSpot(opening.point)
                     if (canManage && !cancelled) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             // A platform admin may change anyone's opening: say so.
@@ -467,9 +492,24 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
     }
 }
 
-/** Title and description, edited in place (the web's inline form). */
+/** Title, description and where, edited in place (the web's inline form). */
 @Composable
-private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, String) -> Unit, onCancel: () -> Unit) {
+private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, String, PlaceDraft?) -> Unit, onCancel: () -> Unit) {
+    val api = LocalAppContainer.current.api
+    var place by rememberSaveable(opening.id, stateSaver = PlaceDraftSaver) { mutableStateOf(PlaceDraft()) }
+    var placeLoaded by rememberSaveable(opening.id) { mutableStateOf(false) }
+    var placeFailed by rememberSaveable(opening.id) { mutableStateOf(false) }
+    LaunchedEffect(opening.id) {
+        if (placeLoaded) return@LaunchedEffect
+        try {
+            place = PlaceDraft.of(api.place(Places.OPENINGS, opening.id))
+            placeLoaded = true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            placeFailed = true
+        }
+    }
     var title by rememberSaveable(opening.id) { mutableStateOf(opening.title) }
     var description by rememberSaveable(opening.id) { mutableStateOf(opening.description.orEmpty()) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -488,12 +528,13 @@ private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, St
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
         )
+        if (placeLoaded || placeFailed) PlaceFields(place.takeIf { placeLoaded }, { place = it }, "Where")
         MetaText(
             "Once an exchange has come from this opening, saving keeps this version as it was and makes a new one.",
             maxLines = 3,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onSave(title, description) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
+            Button(onClick = { onSave(title, description, place.takeIf { placeLoaded }) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
             TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
         }
     }

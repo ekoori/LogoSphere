@@ -64,6 +64,7 @@ import com.krbavcic.logosphere.ui.common.OpeningCard
 import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.QuietPill
+import com.krbavcic.logosphere.ui.common.ExactSpot
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.ScrollingTabs
@@ -250,7 +251,8 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (c.isDemo) DemoTag()
                     QuietPill("${c.peopleCount} member${if (c.peopleCount == 1) "" else "s"}")
-                    c.location?.takeIf { c.kind == CommunityKind.Sphere && it.isNotBlank() }?.let { QuietPill(it) }
+                    c.location?.takeIf { it.isNotBlank() }?.let { QuietPill(it) }
+                    c.distance?.let { QuietPill(it.text) }
                     if (c.kind == CommunityKind.Sphere && c.isPublic) QuietPill("Public")
                     if (c.kind == CommunityKind.Project) QuietPill(if (c.isClosed) "Closed" else c.status ?: "Ongoing")
                     if (c.joinPolicy == "approval") QuietPill("Joining needs approval")
@@ -276,6 +278,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     }
                 }
                 c.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+                ExactSpot(c.point)
                 when {
                     role == "pending" -> MetaText("Your request to join is waiting for a manager's approval.", maxLines = 2)
                     !isMember && me != null -> PrimaryAction(

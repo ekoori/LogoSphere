@@ -31,6 +31,8 @@ sealed interface AppLink {
     data class MeaningGraph(val owner: String? = null) : AppLink
     data object Me : AppLink
     data object EditProfile : AppLink
+    data object Account : AppLink
+    data object Nearby : AppLink
     data object Admin : AppLink
     data class Info(val page: InfoPage) : AppLink
 
@@ -58,7 +60,10 @@ object Links {
         val kind = CommunityKind.of(path.removePrefix("/").removeSuffix("-management"))
         return when {
             path == "/profile" -> AppLink.Me
+            // Where the email in an unsubscribe or notification message sends you.
+            path == "/settings" && text.endsWith("#email") -> AppLink.Account
             path == "/settings" -> AppLink.EditProfile
+            path == "/nearby" -> AppLink.Nearby
             path == "/admin" -> AppLink.Admin
             path == "/meaning-graph" -> AppLink.MeaningGraph(params["owner"]?.takeIf { it.isNotBlank() })
             path == "/opening" -> id?.let { AppLink.Opening(it) }

@@ -30,6 +30,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class NewCommunityRoute(val kind: String)
 @Serializable data class PersonRoute(val id: String, val tab: String? = null)
 @Serializable data object SearchRoute
+@Serializable data object NearbyRoute
 
 /** The Meaning Graph; [owner] opens it on one person's or group's cards. */
 @Serializable data class GraphRoute(val owner: String? = null)
@@ -82,6 +83,8 @@ class Navigator(
 
     fun search() = controller.navigate(SearchRoute)
 
+    fun nearby() = controller.navigate(NearbyRoute)
+
     fun meaningGraph(owner: String? = null) = controller.navigate(GraphRoute(owner))
 
     fun register() = controller.navigate(RegisterRoute)
@@ -115,6 +118,8 @@ class Navigator(
         is AppLink.MeaningGraph -> meaningGraph(link.owner)
         AppLink.Me -> tab(Tab.Me)
         AppLink.EditProfile -> editProfile()
+        AppLink.Account -> account()
+        AppLink.Nearby -> nearby()
         AppLink.Admin -> admin()
         is AppLink.Info -> info(link.page)
         is AppLink.Web -> web(link.path)

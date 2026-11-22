@@ -64,6 +64,12 @@ import com.krbavcic.logosphere.ui.values.ValueCardItem
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.MoreInAdvanced
 import com.krbavcic.logosphere.ui.common.AiPictureButton
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.core.model.PlaceSettings
+import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
+import com.krbavcic.logosphere.ui.common.PlaceFields
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class ManageCommunityViewModel(
     private val app: AppContainer,
@@ -73,12 +79,21 @@ class ManageCommunityViewModel(
     val viewerId: String? get() = app.session.user?.id
     val isPlatformAdmin: Boolean get() = app.session.user?.isPlatformAdmin == true
 
+    private val _place = MutableStateFlow<PlaceSettings?>(null)
+
+    /** Where it is, whole; null when it didn't load. */
+    val place = _place.asStateFlow()
+
     init {
         load()
         reloadOn(app.changes, Change.ValueCards, Change.Communities)
     }
 
-    override suspend fun fetch(force: Boolean): Community = app.api.community(kind, id)
+    override suspend fun fetch(force: Boolean): Community {
+        val community = app.api.community(kind, id)
+        _place.value = if (community.canManage) runCatching { app.api.place(kind.path, id) }.getOrNull() else null
+        return community
+    }
 
     private suspend fun changed() {
         app.communities.invalidate(kind)
@@ -87,19 +102,23 @@ class ManageCommunityViewModel(
     }
 
     /** [changes]: name, description and policies that differ; a sphere's flags only when they changed. */
-    fun save(changes: Map<String, String>, isPublic: Boolean?, isSandbox: Boolean?) {
+    fun save(changes: Map<String, String>, isPublic: Boolean?, isSandbox: Boolean?, place: PlaceDraft?) {
         if (changes["name"]?.isBlank() == true) {
             say("The name can't be empty.")
             return
         }
-        if (changes.isEmpty() && isPublic == null && isSandbox == null) {
+        place?.problem?.let { return say(it) }
+        val moved = place?.changed == true
+        if (changes.isEmpty() && isPublic == null && isSandbox == null && !moved) {
             say("Nothing has changed.")
             return
         }
         act(onSuccess = {
+            if (moved) app.openings.invalidate() // an opening with no place is as near as its sphere
             changed()
             say("Saved.")
         }) {
+            if (moved) app.api.savePlace(kind.path, id, place)
             if (changes.isNotEmpty()) app.api.updateCommunity(kind, id, changes)
             if (kind == CommunityKind.Sphere && (isPublic != null || isSandbox != null)) app.api.setSphereFlags(id, isPublic, isSandbox)
         }
@@ -140,6 +159,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
     val vm: ManageCommunityViewModel = viewModel(key = "manage-$kind-$id") { ManageCommunityViewModel(app, kind, id) }
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
+    val place by vm.place.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
@@ -202,7 +222,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                     }
                     when (tab) {
                         0 -> item(key = "settings") {
-                            SettingsForm(c, vm.isPlatformAdmin, busy, onSave = vm::save, modifier = Modifier.padding(horizontal = ScreenPadding))
+                            SettingsForm(c, place, vm.isPlatformAdmin, busy, onSave = vm::save, modifier = Modifier.padding(horizontal = ScreenPadding))
                         }
                         1 -> {
                             item(key = "graph-intro") {
@@ -231,11 +251,15 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
 @Composable
 private fun SettingsForm(
     c: Community,
+    storedPlace: PlaceSettings?,
     isPlatformAdmin: Boolean,
     busy: Boolean,
-    onSave: (Map<String, String>, Boolean?, Boolean?) -> Unit,
+    onSave: (Map<String, String>, Boolean?, Boolean?, PlaceDraft?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var place by rememberSaveable(c.id, storedPlace?.place?.toString(), stateSaver = PlaceDraftSaver) {
+        mutableStateOf(storedPlace?.let { PlaceDraft.of(it) } ?: PlaceDraft())
+    }
     var name by rememberSaveable(c.id) { mutableStateOf(c.name) }
     var description by rememberSaveable(c.id) { mutableStateOf(c.description.orEmpty()) }
     val fields = Policies.fields(c.kind)
@@ -260,6 +284,7 @@ private fun SettingsForm(
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth().heightIn(min = 110.dp),
         )
+        PlaceFields(place.takeIf { storedPlace != null }, { place = it }, "Where it is")
         // Hidden isn't cleared: only what changed is sent.
         fields.filter { !simple || it.key == "phase" }.forEach { field ->
             Picker(
@@ -304,6 +329,7 @@ private fun SettingsForm(
                 changes,
                 isPublic.takeIf { c.kind == CommunityKind.Sphere && it != c.isPublic },
                 isSandbox.takeIf { c.kind == CommunityKind.Sphere && isPlatformAdmin && it != c.isSandbox },
+                place.takeIf { storedPlace != null },
             )
         })
     }

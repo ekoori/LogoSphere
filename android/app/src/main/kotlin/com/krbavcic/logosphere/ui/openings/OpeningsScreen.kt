@@ -55,8 +55,12 @@ import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import androidx.compose.material.icons.outlined.NearMe
+import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.ui.common.LinkText
 
-data class OpeningsData(val openings: List<Opening>, val spheres: List<Community>)
+/** [canMeasure]: whether the member's own place gives distances; null when that didn't load. */
+data class OpeningsData(val openings: List<Opening>, val spheres: List<Community>, val canMeasure: Boolean? = null)
 
 // Sphere filter choices that aren't a single sphere.
 private const val REAL_SPHERES = "real-spheres"
@@ -73,7 +77,10 @@ class OpeningsViewModel(private val app: AppContainer) : LoadViewModel<OpeningsD
     override suspend fun fetch(force: Boolean): OpeningsData = coroutineScope {
         val openings = async { app.openings.list(force) }
         val spheres = async { runCatching { app.communities.list(CommunityKind.Sphere, force) }.getOrDefault(emptyList()) }
-        OpeningsData(openings.await(), spheres.await())
+        val mine = async {
+            viewerId?.let { me -> runCatching { Places.canMeasure(app.api.place(Places.PEOPLE, me).place) }.getOrNull() }
+        }
+        OpeningsData(openings.await(), spheres.await(), mine.await())
     }
 
     fun like(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
@@ -91,6 +98,7 @@ fun OpeningsScreen() {
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     var type by rememberSaveable { mutableIntStateOf(0) } // all, offers, needs
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
+    var near by rememberSaveable { mutableStateOf<String?>(null) } // km from your place
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -99,6 +107,9 @@ fun OpeningsScreen() {
             TopAppBar(
                 title = { Text("Openings", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    IconButton(onClick = navigator::nearby) {
+                        Icon(Icons.Outlined.NearMe, contentDescription = "Who and what is near you")
+                    }
                     IconButton(onClick = { navigator.meaningGraph() }) {
                         Icon(Icons.Outlined.Hub, contentDescription = "Meaning Graph")
                     }
@@ -121,6 +132,8 @@ fun OpeningsScreen() {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
+            val within = near?.toIntOrNull()
+            val noPlace = within != null && data.canMeasure == false
             val shown = data.openings
                 .filter { when (type) { 1 -> it.isOffer; 2 -> !it.isOffer; else -> true } }
                 .filter {
@@ -131,6 +144,9 @@ fun OpeningsScreen() {
                         else -> it.sphereId == sphereId
                     }
                 }
+                .filter { within == null || (it.distance?.km ?: Int.MAX_VALUE) <= within }
+                // Nearest band first, each still in the order it came.
+                .let { list -> if (within == null) list else list.sortedBy { it.distance?.km } }
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
@@ -157,10 +173,25 @@ fun OpeningsScreen() {
                                     onSelect = { sphereId = it },
                                 )
                             }
+                            FilterMenuChip(
+                                choices = listOf(Choice(null, "Any distance")) +
+                                    Places.NEAR_KM.map { Choice(it.toString(), "Within $it km") },
+                                selected = near,
+                                onSelect = { near = it },
+                            )
                         }
                     }
-                    if (shown.isEmpty()) {
-                        item { EmptyNote("No offers or needs here yet. Share something with your community.") }
+                    if (noPlace) {
+                        item(key = "no-place") {
+                            LinkText("To see what's near you, first say where you are →", navigator::editProfile)
+                        }
+                    } else if (shown.isEmpty()) {
+                        item {
+                            EmptyNote(
+                                if (within == null) "No offers or needs here yet. Share something with your community."
+                                else "Nothing this near. Openings that haven't said where they are, and whose sphere hasn't, are left out.",
+                            )
+                        }
                     }
                     items(shown, key = { it.id }) { opening ->
                         OpeningCard(

@@ -69,6 +69,13 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.krbavcic.logosphere.core.model.MeaningTrail
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.core.model.EmailSettings
+import com.krbavcic.logosphere.core.model.MailStatus
+import com.krbavcic.logosphere.core.model.Nearby
+import com.krbavcic.logosphere.core.model.PlaceSearch
+import com.krbavcic.logosphere.core.model.PlaceSettings
+import com.krbavcic.logosphere.core.model.RegisterResult
 import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
@@ -129,12 +136,55 @@ class LogoSphereApi(
         buildJsonObject { put("email", email); put("password", password) },
     )
 
-    suspend fun register(name: String, email: String, password: String) {
-        post<JsonElement>(
-            "/api/register",
-            buildJsonObject { put("name", name); put("email", email); put("password", password) },
-        )
-    }
+    /**
+     * With email working, only name and address ([password] null): the answer says to look in the
+     * inbox, and the account is made from the link there. Without, the password makes it at once.
+     */
+    suspend fun register(name: String, email: String, password: String? = null): RegisterResult = post(
+        "/api/register",
+        buildJsonObject {
+            put("name", name)
+            put("email", email)
+            password?.let { put("password", it) }
+        },
+    )
+
+    // ── Email ───────────────────────────────────────────────────────────────
+
+    suspend fun mailOn(): Boolean = get<MailStatus>("/api/mail").on
+
+    /** The same answer whether or not the address has an account. */
+    suspend fun forgotPassword(email: String): String = said(
+        post("/api/password/forgot", buildJsonObject { put("email", email.trim()) }),
+        "If that address has an account, a link is on its way.",
+    )
+
+    suspend fun emailSettings(): EmailSettings = get("/api/account/email")
+
+    suspend fun chooseEmailTopics(topics: List<String>): EmailSettings = post(
+        "/api/account/email",
+        buildJsonObject { put("topics", buildJsonArray { topics.forEach { add(JsonPrimitive(it)) } }) },
+    )
+
+    suspend fun sendEmailConfirmation(): String =
+        said(post("/api/account/email/confirm", JsonObject(emptyMap())), "A link is on its way.")
+
+    // ── Places ──────────────────────────────────────────────────────────────
+
+    /** A place, whole: only for whoever may change it. [kind]: users, openings, or a group's path. */
+    suspend fun place(kind: String, id: String): PlaceSettings = get("/api/places/$kind/$id")
+
+    suspend fun savePlace(kind: String, id: String, draft: PlaceDraft): PlaceSettings =
+        post("/api/places/$kind/$id", draft.body())
+
+    /** In the body, so what people look for stays out of URLs. */
+    suspend fun searchPlaces(text: String): PlaceSearch =
+        post("/api/places/search", buildJsonObject { put("q", text) })
+
+    suspend fun nearestPlaces(lat: Double, lon: Double): PlaceSearch =
+        post("/api/places/nearest", buildJsonObject { put("lat", lat); put("lon", lon) })
+
+    suspend fun nearby(km: Int): Nearby = get(url("/api/nearby") { addQueryParameter("km", km.toString()) })
 
     /** Revokes the session on the server; the caller forgets it locally either way. */
     suspend fun logout() {
@@ -225,12 +275,11 @@ class LogoSphereApi(
 
     suspend fun ownProfile(): OwnProfile = get("/api/user/profile")
 
-    /** Name, surname and location; a new photo too when [picture] is given. */
-    suspend fun updateProfile(name: String, surname: String, location: String, picture: Upload? = null) {
+    /** Name and surname; a new photo too when [picture] is given. Where you are is [savePlace]'s. */
+    suspend fun updateProfile(name: String, surname: String, picture: Upload? = null) {
         multipart<JsonElement>("/api/updateuser") {
             addFormDataPart("name", name.trim())
             addFormDataPart("surname", surname.trim())
-            addFormDataPart("location", location.trim())
             picture?.let { addPicture("profile_picture", it) }
         }
     }
@@ -444,7 +493,6 @@ class LogoSphereApi(
         val created = multipart<Community>("/api/${new.kind.path}") {
             addFormDataPart("name", new.name.trim())
             addFormDataPart("description", new.description.trim())
-            addFormDataPart("location", new.location.trim())
             if (new.kind != CommunityKind.Sphere) {
                 addFormDataPart("sphere_id", new.sphereId.orEmpty())
                 addFormDataPart("sphere_name", new.sphereName.orEmpty())
@@ -643,6 +691,8 @@ class LogoSphereApi(
     }
 
     private suspend inline fun <reified T> get(path: String): T = get(url(path))
+
+    private fun said(body: JsonObject, otherwise: String): String = body["message"]?.jsonPrimitive?.content ?: otherwise
 
     private suspend inline fun <reified T> get(url: HttpUrl): T =
         execute(Request.Builder().url(url).get().build())

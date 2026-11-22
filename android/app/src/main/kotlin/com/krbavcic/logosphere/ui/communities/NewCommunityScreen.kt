@@ -58,12 +58,19 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.MoreInAdvanced
 import com.krbavcic.logosphere.ui.common.AiPictureButton
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.krbavcic.logosphere.core.logic.PlaceDraft
+import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
+import com.krbavcic.logosphere.ui.common.PlacePicker
+import kotlin.coroutines.cancellation.CancellationException
 
 /** Spheres a new alliance or project may live in, and the alliances a project may be run for. */
 data class FoundingPlaces(val spheres: List<Community>, val managedAlliances: List<Community>)
 
 class NewCommunityViewModel(private val app: AppContainer) : LoadViewModel<FoundingPlaces>() {
-    private val _created = Channel<Community>(Channel.BUFFERED)
+    /** The new group, and whether where it is saved too. */
+    private val _created = Channel<Pair<Community, Boolean>>(Channel.BUFFERED)
     val created = _created.receiveAsFlow()
 
     init {
@@ -82,7 +89,8 @@ class NewCommunityViewModel(private val app: AppContainer) : LoadViewModel<Found
         )
     }
 
-    fun create(new: NewCommunity, banner: Uri?) {
+    fun create(new: NewCommunity, banner: Uri?, place: PlaceDraft) {
+        place.problem?.let { return say(it) }
         when {
             new.name.isBlank() -> return say("Give it a name.")
             new.description.isBlank() -> return say("Say in a sentence or two what it's for.")
@@ -90,9 +98,20 @@ class NewCommunityViewModel(private val app: AppContainer) : LoadViewModel<Found
         }
         act {
             val created = app.api.createCommunity(new, banner?.let { app.pictures.read(it) })
+            var placed = true
+            if (place.changed) {
+                try {
+                    app.api.savePlace(new.kind.path, created.id, place)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    logFailure("group place", e)
+                    placed = false
+                }
+            }
             app.communities.invalidate(new.kind)
             app.changes.emit(Change.Communities)
-            _created.send(created)
+            _created.send(created to placed)
         }
     }
 }
@@ -107,13 +126,21 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
     val busy by vm.busy.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
-    LaunchedEffect(vm) { vm.created.collect { c -> navigator.replace { community(c.kind, c.id) } } }
+    val context = LocalContext.current
+    LaunchedEffect(vm) {
+        vm.created.collect { (c, placed) ->
+            if (!placed) {
+                Toast.makeText(context, "Started, but where it is didn't save. You can add it under Manage.", Toast.LENGTH_LONG).show()
+            }
+            navigator.replace { community(c.kind, c.id) }
+        }
+    }
 
     var kindIndex by rememberSaveable { mutableIntStateOf(initialKind.ordinal) }
     val kind = CommunityKind.entries[kindIndex]
     var name by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
-    var location by rememberSaveable { mutableStateOf("") }
+    var where by rememberSaveable(stateSaver = PlaceDraftSaver) { mutableStateOf(PlaceDraft()) }
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var allianceId by rememberSaveable { mutableStateOf<String?>(null) }
     var joinPolicy by rememberSaveable { mutableStateOf("open") }
@@ -201,14 +228,7 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                     selected = joinPolicy,
                     onSelect = { joinPolicy = it ?: "open" },
                 )
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("Geographical location") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                PlacePicker(where.place, { where = where.copy(place = it) }, "Where it is (optional)")
                 PrimaryAction(
                     "Start the ${kind.noun.lowercase()}",
                     busy = busy,
@@ -219,13 +239,13 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                                 kind = kind,
                                 name = name,
                                 description = description,
-                                location = location,
                                 sphereId = sphere?.id,
                                 sphereName = sphere?.name,
                                 ownerAllianceId = allianceId.takeIf { kind == CommunityKind.Project },
                                 joinPolicy = joinPolicy,
                             ),
                             banner,
+                            where,
                         )
                     },
                 )

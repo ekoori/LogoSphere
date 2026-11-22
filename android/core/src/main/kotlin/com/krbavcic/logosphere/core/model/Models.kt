@@ -208,6 +208,12 @@ data class Opening(
     /** From a demo sphere, where the members are AI personas. */
     @SerialName("is_demo") val isDemo: Boolean = false,
     @SerialName("provider_is_agent") val providerIsAgent: Boolean = false,
+    /** Where, in words. */
+    val location: String? = null,
+    /** From the viewer's own place, to it or else to its sphere. */
+    val distance: Distance? = null,
+    /** Detail only, and only where it was shown exactly. */
+    val point: GeoPoint? = null,
 ) {
     val isOffer: Boolean get() = type != "need"
     val isPerpetual: Boolean get() = cadence == "perpetual"
@@ -409,6 +415,9 @@ data class Community(
     val name: String = "",
     val description: String? = null,
     val location: String? = null,
+    val distance: Distance? = null,
+    /** Detail only: the exact spot, for who may look inside, when its people chose to show it. */
+    val point: GeoPoint? = null,
     @SerialName("sphere_name") val sphereName: String? = null,
     val members: List<Member> = emptyList(),
     /** A sphere's size; its [members] are empty for someone outside a private one. */
@@ -477,7 +486,6 @@ data class NewCommunity(
     val kind: CommunityKind,
     val name: String,
     val description: String,
-    val location: String = "",
     val sphereId: String? = null,
     val sphereName: String? = null,
     /** A project may be run on behalf of an alliance its founder manages. */

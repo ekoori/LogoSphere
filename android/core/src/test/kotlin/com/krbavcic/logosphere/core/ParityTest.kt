@@ -229,13 +229,14 @@ class ParityTest {
     @Test
     fun aProfilePhotoGoesUpAsMultipart() = runTest {
         respond("""{"user_id":"me"}""")
-        api.updateProfile("Igor", "K", "Melbourne", Upload(byteArrayOf(1, 2, 3), "me.jpg", "image/jpeg"))
+        api.updateProfile("Igor", "K", Upload(byteArrayOf(1, 2, 3), "me.jpg", "image/jpeg"))
         val request = server.takeRequest()
         assertEquals("/api/updateuser", request.path)
         assertTrue(request.getHeader("Content-Type")!!.startsWith("multipart/form-data"))
         val body = request.body.readUtf8()
         assertTrue(body.contains("name=\"name\""))
-        assertTrue(body.contains("Melbourne"))
+        // Where you are is saved as a place: sent here, new words would drop the point.
+        assertFalse(body.contains("name=\"location\""))
         assertTrue(body.contains("name=\"profile_picture\"; filename=\"me.jpg\""))
     }
 
