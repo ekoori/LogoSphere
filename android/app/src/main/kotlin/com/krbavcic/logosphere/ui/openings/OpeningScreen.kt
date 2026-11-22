@@ -79,6 +79,7 @@ import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 data class OpeningData(
     val opening: Opening,
@@ -400,6 +401,7 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
     val canAccept = OpeningRules.canAccept(opening, me)
     val canWithdraw = OpeningRules.canWithdraw(opening, me)
     var acceptAs by rememberSaveable { mutableStateOf<String?>(null) }
+    val simple = LocalSimple.current
 
     val hasSomething = canAccept || canWithdraw || mine != null || opening.status == "Cancelled"
     if (!hasSomething) return
@@ -426,7 +428,7 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
                 ) { Text("Take back my acceptance") }
             }
             if (canAccept) {
-                if (data.acceptAs.isNotEmpty()) {
+                if (!simple && data.acceptAs.isNotEmpty()) {
                     Picker(
                         label = "Accept as",
                         choices = listOf(Choice(null, "Myself")) + data.acceptAs.map { Choice(it.id, "${it.name} (${it.kind.noun.lowercase()})") },
@@ -436,7 +438,7 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
                 }
                 PrimaryAction(
                     if (opening.isOffer) "Accept this offer" else "Fulfil this need",
-                    onClick = { vm.accept(acceptAs) },
+                    onClick = { vm.accept(acceptAs.takeUnless { simple }) },
                     busy = busy,
                 )
                 MetaText(

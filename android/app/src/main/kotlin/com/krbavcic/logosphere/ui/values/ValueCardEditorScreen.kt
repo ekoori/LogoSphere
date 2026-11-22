@@ -58,6 +58,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.MoreInAdvanced
 
 /** The card being written: blank, or an existing one's words; and whose graph it's for. */
 data class CardToWrite(val draft: ValueCardDraft, val groupName: String?)
@@ -142,6 +144,7 @@ private fun CardForm(start: CardToWrite, isGroup: Boolean, busy: Boolean, isNew:
     var mode by rememberSaveable { mutableStateOf(d.franklMode) }
     var colour by rememberSaveable { mutableStateOf(d.colorKey) }
     val we = if (isGroup) "we" else "you"
+    val simple = LocalSimple.current
 
     Column(
         modifier
@@ -154,7 +157,8 @@ private fun CardForm(start: CardToWrite, isGroup: Boolean, busy: Boolean, isNew:
         start.groupName?.let { MetaText("For the Meaning Graph of $it", maxLines = 2) }
         if (isNew && !isGroup) {
             MetaText(
-                "A value card captures one thing you genuinely care about — not a hashtag, but a reason, " +
+                if (simple) "A value card says one thing you care about, in your own words. One is plenty to start with."
+                else "A value card captures one thing you genuinely care about — not a hashtag, but a reason, " +
                     "a behaviour, and a drift signal.",
                 maxLines = 4,
             )
@@ -162,7 +166,10 @@ private fun CardForm(start: CardToWrite, isGroup: Boolean, busy: Boolean, isNew:
         Field(title, { title = it }, "Title", "e.g. Honest dialogue", singleLine = true)
         Field(careAbout, { careAbout = it }, if (isGroup) "We care about *" else "I care about *",
             if (isGroup) "What specifically does this group care about?" else "What specifically do you care about?", minHeight = 80)
-        Field(because, { because = it }, "Because", "The reason underneath it", minHeight = 80)
+        Field(because, { because = it }, "Because", if (simple) "Why it matters" else "The reason underneath it", minHeight = 80)
+        // Hidden isn't cleared: what's already on a card is saved back as it was.
+        if (simple) MoreInAdvanced("More can be said about a value")
+        if (!simple) {
         Field(looksLike, { looksLike = it }, "Looks like — one behaviour per line", "Observable actions that express this value", minHeight = 100)
         Field(drift, { drift = it }, "Drift looks like", "Anti-signals — how $we'd know $we've drifted")
         Field(conflict, { conflict = it }, "In conflict, $we prioritise", "The trade-off $we make")
@@ -196,8 +203,9 @@ private fun CardForm(start: CardToWrite, isGroup: Boolean, busy: Boolean, isNew:
                 ) { Box(Modifier.size(40.dp)) }
             }
         }
+        }
         PrimaryAction(
-            if (isNew) "Add to Meaning Graph" else "Save changes",
+            if (!isNew) "Save changes" else if (simple) "Save this card" else "Add to Meaning Graph",
             busy = busy,
             enabled = careAbout.isNotBlank(),
             onClick = {

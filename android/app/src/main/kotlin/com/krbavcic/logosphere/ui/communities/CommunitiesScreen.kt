@@ -60,6 +60,7 @@ import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 class CommunitiesViewModel(private val app: AppContainer) : LoadViewModel<Map<CommunityKind, List<Community>>>() {
     val viewerId: String? get() = app.session.user?.id
@@ -95,6 +96,9 @@ fun CommunitiesScreen() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
+    // Simple lists spheres; their alliances and projects are reached from them.
+    val simple = LocalSimple.current
+    val kindShown = if (simple) CommunityKind.Sphere else CommunityKind.entries[tab]
 
     Scaffold(
         topBar = {
@@ -108,7 +112,7 @@ fun CommunitiesScreen() {
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            val kind = CommunityKind.entries[tab]
+            val kind = kindShown
             ExtendedFloatingActionButton(
                 onClick = { navigator.newCommunity(kind) },
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -117,7 +121,7 @@ fun CommunitiesScreen() {
         },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { lists ->
-            val kind = CommunityKind.entries[tab]
+            val kind = kindShown
             // Your own communities first, then the rest; demo ones in a section of their own.
             val all = lists[kind].orEmpty().sortedByDescending { Membership.isMember(it, vm.viewerId) }
             val shown = all.filter { !it.isDemo }
@@ -129,9 +133,11 @@ fun CommunitiesScreen() {
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    item(key = "tabs") {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                            SegmentedTabs(CommunityKind.entries.map { it.plural }, tab, { tab = it })
+                    if (!simple) {
+                        item(key = "tabs") {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                                SegmentedTabs(CommunityKind.entries.map { it.plural }, tab, { tab = it })
+                            }
                         }
                     }
                     item(key = "intro") {

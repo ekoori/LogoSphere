@@ -55,6 +55,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.MoreInAdvanced
 
 /** Spheres a new alliance or project may live in, and the alliances a project may be run for. */
 data class FoundingPlaces(val spheres: List<Community>, val managedAlliances: List<Community>)
@@ -114,6 +116,7 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var allianceId by rememberSaveable { mutableStateOf<String?>(null) }
     var joinPolicy by rememberSaveable { mutableStateOf("open") }
+    val simple = LocalSimple.current
     var banner by rememberSaveable { mutableStateOf<Uri?>(null) }
     val pick = rememberPicturePicker { banner = it }
     val take = rememberPhotoTaker { banner = it }
@@ -172,7 +175,7 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                         )
                     }
                 }
-                if (kind == CommunityKind.Project && alliances.isNotEmpty()) {
+                if (kind == CommunityKind.Project && !simple && alliances.isNotEmpty()) {
                     Picker(
                         label = "On behalf of an alliance (optional)",
                         choices = listOf(Choice(null, "— just me —")) + alliances.map { Choice(it.id, it.name) },
@@ -180,7 +183,8 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                         onSelect = { allianceId = it },
                     )
                 }
-                Picker(
+                if (simple) MoreInAdvanced("Anyone can join. Asking people to wait for approval is")
+                if (!simple) Picker(
                     label = "Membership join policy",
                     choices = listOf(
                         Choice("open", "Open — anyone can join directly"),

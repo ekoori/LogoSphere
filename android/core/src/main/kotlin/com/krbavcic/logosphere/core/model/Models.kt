@@ -3,6 +3,7 @@ package com.krbavcic.logosphere.core.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import com.krbavcic.logosphere.core.logic.UiMode
 
 // Shapes of the LogoSphere API's JSON, as the Flask routes actually return them (recorded
 // responses live in the test fixtures). Every field the server may omit or null has a default,
@@ -23,9 +24,13 @@ data class User(
     val email: String? = null,
     val location: String? = null,
     @SerialName("is_platform_admin") val isPlatformAdmin: Boolean = false,
+    /** Told only about yourself. */
+    @SerialName("ui_mode") val uiMode: String? = null,
 ) {
     val displayName: String
         get() = listOfNotNull(name, surname).joinToString(" ").trim().ifEmpty { email ?: "Member" }
+
+    val mode: UiMode get() = UiMode.of(uiMode)
 }
 
 @Serializable

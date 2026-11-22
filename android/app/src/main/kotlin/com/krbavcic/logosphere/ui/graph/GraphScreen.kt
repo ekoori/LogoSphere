@@ -80,6 +80,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 class GraphViewModel(private val app: AppContainer) : LoadViewModel<MeaningGraph>() {
     private val _method = MutableStateFlow<Load<ClosenessMethod>>(Load.Loading)
@@ -142,6 +143,7 @@ fun GraphScreen(startOwner: String?) {
     var showMethod by rememberSaveable { mutableStateOf(false) }
     var reading by remember { mutableStateOf<ValueCard?>(null) }
     val drawing = remember { GraphDrawing() }
+    val simple = LocalSimple.current
 
     fun showEverything() {
         scope = 0
@@ -177,7 +179,8 @@ fun GraphScreen(startOwner: String?) {
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { graph ->
-            val from = if (fromPercent >= 0) fromPercent.roundToInt() / 100.0 else graph.shownFrom
+            // Simple has no slider, so it keeps to the platform's threshold.
+            val from = if (!simple && fromPercent >= 0) fromPercent.roundToInt() / 100.0 else graph.shownFrom
             val shown = remember(graph, scope, owner, focus, demos, query, from) {
                 GraphView.visible(graph, GraphScope.entries[scope], owner, focus, demos, query, from)
             }
@@ -213,12 +216,14 @@ fun GraphScreen(startOwner: String?) {
                 if (tuning) {
                     Column(Modifier.padding(horizontal = ScreenPadding)) {
                         FilterChip(selected = demos, onClick = { demos = !demos }, label = { Text("Demo and AI personas") })
-                        MetaText("Connections from ${GraphView.percent(from)}")
-                        Slider(
-                            value = (from * 100).toFloat(),
-                            onValueChange = { fromPercent = it.roundToInt().toFloat() },
-                            valueRange = LEAST_PERCENT..MOST_PERCENT,
-                        )
+                        if (!simple) {
+                            MetaText("Connections from ${GraphView.percent(from)}")
+                            Slider(
+                                value = (from * 100).toFloat(),
+                                onValueChange = { fromPercent = it.roundToInt().toFloat() },
+                                valueRange = LEAST_PERCENT..MOST_PERCENT,
+                            )
+                        }
                     }
                 }
                 val ownerNow = owner

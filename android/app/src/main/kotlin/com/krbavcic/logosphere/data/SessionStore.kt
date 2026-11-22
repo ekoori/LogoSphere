@@ -6,9 +6,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
+import com.krbavcic.logosphere.core.logic.UiMode
 
 /** The signed-in member, as the app remembers them between launches. */
-data class SessionUser(val id: String, val name: String, val isPlatformAdmin: Boolean) {
+data class SessionUser(
+    val id: String,
+    val name: String,
+    val isPlatformAdmin: Boolean,
+    val uiMode: UiMode = UiMode.Advanced,
+) {
     val firstName: String get() = name.trim().substringBefore(' ').ifEmpty { name }
 }
 
@@ -33,7 +39,7 @@ class SessionStore(private val context: Context, private val defaultServer: Stri
         server = prefs[SERVER] ?: defaultServer
         val saved = prefs[TOKEN]?.let { token ->
             val id = prefs[USER_ID] ?: return@let null
-            SavedSession(token, SessionUser(id, prefs[USER_NAME].orEmpty(), prefs[USER_ADMIN] ?: false))
+            SavedSession(token, SessionUser(id, prefs[USER_NAME].orEmpty(), prefs[USER_ADMIN] ?: false, UiMode.of(prefs[USER_MODE])))
         }
         token = saved?.token
         return saved
@@ -45,6 +51,7 @@ class SessionStore(private val context: Context, private val defaultServer: Stri
             it[USER_ID] = session.user.id
             it[USER_NAME] = session.user.name
             it[USER_ADMIN] = session.user.isPlatformAdmin
+            it[USER_MODE] = session.user.uiMode.key
         }
         token = session.token
     }
@@ -54,6 +61,7 @@ class SessionStore(private val context: Context, private val defaultServer: Stri
             it[USER_ID] = user.id
             it[USER_NAME] = user.name
             it[USER_ADMIN] = user.isPlatformAdmin
+            it[USER_MODE] = user.uiMode.key
         }
     }
 
@@ -64,6 +72,7 @@ class SessionStore(private val context: Context, private val defaultServer: Stri
             it.remove(USER_ID)
             it.remove(USER_NAME)
             it.remove(USER_ADMIN)
+            it.remove(USER_MODE)
         }
     }
 
@@ -80,6 +89,7 @@ class SessionStore(private val context: Context, private val defaultServer: Stri
         val USER_ID = stringPreferencesKey("user_id")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_ADMIN = booleanPreferencesKey("user_is_platform_admin")
+        val USER_MODE = stringPreferencesKey("user_ui_mode")
         val SERVER = stringPreferencesKey("server")
     }
 }

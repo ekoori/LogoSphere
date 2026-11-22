@@ -44,6 +44,7 @@ import com.krbavcic.logosphere.ui.common.QuietPill
 import com.krbavcic.logosphere.ui.theme.Brand
 import com.krbavcic.logosphere.ui.theme.Palette
 import com.krbavcic.logosphere.ui.theme.valueCardAccent
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 /** What a value card's owner may do with it from a list; null when the viewer only reads it. */
 class ValueCardActions(
@@ -70,6 +71,7 @@ fun ValueCardItem(
     val mode = FranklMode.of(card.franklMode) ?: FranklMode.Creative
     var expanded by rememberSaveable(card.id) { mutableStateOf(false) }
     var confirmDelete by rememberSaveable(card.id) { mutableStateOf(false) }
+    val simple = LocalSimple.current
 
     BrandCard(modifier.fillMaxWidth(), onClick = { expanded = !expanded }) {
         // The accent edge is drawn, not laid out: sizing the card by its intrinsic height made the
@@ -85,7 +87,7 @@ fun ValueCardItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(accent))
                 Text(
-                    "  ${mode.glyph} ${mode.label}",
+                    if (simple) "" else "  ${mode.glyph} ${mode.label}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -131,6 +133,8 @@ fun ValueCardItem(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ValueCardStateRow(card: ValueCard, actions: ValueCardActions?, busy: Boolean) {
+    // Draft, endorsed and due-for-review are Advanced's.
+    if (LocalSimple.current) return
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         if (card.endorsed == true) {
             val on = Dates.monthYear(card.endorsedAt)

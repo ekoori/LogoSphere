@@ -235,7 +235,7 @@ fun ValueChips(cards: List<ValueCard>, modifier: Modifier = Modifier, subjectLab
 @Composable
 fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String = "Cares about") {
     val accent = valueCardAccent(card.colorKey)
-    val mode = FranklMode.of(card.franklMode)
+    val mode = FranklMode.of(card.franklMode).takeUnless { LocalSimple.current }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(
             Modifier
@@ -273,6 +273,7 @@ fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String 
 /** "Make this yours": copies someone else's card onto your Meaning Graph, or a group's you manage. */
 @Composable
 private fun CloneSection(card: ValueCard) {
+    if (LocalSimple.current) return
     val app = LocalAppContainer.current
     val me = app.session.user?.id ?: return
     if (card.ownerId == me || card.careAbout.isNullOrBlank()) return

@@ -83,6 +83,10 @@ import com.krbavcic.logosphere.ui.values.ValueCardActions
 import com.krbavcic.logosphere.ui.values.ValueCardItem
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.core.logic.UiMode
+import com.krbavcic.logosphere.ui.common.UiModeDialog
+import androidx.compose.material.icons.outlined.Tune
 
 data class MeData(val profile: OwnProfile?, val cards: List<ValueCard>, val communities: List<Community>)
 
@@ -113,6 +117,8 @@ class MeViewModel(private val app: AppContainer) : LoadViewModel<MeData>() {
         }
     }
 
+    fun chooseMode(mode: UiMode) = act { app.session.setUiMode(mode) }
+
     fun signOut() = app.session.signOut()
 }
 
@@ -129,6 +135,8 @@ fun MeScreen() {
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
     var showLicences by rememberSaveable { mutableStateOf(false) }
     var showAppearance by rememberSaveable { mutableStateOf(false) }
+    var showMode by rememberSaveable { mutableStateOf(false) }
+    val simple = LocalSimple.current
     val theme by app.appearance.choice.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
@@ -169,17 +177,22 @@ fun MeScreen() {
                     }
                     item(key = "values-head") {
                         Column(Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            SectionHeading("Your Meaning Graph") {
+                            SectionHeading(if (simple) "What you care about" else "Your Meaning Graph") {
                                 if (data.cards.isNotEmpty()) TextButton(onClick = { navigator.valueCardEditor() }) { Text("+ Add card") }
                             }
-                            MetaText("What you care about and why, in a form that can't easily be optimised away.", maxLines = 2)
+                            MetaText(
+                                if (simple) "Each value card says one thing that matters to you, so neighbours can get to know you."
+                                else "What you care about and why, in a form that can't easily be optimised away.",
+                                maxLines = 2,
+                            )
                         }
                     }
                     if (data.cards.isEmpty()) {
                         item(key = "values-empty") {
                             Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(
-                                    "No value cards yet. A value card captures one thing you genuinely care about — not a hashtag, " +
+                                    if (simple) "No value cards yet. A value card says one thing you care about, in your own words. One is plenty to start with."
+                                    else "No value cards yet. A value card captures one thing you genuinely care about — not a hashtag, " +
                                         "but a reason, a behaviour, and a drift signal. Start with one value you'd recognise yourself by.",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -198,7 +211,7 @@ fun MeScreen() {
                             "Where your values sit among everyone's, and why",
                         ) { navigator.meaningGraph() }
                     }
-                    if (data.cards.isNotEmpty()) {
+                    if (!simple && data.cards.isNotEmpty()) {
                         item(key = "legend") { FranklLegend(Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp)) }
                     }
                     item(key = "communities-head") {
@@ -228,6 +241,9 @@ fun MeScreen() {
                             if (user?.isPlatformAdmin == true) {
                                 LinkRow(Icons.Outlined.AdminPanelSettings, "Platform administration") { navigator.admin() }
                             }
+                            LinkRow(Icons.Outlined.Tune, "Simple or Advanced", (if (simple) UiMode.Simple else UiMode.Advanced).label) {
+                                showMode = true
+                            }
                             LinkRow(Icons.Outlined.DarkMode, "Appearance", theme.label) { showAppearance = true }
                             LinkRow(Icons.Outlined.Lock, "Password, data & account") { navigator.account() }
                             LinkRow(Icons.Outlined.Language, InfoPage.About.title) { navigator.info(InfoPage.About) }
@@ -256,6 +272,16 @@ fun MeScreen() {
             text = { Text("You'll need your email and password to sign in again.") },
             confirmButton = { TextButton(onClick = { confirmSignOut = false; vm.signOut() }) { Text("Sign out") } },
             dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Stay") } },
+        )
+    }
+    if (showMode) {
+        UiModeDialog(
+            current = if (simple) UiMode.Simple else UiMode.Advanced,
+            onChoose = {
+                showMode = false
+                vm.chooseMode(it)
+            },
+            onDismiss = { showMode = false },
         )
     }
     if (showAppearance) {

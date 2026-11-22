@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 private val SCOPES = listOf(
     null to "Everything", "user" to "People", "sphere" to "Spheres", "alliance" to "Alliances",
@@ -136,7 +137,8 @@ fun SearchScreen() {
         ) {
             item(key = "field") {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SegmentedTabs(listOf("Text search", "Near my values"), mode, {
+                    // "Near my values" is Advanced's, but stays while it's in use.
+                    if (!LocalSimple.current || mode == 1) SegmentedTabs(listOf("Text search", "Near my values"), mode, {
                         mode = it
                         if (it == 1 && scope == "card") scope = null
                     })

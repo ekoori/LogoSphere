@@ -74,6 +74,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.ui.trail.trailItems
+import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.core.logic.ShownTabs
 
 data class CommunityData(
     val community: Community,
@@ -201,6 +203,7 @@ fun CommunityScreen(kind: CommunityKind, id: String, initialTab: String? = null)
 
 /** The tabs, by the names links use (`?tab=governance`). */
 private val TABS = listOf("trail", "openings", "people", "governance", "charter")
+private val ADVANCED_TABS = setOf("governance")
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -217,6 +220,8 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
     val members = c.members.filter { it.role != "pending" }
     var tab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, TABS)) }
     var confirmLeave by rememberSaveable { mutableStateOf(false) }
+    val simple = LocalSimple.current
+    val shownTabs = ShownTabs.of(TABS, ADVANCED_TABS, simple, open = TABS.getOrNull(tab))
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item(key = "banner") {
@@ -307,7 +312,21 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
         }
 
         item(key = "tabs") {
-            ScrollingTabs(listOf("Trail", "Openings", "People (${members.size})", "Governance", "Charter"), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
+            val labels = shownTabs.map { name ->
+                when (name) {
+                    "trail" -> "Trail"
+                    "openings" -> "Openings"
+                    "people" -> "People (${members.size})"
+                    "governance" -> "Governance"
+                    else -> if (simple) "Values" else "Charter"
+                }
+            }
+            ScrollingTabs(
+                options = labels,
+                selected = shownTabs.indexOf(TABS.getOrNull(tab)),
+                onSelect = { tab = TABS.indexOf(shownTabs[it]) },
+                modifier = Modifier.padding(horizontal = ScreenPadding),
+            )
         }
         when (tab) {
             0 -> {
@@ -328,7 +347,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                 }
             }
             1 -> {
-                if (canManage && !c.isClosed) {
+                if (canManage && !simple && !c.isClosed) {
                     item(key = "post-as") {
                         OutlinedButton(onClick = { navigator.newOpening(c) }, modifier = Modifier.padding(horizontal = ScreenPadding).fillMaxWidth()) {
                             Text("+ Post an opening as ${c.name}")
@@ -397,7 +416,7 @@ private fun Charter(data: CommunityData, modifier: Modifier = Modifier, onEdit: 
     val c = data.community
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (c.valueCards.isNotEmpty() || onEdit != null) {
-            SectionHeading("Meaning Graph") {
+            SectionHeading(if (LocalSimple.current) "What we care about" else "Meaning Graph") {
                 if (onEdit != null) TextButton(onClick = onEdit) { Text(if (c.valueCards.isEmpty()) "+ Add values" else "Edit") }
             }
             if (c.valueCards.isNotEmpty()) {

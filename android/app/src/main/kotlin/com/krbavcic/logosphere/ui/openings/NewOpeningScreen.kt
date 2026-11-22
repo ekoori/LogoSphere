@@ -51,6 +51,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 /** Where an opening may go; [actingAs] is the group it's posted for, when it isn't the member's own. */
 data class PostingPlaces(val spheres: List<Community>, val projects: List<Community>, val actingAs: Community? = null) {
@@ -192,7 +193,7 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                         }
                     },
                 )
-                Picker(
+                if (!LocalSimple.current || places.fixedProjectName != null) Picker(
                     label = "Project (optional)",
                     choices = listOf(Choice(null, "None")) + projects.map { Choice(it.name, it.name) },
                     selected = projectName,

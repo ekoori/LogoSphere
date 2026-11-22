@@ -79,6 +79,8 @@ import com.krbavcic.logosphere.ui.people.PersonScreen
 import com.krbavcic.logosphere.ui.search.SearchScreen
 import com.krbavcic.logosphere.ui.trail.TrailScreen
 import kotlinx.coroutines.launch
+import com.krbavcic.logosphere.core.logic.UiMode
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 private fun Tab.icon(selected: Boolean): ImageVector = when (this) {
     Tab.Trail -> if (selected) Icons.Filled.Eco else Icons.Outlined.Eco
@@ -177,7 +179,8 @@ fun LogoSphereRoot() {
         if (signedIn) container.inbox.refreshCount()
     }
 
-    CompositionLocalProvider(LocalNavigator provides navigator) {
+    val simple = (auth as? AuthState.SignedIn)?.user?.uiMode == UiMode.Simple
+    CompositionLocalProvider(LocalNavigator provides navigator, LocalSimple provides simple) {
         Scaffold(
             contentWindowInsets = WindowInsets(0),
             bottomBar = {

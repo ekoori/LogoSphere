@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import com.krbavcic.logosphere.core.logic.UiMode
 
 sealed interface AuthState {
     /** Reading the saved session; the splash screen stays up. */
@@ -64,7 +65,7 @@ class SessionManager(
             val status = api().checkSession()
             val data = status.userData
             if (status.isActive && data != null) {
-                val fresh = SessionUser(data.userId, data.displayName, data.isPlatformAdmin)
+                val fresh = SessionUser(data.userId, data.displayName, data.isPlatformAdmin, data.mode)
                 if (fresh != user) {
                     store.updateUser(fresh)
                     _state.value = AuthState.SignedIn(fresh)
@@ -86,7 +87,7 @@ class SessionManager(
     suspend fun signIn(email: String, password: String, server: String? = null) {
         if (server != null && server != store.server) store.setServer(server)
         val response = api().login(email.trim(), password)
-        val user = SessionUser(response.data.userId, response.data.displayName, response.data.isPlatformAdmin)
+        val user = SessionUser(response.data.userId, response.data.displayName, response.data.isPlatformAdmin, response.data.mode)
         store.save(SavedSession(response.sessionId, user))
         _state.value = AuthState.SignedIn(user)
         onSignedIn()
@@ -96,6 +97,14 @@ class SessionManager(
         if (server != null && server != store.server) store.setServer(server)
         api().register(name.trim(), email.trim(), password)
         signIn(email, password)
+    }
+
+    /** Simple or Advanced: saved to the account, then shown. Throws if it didn't save. */
+    suspend fun setUiMode(mode: UiMode) {
+        api().setUiMode(mode)
+        val changed = user?.copy(uiMode = mode) ?: return
+        _state.value = AuthState.SignedIn(changed)
+        store.updateUser(changed)
     }
 
     fun signOut() {

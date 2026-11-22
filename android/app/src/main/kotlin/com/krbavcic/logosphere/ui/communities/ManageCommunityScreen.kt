@@ -61,6 +61,8 @@ import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import com.krbavcic.logosphere.ui.values.ValueCardActions
 import com.krbavcic.logosphere.ui.values.ValueCardItem
+import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.MoreInAdvanced
 
 class ManageCommunityViewModel(
     private val app: AppContainer,
@@ -161,6 +163,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                     onReview = { vm.review(it) },
                 )
             }
+            val simple = LocalSimple.current
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding).imePadding()) {
                 LazyColumn(contentPadding = PaddingValues(bottom = 40.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     item(key = "head") {
@@ -184,7 +187,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                         )
                     }
                     item(key = "tabs") {
-                        ScrollingTabs(listOf("Settings", "Meaning Graph", Roles.peopleWord(kind)), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
+                        ScrollingTabs(listOf("Settings", if (simple) "Values" else "Meaning Graph", Roles.peopleWord(kind)), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
                     }
                     when (tab) {
                         0 -> item(key = "settings") {
@@ -193,8 +196,12 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                         1 -> {
                             item(key = "graph-intro") {
                                 Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    MetaText("The values this ${kind.noun.lowercase()} holds itself to — what it cares about, why, and what drift looks like.", maxLines = 3)
-                                    Button(onClick = { navigator.valueCardEditor(c) }) { Text("+ Add to Meaning Graph") }
+                                    MetaText(
+                                        if (simple) "What this ${kind.noun.lowercase()} cares about, for everyone to see."
+                                        else "The values this ${kind.noun.lowercase()} holds itself to — what it cares about, why, and what drift looks like.",
+                                        maxLines = 3,
+                                    )
+                                    Button(onClick = { navigator.valueCardEditor(c) }) { Text(if (simple) "+ Add a value card" else "+ Add to Meaning Graph") }
                                 }
                             }
                             if (c.valueCards.isEmpty()) item { EmptyNote("No value cards yet. Add the values this group holds itself to.") }
@@ -224,6 +231,7 @@ private fun SettingsForm(
     val values = remember(c.id) { mutableStateMapOf<String, String>().apply { fields.forEach { put(it.key, Policies.valueOf(c, it.key)) } } }
     var isPublic by rememberSaveable(c.id) { mutableStateOf(c.isPublic) }
     var isSandbox by rememberSaveable(c.id) { mutableStateOf(c.isSandbox) }
+    val simple = LocalSimple.current
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         OutlinedTextField(
@@ -241,7 +249,8 @@ private fun SettingsForm(
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth().heightIn(min = 110.dp),
         )
-        fields.forEach { field ->
+        // Hidden isn't cleared: only what changed is sent.
+        fields.filter { !simple || it.key == "phase" }.forEach { field ->
             Picker(
                 label = field.label,
                 choices = field.options.map { (value, label) ->
@@ -251,7 +260,7 @@ private fun SettingsForm(
                 onSelect = { v -> v?.let { values[field.key] = it } },
             )
         }
-        MetaText(
+        if (!simple) MetaText(
             "Members vote on proposals from the ${c.kind.noun.lowercase()}'s Governance tab (liquid democracy: anyone can lend " +
                 "their vote to a member they trust, and a direct vote always overrides it). A policy change that passes is applied automatically.",
             maxLines = 5,
@@ -263,13 +272,14 @@ private fun SettingsForm(
                 isPublic,
                 enabled = true,
             ) { isPublic = it }
-            Toggle(
+            if (!simple) Toggle(
                 "Sandbox sphere",
                 "Every new member who registers is enrolled into this sphere." + if (!isPlatformAdmin) " Only a platform administrator can change this." else "",
                 isSandbox,
                 enabled = isPlatformAdmin,
             ) { isSandbox = it }
         }
+        MoreInAdvanced("Who can join and how decisions are made are")
         PrimaryAction("Save changes", busy = busy, enabled = name.isNotBlank(), onClick = {
             val changes = buildMap {
                 if (name.trim() != c.name) put("name", name.trim())

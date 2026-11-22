@@ -69,6 +69,7 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.krbavcic.logosphere.core.model.MeaningTrail
+import com.krbavcic.logosphere.core.logic.UiMode
 
 /** Lenient on input: unknown fields are ignored and a null where a default exists takes the default. */
 val LogoSphereJson: Json = Json {
@@ -147,6 +148,11 @@ class LogoSphereApi(
     }
 
     suspend fun checkSession(): SessionStatus = get("/api/check_session")
+
+    /** Simple or Advanced, for this account everywhere. */
+    suspend fun setUiMode(mode: UiMode) {
+        post<JsonElement>("/api/account/preferences", buildJsonObject { put("ui_mode", mode.key) })
+    }
 
     // ── People ──────────────────────────────────────────────────────────────
 

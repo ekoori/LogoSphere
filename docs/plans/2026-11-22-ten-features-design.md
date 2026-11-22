@@ -26,8 +26,8 @@ commit. Tick the boxes as they land.
 - [x] S0 Close the access holes found while reading (below)
 - [x] S1 Openings default, centred initials, camera
 - [x] S2 Acknowledgements
-- [ ] S3 Meaning Graph
-- [ ] S4 Simple / Advanced
+- [x] S3 Meaning Graph (phone check pending)
+- [x] S4 Simple / Advanced (phone check pending)
 - [ ] S5 AI help and pictures
 - [ ] S6 Places and nearby
 - [ ] S7 Kindista gaps

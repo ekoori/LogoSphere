@@ -43,6 +43,7 @@ import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.QuietPill
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SectionHeading
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 private val ROLE_TIERS = mapOf(
     CommunityKind.Sphere to listOf("admin" to "Admins", "member" to "Members"),
@@ -118,7 +119,8 @@ private fun MemberRow(
 ) {
     var menu by remember { mutableStateOf(false) }
     var confirmRemove by remember { mutableStateOf(false) }
-    val actions = Roles.actions(kind, member)
+    // Simple keeps approving and removing; promoting is Advanced's.
+    val actions = if (LocalSimple.current) emptyList() else Roles.actions(kind, member)
     val removable = Roles.canRemove(kind, member)
     Row(
         Modifier

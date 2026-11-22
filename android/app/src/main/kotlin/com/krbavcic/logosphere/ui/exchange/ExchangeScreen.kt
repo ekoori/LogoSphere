@@ -101,6 +101,7 @@ import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.ui.trail.AcknowledgeButton
 import com.krbavcic.logosphere.ui.trail.AcknowledgementRun
 import com.krbavcic.logosphere.ui.trail.CardOwner
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 data class ExchangeData(
     val detail: ExchangeDetail,
@@ -311,7 +312,11 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
             BrandCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     SectionHeading("✓ Receipts")
-                    MetaText("Endorsed records of what happened and why it mattered.", maxLines = 2)
+                    val simple = LocalSimple.current
+                    MetaText(
+                        if (simple) "Thanks, in their own words." else "Endorsed records of what happened and why it mattered.",
+                        maxLines = 2,
+                    )
                     if (x.receipt == null && x.initiatorNote == null) {
                         Text("No receipts yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -319,7 +324,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                         Written(
                             author = recipient?.label ?: "Recipient",
                             authorParty = recipient,
-                            badge = FranklMode.of(x.receiptFranklMode)?.let { "${it.glyph} ${it.label.lowercase()}" },
+                            badge = FranklMode.of(x.receiptFranklMode)?.takeUnless { simple }?.let { "${it.glyph} ${it.label.lowercase()}" },
                             text = text,
                             cards = x.receiptCards,
                             context = x.receiptContext,
@@ -560,6 +565,7 @@ private fun Composer(
     theirCards: List<ValueCard> = emptyList(),
     theirLabel: String = "Their values",
 ) {
+    val simple = LocalSimple.current
     var expanded by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
     var context by rememberSaveable { mutableStateOf("") }
@@ -602,7 +608,7 @@ private fun Composer(
                 .fillMaxWidth()
                 .heightIn(min = 110.dp),
         )
-        if (type == CommentType.Receipt) {
+        if (type == CommentType.Receipt && !simple) {
             Text("What kind of meaning was this?", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FranklMode.entries.forEach { m ->
@@ -634,7 +640,7 @@ private fun Composer(
             }
         }
         if (type == CommentType.Receipt) {
-            OutlinedTextField(
+            if (!simple) OutlinedTextField(
                 value = context,
                 onValueChange = { context = it },
                 label = { Text("Context (optional)") },
@@ -672,8 +678,8 @@ private fun Composer(
                             type = type,
                             text = text,
                             cards = all,
-                            franklMode = FranklMode.of(mode),
-                            context = context.takeIf { type == CommentType.Receipt },
+                            franklMode = FranklMode.of(mode).takeUnless { simple },
+                            context = context.takeIf { type == CommentType.Receipt && !simple },
                         ),
                         if (type == CommentType.Receipt) photos.toList() else emptyList(),
                     ) {

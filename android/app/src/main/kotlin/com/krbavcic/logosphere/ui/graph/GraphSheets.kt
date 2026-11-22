@@ -53,6 +53,7 @@ import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.PersonaTag
 import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.theme.Brand
+import com.krbavcic.logosphere.ui.common.LocalSimple
 
 /** A node as the legend and the lists show it: its colour, a circle or a square. */
 @Composable
@@ -199,10 +200,14 @@ private fun Why(edge: GraphEdge, node: GraphNode, other: GraphNode, busy: Boolea
             val family = if (word.family) " (counted as ${word.countsAs})" else ""
             MetaText("${here.joinToString(", ")} ↔ ${there.joinToString(", ")}$family", maxLines = 3)
         }
-        Part("Lived together", if (edge.people > 0) "${edge.people} people" else "not yet")
+        val simple = LocalSimple.current
+        if (!simple || edge.people > 0) Part("Lived together", if (edge.people > 0) "${edge.people} people" else "not yet")
         if (edge.lineage) Part("One was made from the other", "yes")
-        Part("People's judgement", if (edge.judges > 0) "${edge.saidClose} of ${edge.judges} say close" else "fewer than 2 so far")
+        if (!simple || edge.judges > 0) {
+            Part("People's judgement", if (edge.judges > 0) "${edge.saidClose} of ${edge.judges} say close" else "fewer than 2 so far")
+        }
 
+        if (simple) return@Column
         if (node.canJudge && other.canJudge) {
             Text(
                 "Do these two feel close to you?",
