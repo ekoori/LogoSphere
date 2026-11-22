@@ -57,6 +57,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.MoreInAdvanced
+import com.krbavcic.logosphere.ui.common.AiPictureButton
 
 /** Spheres a new alliance or project may live in, and the alliances a project may be run for. */
 data class FoundingPlaces(val spheres: List<Community>, val managedAlliances: List<Community>)
@@ -118,8 +119,9 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
     var joinPolicy by rememberSaveable { mutableStateOf("open") }
     val simple = LocalSimple.current
     var banner by rememberSaveable { mutableStateOf<Uri?>(null) }
-    val pick = rememberPicturePicker { banner = it }
-    val take = rememberPhotoTaker { banner = it }
+    var bannerIsAi by rememberSaveable { mutableStateOf(false) }
+    val pick = rememberPicturePicker { banner = it; bannerIsAi = false }
+    val take = rememberPhotoTaker { banner = it; bannerIsAi = false }
 
     Scaffold(
         topBar = { BackTopBar("Start a ${kind.noun.lowercase()}", navigator::back) },
@@ -147,7 +149,13 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                     },
                     maxLines = 2,
                 )
-                BannerField(banner, null, kind, onPick = pick, onTake = take)
+                BannerField(banner, null, kind, onPick = pick, onTake = take, isAi = bannerIsAi)
+                AiPictureButton(
+                    purpose = kind.name.lowercase(),
+                    title = name,
+                    description = description,
+                    onUse = { banner = it; bannerIsAi = true },
+                )
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

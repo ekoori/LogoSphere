@@ -183,6 +183,7 @@ fun CommunityCard(community: Community, viewerId: String?, onClick: () -> Unit) 
                 imageUrl = if (community.hasImage) app.api.communityImageUrl(community.kind, community.id) else null,
                 kind = community.kind,
                 height = 96.dp,
+                isAi = community.imageIsAi,
             )
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

@@ -100,6 +100,8 @@ fun BannerField(
     label: String = "banner picture",
     height: Dp = 140.dp,
     onTake: (() -> Unit)? = null,
+    /** The picture showing (picked, or else the current one) is AI-made. */
+    isAi: Boolean = false,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.fillMaxWidth().height(height).clip(MaterialTheme.shapes.large)) {
@@ -108,6 +110,7 @@ fun BannerField(
             } else {
                 Banner(imageUrl = currentUrl, kind = kind, height = height)
             }
+            if (isAi && (picked != null || currentUrl != null)) AiPictureTag(Modifier.align(Alignment.TopStart))
         }
         OutlinedButton(onClick = onPick, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(18.dp))

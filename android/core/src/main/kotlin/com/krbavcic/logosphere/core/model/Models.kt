@@ -192,6 +192,8 @@ data class Opening(
     @SerialName("liked_by") val likedBy: List<PersonRef> = emptyList(),
     @SerialName("liked_by_current_user") val likedByMe: Boolean = false,
     @SerialName("has_image") val hasImage: Boolean = false,
+    /** Made with AI: labelled wherever it shows. */
+    @SerialName("image_is_ai") val imageIsAi: Boolean = false,
     /** The viewer is the provider, posted it for an entity, or manages the providing entity. */
     @SerialName("is_provider") val isProvider: Boolean = false,
     /** [isProvider], or a platform admin. */
@@ -308,6 +310,8 @@ data class Exchange(
     /** Like counts keyed by what was liked: exchange, gratitude, user, other. */
     val likes: Map<String, LikeInfo> = emptyMap(),
     @SerialName("has_image") val hasImage: Boolean = false,
+    /** Made with AI: labelled wherever it shows. */
+    @SerialName("image_is_ai") val imageIsAi: Boolean = false,
     @SerialName("receipt_photo_count") val receiptPhotoCount: Int = 0,
     @SerialName("is_finished") val isFinished: Boolean = false,
     @SerialName("is_demo") val isDemo: Boolean = false,
@@ -412,6 +416,8 @@ data class Community(
     val values: List<String> = emptyList(),
     @SerialName("value_cards") val valueCards: List<ValueCard> = emptyList(),
     @SerialName("has_image") val hasImage: Boolean = false,
+    /** Made with AI: labelled wherever it shows. */
+    @SerialName("image_is_ai") val imageIsAi: Boolean = false,
     @SerialName("is_public") val isPublic: Boolean = false,
     /** A demo sphere, or a group inside one: its members are AI personas. */
     @SerialName("is_demo") val isDemo: Boolean = false,

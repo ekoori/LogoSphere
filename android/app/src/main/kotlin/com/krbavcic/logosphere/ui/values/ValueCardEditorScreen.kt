@@ -60,6 +60,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.MoreInAdvanced
+import com.krbavcic.logosphere.ui.common.AiCardButton
 
 /** The card being written: blank, or an existing one's words; and whose graph it's for. */
 data class CardToWrite(val draft: ValueCardDraft, val groupName: String?)
@@ -163,6 +164,21 @@ private fun CardForm(start: CardToWrite, isGroup: Boolean, busy: Boolean, isNew:
                 maxLines = 4,
             )
         }
+        AiCardButton(
+            current = ValueCardDraft(title, careAbout, because, looksLike, drift, conflict, never, mode, colour),
+            brief = simple,
+            group = isGroup,
+            onUse = {
+                title = it.title
+                careAbout = it.careAbout
+                because = it.because
+                looksLike = it.looksLike
+                drift = it.driftLooksLike
+                conflict = it.inConflict
+                never = it.neverDo
+                mode = it.franklMode
+            },
+        )
         Field(title, { title = it }, "Title", "e.g. Honest dialogue", singleLine = true)
         Field(careAbout, { careAbout = it }, if (isGroup) "We care about *" else "I care about *",
             if (isGroup) "What specifically does this group care about?" else "What specifically do you care about?", minHeight = 80)

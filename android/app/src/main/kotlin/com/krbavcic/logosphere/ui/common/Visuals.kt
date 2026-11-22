@@ -149,6 +149,7 @@ fun Banner(
     kind: CommunityKind?,
     modifier: Modifier = Modifier,
     height: Dp = 160.dp,
+    isAi: Boolean = false,
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val glyph = kind?.glyph ?: "◍"
@@ -188,6 +189,7 @@ fun Banner(
             )
             content()
         }
+        if (isAi && imageUrl != null) AiPictureTag(Modifier.align(Alignment.TopStart))
     }
 }
 

@@ -229,6 +229,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                 imageUrl = if (c.hasImage) app.api.communityImageUrl(c.kind, c.id) else null,
                 kind = c.kind,
                 height = 180.dp,
+                isAi = c.imageIsAi,
             ) {
                 Column(
                     Modifier

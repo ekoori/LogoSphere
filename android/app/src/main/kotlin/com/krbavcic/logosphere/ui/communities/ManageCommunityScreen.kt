@@ -63,6 +63,7 @@ import com.krbavcic.logosphere.ui.values.ValueCardActions
 import com.krbavcic.logosphere.ui.values.ValueCardItem
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.ui.common.MoreInAdvanced
+import com.krbavcic.logosphere.ui.common.AiPictureButton
 
 class ManageCommunityViewModel(
     private val app: AppContainer,
@@ -183,6 +184,16 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                             kind = kind,
                             onPick = { if (!busy) pickPicture() },
                             onTake = takePicture?.let { take -> { if (!busy) take() } },
+                            isAi = c.imageIsAi,
+                            modifier = Modifier.padding(horizontal = ScreenPadding),
+                        )
+                    }
+                    item(key = "banner-ai") {
+                        AiPictureButton(
+                            purpose = kind.name.lowercase(),
+                            title = c.name,
+                            description = c.description.orEmpty(),
+                            onUse = { if (!busy) vm.setPicture(it) },
                             modifier = Modifier.padding(horizontal = ScreenPadding),
                         )
                     }

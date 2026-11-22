@@ -70,6 +70,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.core.logic.UiMode
+import com.krbavcic.logosphere.core.model.AiHelpStatus
+import com.krbavcic.logosphere.core.model.AiPicture
+import com.krbavcic.logosphere.core.model.CardSuggestion
+import java.util.concurrent.TimeUnit
 
 /** Lenient on input: unknown fields are ignored and a null where a default exists takes the default. */
 val LogoSphereJson: Json = Json {
@@ -167,6 +171,41 @@ class LogoSphereApi(
 
     /** The value cards on a person's, sphere's, alliance's or project's Meaning Graph. */
     suspend fun valueCards(ownerId: String): List<ValueCard> = get("/api/value_cards/$ownerId")
+
+    // ── AI help (only when the member asks) ─────────────────────────────────
+
+    suspend fun aiStatus(): AiHelpStatus = get("/api/ai")
+
+    /** A draft from the member's notes. Sends only fields they can see ([brief]: Simple's three). */
+    suspend fun draftCard(notes: String, draft: ValueCardDraft, brief: Boolean, group: Boolean): CardSuggestion = postSlowly(
+        "/api/ai/value_card",
+        buildJsonObject {
+            put("notes", notes)
+            put("draft", buildJsonObject {
+                fun field(key: String, value: String) {
+                    if (value.isNotBlank()) put(key, value.trim())
+                }
+                field("title", draft.title)
+                field("care_about", draft.careAbout)
+                field("because", draft.because)
+                if (!brief) {
+                    val lines = draft.looksLikeLines
+                    if (lines.isNotEmpty()) put("looks_like", buildJsonArray { lines.forEach { add(JsonPrimitive(it)) } })
+                    field("drift_looks_like", draft.driftLooksLike)
+                    field("in_conflict", draft.inConflict)
+                    field("never_do", draft.neverDo)
+                }
+            })
+            put("brief", brief)
+            put("group", group)
+        },
+    )
+
+    /** A picture for an opening or group: nothing is saved until it's uploaded like any other. */
+    suspend fun drawPicture(purpose: String, title: String, description: String, hint: String): AiPicture = postSlowly(
+        "/api/ai/picture",
+        buildJsonObject { put("purpose", purpose); put("title", title); put("description", description); put("hint", hint) },
+    )
 
     // ── The Meaning Graph ───────────────────────────────────────────────────
 
@@ -331,7 +370,8 @@ class LogoSphereApi(
 
     suspend fun opening(id: String): Opening = get("/api/openings/$id")
 
-    suspend fun createOpening(opening: NewOpening) {
+    /** Posts an opening; returns its id (for its picture). */
+    suspend fun createOpening(opening: NewOpening): String {
         val body = buildJsonObject {
             put("type", opening.type)
             put("cadence", opening.cadence)
@@ -343,7 +383,7 @@ class LogoSphereApi(
             put("status", "Posted")
             opening.actingAsId?.let { put("acting_as_id", it) }
         }
-        post<JsonElement>("/api/openings", body)
+        return post<JsonObject>("/api/openings", body)["service_id"]?.jsonPrimitive?.content.orEmpty()
     }
 
     /** Title and description. Once an exchange links to the opening, this makes a new version. */
@@ -618,6 +658,12 @@ class LogoSphereApi(
     private suspend inline fun <reified T> post(path: String, body: JsonElement): T =
         execute(Request.Builder().url(url(path)).post(json(body)).build())
 
+    /** AI answers take longer than anything else here does. */
+    private val patientClient: OkHttpClient by lazy { client.newBuilder().readTimeout(70, TimeUnit.SECONDS).build() }
+
+    private suspend inline fun <reified T> postSlowly(path: String, body: JsonElement): T =
+        execute(Request.Builder().url(url(path)).post(json(body)).build(), patientClient)
+
     private suspend inline fun <reified T> patch(path: String, body: JsonElement): T =
         execute(Request.Builder().url(url(path)).patch(json(body)).build())
 
@@ -655,14 +701,14 @@ class LogoSphereApi(
      * that on the main thread (it threw NetworkOnMainThreadException there). Decoding a large
      * list off the main thread keeps scrolling smooth as well.
      */
-    private suspend inline fun <reified T> execute(request: Request): T = withContext(Dispatchers.IO) {
-        val text = send(request)
+    private suspend inline fun <reified T> execute(request: Request, via: OkHttpClient = client): T = withContext(Dispatchers.IO) {
+        val text = send(request, via)
         LogoSphereJson.decodeFromString<T>(text.ifBlank { "{}" })
     }
 
     /** Returns the body of a 2xx response or throws. Call on [Dispatchers.IO]. */
-    private suspend fun send(request: Request): String {
-        val response = client.newCall(request).await()
+    private suspend fun send(request: Request, via: OkHttpClient = client): String {
+        val response = via.newCall(request).await()
         response.use {
             val body = it.body?.string().orEmpty()
             if (it.isSuccessful) return body

@@ -102,6 +102,10 @@ import com.krbavcic.logosphere.ui.trail.AcknowledgeButton
 import com.krbavcic.logosphere.ui.trail.AcknowledgementRun
 import com.krbavcic.logosphere.ui.trail.CardOwner
 import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.AiPictureTag
+import androidx.compose.foundation.layout.Box
+import com.krbavcic.logosphere.core.api.userMessage
+import kotlin.coroutines.cancellation.CancellationException
 
 data class ExchangeData(
     val detail: ExchangeDetail,
@@ -145,15 +149,26 @@ class ExchangeViewModel(private val app: AppContainer, private val id: String) :
     fun cancel() = act(onSuccess = { changed() }) { app.api.setExchangeStatus(id, ExchangeRules.CANCELLED) }
 
     /** Adds what was written; a receipt may bring up to three photos (read first, so a bad file stops it all). */
-    fun write(comment: NewComment, photos: List<Uri>, onDone: () -> Unit) = act(onSuccess = {
-        onDone()
-        changed()
-    }) {
-        val uploads = photos.take(3).map { app.pictures.read(it) }
-        app.api.addComment(id, comment)
-        if (uploads.isNotEmpty()) {
-            app.api.addReceiptPhotos(id, uploads)
-            repeat(3) { app.pictures.replaced(app.api.receiptPhotoUrl(id, it)) }
+    fun write(comment: NewComment, photos: List<Uri>, onDone: () -> Unit) {
+        var photoProblem: String? = null
+        act(onSuccess = {
+            onDone()
+            changed()
+            photoProblem?.let { say("Your receipt was saved, but not its photos. $it") }
+        }) {
+            val uploads = photos.take(3).map { app.pictures.read(it) }
+            app.api.addComment(id, comment)
+            if (uploads.isNotEmpty()) {
+                try {
+                    app.api.addReceiptPhotos(id, uploads)
+                    repeat(3) { app.pictures.replaced(app.api.receiptPhotoUrl(id, it)) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // The receipt is in: sending it all again would only be refused as a second one.
+                    photoProblem = e.userMessage()
+                }
+            }
         }
     }
 
@@ -248,15 +263,18 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                     LinkText("✎ Edit title, description and picture", onClick = { editing = true })
                 }
                 if (x.hasImage) {
-                    AsyncImage(
-                        model = app.pictures.of(app.api.exchangeImageUrl(x.id)),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(16f / 9f)
-                            .clip(MaterialTheme.shapes.large),
-                    )
+                    Box {
+                        AsyncImage(
+                            model = app.pictures.of(app.api.exchangeImageUrl(x.id)),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(16f / 9f)
+                                .clip(MaterialTheme.shapes.large),
+                        )
+                        if (x.imageIsAi) AiPictureTag(Modifier.align(Alignment.TopStart))
+                    }
                 }
                 // Only what the people wrote - no generated stand-in.
                 x.longDescription?.takeIf { it.isNotBlank() }?.let {
@@ -370,6 +388,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             myCards = data.myCards,
                             theirCards = data.theirCards,
                             theirLabel = "${initiator.name}'s values",
+                            realPhotosOnly = !x.isDemo,
                             busy = busy,
                             onSubmit = vm::write,
                         )
@@ -564,6 +583,8 @@ private fun Composer(
     onSubmit: (NewComment, List<Uri>, () -> Unit) -> Unit,
     theirCards: List<ValueCard> = emptyList(),
     theirLabel: String = "Their values",
+    /** Outside demo spheres a receipt's photos can't be AI pictures. */
+    realPhotosOnly: Boolean = false,
 ) {
     val simple = LocalSimple.current
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -650,6 +671,7 @@ private fun Composer(
                     .heightIn(min = 100.dp),
             )
             Text("Photos (up to 3)", style = MaterialTheme.typography.labelLarge)
+            if (realPhotosOnly) MetaText("A receipt is evidence: real photos only, no AI pictures.", maxLines = 2)
             if (photos.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     photos.forEach { uri ->

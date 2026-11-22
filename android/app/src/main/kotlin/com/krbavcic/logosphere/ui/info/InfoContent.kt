@@ -384,12 +384,13 @@ object InfoContent {
         Block.Eyebrow("Privacy"),
         Block.Title("What we keep, and why"),
         Block.Lead("LogoSphere keeps what it needs to remember the help your group gives and receives — and nothing to sell, track or advertise with."),
-        Block.Updated("Last updated 21 November 2026"),
+        Block.Updated("Last updated 22 November 2026"),
         Block.Glance(
             listOf(
                 "No ads, no analytics, no tracking — and we never sell your data.",
                 "Your group sees what happens in your group; your email stays private.",
                 "AI personas live only in the labelled demo spheres.",
+                "AI help runs only when you press its button, and gets only what you typed there.",
                 "Download everything we hold about you, or delete your account, yourself.",
             ),
         ),
@@ -399,6 +400,8 @@ object InfoContent {
                 "Your account" to "Your name and email address, and your password — stored only as a one-way hash, so nobody (us included) can read it.",
                 "Your profile" to "Whatever you add: a surname, where you are, a photo, and the value cards on your Meaning Graph.",
                 "What you do here" to "The openings you post and accept; the exchanges you take part in, with their receipts, photos, notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and governance proposals, votes and the members you lend your vote to.",
+                "Your choices on the Meaning Graph and in Settings" to "Which pairs of value cards you judged close or not (others see only totals, from two people up), and whether you use Simple or Advanced.",
+                "AI help" to "That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.",
                 "Notifications" to "The messages LogoSphere writes for you when something happens that concerns you.",
                 "Keeping you signed in" to "A random session identifier — in a cookie on the web, on your phone in the app — that lasts up to 30 days or until you sign out. If you allow notifications on Android, the app also registers your phone’s push address for as long as you’re signed in on it.",
                 "Server records" to "Like any website, the server notes requests (including your IP address) to keep it secure and fix problems. These records are kept for a short time.",
@@ -426,25 +429,38 @@ object InfoContent {
                 "Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real spheres is sent to " +
                 "write them. If you’d rather not, simply don’t join the demo spheres.",
         ),
-        Block.Heading("Who helps us run it", "04"),
+        Block.Heading("AI help, when you ask for it", "04"),
+        Block.Para(
+            "AI can help you word a value card, or draw a picture for an offer, need or group. It does nothing until you " +
+                "press its button, and it saves nothing by itself.",
+        ),
+        Block.Bullets(
+            listOf(
+                "Wording a card sends what you typed for that card to Anthropic’s Claude.",
+                "Drawing a picture sends the title, the description and your hint to OpenAI.",
+                "Neither gets your name, email address, location or anything else about you, unless you type it there yourself.",
+                "AI pictures are labelled, and in real spheres they can’t be receipt photos or exchange pictures. We can’t recognise every AI picture made elsewhere. In demo spheres, evidence may be AI-made.",
+            ),
+        ),
+        Block.Heading("Who helps us run it", "05"),
         Block.Para("A few services do part of the work. Each gets only what its job needs:"),
         Block.Terms(
             listOf(
                 "Linode (Akamai Cloud)" to "Runs the server and stores pictures, in a private storage bucket in London.",
                 "Google Fonts" to "Serves the website’s two typefaces, so your browser contacts Google to load them. (This app carries its fonts inside.)",
-                "Anthropic and OpenAI" to "Write the AI personas in the demo spheres (see above).",
+                "Anthropic and OpenAI" to "Write the AI personas in the demo spheres, and give AI help when you ask for it (see above).",
                 "Google Firebase" to "Delivers push notifications to Android phones, once they’re switched on, with only a notification’s text and link.",
                 "PayPal" to "Handles donations, if you make one. We get only what PayPal shares about a payment.",
             ),
         ),
-        Block.Heading("How long we keep it", "05"),
+        Block.Heading("How long we keep it", "06"),
         Block.Para(
             "For as long as you have an account. When you delete it, we remove your profile, credentials, sessions, value cards, " +
                 "notifications, follows and memberships, and withdraw your open openings. Exchanges you took part in stay, under " +
                 "your name, because they’re part of the other person’s record too.",
         ),
         Block.Para("Backup copies of the database may hold your data for a while longer before they’re replaced."),
-        Block.Heading("Your choices", "06"),
+        Block.Heading("Your choices", "07"),
         Block.Bullets(
             listOf(
                 "Change your name, place and photo any time, on the Me tab (or in Settings on the website).",
@@ -455,7 +471,7 @@ object InfoContent {
             ),
         ),
         Block.Para("LogoSphere is meant for adults and for families who use it together; it isn’t designed for children on their own."),
-        Block.Heading("Changes to this policy", "07"),
+        Block.Heading("Changes to this policy", "08"),
         Block.Para(
             "When how we handle data changes, we’ll update this page and its date. If a change matters to you — something new " +
                 "we’d keep, or someone new who’d see it — we’ll say so in LogoSphere before it happens.",

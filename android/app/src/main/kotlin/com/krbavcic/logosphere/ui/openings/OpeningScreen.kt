@@ -80,6 +80,7 @@ import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.AiPictureButton
 
 data class OpeningData(
     val opening: Opening,
@@ -237,6 +238,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                 imageUrl = if (opening.hasImage) app.api.openingImageUrl(opening.id) else null,
                 kind = null,
                 height = 180.dp,
+                isAi = opening.imageIsAi,
             ) {
                 Column(
                     Modifier
@@ -317,6 +319,10 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                             if (takePicture != null) {
                                 TextButton(onClick = takePicture, enabled = !busy) { Text("Take a photo$asAdmin") }
                             }
+                        }
+                        // For their own; not for an admin to draw on someone else's.
+                        if (isOwn || opening.isProvider) {
+                            AiPictureButton("opening", opening.title, opening.description.orEmpty(), onUse = { if (!busy) vm.setPicture(it) })
                         }
                     }
                 }
