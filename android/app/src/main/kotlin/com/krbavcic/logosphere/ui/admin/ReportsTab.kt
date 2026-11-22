@@ -122,6 +122,9 @@ internal fun ReportsTab(snackbar: SnackbarHostState) {
                                 if (report.kind == "opening") {
                                     report.itemId?.let { id -> TextButton(onClick = { navigator.opening(id) }) { Text("The opening") } }
                                 }
+                                if (report.kind == "event") {
+                                    report.itemId?.let { id -> TextButton(onClick = { navigator.event(id) }) { Text("The event") } }
+                                }
                                 if (report.status == "open") {
                                     TextButton(onClick = { settling = Settling(report, "handled") }, enabled = !busy) { Text("Handled") }
                                     TextButton(onClick = { settling = Settling(report, "dismissed") }, enabled = !busy) { Text("Dismiss") }

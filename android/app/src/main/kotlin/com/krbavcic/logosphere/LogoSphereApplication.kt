@@ -6,6 +6,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
 import coil.disk.DiskCache
+import coil.imageLoader
 import com.krbavcic.logosphere.core.api.BearerAuthInterceptor
 import com.krbavcic.logosphere.core.api.LogoSphereApi
 import com.krbavcic.logosphere.core.logic.AppLink
@@ -60,6 +61,7 @@ class AppContainer(context: Context) {
             communities.clear()
             openings.clear()
             inbox.clear()
+            forgetPictures()
         },
         onSignedIn = { registerPush() },
         beforeSignOut = { forgetPush() },
@@ -75,6 +77,14 @@ class AppContainer(context: Context) {
             val current = token ?: Push.token(appContext) ?: return@launch
             runCatching { api.registerDevice(current) }
         }
+    }
+
+    /** Pictures only members may see are cached too. */
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
+    private fun forgetPictures() {
+        val loader = appContext.imageLoader
+        loader.memoryCache?.clear()
+        appScope.launch(Dispatchers.IO) { runCatching { loader.diskCache?.clear() } }
     }
 
     private suspend fun forgetPush() {

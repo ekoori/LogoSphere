@@ -55,6 +55,11 @@ import com.krbavcic.logosphere.ui.common.LinkText
 import androidx.compose.runtime.LaunchedEffect
 import com.krbavcic.logosphere.core.model.BlockedPerson
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.krbavcic.logosphere.core.logic.Dates
+import com.krbavcic.logosphere.core.model.Invite
+import com.krbavcic.logosphere.core.model.NewInvite
+import com.krbavcic.logosphere.ui.common.InviteDialog
+import com.krbavcic.logosphere.ui.common.ReallyDialog
 
 /** The fewest characters a password may have (the server's rule). */
 private const val MIN_PASSWORD = 8
@@ -91,6 +96,20 @@ class AccountViewModel(private val app: AppContainer) : LoadViewModel<EmailSetti
         app.changes.emit(com.krbavcic.logosphere.data.Change.Profile)
     }
 
+    /** Null until they load, or if they don't. */
+    val invites = MutableStateFlow<List<Invite>?>(null)
+
+    /** A link just made, shown until it's closed. */
+    val madeInvite = MutableStateFlow<NewInvite?>(null)
+
+    suspend fun loadInvites() {
+        invites.value = runCatching { app.api.invites() }.getOrNull()
+    }
+
+    fun makeInvite() = act(onSuccess = { loadInvites() }) { madeInvite.value = app.api.makeInvite(null) }
+
+    fun revokeInvite(id: String) = act(onSuccess = { loadInvites() }) { app.api.revokeInvite(id) }
+
     fun changePassword(current: String, new: String, onDone: () -> Unit) = act {
         say(app.api.changePassword(current, new))
         onDone()
@@ -117,6 +136,10 @@ fun AccountScreen() {
     val email by vm.state.collectAsStateWithLifecycle()
     val blocked by vm.blocked.collectAsStateWithLifecycle()
     LaunchedEffect(vm) { vm.loadBlocked() }
+    val invites by vm.invites.collectAsStateWithLifecycle()
+    val madeInvite by vm.madeInvite.collectAsStateWithLifecycle()
+    LaunchedEffect(vm) { vm.loadInvites() }
+    var revoking by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -146,6 +169,34 @@ fun AccountScreen() {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             EmailCard(email, busy, onToggle = vm::toggleTopic, onConfirm = vm::sendConfirmation, onRetry = vm::load)
+            BrandCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeading("Invitations")
+                    MetaText(
+                        "A link to share yourself. Each works for two weeks, or until you revoke it. To invite into a " +
+                            "group, use Invite someone on its page.",
+                        maxLines = 4,
+                    )
+                    OutlinedButton(onClick = vm::makeInvite, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
+                        Text("Make a link to LogoSphere")
+                    }
+                    val out = invites
+                    if (out == null) MetaText("The list hasn't loaded.")
+                    out?.forEach { invite ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(invite.group?.name ?: "LogoSphere")
+                                MetaText(
+                                    "${invite.joined} joined · " +
+                                        if (invite.works) "until ${Dates.day(invite.expiresAt)}" else "doesn't work any more",
+                                    maxLines = 2,
+                                )
+                            }
+                            LinkText("Revoke", { revoking = invite.id }, enabled = !busy)
+                        }
+                    }
+                }
+            }
             BrandCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SectionHeading("Change your password")
@@ -181,7 +232,7 @@ fun AccountScreen() {
                     SectionHeading("Your data")
                     Text(
                         "Everything LogoSphere holds about you — profile, value cards, memberships, openings, exchanges, " +
-                            "follows, votes and notifications — in one file you can keep.",
+                            "follows, votes, messages, events and notifications — in one file you can keep.",
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     OutlinedButton(
@@ -196,8 +247,9 @@ fun AccountScreen() {
                     SectionHeading("Delete your account")
                     Text(
                         "Your profile, value cards, notifications, follows and memberships are removed, and your open " +
-                            "openings are withdrawn. Exchanges you took part in stay as history for the other people in " +
-                            "them. This can't be undone.",
+                            "openings are withdrawn. Events you put on for everyone are cancelled, and your invitation " +
+                            "links stop. A group's events and announcements stay with the group, without your name. " +
+                            "Exchanges you took part in stay as history for the other people in them. This can't be undone.",
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     PasswordField(deletePassword, { deletePassword = it }, "Your password, to confirm")
@@ -212,6 +264,10 @@ fun AccountScreen() {
         }
     }
 
+    madeInvite?.let { InviteDialog(it) { vm.madeInvite.value = null } }
+    revoking?.let { id ->
+        ReallyDialog("Revoke this link?", "It stops working for whoever has it.", "Revoke", { vm.revokeInvite(id) }, { revoking = null })
+    }
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },

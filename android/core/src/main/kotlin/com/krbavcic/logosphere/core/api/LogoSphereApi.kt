@@ -85,6 +85,13 @@ import com.krbavcic.logosphere.core.model.Reports
 import com.krbavcic.logosphere.core.model.RespondentsResult
 import com.krbavcic.logosphere.core.model.SentMessage
 import com.krbavcic.logosphere.core.logic.UiMode
+import com.krbavcic.logosphere.core.logic.EventAnswer
+import com.krbavcic.logosphere.core.logic.EventDraft
+import com.krbavcic.logosphere.core.model.Announcements
+import com.krbavcic.logosphere.core.model.CommunityEvent
+import com.krbavcic.logosphere.core.model.EventsPage
+import com.krbavcic.logosphere.core.model.Invite
+import com.krbavcic.logosphere.core.model.NewInvite
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
 import com.krbavcic.logosphere.core.model.CardSuggestion
@@ -220,6 +227,7 @@ class LogoSphereApi(
                 put("note", note.trim())
                 what.personId?.let { put("person_id", it) }
                 what.trailId?.let { put("trail_id", it) }
+                what.groupId?.let { put("group_id", it) }
             },
         ),
         "Thank you. The platform's administrators will look at it.",
@@ -236,6 +244,59 @@ class LogoSphereApi(
                 put("remove", remove)
             },
         )
+    }
+
+    // ── Events, announcements and invitations ───────────────────────────────
+
+    /** What's on, soonest first: everywhere the member may look, or in one group. */
+    suspend fun events(groupId: String? = null): List<CommunityEvent> =
+        get<EventsPage>(url("/api/events") { groupId?.let { addQueryParameter("group", it) } }).events
+
+    suspend fun event(id: String): CommunityEvent = get("/api/events/$id")
+
+    /** [hostId]: the group putting it on; none is for everyone. */
+    suspend fun createEvent(draft: EventDraft, hostId: String?): CommunityEvent = post("/api/events", draft.body(hostId))
+
+    suspend fun editEvent(id: String, draft: EventDraft): CommunityEvent = patch("/api/events/$id", draft.body())
+
+    /** [answer] null takes the answer back, which has to be said. */
+    suspend fun replyEvent(id: String, day: String, answer: EventAnswer?): CommunityEvent =
+        post("/api/events/$id/reply", buildJsonObject { put("day", day); put("answer", answer?.key) })
+
+    /** All of it, or only [day]; [cancelled] false puts that date back on. */
+    suspend fun cancelEvent(id: String, day: String? = null, cancelled: Boolean = true): CommunityEvent = post(
+        "/api/events/$id/cancel",
+        buildJsonObject {
+            if (day != null) put("day", day)
+            put("cancelled", cancelled)
+        },
+    )
+
+    suspend fun setEventImage(id: String, picture: Upload) {
+        multipart<JsonElement>("/api/events/$id/image") { addPicture("image", picture) }
+    }
+
+    fun eventImageUrl(id: String, side: Int? = null): String =
+        url("/api/events/$id/image") { side?.let { addQueryParameter("size", it.toString()) } }.toString()
+
+    suspend fun announcements(groupId: String): Announcements = get("/api/announcements/$groupId")
+
+    suspend fun announce(groupId: String, text: String) {
+        post<JsonElement>("/api/announcements/$groupId", buildJsonObject { put("text", text.trim()) })
+    }
+
+    suspend fun removeAnnouncement(groupId: String, id: String) {
+        delete<JsonElement>("/api/announcements/$groupId/$id")
+    }
+
+    suspend fun invites(): List<Invite> = get("/api/invites")
+
+    /** A new link: into [groupId], or just to LogoSphere. */
+    suspend fun makeInvite(groupId: String?): NewInvite =
+        post("/api/invites", buildJsonObject { if (groupId != null) put("group_id", groupId) })
+
+    suspend fun revokeInvite(id: String) {
+        post<JsonElement>("/api/invites/$id/revoke", JsonObject(emptyMap()))
     }
 
     // ── Places ──────────────────────────────────────────────────────────────

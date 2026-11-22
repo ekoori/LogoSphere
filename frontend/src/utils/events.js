@@ -103,7 +103,7 @@ export function whenText(time, tz, { locale = undefined, viewerZone = deviceZone
     const dayOptions = { weekday: 'short', day: 'numeric', month: 'short' };
     if (start.getFullYear() !== now.getFullYear()) dayOptions.year = 'numeric';
     const day = (d) => formatted(d, dayOptions, locale, tz);
-    const clock = (d, zone = tz) => formatted(d, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }, locale, zone);
+    const clock = (d) => formatted(d, { hour: 'numeric', minute: '2-digit' }, locale, tz);
 
     let text = `${day(start)}, ${clock(start)}`;
     if (end) text += day(end) === day(start) ? `–${clock(end)}` : ` – ${day(end)}, ${clock(end)}`;

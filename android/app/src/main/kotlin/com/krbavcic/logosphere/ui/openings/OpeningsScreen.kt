@@ -55,6 +55,7 @@ import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.NearMe
 import com.krbavcic.logosphere.core.logic.Places
 import com.krbavcic.logosphere.ui.common.LinkText
@@ -107,6 +108,9 @@ fun OpeningsScreen() {
             TopAppBar(
                 title = { Text("Openings", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    IconButton(onClick = navigator::events) {
+                        Icon(Icons.Outlined.CalendarMonth, contentDescription = "What's on: events")
+                    }
                     IconButton(onClick = navigator::nearby) {
                         Icon(Icons.Outlined.NearMe, contentDescription = "Who and what is near you")
                     }

@@ -31,6 +31,11 @@ import kotlinx.serialization.Serializable
 @Serializable data class PersonRoute(val id: String, val tab: String? = null)
 @Serializable data object SearchRoute
 @Serializable data object NearbyRoute
+@Serializable data object EventsRoute
+@Serializable data class EventRoute(val id: String)
+
+/** Changes an event ([id]), or puts one on, for [groupKind]/[groupId] when it began there. */
+@Serializable data class EditEventRoute(val id: String? = null, val groupKind: String? = null, val groupId: String? = null)
 @Serializable data object MessagesRoute
 @Serializable data class ConversationRoute(val personId: String, val openingId: String? = null)
 
@@ -87,6 +92,15 @@ class Navigator(
 
     fun nearby() = controller.navigate(NearbyRoute)
 
+    fun events() = controller.navigate(EventsRoute)
+
+    fun event(id: String) = controller.navigate(EventRoute(id))
+
+    fun newEvent(group: Community? = null) =
+        controller.navigate(EditEventRoute(groupKind = group?.kind?.name, groupId = group?.id))
+
+    fun editEvent(id: String) = controller.navigate(EditEventRoute(id = id))
+
     fun messages() = controller.navigate(MessagesRoute)
 
     /** [openingId]: what it's about, which can make writing allowed. */
@@ -127,6 +141,8 @@ class Navigator(
         AppLink.EditProfile -> editProfile()
         AppLink.Account -> account()
         AppLink.Nearby -> nearby()
+        AppLink.Events -> events()
+        is AppLink.Event -> event(link.id)
         is AppLink.Messages -> link.with?.let { conversation(it, link.opening) } ?: messages()
         AppLink.Admin -> admin()
         is AppLink.Info -> info(link.page)

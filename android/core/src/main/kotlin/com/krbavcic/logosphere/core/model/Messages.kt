@@ -73,6 +73,8 @@ data class ReportOf(
     val personId: String? = null,
     /** An acknowledgement: whose trail it's on. */
     val trailId: String? = null,
+    /** An announcement: whose group's. */
+    val groupId: String? = null,
 ) {
     /** A person needs a word on what happened. */
     val needsNote: Boolean get() = kind == PERSON
@@ -87,6 +89,10 @@ data class ReportOf(
         fun opening(id: String) = ReportOf("opening", id)
 
         fun acknowledgement(id: String, trailId: String) = ReportOf("acknowledgement", id, trailId = trailId)
+
+        fun event(id: String) = ReportOf("event", id)
+
+        fun announcement(id: String, groupId: String) = ReportOf("announcement", id, groupId = groupId)
     }
 }
 
@@ -111,6 +117,8 @@ data class Report(
             "message" -> "A private message"
             "acknowledgement" -> "An acknowledgement"
             "opening" -> "An opening"
+            "event" -> "An event"
+            "announcement" -> "An announcement"
             else -> kind
         }
 }

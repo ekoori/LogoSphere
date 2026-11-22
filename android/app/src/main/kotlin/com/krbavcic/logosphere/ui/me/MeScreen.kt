@@ -88,6 +88,7 @@ import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.ui.common.UiModeDialog
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.NearMe
+import androidx.compose.material.icons.outlined.CalendarMonth
 
 data class MeData(val profile: OwnProfile?, val cards: List<ValueCard>, val communities: List<Community>)
 
@@ -214,6 +215,9 @@ fun MeScreen() {
                     }
                     if (!simple && data.cards.isNotEmpty()) {
                         item(key = "legend") { FranklLegend(Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp)) }
+                    }
+                    item(key = "events") {
+                        LinkRow(Icons.Outlined.CalendarMonth, "What's on", "Events in your spheres, and for everyone") { navigator.events() }
                     }
                     item(key = "near") {
                         LinkRow(Icons.Outlined.NearMe, "Near you", "Who and what is around you, as rough distances") { navigator.nearby() }

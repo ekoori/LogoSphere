@@ -40,6 +40,7 @@ enum class PinPrecision(val key: String, val km: Double?, val label: String) {
 object Places {
     const val PEOPLE = "users"
     const val OPENINGS = "openings"
+    const val EVENTS = "events"
     const val LABEL_MAX = 120
     val NEAR_KM = listOf(5, 10, 25, 50, 100, 250)
 

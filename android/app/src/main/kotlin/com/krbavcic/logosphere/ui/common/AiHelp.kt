@@ -60,9 +60,9 @@ private const val NOTES_MAX = 1500
 
 /** On every picture known to be AI-made. */
 @Composable
-fun AiPictureTag(modifier: Modifier = Modifier) {
+fun AiPictureTag(modifier: Modifier = Modifier, short: Boolean = false) {
     Text(
-        "AI picture",
+        if (short) "AI" else "AI picture",
         style = MaterialTheme.typography.labelSmall,
         color = Color(0xFFF7F4E8),
         modifier = modifier

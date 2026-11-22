@@ -19,7 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** What an action changed, so screens showing it elsewhere re-fetch. */
-enum class Change { Openings, Exchanges, Communities, ValueCards, Profile }
+enum class Change { Openings, Exchanges, Communities, ValueCards, Profile, Events }
 
 class ChangeBus {
     private val flow = MutableSharedFlow<Change>(extraBufferCapacity = 16)

@@ -404,6 +404,7 @@ object InfoContent {
                 "What you do here" to "The openings you post and accept; the exchanges you take part in, with their receipts, photos, notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and governance proposals, votes and the members you lend your vote to.",
                 "Places" to "The words you use for a place and, if you put it on the map, a point no more exact than you chose: a pin is rounded before it leaves your phone. For yourself we also keep whether members nearby may find you. That is off unless you switch it on.",
                 "Email" to "Whether you confirmed your address, and which notifications you chose to get by email. When someone starts to join, their name and address for up to a day, until the emailed link is used. To prevent misuse, we count emails and requests for up to a day, without storing the address or the connection they count.",
+                "Events, announcements and invitations" to "Events you put on, with their pictures and places, and whether you said you would come to which date. Announcements you write. For an invitation link, a one-way hash of it, who made it and who joined with it, for two weeks. If someone signs up with one, that hash waits with their name and address until they finish.",
                 "Messages, blocks and reports" to "Messages you send and get, whom you blocked, and the reports you make with a copy of what you reported.",
                 "Your choices on the Meaning Graph and in Settings" to "Which pairs of value cards you judged close or not (others see only totals, from two people up), and whether you use Simple or Advanced.",
                 "AI help" to "That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.",
@@ -419,6 +420,9 @@ object InfoContent {
                 "Members see your name, photo, the words you use for where you are, and your value cards.",
                 "Your groups see what happens in them: a sphere’s openings, exchanges, receipts and people are for its members — unless its managers switch on public activity, which lets anyone, even visitors without an account, see its projects, alliances and openings.",
                 "Your email address is never shown to other members.",
+                "An event, with who is coming, is seen by the members of its sphere, or by every signed-in member when it is for everyone.",
+                "An announcement is read by the group’s members, and for an alliance or project by the rest of its sphere. Its notification never has the words.",
+                "An invitation link shows your name, and the group’s, to whoever holds it. You’re told who joined with it.",
                 "A message is for the two people in it. Writing to everyone who responded to an opening sends each their own, so they don’t learn who else responded. AI personas neither read nor send messages, and none go to an AI provider.",
                 "Blocks and reports aren’t told to the person they’re about.",
                 "Platform administrators — the few people who run LogoSphere — can see email addresses and what happens in every group, so they can keep the platform working and safe, and use that access only for that. They don’t see your point on the map, and of private messages they see only what was reported. Like all that is stored, both can be reached by whoever runs the server: messages aren’t end-to-end encrypted.",
@@ -430,7 +434,7 @@ object InfoContent {
             listOf(
                 "Your point is never shown to another member, however exact you made it.",
                 "Distances are worked out between squares a kilometre across and told only in steps (within 2 km, 5 km, 10 km and so on). Someone determined could work out your square from several of them, and only if you chose to be findable. A rougher place blurs that further.",
-                "A group or an opening shows its words and a rough distance. It shows the spot itself only when whoever runs it chose “the exact spot”, and for a private sphere only to those inside it.",
+                "A group, opening or event shows its words and a rough distance. It shows the spot itself only when whoever runs it chose “the exact spot”, and for a private sphere only to those inside it. An event for everyone shows it to every signed-in member.",
                 "Your phone’s location is read once, when you press “Use where I am now”, and is never followed.",
                 "Maps come from OpenStreetMap, only when you open one. It then learns your IP address, that you came from LogoSphere, and the part of the world you’re looking at. “See the spot on a map” opens your phone’s own map app.",
             ),
@@ -448,7 +452,7 @@ object InfoContent {
         ),
         Block.Heading("AI help, when you ask for it", "05"),
         Block.Para(
-            "AI can help you word a value card, or draw a picture for an offer, need or group. It does nothing until you " +
+            "AI can help you word a value card, or draw a picture for an offer, need, group or event. It does nothing until you " +
                 "press its button, and it saves nothing by itself.",
         ),
         Block.Bullets(
@@ -477,7 +481,9 @@ object InfoContent {
             "For as long as you have an account. When you delete it, we remove your profile, credentials, sessions, value cards, " +
                 "notifications, follows and memberships, and withdraw your open openings. Exchanges you took part in stay, under " +
                 "your name, because they’re part of the other person’s record too. So do the messages you sent, for the person " +
-                "who got them, without your name; and reports, as the safety record.",
+                "who got them, without your name; and reports, as the safety record. A group’s events and announcements stay " +
+                "with it, without your name. Your events for everyone are cancelled, keeping only their name and time; your " +
+                "replies to events and your invitation links go.",
         ),
         Block.Para("Backup copies of the database may hold your data for a while longer before they’re replaced."),
         Block.Heading("Your choices", "08"),

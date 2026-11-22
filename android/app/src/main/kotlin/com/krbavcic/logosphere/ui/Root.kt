@@ -64,6 +64,9 @@ import com.krbavcic.logosphere.ui.communities.CommunitiesScreen
 import com.krbavcic.logosphere.ui.communities.CommunityScreen
 import com.krbavcic.logosphere.ui.communities.ManageCommunityScreen
 import com.krbavcic.logosphere.ui.communities.NewCommunityScreen
+import com.krbavcic.logosphere.ui.events.EditEventScreen
+import com.krbavcic.logosphere.ui.events.EventScreen
+import com.krbavcic.logosphere.ui.events.EventsScreen
 import com.krbavcic.logosphere.ui.exchange.ExchangeScreen
 import com.krbavcic.logosphere.ui.graph.GraphScreen
 import com.krbavcic.logosphere.ui.inbox.InboxScreen
@@ -255,6 +258,12 @@ fun LogoSphereRoot() {
                     }
                     composable<SearchRoute> { SearchScreen() }
                     composable<NearbyRoute> { NearbyScreen() }
+                    composable<EventsRoute> { EventsScreen() }
+                    composable<EventRoute> { EventScreen(it.toRoute<EventRoute>().id) }
+                    composable<EditEventRoute> {
+                        val route = it.toRoute<EditEventRoute>()
+                        EditEventScreen(route.id, route.groupKind?.let(CommunityKind::valueOf), route.groupId)
+                    }
                     composable<MessagesRoute> { MessagesScreen() }
                     composable<ConversationRoute> {
                         val route = it.toRoute<ConversationRoute>()

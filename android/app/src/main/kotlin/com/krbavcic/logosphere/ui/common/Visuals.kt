@@ -150,9 +150,9 @@ fun Banner(
     modifier: Modifier = Modifier,
     height: Dp = 160.dp,
     isAi: Boolean = false,
+    glyph: String = kind?.glyph ?: "◍",
     content: (@Composable BoxScope.() -> Unit)? = null,
 ) {
-    val glyph = kind?.glyph ?: "◍"
     val pictures = LocalAppContainer.current.pictures
     val fallback = @Composable {
         Box(

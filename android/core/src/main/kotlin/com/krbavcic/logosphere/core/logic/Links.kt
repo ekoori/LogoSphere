@@ -33,6 +33,8 @@ sealed interface AppLink {
     data object EditProfile : AppLink
     data object Account : AppLink
     data object Nearby : AppLink
+    data object Events : AppLink
+    data class Event(val id: String) : AppLink
 
     /** [with]: that conversation, about [opening] if given. */
     data class Messages(val with: String? = null, val opening: String? = null) : AppLink
@@ -64,9 +66,11 @@ object Links {
         return when {
             path == "/profile" -> AppLink.Me
             // Where the email in an unsubscribe or notification message sends you.
-            path == "/settings" && text.endsWith("#email") -> AppLink.Account
+            path == "/settings" && (text.endsWith("#email") || text.endsWith("#invitations")) -> AppLink.Account
             path == "/settings" -> AppLink.EditProfile
             path == "/nearby" -> AppLink.Nearby
+            path == "/events" -> AppLink.Events
+            path == "/event" -> id?.let { AppLink.Event(it) }
             path == "/messages" -> AppLink.Messages(
                 with = params["with"]?.takeIf { it.isNotBlank() },
                 opening = params["opening"]?.takeIf { it.isNotBlank() },

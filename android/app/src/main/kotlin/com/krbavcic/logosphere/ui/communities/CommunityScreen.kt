@@ -77,6 +77,12 @@ import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.ui.trail.trailItems
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.core.logic.ShownTabs
+import com.krbavcic.logosphere.core.model.Announcements
+import com.krbavcic.logosphere.core.model.CommunityEvent
+import com.krbavcic.logosphere.core.model.NewInvite
+import com.krbavcic.logosphere.ui.common.InviteDialog
+import com.krbavcic.logosphere.ui.events.EventCard
+import kotlinx.coroutines.flow.MutableStateFlow
 
 data class CommunityData(
     val community: Community,
@@ -90,6 +96,11 @@ data class CommunityData(
     val projects: List<PersonRef>,
     /** A project's lead alliance, when it has one. */
     val ownerAlliance: PersonRef?,
+    /** The viewer is in it, or runs it. */
+    val inGroup: Boolean = false,
+    /** For who is in it. Null when that didn't load. */
+    val news: Announcements? = null,
+    val events: List<CommunityEvent>? = null,
 )
 
 class CommunityViewModel(
@@ -103,7 +114,7 @@ class CommunityViewModel(
 
     init {
         load()
-        reloadOn(app.changes, Change.Openings, Change.Exchanges, Change.Communities, Change.ValueCards)
+        reloadOn(app.changes, Change.Openings, Change.Exchanges, Change.Communities, Change.ValueCards, Change.Events)
     }
 
     override suspend fun fetch(force: Boolean): CommunityData = coroutineScope {
@@ -128,6 +139,9 @@ class CommunityViewModel(
         // The server gathers a group's trail: its own, its alliances' and projects', its sphere's.
         val trail = async { runCatching { app.api.trail(id) }.getOrNull() }
         val openings = async { app.openings.list(force) }
+        val inGroup = Membership.isMember(community, viewerId) || Membership.canManage(community, viewerId, isPlatformAdmin)
+        val news = async { if (inGroup) runCatching { app.api.announcements(id) }.getOrNull() else null }
+        val events = async { if (inGroup) runCatching { app.api.events(id) }.getOrNull() else null }
 
         val projectNames = projects.map { it.name }.toSet()
         val related = openings.await().filter {
@@ -136,7 +150,10 @@ class CommunityViewModel(
                 (kind != CommunityKind.Sphere && it.projectName != null && it.projectName in projectNames) ||
                 (kind == CommunityKind.Project && it.projectName == community.name)
         }
-        CommunityData(community, true, trail.await(), related, alliances, projects, ownerAlliance)
+        CommunityData(
+            community, true, trail.await(), related, alliances, projects, ownerAlliance,
+            inGroup = inGroup, news = news.await(), events = events.await(),
+        )
     }
 
     fun join() = act {
@@ -169,6 +186,16 @@ class CommunityViewModel(
         app.changes.emit(Change.Communities)
         reload()
     }) { app.api.setMemberRole(kind, id, memberId, role) }
+
+    /** A link just made, shown until it's closed. */
+    val madeInvite = MutableStateFlow<NewInvite?>(null)
+
+    fun invite() = act { madeInvite.value = app.api.makeInvite(id) }
+
+    fun announce(text: String, onDone: () -> Unit) = act(onSuccess = { onDone(); reload() }) { app.api.announce(id, text) }
+
+    fun removeAnnouncement(announcementId: String) =
+        act(onSuccess = { reload() }) { app.api.removeAnnouncement(id, announcementId) }
 
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
         data.copy(trail = data.trail?.mapExchanges(f))
@@ -203,7 +230,7 @@ fun CommunityScreen(kind: CommunityKind, id: String, initialTab: String? = null)
 }
 
 /** The tabs, by the names links use (`?tab=governance`). */
-private val TABS = listOf("trail", "openings", "people", "governance", "charter")
+private val TABS = listOf("trail", "openings", "events", "people", "governance", "charter")
 private val ADVANCED_TABS = setOf("governance")
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -219,10 +246,14 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
     val canManage = Membership.canManage(c, me, isAdmin)
     val canSetRoles = Membership.canSetRoles(c, me, isAdmin)
     val members = c.members.filter { it.role != "pending" }
-    var tab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, TABS)) }
+    var chosenTab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, TABS)) }
+    // Events are for who is in it: a link to that tab opens Openings for anyone else.
+    val tab = if (!data.inGroup && TABS.getOrNull(chosenTab) == "events") TABS.indexOf(Tabs.OPENINGS) else chosenTab
+    val madeInvite by vm.madeInvite.collectAsStateWithLifecycle()
     var confirmLeave by rememberSaveable { mutableStateOf(false) }
     val simple = LocalSimple.current
     val shownTabs = ShownTabs.of(TABS, ADVANCED_TABS, simple, open = TABS.getOrNull(tab))
+        .filter { data.inGroup || it != "events" }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item(key = "banner") {
@@ -300,7 +331,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
                 if (canSetRoles && c.pendingMembers.isNotEmpty()) {
-                    TextButton(onClick = { tab = TABS.indexOf("people") }, contentPadding = PaddingValues(0.dp)) {
+                    TextButton(onClick = { chosenTab = TABS.indexOf("people") }, contentPadding = PaddingValues(0.dp)) {
                         Text("${c.pendingMembers.size} waiting for approval →")
                     }
                 }
@@ -315,11 +346,28 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
             return@LazyColumn
         }
 
+        if (data.inGroup) {
+            item(key = "news") {
+                GroupNews(
+                    groupId = c.id,
+                    news = data.news,
+                    viewerId = me,
+                    // The server's rule: in an open group any member invites, else its managers.
+                    canInvite = !c.isClosed && (canManage || (c.joinPolicy ?: "open") == "open"),
+                    busy = busy,
+                    onAnnounce = vm::announce,
+                    onRemove = vm::removeAnnouncement,
+                    onInvite = vm::invite,
+                    modifier = Modifier.padding(horizontal = ScreenPadding),
+                )
+            }
+        }
         item(key = "tabs") {
             val labels = shownTabs.map { name ->
                 when (name) {
                     "trail" -> "Trail"
                     "openings" -> "Openings"
+                    "events" -> "Events"
                     "people" -> "People (${members.size})"
                     "governance" -> "Governance"
                     else -> if (simple) "Values" else "Charter"
@@ -328,12 +376,12 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
             ScrollingTabs(
                 options = labels,
                 selected = shownTabs.indexOf(TABS.getOrNull(tab)),
-                onSelect = { tab = TABS.indexOf(shownTabs[it]) },
+                onSelect = { chosenTab = TABS.indexOf(shownTabs[it]) },
                 modifier = Modifier.padding(horizontal = ScreenPadding),
             )
         }
-        when (tab) {
-            0 -> {
+        when (TABS.getOrNull(tab)) {
+            "trail" -> {
                 val trail = data.trail
                 if (trail == null) {
                     item(key = "trail-none") { EmptyNote("This Meaning Trail is for the members of its sphere.") }
@@ -350,7 +398,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
             }
-            1 -> {
+            "openings" -> {
                 if (canManage && !simple && !c.isClosed) {
                     item(key = "post-as") {
                         OutlinedButton(onClick = { navigator.newOpening(c) }, modifier = Modifier.padding(horizontal = ScreenPadding).fillMaxWidth()) {
@@ -374,8 +422,30 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                     )
                 }
             }
-            2 -> memberItems(c, me, canSetRoles, busy, onSetRole = vm::setRole, onOpen = navigator::person)
-            3 -> item(key = "governance") {
+            "events" -> {
+                if (!c.isClosed) {
+                    item(key = "put-on") {
+                        OutlinedButton(onClick = { navigator.newEvent(c) }, modifier = Modifier.padding(horizontal = ScreenPadding).fillMaxWidth()) {
+                            Text("+ Put on an event")
+                        }
+                    }
+                }
+                val events = data.events
+                when {
+                    events == null -> item { EmptyNote("The events didn't load. Pull down to try again.") }
+                    events.isEmpty() -> item { EmptyNote("Nothing is on in this ${c.kind.noun.lowercase()} yet.") }
+                    else -> items(events, key = { "e-" + it.id }) { event ->
+                        EventCard(
+                            event,
+                            onClick = { navigator.event(event.id) },
+                            modifier = Modifier.padding(horizontal = ScreenPadding),
+                            inGroup = c.id,
+                        )
+                    }
+                }
+            }
+            "people" -> memberItems(c, me, canSetRoles, busy, onSetRole = vm::setRole, onOpen = navigator::person)
+            "governance" -> item(key = "governance") {
                 GovernancePanel(
                     c.kind,
                     c.id,
@@ -390,6 +460,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
         }
     }
 
+    madeInvite?.let { InviteDialog(it) { vm.madeInvite.value = null } }
     if (confirmLeave) {
         val noun = c.kind.noun.lowercase()
         AlertDialog(
