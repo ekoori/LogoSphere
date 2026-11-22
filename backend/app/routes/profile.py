@@ -166,8 +166,11 @@ def get_public_user(target_id, user_id=None):
         # Email addresses are private: any signed-in member could otherwise read
         # every member's address by walking user ids. Only the person themself
         # and platform admins (who already see it in the admin console) get it.
-        if str(target_id) != str(user_id) and not is_platform_admin(user_id):
-            d.pop('email', None)
+        if str(target_id) != str(user_id):
+            # How someone likes their screens is their own business.
+            d.pop('ui_mode', None)
+            if not is_platform_admin(user_id):
+                d.pop('email', None)
         # Whether the viewer follows this user, + their follower/following counts.
         d['is_following'] = (str(target_id) != str(user_id)) and Follow.is_following(user_id, target_id)
         d['following_count'] = Follow.following_count(target_id)

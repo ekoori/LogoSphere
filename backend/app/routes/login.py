@@ -41,7 +41,6 @@ def login():
 
     try:
         data = request.get_json()
-        logger.debug('Login attempt for %s', (data or {}).get('email'))
         
         # Authenticate user
         user = User.login(data)
@@ -56,7 +55,7 @@ def login():
                 'fresh': 'true'
             }
             
-            logger.info(f'User {user.email} logged in successfully')
+            logger.info('User %s logged in', user_id)  # never the address
             
             # Create response. `session_id` is returned in the body so API
             # clients (anything that isn't the browser SPA) can capture it and

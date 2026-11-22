@@ -1,6 +1,7 @@
 """Your own account (Settings on the web, the Me tab in the app):
 
   POST /api/account/password   change your password; other devices are signed out
+  POST /api/account/preferences  Simple or Advanced
   GET  /api/account/export     everything LogoSphere holds about you, as a JSON file
   POST /api/account/delete     delete your account (asks for your password)
   POST /api/password/reset     set a new password with an admin's one-time reset link
@@ -20,7 +21,7 @@ from app.models.notification import Notification
 from app.models.openings import Service
 from app.models.value_card import ValueCard
 from app.routes.entities import KINDS, _entity_id, _members, _roles
-from app.utils import password_reset
+from app.utils import password_reset, preferences
 from app.utils.accounts import MIN_PASSWORD_LEN, end_sessions, password_matches, remove_account, set_password
 
 logger = logging.getLogger(__name__)
@@ -55,10 +56,22 @@ def change_password(user_id=None):
     }), 200
 
 
+@validate_session
+def set_preferences(user_id=None):
+    if request.method == 'OPTIONS':
+        return _options()
+    data = request.get_json(silent=True)
+    mode = data.get('ui_mode') if isinstance(data, dict) else None
+    if mode not in preferences.MODES:
+        return jsonify({'message': 'Choose simple or advanced.'}), 400
+    preferences.set_mode(user_id, mode)
+    return jsonify({'ui_mode': mode}), 200
+
+
 def _profile(uid):
     # writetime() tells whether a picture is set without loading it (as app/models/user.py does).
     row = session.execute(
-        'SELECT user_id, name, surname, email, location, joined_datetime, is_platform_admin, '
+        'SELECT user_id, name, surname, email, location, joined_datetime, is_platform_admin, ui_mode, '
         'picture_object, writetime(profile_picture) AS picture_wt FROM users WHERE user_id = %s', [uid]).one()
     if not row:
         return None
@@ -66,6 +79,7 @@ def _profile(uid):
         'user_id': str(row.user_id), 'name': row.name, 'surname': row.surname, 'email': row.email,
         'location': row.location, 'joined': row.joined_datetime,
         'is_platform_admin': bool(getattr(row, 'is_platform_admin', False)),
+        'ui_mode': preferences.mode_of(getattr(row, 'ui_mode', None)),
         'has_profile_picture': row.picture_wt is not None or bool(getattr(row, 'picture_object', None)),
     }
 
@@ -163,6 +177,8 @@ def reset_password():
 
 def register(app_):
     password_reset.ensure_tables()
+    preferences.ensure_tables()
+    app_.add_url_rule('/api/account/preferences', view_func=set_preferences, methods=['POST', 'OPTIONS'])
     app_.add_url_rule('/api/account/password', view_func=change_password, methods=['POST', 'OPTIONS'])
     app_.add_url_rule('/api/account/export', view_func=export_data, methods=['GET'])
     app_.add_url_rule('/api/account/delete', view_func=delete_account, methods=['POST', 'OPTIONS'])

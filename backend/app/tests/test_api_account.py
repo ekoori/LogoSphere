@@ -75,6 +75,50 @@ def test_your_data_comes_whole_and_never_with_the_password(app, member):
     assert c.get('/api/account/export').status_code == 401
 
 
+def test_simple_for_newcomers_and_the_choice_is_yours(app, db, api, member):
+    _, uid, sign_in = member
+    _, token = sign_in()
+    c = app.test_client()
+
+    def mine():
+        return c.get('/api/check_session', headers=_auth(token)).get_json()['user_data']['ui_mode']
+
+    def choose(body):
+        return c.post('/api/account/preferences', headers=_auth(token), json=body)
+
+    assert mine() == 'simple'
+    r = choose({'ui_mode': 'advanced'})
+    assert r.status_code == 200 and r.get_json() == {'ui_mode': 'advanced'}
+    assert mine() == 'advanced'
+    assert c.get('/api/account/export', headers=_auth(token)).get_json()['profile']['ui_mode'] == 'advanced'
+
+    for bad in ({}, {'ui_mode': 'expert'}, {'ui_mode': ['simple']}, {'ui_mode': None}, ['simple']):
+        assert choose(bad).status_code == 400, bad
+    assert app.test_client().post('/api/account/preferences', json={'ui_mode': 'simple'}).status_code == 401
+    assert mine() == 'advanced'
+
+    # An account from before there was a choice keeps seeing everything.
+    db.execute('UPDATE users SET ui_mode = null WHERE user_id = %s', [uuid.UUID(uid)])
+    assert mine() == 'advanced'
+    assert choose({'ui_mode': 'simple'}).status_code == 200
+    assert mine() == 'simple'
+
+    # Yours to see, nobody else's, admins included.
+    assert c.get(f'/api/users/{uid}', headers=_auth(token)).get_json()['ui_mode'] == 'simple'
+    status, seen = api.get(f'/api/users/{uid}', who='admin')
+    assert status == 200 and 'ui_mode' not in seen
+
+
+def test_signing_in_tells_the_choice_and_logs_no_address(app, member, caplog):
+    email, _, _ = member
+    with caplog.at_level('DEBUG'):
+        r = app.test_client().post('/api/login', json={'email': email, 'password': OLD})
+    assert r.status_code == 200
+    assert r.get_json()['data']['ui_mode'] == 'simple'
+    said = [m.getMessage() for m in caplog.records if not m.name.startswith('cassandra')]
+    assert not [line for line in said if email in line]
+
+
 def test_deleting_your_account_needs_your_password(app, db, member):
     _, uid, sign_in = member
     _, token = sign_in()

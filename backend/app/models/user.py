@@ -38,7 +38,7 @@ def normalize_email(value):
     return (value or '').strip().lower()
 
 from app.db import session as cassandra_session, is_unavailable
-from app.utils import image_store
+from app.utils import image_store, preferences
 
 class User(UserMixin):
     def __init__(self, name, email, user_id, session_id=None):
@@ -54,6 +54,8 @@ class User(UserMixin):
         self.has_picture = False
         # An AI persona account (see backend/agents).
         self.is_agent = False
+        # Simple or Advanced (app/utils/preferences.py): presentation only.
+        self.ui_mode = preferences.ADVANCED
         self.session_id = session_id
 
 
@@ -73,6 +75,7 @@ class User(UserMixin):
             # The picture itself is served by /api/users/<id>/avatar.
             'has_picture': bool(self.has_picture),
             'is_agent': bool(self.is_agent),
+            'ui_mode': self.ui_mode,
         }
 
 
@@ -109,7 +112,7 @@ class User(UserMixin):
             (email,)
         ).one()
         if existing:
-            logging.error(f'Registration failed: email already registered: {email}')
+            logging.error('Registration failed: email already registered')
             return None
 
         password_hash = generate_password_hash(password)
@@ -120,16 +123,17 @@ class User(UserMixin):
         cassandra_session.execute(query, (user_id, email, password_hash))
 
         # Store profile data in users table
-        query = "INSERT INTO users (user_id, email, name) VALUES (%s, %s, %s)"
-        cassandra_session.execute(query, (user_id, email, name))
+        query = "INSERT INTO users (user_id, email, name, ui_mode) VALUES (%s, %s, %s, %s)"
+        cassandra_session.execute(query, (user_id, email, name, preferences.SIMPLE))
 
-        return cls(name, email, user_id)
+        user = cls(name, email, user_id)
+        user.ui_mode = preferences.SIMPLE
+        return user
 
     @classmethod
     def login(cls, data):
         email = normalize_email(data.get('email'))
         password = data.get('password') or ''
-        logging.info(f'Attempting login for email: {email}')
 
         try:
             # Fetch user credentials (email is backed by a secondary index)
@@ -139,7 +143,7 @@ class User(UserMixin):
             for row in rows:
                 if check_password_hash(row.password, password):
                     # Fetch additional user details like name
-                    user_details_query = "SELECT user_id, name FROM users WHERE user_id = %s"
+                    user_details_query = "SELECT user_id, name, ui_mode FROM users WHERE user_id = %s"
                     user_details = cassandra_session.execute(user_details_query, (row.user_id,)).one()
 
                     if user_details:
@@ -147,7 +151,9 @@ class User(UserMixin):
                         # other session of this user is looked up or returned: the
                         # login response used to carry one (a second live token)
                         # inside its user data.
-                        return cls(name=user_details.name, email=row.email, user_id=row.user_id)
+                        user = cls(name=user_details.name, email=row.email, user_id=row.user_id)
+                        user.ui_mode = preferences.mode_of(getattr(user_details, 'ui_mode', None))
+                        return user
                     else:
                         logging.error('User details not found in the users table')
                         return None
@@ -204,7 +210,7 @@ class User(UserMixin):
         try:
             logging.info(f'user.py: Fetching user with user_id: {user_id}')
             # writetime() tells whether a picture is set without loading it.
-            query = ("SELECT user_id, email, name, surname, location, is_agent, picture_object, writetime(profile_picture) AS picture_wt "
+            query = ("SELECT user_id, email, name, surname, location, is_agent, ui_mode, picture_object, writetime(profile_picture) AS picture_wt "
                      "FROM users WHERE user_id = %s")
             rows = cassandra_session.execute(query, (user_id,))
 
@@ -214,6 +220,7 @@ class User(UserMixin):
                 user.location = row.location
                 user.has_picture = row.picture_wt is not None or bool(getattr(row, 'picture_object', None))
                 user.is_agent = bool(getattr(row, 'is_agent', False))
+                user.ui_mode = preferences.mode_of(getattr(row, 'ui_mode', None))
                 return user
 
             logging.error(f'User not found with user_id: {user_id}')

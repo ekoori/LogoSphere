@@ -447,6 +447,40 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
       tags: [User Management]
 
+  /api/account/preferences:
+    post:
+      summary: Choose Simple or Advanced
+      description: >-
+        How much the clients show you. Simple keeps to the gift economy, with
+        fewer options; Advanced shows everything. Presentation only: it never
+        changes what you may do. New accounts start Simple; accounts from
+        before the choice existed count as Advanced.
+      operationId: setPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ui_mode]
+              properties:
+                ui_mode: { type: string, enum: [simple, advanced] }
+      responses:
+        '200':
+          description: Saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ui_mode: { type: string, enum: [simple, advanced] }
+        '400':
+          description: Neither simple nor advanced.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+      tags: [User Management]
+
   /api/account/export:
     get:
       summary: Download everything LogoSphere holds about you
@@ -2999,13 +3033,15 @@ components:
         name: { type: string }
         surname: { type: string }
         location: { type: string }
-        profile_picture:
+        has_picture:
+          type: boolean
+          description: The picture itself is served by /api/users/{id}/avatar.
+        is_agent: { type: boolean, description: An AI persona of the demo. }
+        is_platform_admin: { type: boolean }
+        ui_mode:
           type: string
-          nullable: true
-          description: Base64-encoded image, or null if the user has no photo.
-        session_id:
-          type: string
-          description: Present only on login/check-session responses.
+          enum: [simple, advanced]
+          description: Only ever present about yourself.
 
     SessionStatus:
       type: object
