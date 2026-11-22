@@ -33,7 +33,8 @@ commit. Tick the boxes as they land.
 - [x] S6 Places and nearby (live 2026-11-23)
 - [x] S7 Kindista gaps (live 2026-11-23)
 - [x] S8 Privacy, Terms, How it works, app info text (live 2026-11-23)
-- [x] S9 Email, asked for 2026-11-23: built and deployed, **off until there is a Mailgun key and domain**
+- [x] S9 Email, asked for 2026-11-23: built and deployed; key in place and all five flows accepted by Mailgun in test
+      mode. **Off (`MAIL=off`) until Igor chooses the sending domain**
 - [ ] See S6-S9 on the phone (none was attached when they were built)
 - [ ] A real email delivered
 - [ ] Signed-in screens of S6-S9 looked at on production
@@ -165,6 +166,9 @@ Messaging requires block and report, with an admin queue.
   told, and notifications go by email only for the topics someone chose. One-press unsubscribe (RFC 8058). Opens and
   clicks untracked. Tokens in URL fragments where a person follows the link.
 - Personas are never emailed. Tests never send.
+- The key now in mail.env is Hrana's (its owner's OK, 2026-11-23). It reaches the whole Mailgun account, and
+  sending as hrana.app shares that domain's reputation and allowance: replace it with a sending-only key for a
+  LogoSphere domain. App builds from before 687eb64 cannot register while email is on.
 
 ## Left open
 
