@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awaitingReceipt, canCancel, hasFollowup, isCancelled, nextStatus, showsPersonaTag, stepIndex } from './exchangeRules';
+import { awaitingReceipt, canCancel, hasFollowup, isCancelled, nextStatus, showsPersonaTag, sideOf, stepIndex } from './exchangeRules';
 
 const xc = (status, extra = {}) => ({ exchange_status: status, ...extra });
 
@@ -66,5 +66,15 @@ describe('showsPersonaTag', () => {
         expect(showsPersonaTag({ name: 'Igor', kind: 'user', isAgent: false })).toBe(false);
         expect(showsPersonaTag('Someone')).toBe(false);
         expect(showsPersonaTag(null)).toBe(false);
+    });
+});
+
+describe('whose side', () => {
+    const row = { user_id: 'G', initiator_acting_user_id: 'A', other_user_id: 'R' };
+    it('counts the person and whoever acted for the group', () => {
+        expect(sideOf(row, 'A')).toBe('initiator');
+        expect(sideOf(row, 'R')).toBe('recipient');
+        expect(sideOf(row, 'Z')).toBe(null);
+        expect(sideOf(row, null)).toBe(null);
     });
 });

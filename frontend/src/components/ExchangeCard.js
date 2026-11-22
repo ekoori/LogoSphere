@@ -4,14 +4,14 @@
 // Receipts (verified gratitude records) and Acknowledgements (kudos) have
 // distinct visual identities and live in clearly labelled sections.
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import { DemoTag, PersonaTag } from './DemoTags';
-import NewAcknowledgementForm from './NewAcknowledgementForm';
-import NewReceiptForm from './NewReceiptForm';
+import { Acknowledge, AcknowledgementRun } from './Acknowledgements';
+import WordsForm from './WordsForm';
 import StatusProgression from './StatusProgression';
 import ValueCardChip from './ValueCardChip';
 import Avatar from './Avatar';
@@ -77,7 +77,7 @@ function ExchangeCard({
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
     receipts, acknowledgements,
-    onAddReceipt, onAddAcknowledgement, onModifyExchange, canModify, isDemo = false,
+    ownSide = null, hasNote = false, hasReceipt = false, onChanged, isDemo = false,
 }) {
     const navigate = useNavigate();
     const { entityHref } = useEntityIndex();
@@ -85,12 +85,12 @@ function ExchangeCard({
     const [liked, setLiked] = useState(likedByCurrentUser);
     const [likes, setLikes] = useState(likesCount);
     const [likedBy, setLikedBy] = useState(likedByInitial);
-    const [showAcknowledgementForm, setShowAcknowledgementForm] = useState(false);
-    const [showReceiptForm, setShowReceiptForm] = useState(false);
+    const [showNoteForm, setShowNoteForm] = useState(false);
     const [img, setImg] = useState(imageUrl);
-    // Local copies so newly submitted entries appear immediately without a refetch.
+    // A copy for optimistic likes; it follows the server's after every refetch.
     const [localReceipts, setLocalReceipts] = useState(receipts || []);
-    const [localAcknowledgements, setLocalAcknowledgements] = useState(acknowledgements || []);
+    const written = JSON.stringify(receipts || []);
+    useEffect(() => { setLocalReceipts(JSON.parse(written)); }, [written]);
 
     // Toggle the like on the exchange itself. Optimistic, rolled back on error.
     const handleLike = async (e) => {
@@ -111,12 +111,11 @@ function ExchangeCard({
     };
 
     // Toggle a like on one of the exchange's comments (gratitude / user / other).
-    // Likes are keyed by (exchange_id, comment_type), so we update whichever
-    // list holds that comment_type. isReceipt selects receipts vs acknowledgements.
-    const handleCommentLike = async (commentType, isReceipt) => {
+    // Likes are keyed by (exchange_id, comment_type). An acknowledgement's are
+    // its own (see Acknowledgements.js).
+    const handleCommentLike = async (commentType) => {
         if (!id || !commentType) return;
-        const setList = isReceipt ? setLocalReceipts : setLocalAcknowledgements;
-        const apply = (fn) => setList((prev) => prev.map((it) =>
+        const apply = (fn) => setLocalReceipts((prev) => prev.map((it) =>
             it.commentType === commentType ? fn(it) : it));
         // optimistic
         apply((it) => ({
@@ -142,36 +141,15 @@ function ExchangeCard({
         if (id) navigate(`/exchange?id=${id}`);
     };
 
-    const handleAddReceipt = async (receipt) => {
-        const entry = {
-            author: 'You', text: receipt.text, time: 'just now',
-            commentType: 'user', likesCount: 0, likedByCurrentUser: false, imageUrl: null,
-            cards: receipt.cards || [],
-        };
-        setLocalReceipts((prev) => [...prev, entry]);
-        setShowReceiptForm(false);
-        try {
-            // onAddReceipt persists it; if the server rejects (e.g. a receipt
-            // already exists for this side) it throws and we roll the entry back.
-            await onAddReceipt({ text: receipt.text, cardIds: receipt.cardIds || [], cards: receipt.cards || [], franklMode: receipt.franklMode || null });
-        } catch (e) {
-            setLocalReceipts((prev) => prev.filter((r) => r !== entry));
-        }
+    // Shown once the server has it: these used to look posted on pages that saved nothing.
+    const saveNote = async ({ text, cardIds }) => {
+        await api.post(`/api/exchange/${id}/comment`, { type: 'user', text, card_ids: cardIds });
+        setShowNoteForm(false);
+        await onChanged();
     };
-
-    // One receipt per side — once the viewer has added theirs, don't offer again.
-    const hasOwnReceipt = localReceipts.some((r) => r.author === 'You');
-
-    const handleAddAcknowledgement = (acknowledgement) => {
-        const entry = {
-            author: 'You', text: acknowledgement.text, time: 'just now',
-            commentType: 'other', likesCount: 0, likedByCurrentUser: false,
-            cards: acknowledgement.cards || [],
-        };
-        setLocalAcknowledgements((prev) => [...prev, entry]);
-        onAddAcknowledgement({ text: acknowledgement.text, cardIds: acknowledgement.cardIds || [], cards: acknowledgement.cards || [] });
-        setShowAcknowledgementForm(false);
-    };
+    const counterparts = (participants || [])
+        .filter((p) => p && typeof p === 'object' && p.id && p.name !== 'You')
+        .map((p) => ({ id: p.id, label: `${p.name}'s values` }));
 
     const cancelled = status === 'Cancelled';
     const hasFollowup = !!hasFollowupComment || status === XC_FOLLOWUP_STATUS;
@@ -183,7 +161,6 @@ function ExchangeCard({
     const steps = xcStepLabels.map((label, i) => ({ label, time: stepTimes[i] || '' }));
 
     const hasReceipts = localReceipts.length > 0;
-    const hasAcknowledgements = localAcknowledgements.length > 0;
     const pillClass = TYPE_PILL[type] || 'pill-clay';
     const typeLabel = TYPE_LABELS[type] || type;
 
@@ -323,7 +300,7 @@ function ExchangeCard({
                                             likesCount={tf.likesCount}
                                             likedBy={tf.likedBy}
                                             time={tf.time}
-                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType, true); }}
+                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(tf.commentType); }}
                                             canLike={tf.canLike !== false}
                                         />
                                     </div>
@@ -332,21 +309,25 @@ function ExchangeCard({
                         ) : (
                             <p className="xc-empty-section">No receipts yet.</p>
                         )}
-                        {hasOwnReceipt ? null : !showReceiptForm ? (
+                        {!cancelled && ownSide === 'initiator' && !hasNote && (showNoteForm ? (
+                            <WordsForm
+                                placeholder="What did you give, and what did it mean to you?"
+                                submitLabel="Save my note"
+                                counterparts={counterparts}
+                                onSave={saveNote}
+                                onCancel={() => setShowNoteForm(false)}
+                            />
+                        ) : (
                             <button
                                 className="xc-add-btn xc-add-receipt"
-                                onClick={(e) => { e.stopPropagation(); setShowReceiptForm(true); }}
+                                onClick={(e) => { e.stopPropagation(); setShowNoteForm(true); }}
                             >
-                                + Add Receipt
+                                + Add your note
                             </button>
-                        ) : (
-                            <NewReceiptForm
-                                onSave={handleAddReceipt}
-                                onCancel={() => setShowReceiptForm(false)}
-                                counterparts={(participants || [])
-                                    .filter((p) => p && typeof p === 'object' && p.id && p.name !== 'You')
-                                    .map((p) => ({ id: p.id, label: `${p.name}'s values` }))}
-                            />
+                        ))}
+                        {/* The receipt is written on the exchange's page, where its photos are taken. */}
+                        {!cancelled && ownSide === 'recipient' && !hasReceipt && (
+                            <Link className="xc-add-btn xc-add-receipt" to={`/exchange?id=${id}`}>Write your receipt →</Link>
                         )}
                     </div>
 
@@ -356,46 +337,8 @@ function ExchangeCard({
                             <span>📢 Acknowledgements</span>
                             <span className="xc-section-hint">public acknowledgements</span>
                         </div>
-                        {hasAcknowledgements && (
-                            <div className="acknowledgements">
-                                {localAcknowledgements.map((s, i) => (
-                                    <div key={i} className="acknowledgement">
-                                        <div className="tf-content">
-                                            <p className="tf-author-line"><CommentAuthor author={s.author} authorId={s.authorId} /> {s.text}</p>
-                                            {s.cards?.length > 0 && (
-                                                <div className="comment-value-chips comment-value-chips--ack">
-                                                    <span className="comment-vc-label">values</span>
-                                                    {s.cards.map((c, ci) => (
-                                                        <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <LikeTimestamp
-                                            likedByCurrentUser={s.likedByCurrentUser}
-                                            likesCount={s.likesCount}
-                                            likedBy={s.likedBy}
-                                            time={s.time}
-                                            onLike={(e) => { e.stopPropagation(); handleCommentLike(s.commentType, false); }}
-                                            canLike={s.canLike !== false}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {!showAcknowledgementForm ? (
-                            <button
-                                className="xc-add-btn xc-add-acknowledgement"
-                                onClick={(e) => { e.stopPropagation(); setShowAcknowledgementForm(true); }}
-                            >
-                                + Add Acknowledgement
-                            </button>
-                        ) : (
-                            <NewAcknowledgementForm
-                                onSave={handleAddAcknowledgement}
-                                onCancel={() => setShowAcknowledgementForm(false)}
-                            />
-                        )}
+                        <AcknowledgementRun trailId={id} items={acknowledgements || []} onChanged={onChanged} />
+                        <Acknowledge trailId={id} counterparts={counterparts} onChanged={onChanged} />
                     </div>
                 </div>
             )}
@@ -426,10 +369,10 @@ ExchangeCard.propTypes = {
     hasFollowupComment: PropTypes.bool,
     receipts: PropTypes.array,
     acknowledgements: PropTypes.array,
-    onAddReceipt: PropTypes.func.isRequired,
-    onAddAcknowledgement: PropTypes.func.isRequired,
-    onModifyExchange: PropTypes.func.isRequired,
-    canModify: PropTypes.bool.isRequired,
+    ownSide: PropTypes.oneOf(['initiator', 'recipient']),
+    hasNote: PropTypes.bool,
+    hasReceipt: PropTypes.bool,
+    onChanged: PropTypes.func.isRequired,
 };
 
 export default ExchangeCard;

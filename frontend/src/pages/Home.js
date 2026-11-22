@@ -6,14 +6,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import '../styles/MeaningTrail.css';
 import '../styles/Openings.css';
 
-import MeaningTrail from '../components/MeaningTrail';
+import TrailView from '../components/TrailView';
 import Openings from '../components/Openings';
 import TabSelector from '../components/TabSelector';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import Avatar from '../components/Avatar';
 import DemoInvite from '../components/DemoInvite';
 import api from '../api';
-import { mapService, mapExchange } from '../utils/mappers';
+import { mapService } from '../utils/mappers';
 import { useLogin } from '../App';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 
@@ -23,43 +23,10 @@ function Home() {
     const tabParam = params.get('tab');
     const [activeTab, setActiveTab] = useState(() => tabFrom(tabParam, [TRAIL_TAB, OPENINGS_TAB, 'following']));
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const [items, setItems] = useState([]);
     const [services, setServices] = useState([]);
     const [following, setFollowing] = useState([]);
 
     const fetchFeed = useCallback(async () => {
-        try {
-            const res = await api.get('/api/meaning_trail');
-            setItems((res.data || []).map(row => {
-                // Pass the viewer id so "You" rows get an avatar + own-profile link.
-                const mapped = mapExchange(row, { ownerId: userId });
-                // On the home feed the viewer is always the initiator, so:
-                //   "Add Receipt" → personal note (type: user)
-                //   "Add Acknowledgement" → public shoutout (type: other)
-                return {
-                    ...mapped,
-                    canModify: true,
-                    onAddReceipt: async ({ text, cardIds, cards }) => {
-                        // Let errors propagate so ExchangeCard can roll back its
-                        // optimistic entry (e.g. server rejects a duplicate receipt).
-                        await api.post(`/api/exchange/${mapped.id}/comment`, {
-                            type: 'user', text, card_ids: cardIds || [], cards: cards || [],
-                        });
-                    },
-                    onAddAcknowledgement: async ({ text, cardIds, cards }) => {
-                        try {
-                            await api.post(`/api/exchange/${mapped.id}/comment`, {
-                                type: 'other', text, card_ids: cardIds || [], cards: cards || [],
-                            });
-                        } catch (e) {
-                            console.error('Failed to save acknowledgement:', e);
-                        }
-                    },
-                };
-            }));
-        } catch (e) {
-            if (e.response?.status !== 401) console.error('Error fetching meaning_trail:', e);
-        }
         try {
             const fr = await api.get('/api/following');
             setFollowing(fr.data || []);
@@ -104,9 +71,9 @@ function Home() {
                 />
 
                 {activeTab === 'meaning_trail' && (
-                    items.length === 0
-                        ? <p className="empty-state">Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.</p>
-                        : <MeaningTrail items={items} />
+                    userId
+                        ? <TrailView trailId={userId} empty="Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here." />
+                        : <p className="empty-state"><Link to="/login">Log in</Link> to see your Meaning Trail.</p>
                 )}
                 {activeTab === 'offers-needs' && services.length === 0 && !isFormVisible && (
                     <p className="empty-state">

@@ -390,7 +390,23 @@ class MeaningTrail(Model):
     def _enrich(cls, row, target_id, viewer_id, names, kinds=None):
         """Row → dict with like summary and both-sides perspective fields."""
         d = row.to_dict()
+        from app.models.acknowledgement import Acknowledgement
+        from app.utils import timeline
+        acks = Acknowledgement.on(row.exchange_id)
+        first = acks[-1] if acks else None
+        if first:
+            # Apps from before there could be many read the first in this slot.
+            d.update(other_comment=first.body, other_comment_id=str(first.ack_id),
+                     other_comment_author_id=str(first.author_id) if first.author_id else None,
+                     other_comment_author_name=names.get(first.author_id) or first.author_name,
+                     other_comment_timestamp=first.created_at.isoformat(), other_comment_cards=first.cards)
         d['likes'] = Likes.summary_for_exchange(row.exchange_id, viewer_id, own=own_like_targets(d, viewer_id))
+        if first:
+            d['likes']['other'] = first.likes(viewer_id)
+        lit, kept = timeline.highlights(acks), timeline.shown(acks) if acks else set()
+        d['acknowledgements'] = [
+            {**a.to_dict(viewer_id, names=names, highlighted=a.ack_id in lit), 'shown': a.ack_id in kept}
+            for a in acks]
         d['initiator_id'] = str(row.user_id) if row.user_id else None
         d['initiator_name'] = names.get(row.user_id, 'A member')
         # Perspective is relative to whose trail this is (target_id).
@@ -402,6 +418,24 @@ class MeaningTrail(Model):
         if kinds is not None:
             cls._add_kinds(d, kinds)
         return d
+
+    @classmethod
+    def row_of(cls, exchange_id):
+        """One exchange's row, or None."""
+        rows = list(cls.objects.filter(exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
+        return rows[0] if rows else None
+
+    @classmethod
+    def every_row(cls):
+        return list(cls.objects.all().limit(None).defer(_NO_BLOB))
+
+    @classmethod
+    def rows_of_party(cls, party_id):
+        """The exchanges someone is either side of."""
+        party = UUID(str(party_id))
+        rows = list(cls.objects(user_id=party).limit(None).defer(_NO_BLOB))
+        rows += list(cls.objects(other_user_id=party).limit(None).allow_filtering().defer(_NO_BLOB))
+        return list({r.exchange_id: r for r in rows}.values())
 
     @classmethod
     def get_meaning_trail(cls, user_id, viewer_id=None):
@@ -491,6 +525,13 @@ class MeaningTrail(Model):
             own = own_like_targets(d, viewer_id, is_initiator, is_other)
             for ct, summary in (d.get('likes') or {}).items():
                 summary['own'] = ct in own
+            # An exchange's trail is both sides': they highlight, and may remove.
+            from app.utils.permissions import is_platform_admin
+            owner = is_initiator or is_other
+            moderator = is_platform_admin(viewer_id)
+            for ack in d['acknowledgements']:
+                ack['can_highlight'] = owner
+                ack['can_remove'] = ack['can_remove'] or owner or moderator
             return d, is_initiator, is_other
         except Exception as e:
             print(f"Error getting exchange for view: {e}")
@@ -756,8 +797,9 @@ class MeaningTrail(Model):
     def add_comment_for(cls, initiator_user_id, exchange_id, comment_type, text,
                         author_id=None, author_name=None, cards=None, context=None,
                         card_ids=None, frankl_mode=None):
-        """comment_type: 'gratitude' | 'user' | 'other'. `context` (the
-        Time/Effort/Care/... note) is only stored on a gratitude receipt."""
+        """comment_type: 'gratitude' | 'user' (acknowledgements are their own
+        table: app/models/acknowledgement.py). `context` (the Time/Effort/Care/...
+        note) is only stored on a gratitude receipt."""
         try:
             rows = list(cls.objects(
                 user_id=UUID(str(initiator_user_id)),
@@ -784,15 +826,6 @@ class MeaningTrail(Model):
                     user_comment_id=uuid.uuid4(),
                     user_comment_timestamp=now,
                     user_comment_cards=cards_json,
-                )
-            elif comment_type == 'other':
-                row.update(
-                    other_comment=text,
-                    other_comment_id=uuid.uuid4(),
-                    other_comment_author_id=UUID(str(author_id)) if author_id else None,
-                    other_comment_author_name=author_name or '',
-                    other_comment_timestamp=now,
-                    other_comment_cards=cards_json,
                 )
             return True
         except Exception as e:

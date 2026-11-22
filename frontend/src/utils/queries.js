@@ -62,6 +62,17 @@ export function useOpening(id, { enabled = true } = {}) {
     });
 }
 
+// A Meaning Trail as one timeline (exchanges and acknowledgements).
+export function useTrail(id, { enabled = true } = {}) {
+    return useQuery({
+        queryKey: ['trail', id],
+        queryFn: () => get(`/api/trails/${id}`),
+        enabled: !!id && enabled,
+        staleTime: 10_000,
+        retry: (count, err) => err?.response?.status >= 500 && count < 2,
+    });
+}
+
 // A public (logged-out) view of a sphere flagged is_public.
 export function usePublicSphere(id, { enabled = true } = {}) {
     return useQuery({

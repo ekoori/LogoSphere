@@ -1,0 +1,79 @@
+/* Acknowledgements on Meaning Trails: short words between the exchanges. */
+.ack-add { margin: 0 0 1rem; }
+.ack-add > .xc-add-btn { margin-top: 0; }
+
+.ack-run {
+    margin: 0 0 1rem;
+    padding: 0.2em 0.9em;
+    background: rgba(217, 162, 63, 0.07);
+    border: 1px solid rgba(217, 162, 63, 0.3);
+    border-radius: var(--r-md);
+}
+
+.ack-item { display: flex; gap: 0.7em; padding: 0.75em 0; }
+.ack-item + .ack-item { border-top: 1px solid var(--border-soft); }
+.ack-item.is-highlighted {
+    margin: 0 -0.9em;
+    padding-left: calc(0.9em - 4px);
+    padding-right: 0.9em;
+    border-left: 4px solid var(--honey);
+    background: rgba(217, 162, 63, 0.13);
+}
+
+.ack-body { flex: 1; min-width: 0; }
+.ack-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15em 0.5em;
+    font-size: 0.86rem;
+}
+.ack-author { color: var(--moss-deep); font-weight: 700; text-decoration: none; }
+.ack-author:hover { text-decoration: underline; }
+.ack-date { color: var(--ink-faint); font-size: 0.78rem; }
+.ack-flag { color: var(--honey-ink); font-size: 0.76rem; font-weight: 700; }
+.ack-text {
+    margin: 0.3em 0 0;
+    color: var(--ink);
+    font-size: 0.96rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ack-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3em 0.9em;
+    margin-top: 0.4em;
+}
+.ack-controls .like-timestamp { flex-direction: row; align-items: center; min-width: 0; max-width: none; text-align: left; }
+.ack-link, .ack-more {
+    padding: 0.3em 0;
+    background: none;
+    border: 0;
+    color: var(--moss-deep);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.ack-link:hover, .ack-more:hover { text-decoration: underline; }
+.ack-link:disabled { opacity: 0.5; cursor: default; }
+.ack-link.is-danger { color: var(--danger); }
+.ack-more { display: block; width: 100%; padding: 0.6em 0; text-align: left; border-top: 1px solid var(--border-soft); }
+.ack-problem { margin: 0.3em 0 0; color: var(--danger); font-size: 0.84rem; }
+
+/* The small form for a few words (an acknowledgement, a note). */
+.words-form { width: 100%; }
+.words-form-text {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.5em;
+    resize: vertical;
+}
+.words-form-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin-top: 0.6em; }
+.words-form-foot .btn { padding: 0.6em 1.1em; }
+.words-form-foot .btn:disabled { opacity: 0.5; cursor: default; }
+.words-form-left { color: var(--ink-faint); font-size: 0.78rem; }

@@ -2765,6 +2765,106 @@ paths:
         '401': { description: 'No session, or it expired.' }
         '500': { $ref: '#/components/responses/InternalError' }
 
+  /api/trails/{trail_id}:
+    get:
+      summary: A Meaning Trail as one timeline
+      description: >-
+        `trail_id` is a person's, sphere's, alliance's, project's or exchange's
+        id. Entries are newest first: an exchange (`type: exchange`, limited to
+        those the viewer may open), or a run of acknowledgements with no
+        exchange between them (`type: acknowledgements`). Each item in a run
+        says whether it is `highlighted` (two at most) and whether it stays
+        `shown` while the run is folded (runs of three or more fold to the
+        highlighted ones, else the newest). A person's trail is open to
+        members; a group's to its sphere; an exchange's to whoever can see it.
+      operationId: getTrail
+      parameters:
+        - { name: trail_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: "trail_id, kind, name, can_acknowledge, can_highlight, max_highlights, entries" }
+        '404': { description: Not found, or not the viewer's to see }
+      tags: [Meaning Trail]
+
+  /api/trails/{trail_id}/acknowledgements:
+    post:
+      summary: Acknowledge on any Meaning Trail
+      description: >-
+        Anyone may, except in spheres they aren't in (a platform admin's
+        override doesn't write). Text only, up to 1000 characters; up to five
+        value cards by id, stored as they read on the server.
+      operationId: addAcknowledgement
+      parameters:
+        - { name: trail_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 1000 }
+                card_ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '201': { description: Added }
+        '400': { description: No text, or too much }
+        '403': { description: Not in that sphere }
+        '404': { description: No such trail, or not the caller's to see }
+      tags: [Meaning Trail]
+
+  /api/trails/{trail_id}/acknowledgements/{ack_id}:
+    delete:
+      summary: Remove an acknowledgement
+      description: Its author, the trail's owner, or a platform admin.
+      operationId: removeAcknowledgement
+      parameters:
+        - { name: trail_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: ack_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Removed }
+        '403': { description: Not the caller's to remove }
+        '404': { description: Not found }
+      tags: [Meaning Trail]
+
+  /api/trails/{trail_id}/acknowledgements/{ack_id}/like:
+    post:
+      summary: Appreciate an acknowledgement
+      description: Not your own. `liked` sets the state; without it the like toggles.
+      operationId: likeAcknowledgement
+      parameters:
+        - { name: trail_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: ack_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { liked: { type: boolean } } }
+      responses:
+        '200': { description: "liked, count, by" }
+        '403': { description: It is the caller's own }
+        '404': { description: Not found }
+      tags: [Meaning Trail]
+
+  /api/trails/{trail_id}/acknowledgements/{ack_id}/highlight:
+    post:
+      summary: Highlight an acknowledgement on your trail
+      description: >-
+        The trail's owner only: that person, the group's own managers, or
+        either side of an exchange. Two at most in each run.
+      operationId: highlightAcknowledgement
+      parameters:
+        - { name: trail_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: ack_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { highlighted: { type: boolean, default: true } } }
+      responses:
+        '200': { description: highlighted }
+        '403': { description: Not the trail's owner }
+        '404': { description: Not found }
+        '409': { description: Two in that run are highlighted already }
+      tags: [Meaning Trail]
+
 components:
   securitySchemes:
     bearerAuth:

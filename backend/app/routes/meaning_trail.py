@@ -221,8 +221,11 @@ def get_exchange(exchange_id, user_id=None):
             return jsonify({'message': 'Exchange not found'}), 404
         tx_dict['receipt_photo_count'] = MeaningTrail.receipt_photo_count(exchange_id)
         tx_dict['is_finished'] = MeaningTrail.is_finished(exchange_id)
+        from app.utils.trails import Trail
+        as_trail = Trail(tx_dict['exchange_id'], 'exchange', '', tx_dict, exchange_sphere(tx_dict))
         return jsonify({
             'exchange': tx_dict,
+            'can_acknowledge': as_trail.writable(Sight(user_id)),
             'is_initiator': is_initiator,
             'is_other': is_other,
             'is_participant': is_initiator or is_other,
@@ -306,8 +309,17 @@ def add_xc_comment(exchange_id, user_id=None):
                 return jsonify({'message': 'You have already commented'}), 409
             return jsonify({'message': 'Failed to add comment'}), 500
 
-        # Receipts and the initiator note are participant-only; acknowledgements
-        # ('other') may be added by anyone.
+        # An exchange takes any number of acknowledgements, by anyone in its
+        # sphere or either side (app/routes/trails.py).
+        if comment_type == 'other':
+            from app.routes.trails import add_acknowledgement
+            named = data.get('card_ids') or [c.get('card_id') for c in cards if isinstance(c, dict)]
+            body, code = add_acknowledgement(exchange_id, user_id, text, named)
+            if code == 201:
+                return jsonify({**body, 'message': 'Comment added'}), 200
+            return jsonify(body), code
+
+        # Receipts and the initiator note are participant-only.
         if comment_type == 'gratitude' and not is_other:
             return jsonify({'message': 'Only the recipient can add a receipt'}), 403
         if comment_type == 'user' and not is_initiator:
@@ -319,12 +331,9 @@ def add_xc_comment(exchange_id, user_id=None):
             return jsonify({'message': 'A receipt has already been added for this side'}), 409
         if comment_type == 'user' and tx_dict.get('user_comment'):
             return jsonify({'message': 'A note has already been added for this side'}), 409
-        # The single acknowledgement slot is first-come: never overwrite it.
-        if comment_type == 'other' and tx_dict.get('other_comment'):
-            return jsonify({'message': 'This exchange already has an acknowledgement'}), 409
 
         author_name = None
-        if comment_type in ('other', 'gratitude'):
+        if comment_type == 'gratitude':
             from app.models.user import User
             u = User.get(str(user_id))
             if u:
@@ -386,6 +395,11 @@ def like_exchange(exchange_id, user_id=None):
         tx_dict, is_initiator, is_other = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return jsonify({'message': 'Exchange not found'}), 404
+
+        if comment_type == 'other' and tx_dict.get('acknowledgements'):
+            from app.routes.trails import like_acknowledgement
+            body, code = like_acknowledgement(exchange_id, tx_dict['other_comment_id'], user_id)
+            return jsonify({**body, 'comment_type': 'other'}), code
 
         # Appreciation is a signal from others: nobody likes what they made (an
         # old self-like can still be taken off).

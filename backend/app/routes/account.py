@@ -96,6 +96,11 @@ def export_data(user_id=None):
     votes = [{'proposal_id': str(r.proposal_id), 'choice': r.choice, 'at': r.created_at}
              for r in session.execute('SELECT proposal_id, user_id, choice, created_at FROM governance_votes') if r.user_id == uid]
     proposals = [proposal_dict(r) for r in session.execute('SELECT * FROM governance_proposals') if r.created_by == uid]
+    from app.models.acknowledgement import Acknowledgement
+    acknowledgements = [
+        {'on_trail': str(x.trail_id), 'text': x.body, 'cards': [c.get('title') for c in x.cards],
+         'at': x.created_at, 'highlighted': bool(x.highlighted_at)}
+        for x in Acknowledgement.everything() if x.author_id == uid]
     out = {
         'exported_at': datetime.utcnow().isoformat() + 'Z',
         'note': 'Everything LogoSphere holds about you. Your password is stored only as a hash and is not included.',
@@ -104,6 +109,7 @@ def export_data(user_id=None):
         'memberships': memberships,
         'openings': openings,
         'exchanges': exchanges,
+        'acknowledgements': acknowledgements,
         'following': following,
         'followers': followers,
         'governance': {'votes': votes, 'proposals': proposals},

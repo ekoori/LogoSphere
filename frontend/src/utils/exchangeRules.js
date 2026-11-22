@@ -28,6 +28,15 @@ export const canCancel = (xc, isInitiator) => !!isInitiator && CANCELLABLE.inclu
 /** Finished, but the recipient hasn't written their receipt yet. */
 export const awaitingReceipt = (xc) => statusOf(xc) === 'Finished' && !xc.gratitude_comment;
 
+/** Which side of an exchange this person is, by name or by acting for it; null for neither. */
+export const sideOf = (row, userId) => {
+    if (!row || !userId) return null;
+    const me = String(userId);
+    if ([row.user_id, row.initiator_acting_user_id].some((id) => id && String(id) === me)) return 'initiator';
+    if ([row.other_user_id, row.recipient_acting_user_id].some((id) => id && String(id) === me)) return 'recipient';
+    return null;
+};
+
 /** Index of a status on the progress bar (unknown statuses count as the first step). */
 export const stepIndex = (status) => {
     const i = XC_STEPS.findIndex((s) => s.toLowerCase() === (status || '').toLowerCase());

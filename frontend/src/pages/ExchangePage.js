@@ -7,6 +7,7 @@ import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
 import Avatar from '../components/Avatar';
 import PhotoInput from '../components/PhotoInput';
+import { Acknowledge, AcknowledgementRun } from '../components/Acknowledgements';
 import { forUpload } from '../utils/pictures';
 import * as rules from '../utils/exchangeRules';
 import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchangeRules';
@@ -79,7 +80,6 @@ function ExchangePage() {
 
     const [gratitudeText, setGratitudeText] = useState('');
     const [userNoteText, setUserNoteText] = useState('');
-    const [acknowledgementText, setAcknowledgementText] = useState('');
     const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
@@ -89,13 +89,12 @@ function ExchangePage() {
     const [gratitudeMode, setGratitudeMode] = useState('');
     const [userNoteCardIds, setUserNoteCardIds] = useState([]);
     const [userNoteCards, setUserNoteCards] = useState([]);
-    const [ackCardIds, setAckCardIds] = useState([]);
-    const [ackCards, setAckCards] = useState([]);
 
     // Receipt context (Time/Effort/Care/...) + up to 3 photos.
     const [gratitudeContext, setGratitudeContext] = useState('');
     const [gratitudePhotos, setGratitudePhotos] = useState([]);
     const [receiptError, setReceiptError] = useState('');
+    const [canAcknowledge, setCanAcknowledge] = useState(false);
     // Two-step cancel: first click asks, second confirms (no modal dialogs).
     const [confirmCancel, setConfirmCancel] = useState(false);
     // The server's reason when a status change is refused, shown in Actions.
@@ -172,6 +171,7 @@ function ExchangePage() {
         try {
             const res = await api.get(`/api/exchange/${xcId}`);
             setXc(res.data.exchange);
+            setCanAcknowledge(!!res.data.can_acknowledge);
             setIsInitiator(res.data.is_initiator);
             setIsOther(res.data.is_other);
         } catch (e) {
@@ -569,53 +569,18 @@ function ExchangePage() {
                             <span className="xc-section-hint">public acknowledgements</span>
                         </div>
 
-                        {xc.other_comment ? (
-                            <div className="acknowledgement">
-                                <div className="tf-content">
-                                    <p className="tf-author-line">
-                                        <AuthorTag name={xc.other_comment_author_name || 'A participant'} id={xc.other_comment_author_id} />{' '}
-                                        {xc.other_comment}
-                                    </p>
-                                    {xc.other_comment_cards?.length > 0 && (
-                                        <div className="comment-value-chips comment-value-chips--ack">
-                                            <span className="comment-vc-label">values</span>
-                                            {xc.other_comment_cards.map((c, ci) => (
-                                                <ValueCardChip key={c.card_id || ci} card={c} subjectLabel="Cares about" />
-                                            ))}
-                                        </div>
-                                    )}
-                                    {fmtDate(xc.other_comment_timestamp) && (
-                                        <span className="xc-date" style={{ marginTop: '0.3em', display: 'block', fontSize: '0.74rem' }}>
-                                            {fmtDate(xc.other_comment_timestamp)}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="xc-empty-section">No acknowledgements yet.</p>
-                        )}
-
-                        {userId && !xc.other_comment && (
-                            <div className="xc-comment-area">
-                                <span className="xc-comment-label">Add an acknowledgement</span>
-                                <textarea
-                                    className="xc-comment-input"
-                                    placeholder="Celebrate this exchange publicly — let the community know!"
-                                    value={acknowledgementText}
-                                    onChange={e => setAcknowledgementText(e.target.value)}
-                                />
-                                <ValueCardPicker
-                                    selectedIds={ackCardIds}
-                                    onChange={(ids, cards) => { setAckCardIds(ids); setAckCards(cards); }}
-                                />
-                                <button
-                                    className="xc-comment-submit xc-submit-acknowledgement"
-                                    disabled={submitting || !acknowledgementText.trim()}
-                                    onClick={() => submitComment('other', acknowledgementText, setAcknowledgementText, ackCardIds, setAckCardIds, ackCards, setAckCards)}
-                                >
-                                    + Add Acknowledgement
-                                </button>
-                            </div>
+                        {(xc.acknowledgements || []).length > 0
+                            ? <AcknowledgementRun trailId={xc.exchange_id} items={xc.acknowledgements} onChanged={fetchXc} />
+                            : <p className="xc-empty-section">No acknowledgements yet.</p>}
+                        {canAcknowledge && (
+                            <Acknowledge
+                                trailId={xc.exchange_id}
+                                onChanged={fetchXc}
+                                counterparts={[
+                                    { id: xc.user_id, label: `${xc.initiator_name || 'Their'} values` },
+                                    { id: xc.other_user_id, label: `${xc.other_user_name || 'Their'} values` },
+                                ].filter((c) => c.id)}
+                            />
                         )}
                     </div>
                 </div>

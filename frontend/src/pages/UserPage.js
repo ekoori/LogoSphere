@@ -9,13 +9,14 @@ import '../styles/User.css';
 import '../styles/MeaningTrail.css';
 import '../styles/Openings.css';
 
-import MeaningTrail from '../components/MeaningTrail';
+import TrailView from '../components/TrailView';
+import { useTrail } from '../utils/queries';
 import Openings from '../components/Openings';
 import TabSelector from '../components/TabSelector';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import ValueCardChip from '../components/ValueCardChip';
 import api from '../api';
-import { mapExchange, mapService } from '../utils/mappers';
+import { mapService } from '../utils/mappers';
 import { useLogin } from '../App';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import '../styles/ValueCardChip.css';
@@ -27,7 +28,8 @@ function UserPage() {
     const id = params.get('id');
 
     const [user, setUser] = useState(null);
-    const [trail, setTrail] = useState([]);
+    const { data: trail } = useTrail(id, { enabled: !!viewerId });
+    const exchangeCount = (trail?.entries || []).filter((e) => e.type === 'exchange').length;
     const [services, setServices] = useState([]);
     const [valueCards, setValueCards] = useState([]);
     const tabParam = params.get('tab');
@@ -39,26 +41,11 @@ function UserPage() {
 
     const fetchAll = useCallback(async () => {
         if (!id) { setLoading(false); return; }
-        let ownerUser = null;
         try {
             const res = await api.get(`/api/users/${id}`);
-            ownerUser = res.data;
             setUser(res.data);
         } catch (e) {
             console.error('Error loading user:', e);
-        }
-        // "You" only makes sense when the page owner IS the logged-in viewer;
-        // otherwise the trail should name the actual owner of this page.
-        const isOwnPage = !!viewerId && String(viewerId) === String(id);
-        const ownerFullName = ([ownerUser?.name, ownerUser?.surname].filter(Boolean).join(' ')) || 'This member';
-        try {
-            const res = await api.post('/api/meaning_trail', { userId: id });
-            setTrail((res.data || []).map((row) => mapExchange(row, {
-                ownerLabel: isOwnPage ? 'You' : ownerFullName,
-                ownerId: isOwnPage ? null : id,
-            })));
-        } catch (e) {
-            // empty trail is fine
         }
         try {
             const res = await api.get('/api/openings');
@@ -74,7 +61,7 @@ function UserPage() {
             setValueCards(vcRes.data || []);
         } catch (_) {}
         setLoading(false);
-    }, [id, viewerId]);
+    }, [id]);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
     useEffect(() => { setFollowing(!!user?.is_following); }, [user]);
@@ -136,7 +123,7 @@ function UserPage() {
 
                     <div className="user-aside-stats">
                         <div className="user-stat">
-                            <span className="user-stat-count">{trail.length}</span>
+                            <span className="user-stat-count">{exchangeCount}</span>
                             <span className="user-stat-label">exchanges</span>
                         </div>
                         <div className="user-stat">
@@ -160,9 +147,7 @@ function UserPage() {
                 />
 
                 {activeTab === 'meaning_trail' && (
-                    trail.length === 0
-                        ? <p className="empty-state">No meaning trail recorded yet.</p>
-                        : <MeaningTrail items={trail} />
+                    <TrailView key={id} trailId={id} empty="No meaning trail recorded yet." />
                 )}
 
                 {activeTab === OPENINGS_TAB && (

@@ -28,6 +28,7 @@ def exchange(api, db, keep_rows):
     joe, x = uuid.UUID(JOE), uuid.UUID(xid)
     db.execute('DELETE FROM meaning_trail WHERE user_id = %s AND exchange_id = %s', [joe, x])
     db.execute('DELETE FROM receipt_photos WHERE exchange_id = %s', [x])
+    db.execute('DELETE FROM trail_acknowledgements WHERE trail_id = %s', [x])
     for ct in ('exchange', 'gratitude', 'user', 'other'):
         db.execute('DELETE FROM likes WHERE exchange_id = %s AND comment_type = %s', [x, ct])
     for v in created_versions:

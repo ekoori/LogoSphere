@@ -201,17 +201,8 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         });
     }
 
-    const acknowledgements = [];
-    if (row.other_comment) {
-        acknowledgements.push({
-            author: row.other_comment_author_name || 'A neighbour',
-            authorId: row.other_comment_author_id || null,
-            text: row.other_comment,
-            time: fmtDate(row.other_comment_timestamp),
-            commentType: 'other', ...likeOf('other'),
-            cards: row.other_comment_cards || [],
-        });
-    }
+    // Any number, newest first, as the server gives them.
+    const acknowledgements = row.acknowledgements || [];
 
     return {
         id: row.exchange_id,
@@ -247,9 +238,8 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         hasFollowupComment: !!(row.initiator_comment || row.recipient_comment),
         receipts,
         acknowledgements,
-        canModify: false,
-        onAddReceipt: () => {},
-        onAddAcknowledgement: () => {},
-        onModifyExchange: () => {},
+        // Whether each side has written theirs (ExchangeCard offers the viewer their own).
+        hasNote: !!row.user_comment,
+        hasReceipt: !!row.gratitude_comment,
     };
 }

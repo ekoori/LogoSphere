@@ -17,13 +17,12 @@ import { usePermissions } from '../utils/usePermissions';
 import CompactValueGraph from '../components/CompactValueGraph';
 import EntityBanner from '../components/EntityBanner';
 import Openings from '../components/Openings';
-import MeaningTrail from '../components/MeaningTrail';
+import TrailView from '../components/TrailView';
 import TabSelector from '../components/TabSelector';
 import MembersList from '../components/MembersList';
 import GovernancePanel from '../components/GovernancePanel';
 import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
-import { fetchAggregateTrail } from '../utils/entityTrail';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import '../styles/EntityPage.css';
@@ -84,7 +83,6 @@ export default function EntityPage({ kind }) {
     const canViewActivity = anonymous ? !!entity?.is_public : perms.canViewActivity;
 
     const openings = useOpenings({ enabled: !!userId && canViewActivity });
-    const [trail, setTrail] = useState([]);
     const tabParam = params.get('tab');
     const [activeTab, setActiveTab] = useState(() => tabFrom(tabParam, TAB_KEYS));
     useEffect(() => { setActiveTab(tabFrom(tabParam, TAB_KEYS)); }, [kind, id, tabParam]);
@@ -94,26 +92,6 @@ export default function EntityPage({ kind }) {
     const [leaveArmed, setLeaveArmed] = useState(false);
 
     const eid = entity ? (entity[ID_KEY[kind]] || entity.id) : null;
-
-    // Aggregate trail: the entity's own exchanges plus its alliances'/projects'.
-    useEffect(() => {
-        if (!entity || !userId || !canViewActivity) { setTrail([]); return undefined; }
-        let alive = true;
-        const own = [eid];
-        let projectIds = [];
-        if (kind === 'sphere') {
-            own.push(...(entity.alliance_list || []).map((a) => a.id));
-            projectIds = (entity.project_list || []).map((p) => p.id);
-        } else if (kind === 'alliance') {
-            projectIds = (entity.projects || []).map((n) => projectIdByName[n]).filter(Boolean);
-        } else {
-            projectIds = [eid];
-        }
-        fetchAggregateTrail({ ownEntityIds: own, projectIds }, userId)
-            .then((rows) => { if (alive) setTrail(rows); })
-            .catch(() => { if (alive) setTrail([]); });
-        return () => { alive = false; };
-    }, [entity, eid, kind, userId, canViewActivity, projectIdByName]);
 
     if (loading) return <div className="ep-loading">Loading…</div>;
     if (!entity) return (
@@ -334,9 +312,7 @@ export default function EntityPage({ kind }) {
                             // members-only); don't tell them it's empty.
                             anonymous
                                 ? <p className="empty-state"><Link to="/login">Log in</Link> to see this {kind}'s Meaning Trail.</p>
-                                : trail.length === 0
-                                    ? <p className="empty-state">No meaning trail recorded yet for this {kind}.</p>
-                                    : <MeaningTrail items={trail} />
+                                : <TrailView key={eid} trailId={eid} empty={`No meaning trail recorded yet for this ${kind}.`} />
                         )}
 
                         {activeTab === 'offers-needs' && (
