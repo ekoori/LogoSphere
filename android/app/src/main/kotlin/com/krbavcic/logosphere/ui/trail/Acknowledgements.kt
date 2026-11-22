@@ -43,6 +43,8 @@ import com.krbavcic.logosphere.core.model.Acknowledgement
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.core.model.ValueCard
+import com.krbavcic.logosphere.core.model.ReportOf
+import com.krbavcic.logosphere.ui.common.ReportLink
 import com.krbavcic.logosphere.ui.LocalAppContainer
 import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.Avatar
@@ -171,6 +173,7 @@ private fun AcknowledgementRow(ack: Acknowledgement, viewerId: String?, actions:
                         }
                     }
                     if (ack.canRemove) TextButton(onClick = { confirmRemove = true }, enabled = !busy) { Text("Remove") }
+                    if (!mine && ack.authorId != null) ReportLink(ReportOf.acknowledgement(ack.id, ack.trailId))
                 }
             }
         }

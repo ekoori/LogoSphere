@@ -167,7 +167,7 @@ class AdminOpeningsViewModel(private val app: AppContainer) : LoadViewModel<List
 
 // ── The console ─────────────────────────────────────────────────────────────
 
-private val TABS = listOf("Overview", "Users", "Spheres", "Alliances", "Projects", "Openings")
+private val TABS = listOf("Overview", "Users", "Spheres", "Alliances", "Projects", "Openings", "Reports")
 
 /** Platform administration (the web's AdminPage): everything on the platform, in one place. */
 @Composable
@@ -192,7 +192,8 @@ fun AdminScreen() {
                 2 -> GroupsTab(CommunityKind.Sphere, snackbar)
                 3 -> GroupsTab(CommunityKind.Alliance, snackbar)
                 4 -> GroupsTab(CommunityKind.Project, snackbar)
-                else -> OpeningsTab(snackbar)
+                5 -> OpeningsTab(snackbar)
+                else -> ReportsTab(snackbar)
             }
         }
     }

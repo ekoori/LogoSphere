@@ -52,6 +52,9 @@ import androidx.compose.ui.Alignment
 import com.krbavcic.logosphere.core.model.EmailSettings
 import com.krbavcic.logosphere.ui.Load
 import com.krbavcic.logosphere.ui.common.LinkText
+import androidx.compose.runtime.LaunchedEffect
+import com.krbavcic.logosphere.core.model.BlockedPerson
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The fewest characters a password may have (the server's rule). */
 private const val MIN_PASSWORD = 8
@@ -74,6 +77,19 @@ class AccountViewModel(private val app: AppContainer) : LoadViewModel<EmailSetti
     }
 
     fun sendConfirmation() = act { say(app.api.sendEmailConfirmation()) }
+
+    /** Null until they load, or if they don't. */
+    val blocked = MutableStateFlow<List<BlockedPerson>?>(null)
+
+    suspend fun loadBlocked() {
+        blocked.value = runCatching { app.api.blockedPeople() }.getOrNull()
+    }
+
+    fun unblock(person: BlockedPerson) = act {
+        app.api.setBlocked(person.id, false)
+        blocked.value = blocked.value?.filter { it.id != person.id }
+        app.changes.emit(com.krbavcic.logosphere.data.Change.Profile)
+    }
 
     fun changePassword(current: String, new: String, onDone: () -> Unit) = act {
         say(app.api.changePassword(current, new))
@@ -99,6 +115,8 @@ fun AccountScreen() {
     val navigator = LocalNavigator.current
     val busy by vm.busy.collectAsStateWithLifecycle()
     val email by vm.state.collectAsStateWithLifecycle()
+    val blocked by vm.blocked.collectAsStateWithLifecycle()
+    LaunchedEffect(vm) { vm.loadBlocked() }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -140,6 +158,22 @@ fun AccountScreen() {
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Change password") }
                     MetaText("Your other phones and browsers are signed out; this one stays signed in.", maxLines = 2)
+                }
+            }
+            BrandCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeading("People you blocked")
+                    val people = blocked
+                    when {
+                        people == null -> MetaText("The list hasn't loaded.")
+                        people.isEmpty() -> MetaText("Nobody.")
+                        else -> people.forEach { person ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(person.name, modifier = Modifier.weight(1f))
+                                LinkText("Unblock", { vm.unblock(person) }, enabled = !busy)
+                            }
+                        }
+                    }
                 }
             }
             BrandCard(Modifier.fillMaxWidth()) {

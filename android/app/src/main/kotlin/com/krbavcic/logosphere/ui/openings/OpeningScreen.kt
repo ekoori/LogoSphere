@@ -88,6 +88,9 @@ import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
 import com.krbavcic.logosphere.ui.common.PlaceFields
 import com.krbavcic.logosphere.ui.common.WhereLine
 import kotlin.coroutines.cancellation.CancellationException
+import com.krbavcic.logosphere.core.logic.Messaging
+import com.krbavcic.logosphere.core.model.ReportOf
+import com.krbavcic.logosphere.ui.common.ReportLink
 
 data class OpeningData(
     val opening: Opening,
@@ -152,6 +155,13 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
         changed(Change.Openings)
         say("The opening was withdrawn.")
     }) { app.api.withdrawOpening(id) }
+
+    fun messageRespondents(text: String, onDone: () -> Unit) = act {
+        val result = app.api.messageRespondents(id, text)
+        onDone()
+        val left = if (result.skipped > 0) " ${result.skipped} couldn't be written to (AI personas don't read messages)." else ""
+        say("Sent to ${result.sent}, each privately: their answers come to you alone.$left")
+    }
 
     fun like() {
         val opening = current?.opening ?: return
@@ -361,6 +371,18 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
         item(key = "actions") {
             ActionsCard(data, vm, busy, onWithdraw = { confirmWithdraw = true })
         }
+        item(key = "contact") {
+            Column(Modifier.padding(horizontal = ScreenPadding)) {
+                Messaging.openingContact(opening, me)?.let { who ->
+                    OutlinedButton(onClick = { navigator.conversation(who, opening.id) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (opening.isOffer) "Message who offers it" else "Message who needs it")
+                    }
+                }
+                val mine = isOwn || opening.isProvider
+                if (mine && (opening.pendingAcceptances.isNotEmpty() || opening.exchanges.isNotEmpty())) RespondentsButton(vm, busy)
+                if (!mine) ReportLink(ReportOf.opening(opening.id), label = "Report this opening")
+            }
+        }
         if (OpeningRules.mayManage(opening, me) && opening.pendingAcceptances.isNotEmpty() && opening.status != "Cancelled") {
             item(key = "pending") {
                 BrandCard(Modifier.padding(horizontal = ScreenPadding).fillMaxWidth()) {
@@ -368,7 +390,17 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         SectionHeading("Awaiting your confirmation")
                         opening.pendingAcceptances.forEachIndexed { index, acceptance ->
                             if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                            PendingRow(acceptance, busy, onConfirm = { vm.confirm(acceptance) }, onDecline = { vm.decline(acceptance) })
+                            PendingRow(
+                                acceptance,
+                                busy,
+                                onConfirm = { vm.confirm(acceptance) },
+                                onDecline = { vm.decline(acceptance) },
+                                onMessage = if ((isOwn || opening.isProvider) && !acceptance.isAgent) {
+                                    { navigator.conversation(acceptance.actingUserId ?: acceptance.accepterId, opening.id) }
+                                } else {
+                                    null
+                                },
+                            )
                         }
                     }
                 }
@@ -540,8 +572,46 @@ private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, St
     }
 }
 
+/** Writes to everyone who responded, privately to each. */
 @Composable
-private fun PendingRow(acceptance: Acceptance, busy: Boolean, onConfirm: () -> Unit, onDecline: () -> Unit) {
+private fun RespondentsButton(vm: OpeningViewModel, busy: Boolean) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    var text by rememberSaveable { mutableStateOf("") }
+    OutlinedButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) { Text("Message everyone who responded") }
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text("Message everyone who responded") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it.take(Messaging.TEXT_MAX) },
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+                    )
+                    MetaText("Each gets it privately. They don't see who else responded.", maxLines = 2)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { vm.messageRespondents(text) { text = ""; open = false } },
+                    enabled = !busy && text.isNotBlank(),
+                ) { Text("Send to each") }
+            },
+            dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
+        )
+    }
+}
+
+@Composable
+private fun PendingRow(
+    acceptance: Acceptance,
+    busy: Boolean,
+    onConfirm: () -> Unit,
+    onDecline: () -> Unit,
+    onMessage: (() -> Unit)? = null,
+) {
     val navigator = LocalNavigator.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val personId = acceptance.actingUserId ?: acceptance.accepterId
@@ -561,5 +631,6 @@ private fun PendingRow(acceptance: Acceptance, busy: Boolean, onConfirm: () -> U
             Button(onClick = onConfirm, enabled = !busy, modifier = Modifier.weight(1f)) { Text("Confirm") }
             OutlinedButton(onClick = onDecline, enabled = !busy, modifier = Modifier.weight(1f)) { Text("Decline") }
         }
+        onMessage?.let { TextButton(onClick = it) { Text("Message") } }
     }
 }

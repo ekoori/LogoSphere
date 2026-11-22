@@ -404,6 +404,7 @@ object InfoContent {
                 "What you do here" to "The openings you post and accept; the exchanges you take part in, with their receipts, photos, notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and governance proposals, votes and the members you lend your vote to.",
                 "Places" to "The words you use for a place and, if you put it on the map, a point no more exact than you chose: a pin is rounded before it leaves your phone. For yourself we also keep whether members nearby may find you. That is off unless you switch it on.",
                 "Email" to "Whether you confirmed your address, and which notifications you chose to get by email. When someone starts to join, their name and address for up to a day, until the emailed link is used. To prevent misuse, we count emails and requests for up to a day, without storing the address or the connection they count.",
+                "Messages, blocks and reports" to "Messages you send and get, whom you blocked, and the reports you make with a copy of what you reported.",
                 "Your choices on the Meaning Graph and in Settings" to "Which pairs of value cards you judged close or not (others see only totals, from two people up), and whether you use Simple or Advanced.",
                 "AI help" to "That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.",
                 "Notifications" to "The messages LogoSphere writes for you when something happens that concerns you.",
@@ -418,7 +419,9 @@ object InfoContent {
                 "Members see your name, photo, the words you use for where you are, and your value cards.",
                 "Your groups see what happens in them: a sphere’s openings, exchanges, receipts and people are for its members — unless its managers switch on public activity, which lets anyone, even visitors without an account, see its projects, alliances and openings.",
                 "Your email address is never shown to other members.",
-                "Platform administrators — the few people who run LogoSphere — can see everything, including email addresses, so they can keep the platform working and safe. They use that access only for that. LogoSphere doesn’t show them your point on the map; like all that is stored, it can be reached by whoever runs the server.",
+                "A message is for the two people in it. Writing to everyone who responded to an opening sends each their own, so they don’t learn who else responded. AI personas neither read nor send messages, and none go to an AI provider.",
+                "Blocks and reports aren’t told to the person they’re about.",
+                "Platform administrators — the few people who run LogoSphere — can see email addresses and what happens in every group, so they can keep the platform working and safe, and use that access only for that. They don’t see your point on the map, and of private messages they see only what was reported. Like all that is stored, both can be reached by whoever runs the server: messages aren’t end-to-end encrypted.",
             ),
         ),
         Block.Para("Exchanges belong to both people in them, so an exchange stays in the other person’s trail as well as yours."),
@@ -473,7 +476,8 @@ object InfoContent {
         Block.Para(
             "For as long as you have an account. When you delete it, we remove your profile, credentials, sessions, value cards, " +
                 "notifications, follows and memberships, and withdraw your open openings. Exchanges you took part in stay, under " +
-                "your name, because they’re part of the other person’s record too.",
+                "your name, because they’re part of the other person’s record too. So do the messages you sent, for the person " +
+                "who got them, without your name; and reports, as the safety record.",
         ),
         Block.Para("Backup copies of the database may hold your data for a while longer before they’re replaced."),
         Block.Heading("Your choices", "08"),

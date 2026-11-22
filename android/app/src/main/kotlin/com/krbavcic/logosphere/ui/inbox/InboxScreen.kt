@@ -49,6 +49,12 @@ import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
+import androidx.compose.material3.Icon
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import com.krbavcic.logosphere.ui.Load
 
 class InboxViewModel(private val app: AppContainer) : LoadViewModel<List<AppNotification>>() {
     init {
@@ -56,6 +62,11 @@ class InboxViewModel(private val app: AppContainer) : LoadViewModel<List<AppNoti
     }
 
     override suspend fun fetch(force: Boolean): List<AppNotification> = app.inbox.load().notifications
+
+    /** Back here: a conversation that was read took its notification with it. */
+    fun returned() {
+        if (state.value is Load.Ready) viewModelScope.launch { reload() }
+    }
 
     /** Marks it read in the background; opening its link doesn't wait. */
     fun open(notification: AppNotification) {
@@ -81,6 +92,7 @@ fun InboxScreen() {
     val unread by app.inbox.unread.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.returned() }
 
     Scaffold(
         topBar = {
@@ -97,6 +109,20 @@ fun InboxScreen() {
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { notifications ->
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+                    item(key = "messages") {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = navigator::messages)
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Messages", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                            Text("→", color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
                     if (notifications.isEmpty()) item { EmptyNote("You're all caught up.") }
                     items(notifications, key = { it.id }) { n ->
                         NotificationRow(n) {

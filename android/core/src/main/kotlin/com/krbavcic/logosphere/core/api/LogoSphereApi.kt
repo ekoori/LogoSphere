@@ -76,6 +76,14 @@ import com.krbavcic.logosphere.core.model.Nearby
 import com.krbavcic.logosphere.core.model.PlaceSearch
 import com.krbavcic.logosphere.core.model.PlaceSettings
 import com.krbavcic.logosphere.core.model.RegisterResult
+import com.krbavcic.logosphere.core.model.BlockedPerson
+import com.krbavcic.logosphere.core.model.Conversation
+import com.krbavcic.logosphere.core.model.Conversations
+import com.krbavcic.logosphere.core.model.DirectMessage
+import com.krbavcic.logosphere.core.model.ReportOf
+import com.krbavcic.logosphere.core.model.Reports
+import com.krbavcic.logosphere.core.model.RespondentsResult
+import com.krbavcic.logosphere.core.model.SentMessage
 import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
@@ -168,6 +176,67 @@ class LogoSphereApi(
 
     suspend fun sendEmailConfirmation(): String =
         said(post("/api/account/email/confirm", JsonObject(emptyMap())), "A link is on its way.")
+
+    // ── Messages, blocking and reporting ────────────────────────────────────
+
+    suspend fun conversations(): Conversations = get("/api/messages")
+
+    /** A page, oldest first; [before] (a message's id) for older ones. [openingId]: what it's about. */
+    suspend fun conversation(personId: String, openingId: String? = null, before: String? = null): Conversation =
+        get(url("/api/messages/$personId") {
+            openingId?.let { addQueryParameter("opening", it) }
+            before?.let { addQueryParameter("before", it) }
+        })
+
+    suspend fun sendMessage(personId: String, text: String, openingId: String?): DirectMessage = post<SentMessage>(
+        "/api/messages/$personId",
+        buildJsonObject {
+            put("text", text.trim())
+            openingId?.let { put("opening_id", it) }
+        },
+    ).sent
+
+    suspend fun readConversation(personId: String, upTo: String) {
+        post<JsonElement>("/api/messages/$personId/read", buildJsonObject { put("up_to", upTo) })
+    }
+
+    /** Privately to each who responded: they don't learn who else did. */
+    suspend fun messageRespondents(openingId: String, text: String): RespondentsResult =
+        post("/api/openings/$openingId/message_respondents", buildJsonObject { put("text", text.trim()) })
+
+    suspend fun blockedPeople(): List<BlockedPerson> = get("/api/blocks")
+
+    suspend fun setBlocked(personId: String, blocked: Boolean) {
+        post<JsonElement>("/api/blocks/$personId", buildJsonObject { put("blocked", blocked) })
+    }
+
+    /** Returns what to tell the one reporting. */
+    suspend fun report(what: ReportOf, note: String): String = said(
+        post(
+            "/api/reports",
+            buildJsonObject {
+                put("kind", what.kind)
+                put("id", what.id)
+                put("note", note.trim())
+                what.personId?.let { put("person_id", it) }
+                what.trailId?.let { put("trail_id", it) }
+            },
+        ),
+        "Thank you. The platform's administrators will look at it.",
+    )
+
+    suspend fun adminReports(status: String): Reports = get(url("/api/admin/reports") { addQueryParameter("status", status) })
+
+    suspend fun settleReport(id: String, status: String, note: String, remove: Boolean) {
+        post<JsonElement>(
+            "/api/admin/reports/$id",
+            buildJsonObject {
+                put("status", status)
+                put("note", note.trim())
+                put("remove", remove)
+            },
+        )
+    }
 
     // ── Places ──────────────────────────────────────────────────────────────
 

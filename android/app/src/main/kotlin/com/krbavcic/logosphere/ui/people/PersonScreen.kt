@@ -58,6 +58,11 @@ import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.core.logic.Tabs
 import com.krbavcic.logosphere.ui.trail.trailItems
+import androidx.compose.material3.TextButton
+import com.krbavcic.logosphere.core.model.ReportOf
+import com.krbavcic.logosphere.ui.common.BlockDialog
+import androidx.compose.runtime.mutableStateOf
+import com.krbavcic.logosphere.ui.common.ReportLink
 
 data class PersonData(
     val user: PublicUser,
@@ -89,6 +94,12 @@ class PersonViewModel(private val app: AppContainer, private val id: String) : L
         )
     }
 
+    fun setBlocked(blocked: Boolean) = act(onSuccess = {
+        app.changes.emit(Change.Profile) // who's nearby follows from it
+        reload()
+        say(if (blocked) "Blocked. They aren't told." else "Unblocked.")
+    }) { app.api.setBlocked(id, blocked) }
+
     fun toggleFollow() = act {
         val following = app.api.toggleFollow(id)
         update { it.copy(user = it.user.copy(isFollowing = following)) }
@@ -111,6 +122,7 @@ fun PersonScreen(id: String, initialTab: String? = null) {
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
+    var blocking by rememberSaveable { mutableStateOf(false) }
     var tab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, listOf(Tabs.TRAIL, Tabs.OPENINGS))) }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
@@ -149,6 +161,27 @@ fun PersonScreen(id: String, initialTab: String? = null) {
                             OutlinedButton(onClick = vm::toggleFollow, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("✓ Following") }
                         } else {
                             Button(onClick = vm::toggleFollow, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("+ Follow") }
+                        }
+                    }
+                    if (!vm.isSelf) {
+                        item(key = "contact") {
+                            Column {
+                                if (data.user.canMessage) {
+                                    OutlinedButton(onClick = { navigator.conversation(id) }, modifier = Modifier.fillMaxWidth()) {
+                                        Text("Message")
+                                    }
+                                }
+                                Row {
+                                    TextButton(
+                                        onClick = { if (data.user.blocked) vm.setBlocked(false) else blocking = true },
+                                        enabled = !busy,
+                                    ) { Text(if (data.user.blocked) "Unblock" else "Block") }
+                                    ReportLink(ReportOf.person(id))
+                                }
+                                if (blocking) {
+                                    BlockDialog(data.user.displayName, onBlock = { vm.setBlocked(true) }, onClose = { blocking = false })
+                                }
+                            }
                         }
                     }
                     if (data.cards.isNotEmpty()) {

@@ -72,6 +72,8 @@ import com.krbavcic.logosphere.ui.me.AccountScreen
 import com.krbavcic.logosphere.ui.me.EditProfileScreen
 import com.krbavcic.logosphere.ui.me.MeScreen
 import com.krbavcic.logosphere.ui.values.ValueCardEditorScreen
+import com.krbavcic.logosphere.ui.messages.ConversationScreen
+import com.krbavcic.logosphere.ui.messages.MessagesScreen
 import com.krbavcic.logosphere.ui.openings.NewOpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningScreen
 import com.krbavcic.logosphere.ui.openings.OpeningsScreen
@@ -253,6 +255,11 @@ fun LogoSphereRoot() {
                     }
                     composable<SearchRoute> { SearchScreen() }
                     composable<NearbyRoute> { NearbyScreen() }
+                    composable<MessagesRoute> { MessagesScreen() }
+                    composable<ConversationRoute> {
+                        val route = it.toRoute<ConversationRoute>()
+                        ConversationScreen(route.personId, route.openingId)
+                    }
                     composable<GraphRoute> { GraphScreen(it.toRoute<GraphRoute>().owner) }
                     composable<EditProfileRoute> { EditProfileScreen() }
                     composable<AccountRoute> { AccountScreen() }

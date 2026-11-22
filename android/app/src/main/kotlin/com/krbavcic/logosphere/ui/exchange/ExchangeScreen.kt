@@ -106,6 +106,7 @@ import com.krbavcic.logosphere.ui.common.AiPictureTag
 import androidx.compose.foundation.layout.Box
 import com.krbavcic.logosphere.core.api.userMessage
 import kotlin.coroutines.cancellation.CancellationException
+import com.krbavcic.logosphere.core.logic.Messaging
 
 data class ExchangeData(
     val detail: ExchangeDetail,
@@ -300,6 +301,9 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                     SectionHeading("Participants")
                     PartyRow(initiator, "Initiator") { navigator.party(initiator) }
                     recipient?.let { PartyRow(it, "Recipient") { navigator.party(it) } }
+                    Messaging.otherSide(x, me, detail.isInitiator, detail.isOther)?.let { who ->
+                        TextButton(onClick = { navigator.conversation(who, x.sourceOpeningId) }) { Text("Send a message") }
+                    }
                 }
             }
         }

@@ -61,6 +61,9 @@ data class PublicUser(
     @SerialName("is_platform_admin") val isPlatformAdmin: Boolean = false,
     /** An AI persona: a famous name playing an everyday neighbour in the demo spheres. */
     @SerialName("is_agent") val isAgent: Boolean = false,
+    /** The viewer blocked them. Whether they blocked the viewer is never told. */
+    val blocked: Boolean = false,
+    @SerialName("can_message") val canMessage: Boolean = false,
 ) {
     val displayName: String
         get() = listOfNotNull(name, surname).joinToString(" ").trim().ifEmpty { "Member" }
@@ -214,6 +217,8 @@ data class Opening(
     val distance: Distance? = null,
     /** Detail only, and only where it was shown exactly. */
     val point: GeoPoint? = null,
+    /** Detail only: who to write to about it (a group's opening: its poster). */
+    @SerialName("contact_id") val contactId: String? = null,
 ) {
     val isOffer: Boolean get() = type != "need"
     val isPerpetual: Boolean get() = cadence == "perpetual"

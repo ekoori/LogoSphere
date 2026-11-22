@@ -31,6 +31,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class PersonRoute(val id: String, val tab: String? = null)
 @Serializable data object SearchRoute
 @Serializable data object NearbyRoute
+@Serializable data object MessagesRoute
+@Serializable data class ConversationRoute(val personId: String, val openingId: String? = null)
 
 /** The Meaning Graph; [owner] opens it on one person's or group's cards. */
 @Serializable data class GraphRoute(val owner: String? = null)
@@ -85,6 +87,11 @@ class Navigator(
 
     fun nearby() = controller.navigate(NearbyRoute)
 
+    fun messages() = controller.navigate(MessagesRoute)
+
+    /** [openingId]: what it's about, which can make writing allowed. */
+    fun conversation(personId: String, openingId: String? = null) = controller.navigate(ConversationRoute(personId, openingId))
+
     fun meaningGraph(owner: String? = null) = controller.navigate(GraphRoute(owner))
 
     fun register() = controller.navigate(RegisterRoute)
@@ -120,6 +127,7 @@ class Navigator(
         AppLink.EditProfile -> editProfile()
         AppLink.Account -> account()
         AppLink.Nearby -> nearby()
+        is AppLink.Messages -> link.with?.let { conversation(it, link.opening) } ?: messages()
         AppLink.Admin -> admin()
         is AppLink.Info -> info(link.page)
         is AppLink.Web -> web(link.path)
