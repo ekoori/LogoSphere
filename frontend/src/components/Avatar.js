@@ -14,14 +14,18 @@ function sideFor(size) {
     return SIDES.find((s) => s >= size * dpr);
 }
 
+// Words that start with a letter or digit: "Bruce (AI)" is B, not "B(".
+export function initialsOf(name) {
+    return (name || '').trim().split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w))
+        .map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+}
+
 export default function Avatar({ userId, name = '', size = 24, className = '' }) {
     const [failed, setFailed] = useState(false);
     // Reset the error state if the id changes (list re-use).
     useEffect(() => { setFailed(false); }, [userId]);
 
-    // Words that start with a letter or digit: "Bruce (AI)" is B, not "B(".
-    const initials = (name || '').trim().split(/\s+/).filter((w) => /^[\p{L}\p{N}]/u.test(w))
-        .map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+    const initials = initialsOf(name);
     const style = { width: size, height: size, fontSize: Math.round(size * 0.42) };
 
     if (!userId || failed) {

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -38,6 +39,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -84,11 +88,24 @@ fun Avatar(userId: String?, name: String?, size: Dp = 40.dp, modifier: Modifier 
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
+            // Sized in dp (the circle doesn't grow with the text setting), on a line no taller
+            // than its letters: the body style's 24 sp line pushed them off the middle.
+            val letters = with(LocalDensity.current) { (size * 0.38f).toSp() }
             Text(
                 initials(name),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontSize = (size.value * 0.38f).sp,
-                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Visible,
+                style = LocalTextStyle.current.copy(
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontSize = letters,
+                    lineHeight = letters,
+                    letterSpacing = 0.sp,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.SemiBold,
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None),
+                ),
             )
         }
     }

@@ -38,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krbavcic.logosphere.AppContainer
 import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.Membership
+import com.krbavcic.logosphere.core.logic.Tabs
 import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.Exchange
@@ -221,7 +222,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
     val canManage = Membership.canManage(c, me, isAdmin)
     val canSetRoles = Membership.canSetRoles(c, me, isAdmin)
     val members = c.members.filter { it.role != "pending" }
-    var tab by rememberSaveable { mutableIntStateOf(TABS.indexOf(initialTab ?: "").coerceAtLeast(0)) }
+    var tab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, TABS)) }
     var confirmLeave by rememberSaveable { mutableStateOf(false) }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

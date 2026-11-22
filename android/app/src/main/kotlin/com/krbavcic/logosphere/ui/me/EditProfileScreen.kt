@@ -40,6 +40,7 @@ import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.readable
+import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -93,6 +94,7 @@ fun EditProfileScreen() {
             var location by rememberSaveable { mutableStateOf(profile.location.orEmpty()) }
             var photo by rememberSaveable { mutableStateOf<Uri?>(null) }
             val pick = rememberPicturePicker { photo = it }
+            val take = rememberPhotoTaker { photo = it }
             Column(
                 Modifier
                     .padding(padding)
@@ -102,7 +104,7 @@ fun EditProfileScreen() {
                     .readable(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                PhotoField(photo, profile.userId, profile.displayName, onPick = pick)
+                PhotoField(photo, profile.userId, profile.displayName, onPick = pick, onTake = take)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

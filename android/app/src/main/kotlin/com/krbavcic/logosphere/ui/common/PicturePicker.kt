@@ -1,6 +1,8 @@
 package com.krbavcic.logosphere.ui.common
 
+import android.content.ActivityNotFoundException
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,15 +26,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.krbavcic.logosphere.core.model.CommunityKind
+import com.krbavcic.logosphere.data.Captures
 
 private val imagesOnly = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 
@@ -41,6 +50,30 @@ fun rememberPicturePicker(onPicked: (Uri) -> Unit): () -> Unit {
     val latest by rememberUpdatedState(onPicked)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { latest(it) } }
     return { launcher.launch(imagesOnly) }
+}
+
+/** The phone's camera app, for one photo; null on a phone without a camera. */
+@Composable
+fun rememberPhotoTaker(onTaken: (Uri) -> Unit): (() -> Unit)? {
+    val context = LocalContext.current
+    val latest by rememberUpdatedState(onTaken)
+    // Saved: the camera often pushes the app out of memory while it's open.
+    var waiting by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { taken ->
+        waiting?.let { if (taken) latest(it) }
+        waiting = null
+    }
+    if (!remember { Captures.available(context) }) return null
+    return {
+        try {
+            val target = Captures.newFile(context)
+            waiting = target
+            launcher.launch(target)
+        } catch (e: ActivityNotFoundException) {
+            waiting = null
+            Toast.makeText(context, "There's no camera app to take it with.", Toast.LENGTH_LONG).show()
+        }
+    }
 }
 
 /** The photo picker for up to [max] pictures (two or more). */
@@ -66,6 +99,7 @@ fun BannerField(
     modifier: Modifier = Modifier,
     label: String = "banner picture",
     height: Dp = 140.dp,
+    onTake: (() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.fillMaxWidth().height(height).clip(MaterialTheme.shapes.large)) {
@@ -85,12 +119,25 @@ fun BannerField(
                 },
             )
         }
+        if (onTake != null) {
+            OutlinedButton(onClick = onTake, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text("  Take a photo")
+            }
+        }
     }
 }
 
 /** A round photo in a form: the one just picked or the current avatar, with a choose button beside it. */
 @Composable
-fun PhotoField(picked: Uri?, userId: String?, name: String?, onPick: () -> Unit, modifier: Modifier = Modifier) {
+fun PhotoField(
+    picked: Uri?,
+    userId: String?,
+    name: String?,
+    onPick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onTake: (() -> Unit)? = null,
+) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         if (picked != null) {
             AsyncImage(
@@ -102,9 +149,17 @@ fun PhotoField(picked: Uri?, userId: String?, name: String?, onPick: () -> Unit,
         } else {
             Avatar(userId, name, size = 72.dp)
         }
-        TextButton(onClick = onPick) {
-            Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(if (picked != null) "  Choose another photo" else "  Choose a new photo")
+        Column {
+            TextButton(onClick = onPick) {
+                Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(18.dp))
+                Text(if (picked != null) "  Choose another photo" else "  Choose a new photo")
+            }
+            if (onTake != null) {
+                TextButton(onClick = onTake) {
+                    Icon(Icons.Outlined.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("  Take a photo")
+                }
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ import '../styles/Profile.css';
 import api from '../api';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import ValueCardState from '../components/ValueCardState';
+import { initialsOf } from '../components/Avatar';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -326,7 +327,7 @@ const ProfilePage = () => {
     // The picture is served by the avatar endpoint, never inlined in JSON.
     const avatar = `/api/users/${profileData?.user_id}/avatar?v=${avatarVersion}`;
     const fullName = [profileData?.name, profileData?.surname].filter(Boolean).join(' ') || 'Your Profile';
-    const initials = fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const initials = initialsOf(fullName);
 
 
     return (

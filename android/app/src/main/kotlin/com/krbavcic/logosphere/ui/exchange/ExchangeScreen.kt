@@ -36,8 +36,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +66,7 @@ import com.krbavcic.logosphere.core.model.NewComment
 import com.krbavcic.logosphere.core.model.ValueCard
 import com.krbavcic.logosphere.ui.common.BannerField
 import com.krbavcic.logosphere.ui.common.LinkText
+import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import com.krbavcic.logosphere.ui.common.rememberPicturesPicker
 import com.krbavcic.logosphere.data.Change
@@ -468,6 +471,8 @@ private fun PartyRow(party: Party, role: String, onClick: () -> Unit) {
     }
 }
 
+private const val MAX_RECEIPT_PHOTOS = 3
+
 /** Title, description and banner picture, edited in place by either side until the exchange is finished. */
 @Composable
 private fun EditExchangeForm(x: Exchange, busy: Boolean, onSave: (String, String, Uri?) -> Unit, onCancel: () -> Unit) {
@@ -476,6 +481,7 @@ private fun EditExchangeForm(x: Exchange, busy: Boolean, onSave: (String, String
     var description by rememberSaveable(x.id) { mutableStateOf(x.longDescription.orEmpty()) }
     var banner by rememberSaveable(x.id) { mutableStateOf<Uri?>(null) }
     val pick = rememberPicturePicker { banner = it }
+    val take = rememberPhotoTaker { banner = it }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = title,
@@ -492,7 +498,7 @@ private fun EditExchangeForm(x: Exchange, busy: Boolean, onSave: (String, String
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
         )
-        BannerField(banner, if (x.hasImage) app.api.exchangeImageUrl(x.id) else null, kind = null, onPick = pick)
+        BannerField(banner, if (x.hasImage) app.api.exchangeImageUrl(x.id) else null, kind = null, onPick = pick, onTake = take)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { onSave(title, description, banner) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
             TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
@@ -567,12 +573,20 @@ private fun Composer(
     var text by rememberSaveable { mutableStateOf("") }
     var context by rememberSaveable { mutableStateOf("") }
     var mode by rememberSaveable { mutableStateOf<String?>(null) }
-    val selected = remember { mutableStateListOf<String>() }
-    val photos = remember { mutableStateListOf<Uri>() }
-    val pickPhotos = rememberPicturesPicker(3) { picked ->
-        photos.clear()
-        photos.addAll(picked)
+    // Saved, as all of the form is: the camera can push the app out of memory.
+    val selected = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) {
+        mutableStateListOf<String>()
     }
+    val photos = rememberSaveable(
+        saver = listSaver(save = { it.map(Uri::toString) }, restore = { it.map(Uri::parse).toMutableStateList() }),
+    ) { mutableStateListOf<Uri>() }
+    fun add(picked: List<Uri>) {
+        val room = MAX_RECEIPT_PHOTOS - photos.size
+        if (room > 0) photos.addAll(picked.take(room))
+    }
+    val pickPhotos = rememberPicturesPicker(MAX_RECEIPT_PHOTOS) { add(it) }
+    // A receipt is evidence: photos taken or chosen, and never an AI picture.
+    val takePhoto = rememberPhotoTaker { add(listOf(it)) }
 
     if (!expanded) {
         Button(
@@ -651,8 +665,10 @@ private fun Composer(
                     }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = pickPhotos) { Text(if (photos.isEmpty()) "Add photos" else "Choose others") }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val room = photos.size < MAX_RECEIPT_PHOTOS
+                if (takePhoto != null) OutlinedButton(onClick = takePhoto, enabled = room) { Text("Take a photo") }
+                OutlinedButton(onClick = pickPhotos, enabled = room) { Text("Choose photos") }
                 if (photos.isNotEmpty()) TextButton(onClick = { photos.clear() }) { Text("Remove") }
             }
         }

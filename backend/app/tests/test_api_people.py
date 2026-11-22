@@ -154,6 +154,19 @@ def test_registration_stores_the_email_lower_case(app, db, new_member):
     assert r.status_code == 400
 
 
+def test_initials_sit_in_the_middle():
+    """Regression: they were placed with dominant-baseline, which Android's SVG
+    renderer ignores, so they rode high in the circle."""
+    import re
+    from app.routes.profile import _initials_avatar_svg
+    svg = _initials_avatar_svg('Steve Wozniak')
+    assert 'dominant-baseline' not in svg
+    y = float(re.search(r'<text x="40" y="([\d.]+)"', svg).group(1))
+    size = float(re.search(r'font-size="(\d+)"', svg).group(1))
+    capital_middle = y - 0.354 * size
+    assert abs(capital_middle - 40) < 0.2
+
+
 def test_initials_skip_bracketed_words():
     from app.routes.profile import _initials_avatar_svg
     assert '>B</text>' in _initials_avatar_svg('Bruce (AI)')

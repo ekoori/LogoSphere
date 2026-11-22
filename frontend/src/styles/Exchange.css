@@ -424,6 +424,19 @@
 .xc-receipt-photos { display: flex; flex-wrap: wrap; gap: 0.5em; margin-top: 0.55em; }
 .xc-receipt-photo { width: 96px; height: 96px; object-fit: cover; border-radius: var(--r-sm); border: 1px solid var(--border-soft); box-shadow: var(--shadow-sm); }
 .xc-photo-hint { font-size: 0.78rem; color: var(--ink-faint); }
+.xc-photo-input { display: flex; flex-direction: column; gap: 0.5em; margin-bottom: 0.7em; }
+.xc-photo-buttons { display: flex; flex-wrap: wrap; gap: 0.5em; }
+.xc-photo-buttons button:disabled { opacity: 0.5; cursor: default; }
+.xc-photo-previews { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0; padding: 0; list-style: none; }
+.xc-photo-previews li { position: relative; }
+.xc-photo-previews img { display: block; width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); }
+.xc-photo-previews button {
+    position: absolute; top: -8px; right: -8px;
+    width: 28px; height: 28px; padding: 0;
+    border: 1px solid var(--border); border-radius: 50%;
+    background: var(--surface); color: var(--ink); cursor: pointer;
+}
+.xc-receipt-error { color: var(--danger); font-size: 0.9rem; }
 
 /* ── Opening versioning (edit form + previous-versions list) ───────────── */
 .xc-section-head-row {

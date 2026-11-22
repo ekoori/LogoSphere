@@ -31,6 +31,18 @@
             </intent-filter>
         </activity>
 
+        <!-- Where the camera app writes the photo it's asked to take (data/Captures.kt). The app
+             needs no camera permission of its own. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/shared_files" />
+        </provider>
+
         <!-- Push notifications (push/PushService.kt). While the app is in the background the
              system shows them itself, with these defaults; a tap opens MainActivity with the
              message's "link". -->

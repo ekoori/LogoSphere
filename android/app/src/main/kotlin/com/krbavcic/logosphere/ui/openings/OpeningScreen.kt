@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -227,6 +228,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
     val isOwn = OpeningRules.isOwn(opening, me)
     val cancelled = opening.status == "Cancelled"
     val pickPicture = rememberPicturePicker { vm.setPicture(it) }
+    val takePicture = rememberPhotoTaker { vm.setPicture(it) }
 
     LazyColumn(contentPadding = PaddingValues(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item(key = "banner") {
@@ -304,12 +306,15 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         Text(it, style = MaterialTheme.typography.bodyLarge)
                     }
                     if (canManage && !cancelled) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             // A platform admin may change anyone's opening: say so.
                             val asAdmin = if (isOwn || opening.isProvider) "" else " (admin)"
                             if (opening.isCurrent) TextButton(onClick = { editing = true }) { Text("✎ Edit$asAdmin") }
                             TextButton(onClick = pickPicture, enabled = !busy) {
                                 Text((if (opening.hasImage) "Change picture" else "Add a picture") + asAdmin)
+                            }
+                            if (takePicture != null) {
+                                TextButton(onClick = takePicture, enabled = !busy) { Text("Take a photo$asAdmin") }
                             }
                         }
                     }

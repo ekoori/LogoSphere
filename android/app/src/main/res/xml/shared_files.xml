@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the folder camera photos are taken into (data/Captures.kt) is ever shared. -->
+<paths>
+    <cache-path name="captures" path="captures/" />
+</paths>

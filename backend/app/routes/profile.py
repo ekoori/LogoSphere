@@ -19,6 +19,16 @@ from app.middleware.session_middleware import validate_session
 logger = logging.getLogger(__name__)
 
 
+_AVATAR_SIDE = 80
+_INITIALS_SIZE = 34
+# Half a capital's height, as a share of the font size (Roboto .356, Segoe .35,
+# San Francisco .352). Renderers don't agree on `dominant-baseline` (Android's
+# ignores it, which left the initials riding high), so the baseline itself is
+# placed that far below the middle.
+_HALF_CAPITAL = 0.354
+INITIALS_BASELINE = round(_AVATAR_SIDE / 2 + _HALF_CAPITAL * _INITIALS_SIZE, 1)
+
+
 def _initials_avatar_svg(name):
     """A small SVG avatar (initials on the brand's moss gradient), returned in
     place of a 404 when a user has no uploaded photo — so <img> tags never log a
@@ -33,9 +43,9 @@ def _initials_avatar_svg(name):
         '<stop offset="0%" stop-color="#7a9a56"/><stop offset="100%" stop-color="#5f7a4f"/>'
         '</radialGradient></defs>'
         '<rect width="80" height="80" rx="40" fill="url(#g)"/>'
-        '<text x="40" y="43" font-family="system-ui,-apple-system,Segoe UI,sans-serif" '
-        'font-size="34" font-weight="600" fill="#f7f4e8" text-anchor="middle" '
-        f'dominant-baseline="central">{initials}</text></svg>'
+        f'<text x="40" y="{INITIALS_BASELINE}" font-family="system-ui,-apple-system,Segoe UI,sans-serif" '
+        f'font-size="{_INITIALS_SIZE}" font-weight="600" fill="#f7f4e8" text-anchor="middle">'
+        f'{initials}</text></svg>'
     )
 
 

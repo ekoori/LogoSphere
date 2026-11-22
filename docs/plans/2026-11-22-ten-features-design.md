@@ -23,8 +23,8 @@ commit. Tick the boxes as they land.
 
 ## Stages
 
-- [ ] S0 Close the access holes found while reading (below)
-- [ ] S1 Openings default, centred initials, camera
+- [x] S0 Close the access holes found while reading (below)
+- [x] S1 Openings default, centred initials, camera
 - [ ] S2 Acknowledgements
 - [ ] S3 Meaning Graph
 - [ ] S4 Simple / Advanced

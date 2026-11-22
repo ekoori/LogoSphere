@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 import { useLogin } from '../App';  // Import the useLogin hook from App.js
 import NotificationPanel from './NotificationPanel';
+import Avatar from './Avatar';
 import api from '../api';
 import { useTheme } from '../utils/theme';
 
@@ -47,7 +48,7 @@ const BrandMark = () => (
 );
 
 const Header = () => {
-    const { isLoggedIn, userName, handleLogout, isPlatformAdmin, authChecked } = useLogin();
+    const { isLoggedIn, userId, userName, handleLogout, isPlatformAdmin, authChecked } = useLogin();
     const { effective: effectiveTheme, setTheme } = useTheme();
     // Until the session check answers, offer neither "Log in" nor the
     // account: a signed-in member used to see "Log in" flash on every load.
@@ -193,7 +194,9 @@ const Header = () => {
                         aria-haspopup="true"
                         aria-expanded={accountOpen}
                     >
-                        <span className="account-avatar">◍</span>
+                        {isLoggedIn
+                            ? <Avatar userId={userId} name={userName} size={28} />
+                            : <span className="account-avatar">◍</span>}
                         <span className="account-label">{accountLabel}</span>
                         <span className="account-caret">▾</span>
                     </button>

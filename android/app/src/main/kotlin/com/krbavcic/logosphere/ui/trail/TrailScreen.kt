@@ -120,7 +120,7 @@ fun TrailScreen() {
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableIntStateOf(1) } // Openings, though Trail comes first
     // "Not now" on the demo invitation is remembered on this device.
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("logosphere", Context.MODE_PRIVATE) }

@@ -25,10 +25,12 @@ import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { fetchAggregateTrail } from '../utils/entityTrail';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
+import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
 const NOUN = { sphere: 'Sphere', alliance: 'Alliance', project: 'Project' };
+const TAB_KEYS = [TRAIL_TAB, OPENINGS_TAB, 'members', 'governance'];
 const STATUS_META = {
     'Initiated':   { cls: 'status--initiated',   label: 'Initiated' },
     'In Progress': { cls: 'status--in-progress',  label: 'In Progress' },
@@ -83,7 +85,9 @@ export default function EntityPage({ kind }) {
 
     const openings = useOpenings({ enabled: !!userId && canViewActivity });
     const [trail, setTrail] = useState([]);
-    const [activeTab, setActiveTab] = useState(params.get('tab') || 'meaning_trail');
+    const tabParam = params.get('tab');
+    const [activeTab, setActiveTab] = useState(() => tabFrom(tabParam, TAB_KEYS));
+    useEffect(() => { setActiveTab(tabFrom(tabParam, TAB_KEYS)); }, [kind, id, tabParam]);
     const [showNewOpening, setShowNewOpening] = useState(false);
     const [joining, setJoining] = useState(false);
     const [joinNote, setJoinNote] = useState(null);

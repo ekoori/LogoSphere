@@ -49,6 +49,7 @@ import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.readable
+import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -115,6 +116,7 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
     var joinPolicy by rememberSaveable { mutableStateOf("open") }
     var banner by rememberSaveable { mutableStateOf<Uri?>(null) }
     val pick = rememberPicturePicker { banner = it }
+    val take = rememberPhotoTaker { banner = it }
 
     Scaffold(
         topBar = { BackTopBar("Start a ${kind.noun.lowercase()}", navigator::back) },
@@ -142,7 +144,7 @@ fun NewCommunityScreen(initialKind: CommunityKind) {
                     },
                     maxLines = 2,
                 )
-                BannerField(banner, null, kind, onPick = pick)
+                BannerField(banner, null, kind, onPick = pick, onTake = take)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },

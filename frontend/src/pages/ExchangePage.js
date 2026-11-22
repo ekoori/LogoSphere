@@ -6,6 +6,8 @@ import StatusProgression from '../components/StatusProgression';
 import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
 import Avatar from '../components/Avatar';
+import PhotoInput from '../components/PhotoInput';
+import { forUpload } from '../utils/pictures';
 import * as rules from '../utils/exchangeRules';
 import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchangeRules';
 import { formatServerDate } from '../utils/dates';
@@ -93,6 +95,7 @@ function ExchangePage() {
     // Receipt context (Time/Effort/Care/...) + up to 3 photos.
     const [gratitudeContext, setGratitudeContext] = useState('');
     const [gratitudePhotos, setGratitudePhotos] = useState([]);
+    const [receiptError, setReceiptError] = useState('');
     // Two-step cancel: first click asks, second confirms (no modal dialogs).
     const [confirmCancel, setConfirmCancel] = useState(false);
     // The server's reason when a status change is refused, shown in Actions.
@@ -133,16 +136,20 @@ function ExchangePage() {
     const submitGratitude = async () => {
         if (!gratitudeText.trim() || submitting) return;
         setSubmitting(true);
+        setReceiptError('');
+        let posted = false;
         try {
+            const photos = await Promise.all(gratitudePhotos.slice(0, 3).map(forUpload));
             await api.post(`/api/exchange/${xcId}/comment`, {
                 type: 'gratitude', text: gratitudeText.trim(),
                 card_ids: gratitudeCardIds, cards: gratitudeCards,
                 frankl_mode: gratitudeMode || null,
                 context: gratitudeContext.trim() || null,
             });
-            if (gratitudePhotos.length > 0) {
+            posted = true;
+            if (photos.length > 0) {
                 const fd = new FormData();
-                gratitudePhotos.slice(0, 3).forEach((p) => fd.append('photos', p));
+                photos.forEach((p) => fd.append('photos', p));
                 await api.post(`/api/exchange/${xcId}/receipt_photos`, fd);
             }
             setGratitudeText(''); setGratitudeContext(''); setGratitudePhotos([]);
@@ -150,6 +157,11 @@ function ExchangePage() {
             await fetchXc();
         } catch (err) {
             console.error('Failed to add receipt:', err);
+            const why = err.response?.data?.message;
+            setReceiptError(posted
+                ? `Your receipt was saved, but not its photos.${why ? ` ${why}` : ''}`
+                : (why || "Your receipt couldn't be saved. Try again."));
+            if (posted) await fetchXc();
         } finally {
             setSubmitting(false);
         }
@@ -465,15 +477,7 @@ function ExchangePage() {
                                     onChange={e => setGratitudeContext(e.target.value)}
                                 />
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Photos (up to 3)</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={(e) => setGratitudePhotos(Array.from(e.target.files || []).slice(0, 3))}
-                                />
-                                {gratitudePhotos.length > 0 && (
-                                    <span className="xc-photo-hint">{gratitudePhotos.length} photo{gratitudePhotos.length > 1 ? 's' : ''} selected</span>
-                                )}
+                                <PhotoInput photos={gratitudePhotos} onChange={setGratitudePhotos} />
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}
@@ -483,6 +487,8 @@ function ExchangePage() {
                                 </button>
                             </div>
                         )}
+
+                        {receiptError && <p className="xc-receipt-error" role="alert">{receiptError}</p>}
 
                         {/* Initiator adds user_comment */}
                         {isInitiator && !xc.user_comment && (

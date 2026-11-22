@@ -17,6 +17,7 @@ import ValueCardChip from '../components/ValueCardChip';
 import api from '../api';
 import { mapExchange, mapService } from '../utils/mappers';
 import { useLogin } from '../App';
+import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import '../styles/ValueCardChip.css';
 import { PersonaTag } from '../components/DemoTags';
 
@@ -29,7 +30,10 @@ function UserPage() {
     const [trail, setTrail] = useState([]);
     const [services, setServices] = useState([]);
     const [valueCards, setValueCards] = useState([]);
-    const [activeTab, setActiveTab] = useState('meaning_trail');
+    const tabParam = params.get('tab');
+    const [activeTab, setActiveTab] = useState(() => tabFrom(tabParam, [TRAIL_TAB, OPENINGS_TAB]));
+    // Going to another person, or following a link that names a tab, starts afresh.
+    useEffect(() => { setActiveTab(tabFrom(tabParam, [TRAIL_TAB, OPENINGS_TAB])); }, [id, tabParam]);
     const [loading, setLoading] = useState(true);
     const [following, setFollowing] = useState(false);
 
@@ -149,7 +153,7 @@ function UserPage() {
                 <TabSelector
                     tabs={[
                         { key: 'meaning_trail', label: 'Meaning Trail' },
-                        { key: 'offerings', label: 'Offers & Needs' },
+                        { key: OPENINGS_TAB, label: 'Offers & Needs' },
                     ]}
                     active={activeTab}
                     onChange={setActiveTab}
@@ -161,7 +165,7 @@ function UserPage() {
                         : <MeaningTrail items={trail} />
                 )}
 
-                {activeTab === 'offerings' && (
+                {activeTab === OPENINGS_TAB && (
                     services.length === 0
                         ? <p className="empty-state">{fullName} hasn't posted any offers or needs yet.</p>
                         : <Openings services={services} newServiceVisible={false} currentUserId={viewerId} />

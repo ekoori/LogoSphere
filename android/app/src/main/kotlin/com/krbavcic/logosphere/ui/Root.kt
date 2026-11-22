@@ -126,7 +126,7 @@ fun LogoSphereRoot() {
     val entry by controller.currentBackStackEntryAsState()
     val destination = entry?.destination
     val inMain = destination?.hierarchy?.any { it.hasRoute(MainGraph::class) } == true
-    var selectedTab by rememberSaveable { mutableStateOf(Tab.Trail) }
+    var selectedTab by rememberSaveable { mutableStateOf(Tab.Openings) }
     // Coming back to a tab's own screen makes that tab current again.
     val tabOnScreen = Tab.entries.firstOrNull { tab -> destination?.hasRoute(tab.route::class) == true }
     LaunchedEffect(tabOnScreen) {
@@ -142,9 +142,10 @@ fun LogoSphereRoot() {
                     // Tapping the current tab again returns to its top.
                     controller.popBackStack(tab.route, inclusive = false)
                 } else {
-                    // The Trail tab is always the root of the signed-in back stack.
+                    // Openings is where the app opens, so it's the root of the signed-in back stack
+                    // (Trail is still the first tab in the bar).
                     controller.navigate(tab.route) {
-                        popUpTo<TrailRoute> { saveState = true }
+                        popUpTo<OpeningsRoute> { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -220,7 +221,7 @@ fun LogoSphereRoot() {
                     }
                     composable<RegisterRoute> { RegisterScreen() }
                 }
-                navigation<MainGraph>(startDestination = TrailRoute) {
+                navigation<MainGraph>(startDestination = OpeningsRoute) {
                     composable<TrailRoute> { TrailScreen() }
                     composable<OpeningsRoute> { OpeningsScreen() }
                     composable<CommunitiesRoute> { CommunitiesScreen() }

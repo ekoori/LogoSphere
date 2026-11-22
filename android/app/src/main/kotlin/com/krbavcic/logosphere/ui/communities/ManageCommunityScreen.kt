@@ -57,6 +57,7 @@ import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.ScrollingTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import com.krbavcic.logosphere.ui.values.ValueCardActions
 import com.krbavcic.logosphere.ui.values.ValueCardItem
@@ -142,6 +143,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
     SnackbarMessages(vm.messages, snackbar)
     var tab by rememberSaveable { mutableIntStateOf(0) }
     val pickPicture = rememberPicturePicker { vm.setPicture(it) }
+    val takePicture = rememberPhotoTaker { vm.setPicture(it) }
 
     Scaffold(
         topBar = { BackTopBar("Manage ${kind.noun.lowercase()}", navigator::back) },
@@ -177,6 +179,7 @@ fun ManageCommunityScreen(kind: CommunityKind, id: String) {
                             currentUrl = if (c.hasImage) app.api.communityImageUrl(kind, c.id) else null,
                             kind = kind,
                             onPick = { if (!busy) pickPicture() },
+                            onTake = takePicture?.let { take -> { if (!busy) take() } },
                             modifier = Modifier.padding(horizontal = ScreenPadding),
                         )
                     }
