@@ -11,6 +11,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
 from app.utils.access import Sight
+from app.utils import evidence
 
 logger = logging.getLogger(__name__)
 
@@ -493,6 +494,9 @@ def confirm_service(service_id, user_id=None):
         # The exchange shows the opening's banner: the same stored object when
         # it is in the bucket, else a copy of the bytes.
         picture = Service.image_object_of(service_uuid)
+        picture, picture_bytes = evidence.inherited(
+            {'source_service_id': service_uuid, 'user_id': service.provider_id, 'other_user_id': accepter_uuid},
+            picture, None if picture else Service.get_image(service_uuid))
         exchange_id = MeaningTrail.create_for_opening(
             initiator_id=service.provider_id,
             other_user_id=accepter_uuid,
@@ -503,7 +507,7 @@ def confirm_service(service_id, user_id=None):
             acting_user_name=getattr(service, 'acting_user_name', None),
             long_description=getattr(service, 'description', None),
             image_object=picture,
-            image=None if picture else Service.get_image(service_uuid),
+            image=picture_bytes,
             # When the opening was accepted on behalf of an entity, carry the
             # human who accepted through to the exchange's recipient side.
             recipient_acting_user_id=acceptance.get('acting_user_id'),

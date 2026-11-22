@@ -171,6 +171,7 @@ def test_a_post_can_ask_for_its_banner(world):
     w.d._writer = SimpleNamespace(opening=lambda *a, **k: SimpleNamespace(
         title='Long ladder free to borrow', description='Knock on my door.'))
     w.d._illustrator = SimpleNamespace(banner=lambda subject: b'jpeg-bytes')
+    w.d._adopt = lambda image: image
     detail = w.d.do_post_opening(w.d.personas[JOE], {'sphere_id': SPHERE, 'kind': 'offer', 'banner': True})
     assert ('p-joe', 'UPLOAD', '/api/openings/o-new/image', len(b'jpeg-bytes')) in w.calls
     assert 'with a banner' in detail

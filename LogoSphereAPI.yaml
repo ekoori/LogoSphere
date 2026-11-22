@@ -2950,6 +2950,98 @@ paths:
         '404': { description: Not cards the caller may see }
       tags: [Meaning Graph]
 
+  /api/ai:
+    get:
+      summary: What AI help is on, and what is left of your day
+      operationId: aiStatus
+      responses:
+        '200':
+          description: For value cards and for pictures.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value_cards: { $ref: '#/components/schemas/AiAllowance' }
+                  pictures: { $ref: '#/components/schemas/AiAllowance' }
+      tags: [AI help]
+
+  /api/ai/value_card:
+    post:
+      summary: Draft a value card from your notes
+      description: >-
+        Sends what is typed here, and nothing about who typed it, to Anthropic's
+        Claude. Returns a draft to edit and a question to think about. Saves
+        nothing.
+      operationId: aiValueCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes: { type: string, maxLength: 1500 }
+                draft:
+                  type: object
+                  description: What is in the form so far (the card's own text fields).
+                group: { type: boolean, description: "The card is a group's" }
+                brief: { type: boolean, description: "Only title, care_about and because (Simple)" }
+      responses:
+        '200':
+          description: A draft, unsaved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  draft: { type: object }
+                  question: { type: string }
+                  left: { type: integer }
+        '400': { description: Nothing to work from. }
+        '422': { description: The AI declined. }
+        '429': { description: The day's help is used up. }
+        '503': { description: AI help is off or not answering. }
+      tags: [AI help]
+
+  /api/ai/picture:
+    post:
+      summary: Draw a picture for an opening, group or event
+      description: >-
+        Sends the title, description and hint to OpenAI. The picture says it is
+        AI-made, is remembered as such, and is saved only if you then upload it.
+        Never for receipts: exchanges in real spheres refuse AI pictures as
+        evidence, while demo spheres accept them.
+      operationId: aiPicture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [purpose, title]
+              properties:
+                purpose: { type: string, enum: [opening, sphere, alliance, project, event] }
+                title: { type: string, maxLength: 120 }
+                description: { type: string }
+                hint: { type: string }
+      responses:
+        '200':
+          description: A JPEG, unsaved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image: { type: string, format: byte }
+                  content_type: { type: string }
+                  left: { type: integer }
+        '400': { description: Not something AI draws for, or no title. }
+        '422': { description: The AI declined. }
+        '429': { description: The day's help is used up. }
+        '503': { description: AI help is off or not answering. }
+      tags: [AI help]
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3042,6 +3134,12 @@ components:
           type: string
           enum: [simple, advanced]
           description: Only ever present about yourself.
+
+    AiAllowance:
+      type: object
+      properties:
+        'on': { type: boolean }
+        left: { type: integer }
 
     SessionStatus:
       type: object

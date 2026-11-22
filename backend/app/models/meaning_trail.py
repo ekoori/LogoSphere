@@ -30,7 +30,7 @@ from datetime import datetime
 # One shared driver session for the whole app (see app/db.py); cqlengine is
 # registered against it there too.
 from app.db import session as _raw_session
-from app.utils import image_store
+from app.utils import ai_pictures, image_store
 
 # Short-lived cache of the {user_id: display name} map. Every meaning-trail read
 # needs it to resolve counterparts, and it changes only when a user registers or
@@ -413,6 +413,10 @@ class MeaningTrail(Model):
         d['viewer_is_initiator'] = str(row.user_id) == str(target_id)
         from app.utils.demo import exchange_is_demo, is_agent
         d['is_demo'] = exchange_is_demo(row)
+        # Evidence: an AI picture shows only where AI evidence may be.
+        from app.utils import evidence
+        may_show, d['image_is_ai'] = evidence.picture_state(row, row.exchange_image_object)
+        d['has_image'] = d['has_image'] and may_show
         d['initiator_is_agent'] = is_agent(getattr(row, 'initiator_acting_user_id', None) or row.user_id)
         d['other_is_agent'] = is_agent(getattr(row, 'recipient_acting_user_id', None) or row.other_user_id)
         if kinds is not None:
@@ -676,6 +680,7 @@ class MeaningTrail(Model):
                 fields['exchange_long_description'] = long_description
             if image is not None:
                 obj, blob = image_store.store(image, 'banner')
+                ai_pictures.note_upload(image, obj)
                 fields['exchange_image'] = blob
                 fields['exchange_image_object'] = obj
                 fields['has_image'] = bool(obj or blob)
@@ -708,6 +713,7 @@ class MeaningTrail(Model):
             _raw_session.execute("DELETE FROM receipt_photos WHERE exchange_id = %s", [ex])
             for i, img in enumerate((images or [])[:3]):
                 obj, blob = image_store.store(img, 'photo')
+                ai_pictures.note_upload(img, obj)
                 _raw_session.execute(
                     "INSERT INTO receipt_photos (exchange_id, idx, image, image_object) VALUES (%s, %s, %s, %s)",
                     [ex, i, blob, obj])

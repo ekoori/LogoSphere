@@ -21,6 +21,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.spheres import Sphere
 from app.utils.permissions import is_platform_admin
 from app.utils.access import Sight, exchange_sphere, resolve_cards
+from app.utils import evidence
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,9 @@ def edit_exchange(exchange_id, user_id=None):
                 image = image_file.read()
                 if not is_supported_image(image):
                     return jsonify({'message': 'Unsupported image format (use JPEG, PNG, GIF or WebP)'}), 400
+                refused = evidence.refusal(tx_dict, [image])
+                if refused:
+                    return jsonify({'message': refused}), 400
         else:
             data = request.get_json() or {}
 
@@ -105,7 +109,7 @@ def get_exchange_image(exchange_id, user_id=None):
     see the exchange (participants, sphere members, platform admins)."""
     try:
         tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
-        if tx_dict is None:
+        if tx_dict is None or not tx_dict.get('has_image'):
             return ('', 404)
         return _image_response(MeaningTrail.get_image(exchange_id))
     except Exception as e:
@@ -147,6 +151,10 @@ def upload_receipt_photos(exchange_id, user_id=None):
             b = f.read()
             if b and is_supported_image(b):
                 images.append(b)
+        # All or none: a receipt doesn't half-arrive.
+        refused = evidence.refusal(tx_dict, images)
+        if refused:
+            return jsonify({'message': refused}), 400
         MeaningTrail.set_receipt_photos(exchange_id, images)
         return jsonify({'count': len(images)}), 200
     except Exception as e:
@@ -161,7 +169,10 @@ def get_receipt_photo(exchange_id, idx, user_id=None):
         tx_dict, _, _ = _load_visible_exchange(exchange_id, user_id)
         if tx_dict is None:
             return ('', 404)
-        return _image_response(MeaningTrail.get_receipt_photo(exchange_id, idx))
+        photo = MeaningTrail.get_receipt_photo(exchange_id, idx)
+        if photo and not evidence.photo_may_show(tx_dict, photo):
+            return ('', 404)
+        return _image_response(photo)
     except Exception as e:
         logger.error(f"Error in get_receipt_photo: {e}")
         return ('', 404)

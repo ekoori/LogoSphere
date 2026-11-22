@@ -10,7 +10,7 @@ from app.utils.demo import is_agent
 from datetime import datetime
 
 from app.db import session as cassandra_session
-from app.utils import image_store
+from app.utils import ai_pictures, image_store
 
 
 class Service:
@@ -59,6 +59,13 @@ class Service:
         # The banner's key in the bucket (app/utils/image_store), when it is there.
         self.image_object = image_object
 
+    def picture_key(self):
+        """The bucket key of its banner; a version borrows the one it was branched from."""
+        if self.image_object:
+            return self.image_object
+        ref = self.image_ref_service_id
+        return type(self).image_object_of(ref) if ref else None
+
     def to_dict(self, include_image=True):
         # `include_image=False` (used by the openings LIST) omits the base64
         # blob — clients load it lazily from GET /api/openings/<id>/image
@@ -88,6 +95,7 @@ class Service:
             'accepted_at': _iso(self.accepted_at),
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
+            'image_is_ai': ai_pictures.is_ai_key(self.picture_key()),
             'has_image': bool(self.image or self.image_ref_service_id) if self._has_image is None else bool(self._has_image or self.image_ref_service_id),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'acting_user_id': str(self.acting_user_id) if self.acting_user_id else None,
@@ -196,6 +204,7 @@ class Service:
     @classmethod
     def set_image(cls, service_id, image_bytes):
         obj, blob = image_store.store(image_bytes, 'banner')
+        ai_pictures.note_upload(image_bytes, obj)
         cassandra_session.execute(
             "UPDATE services SET image = %s, image_object = %s, has_image = true WHERE service_id = %s",
             [blob, obj, service_id]

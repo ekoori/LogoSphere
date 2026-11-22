@@ -10,7 +10,7 @@ from app.utils.demo import agent_ids, is_demo_sphere
 from datetime import datetime
 
 from app.db import session as cassandra_session
-from app.utils import image_store
+from app.utils import ai_pictures, image_store
 from app.utils.names import resolve_user_names, dedupe
 
 
@@ -18,7 +18,8 @@ class Project:
     def __init__(self, project_id, name, description, owner, owner_alliance, status,
                  sphere_id, sphere_name, participants, participant_names, values,
                  participant_roles=None, image=None, join_policy=None, has_image=None,
-                 decision_policy=None, phase=None):
+                 decision_policy=None, phase=None, image_object=None):
+        self.image_object = image_object
         self.project_id = project_id
         self.name = name
         self.description = description
@@ -77,6 +78,7 @@ class Project:
             'decision_policy': self.decision_policy,
             'phase': self.phase,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
+            'image_is_ai': ai_pictures.is_ai_key(self.image_object),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
 
@@ -120,7 +122,7 @@ class Project:
                    participant_roles=participant_roles, image=image, has_image=bool(image))
 
     _COLS = ("project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, "
-             "participants, participant_names, values, participant_roles, join_policy, has_image, decision_policy, phase")
+             "participants, participant_names, values, participant_roles, join_policy, has_image, decision_policy, phase, image_object")
 
     @classmethod
     def get_all(cls):
@@ -158,11 +160,13 @@ class Project:
             has_image=getattr(r, 'has_image', None),
             decision_policy=getattr(r, 'decision_policy', None),
             phase=getattr(r, 'phase', None),
+            image_object=getattr(r, 'image_object', None),
         )
 
     @classmethod
     def set_image(cls, project_id, image_bytes):
         obj, blob = image_store.store(image_bytes, 'banner')
+        ai_pictures.note_upload(image_bytes, obj)
         cassandra_session.execute(
             "UPDATE projects SET image = %s, image_object = %s, has_image = true WHERE project_id = %s",
             [blob, obj, project_id]

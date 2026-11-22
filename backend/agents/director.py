@@ -33,6 +33,7 @@ class Director:
         self.rng = rng or random.Random()
         self.clock = clock
         self._writer, self._illustrator = writer, illustrator
+        self._adopt = None
         self.clients = {}
         self.last = {}                       # observer -> when it last ran
         self.sphere_personas = {}            # demo sphere -> persona ids in it
@@ -65,6 +66,15 @@ class Director:
             from agents.images import Illustrator
             self._illustrator = Illustrator()
         return self._illustrator
+
+    @property
+    def adopt(self):
+        """Marks a drawn picture as AI-made and remembers it, so it is labelled."""
+        if self._adopt is None:
+            from app.utils import ai_pictures
+            ai_pictures.ensure_tables()
+            self._adopt = lambda image: ai_pictures.adopt(image, 'persona')
+        return self._adopt
 
     def due(self, name, seconds):
         now = self.clock()
@@ -447,7 +457,7 @@ class Director:
         wants = payload['banner'] if 'banner' in payload else self.rng.random() < config.IMAGE_SHARE
         if wants and store.usage_today()['images'] < config.DAILY_IMAGES:
             try:
-                image = self.illustrator.banner(f'{text.title}. {text.description}')
+                image = self.adopt(self.illustrator.banner(f'{text.title}. {text.description}'))
                 self.api(p.user_id).upload(f"/api/openings/{created['service_id']}/image", 'image', image)
                 self.usage['images'] += 1
                 detail += ' with a banner'

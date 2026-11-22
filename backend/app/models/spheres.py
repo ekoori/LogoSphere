@@ -5,7 +5,7 @@ from datetime import datetime
 import base64
 
 from app.db import session as cassandra_session
-from app.utils import image_store
+from app.utils import ai_pictures, image_store
 
 from app.utils.names import resolve_user_names as _resolve_user_names, dedupe as _dedupe
 from app.utils.demo import agent_ids
@@ -13,7 +13,8 @@ from app.utils.demo import agent_ids
 
 class Sphere:
     def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False, join_policy=None, has_image=None,
-                 decision_policy=None, is_demo=False):
+                 decision_policy=None, is_demo=False, image_object=None):
+        self.image_object = image_object
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -61,6 +62,7 @@ class Sphere:
             'meaning_graph': self.meaning_graph,
             'location': self.location,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
+            'image_is_ai': ai_pictures.is_ai_key(self.image_object),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'admin1': str(self.admin1),
             'participants': self.participants,
@@ -105,6 +107,7 @@ class Sphere:
     @classmethod
     def set_image(cls, sphere_id, image_bytes):
         obj, blob = image_store.store(image_bytes, 'banner')
+        ai_pictures.note_upload(image_bytes, obj)
         cassandra_session.execute(
             "UPDATE spheres SET image = %s, image_object = %s, has_image = true WHERE sphere_id = %s",
             [blob, obj, sphere_id]
@@ -196,7 +199,7 @@ class Sphere:
     # Every column except the banner blob - lists and detail never need it.
     _COLS = ("sphere_id, name, description, meaning_graph, location, admin1, participants, "
              "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image, decision_policy, "
-             "is_demo")
+             "is_demo, image_object")
 
     @classmethod
     def _from_row(cls, row):
@@ -211,7 +214,8 @@ class Sphere:
             join_policy=getattr(row, 'join_policy', None),
             has_image=getattr(row, 'has_image', None),
             decision_policy=getattr(row, 'decision_policy', None),
-            is_demo=getattr(row, 'is_demo', False))
+            is_demo=getattr(row, 'is_demo', False),
+            image_object=getattr(row, 'image_object', None))
 
     @classmethod
     def get_all(cls):
