@@ -69,7 +69,8 @@ def _version_to_change(opening_id, place):
 def search_places(user_id=None):
     if request.method == 'OPTIONS':
         return _options()
-    found = gazetteer.search(str(_body().get('q') or '')[:120])
+    own = places.of_person(user_id)
+    found = gazetteer.search(str(_body().get('q') or '')[:120], near=(own['lat'], own['lon']) if own else None)
     return jsonify({'available': gazetteer.available(), 'attribution': gazetteer.ATTRIBUTION, 'results': found}), 200
 
 

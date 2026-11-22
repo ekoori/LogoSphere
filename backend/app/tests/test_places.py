@@ -88,14 +88,16 @@ def built(tmp_path, monkeypatch):
         city(3, 'Ellery East', -37.775, 145.06, people=0, code='PPLX'),     # a suburb
         city(4, 'Lostham', -37.7, 145.1, code='PPLH')])                     # gone
     packed('postcodes.zip', 'allCountries.txt', [
-        'XA\t3999\tÉllery\tSouth Vale\t07\t\t\t\t\t-37.77\t145.04\t4'])
+        'XA\t39991\tAardpost\tSouth Vale\t07\t\t\t\t\t-37.70\t145.00\t4',
+        'XA\t3999\tÉllery\tSouth Vale\t07\t\t\t\t\t-37.77\t145.04\t4',
+        'XA\t3999\tFarside\tSouth Vale\t07\t\t\t\t\t-20.00\t120.00\t4'])
 
     script = Path(__file__).resolve().parents[2] / 'tools' / 'build_places.py'
     spec = importlib.util.spec_from_file_location('build_places', script)
     tool = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tool)
     out = tmp_path / 'data' / 'places.sqlite'
-    assert tool.build(tmp_path, out) == 6       # three towns, a region, a country, a postcode
+    assert tool.build(tmp_path, out) == 8       # three towns, a region, a country, three postcodes
     monkeypatch.setenv('PLACES_DB', str(out))
 
 
@@ -112,6 +114,12 @@ def test_finds_places_as_people_type_them(built):
     assert gazetteer.search('south vale')[0]['precision'] == 'region'
     assert names('lostham') == [] and names('x') == []
     assert gazetteer.search('éllery')[0]['label'] == 'Éllery, Creek Shire, South Vale, Exampleland'
+
+
+def test_a_whole_postcode_then_the_nearer_one(built):
+    assert names('3999') == ['3999 Éllery', '3999 Farside', '39991 Aardpost']
+    near_farside = gazetteer.search('3999', near=(-21.0, 121.0))
+    assert [f['name'] for f in near_farside] == ['3999 Farside', '3999 Éllery', '39991 Aardpost']
 
 
 def test_search_words_are_never_syntax(built):

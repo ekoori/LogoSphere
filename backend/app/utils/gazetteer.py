@@ -47,19 +47,25 @@ def get(place_id):
     return _out(row) if row else None
 
 
-def search(text):
-    """Best matches first: the name itself, then names starting so, then the bigger place."""
+def search(text, near=None):
+    """Best matches first: the name or whole postcode, then names starting so, then
+    the bigger place, then the one nearer `near` (lat, lon): half the world has a 3000."""
     words = _TOKEN.findall(plain(str(text or '')))[:6]
     if not words or len(''.join(words)) < 2 or not available():
         return []
     match = ' '.join(f'"{word}"*' for word in words)        # quoted: never read as FTS syntax
     whole = ' '.join(words)
+    order = ("(p.lowered = ? OR (p.kind = 'postcode' AND substr(p.lowered, 1, ?) = ?)) DESC, "
+             '(substr(p.lowered, 1, ?) = ?) DESC, (substr(p.lowered, 1, ?) = ?) DESC, p.population DESC, ')
+    values = [match, whole, len(whole) + 1, f'{whole} ', len(whole), whole, len(words[0]), words[0]]
+    if near:
+        order += '(p.lat - ?) * (p.lat - ?) + (p.lon - ?) * (p.lon - ?), '
+        values += [near[0], near[0], near[1], near[1]]
     with _connect() as db:
         rows = db.execute(
-            'SELECT p.* FROM place_fts JOIN place p ON p.id = place_fts.rowid WHERE place_fts MATCH ? '
-            'ORDER BY (p.lowered = ?) DESC, (substr(p.lowered, 1, ?) = ?) DESC, '
-            '(substr(p.lowered, 1, ?) = ?) DESC, p.population DESC, p.id LIMIT ?',
-            [match, whole, len(whole), whole, len(words[0]), words[0], MOST]).fetchall()
+            'SELECT p.* FROM place_fts JOIN place p ON p.id = place_fts.rowid '
+            f'WHERE place_fts MATCH ? ORDER BY {order}p.id LIMIT ?',
+            values + [MOST]).fetchall()
     return [_out(row) for row in rows]
 
 
