@@ -65,6 +65,7 @@ import com.krbavcic.logosphere.ui.communities.CommunityScreen
 import com.krbavcic.logosphere.ui.communities.ManageCommunityScreen
 import com.krbavcic.logosphere.ui.communities.NewCommunityScreen
 import com.krbavcic.logosphere.ui.exchange.ExchangeScreen
+import com.krbavcic.logosphere.ui.graph.GraphScreen
 import com.krbavcic.logosphere.ui.inbox.InboxScreen
 import com.krbavcic.logosphere.ui.info.InfoScreen
 import com.krbavcic.logosphere.ui.me.AccountScreen
@@ -247,6 +248,7 @@ fun LogoSphereRoot() {
                         PersonScreen(route.id, route.tab)
                     }
                     composable<SearchRoute> { SearchScreen() }
+                    composable<GraphRoute> { GraphScreen(it.toRoute<GraphRoute>().owner) }
                     composable<EditProfileRoute> { EditProfileScreen() }
                     composable<AccountRoute> { AccountScreen() }
                     composable<ValueCardEditorRoute> {

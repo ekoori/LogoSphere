@@ -51,6 +51,7 @@ import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.common.LinkText
 import com.krbavcic.logosphere.ui.common.ValueChips
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -155,6 +156,7 @@ fun PersonScreen(id: String, initialTab: String? = null) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 SectionHeading("Values")
                                 ValueChips(data.cards)
+                                LinkText("See them in the Meaning Graph", { navigator.meaningGraph(id) })
                             }
                         }
                     }

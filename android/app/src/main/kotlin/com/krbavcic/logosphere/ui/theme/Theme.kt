@@ -39,6 +39,12 @@ data class BrandColors(
     val onDemoWash: Color,
     val personaWash: Color,
     val onPersonaWash: Color,
+    /** The Meaning Graph's kinds of meaning, as on the site: checked for colour blindness on [card]. */
+    val graphCreative: Color,
+    val graphExperiential: Color,
+    val graphAttitudinal: Color,
+    val graphEdge: Color,
+    val graphEdgeLit: Color,
 )
 
 private val LightBrand = BrandColors(
@@ -56,6 +62,11 @@ private val LightBrand = BrandColors(
     onDemoWash = Color(0xFF5A338A),
     personaWash = Color(0xFFDDEAF4),
     onPersonaWash = Color(0xFF2F5D7C),
+    graphCreative = Color(0xFFB87A0E),
+    graphExperiential = Color(0xFF2F74B5),
+    graphAttitudinal = Color(0xFFA8456B),
+    graphEdge = Color(0x4D46583A),
+    graphEdgeLit = Color(0xCC2F3D27),
 )
 
 private val DarkBrand = BrandColors(
@@ -73,6 +84,11 @@ private val DarkBrand = BrandColors(
     onDemoWash = Color(0xFFE2CFF8),
     personaWash = Color(0xFF22394A),
     onPersonaWash = Color(0xFFBFDDF2),
+    graphCreative = Color(0xFFBD8318),
+    graphExperiential = Color(0xFF4F95D6),
+    graphAttitudinal = Color(0xFFC9588A),
+    graphEdge = Color(0x38D5E6BD),
+    graphEdgeLit = Color(0xCCD5E6BD),
 )
 
 val LocalBrandColors = staticCompositionLocalOf { LightBrand }

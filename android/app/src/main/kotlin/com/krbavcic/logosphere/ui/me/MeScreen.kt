@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material3.AlertDialog
@@ -189,6 +190,13 @@ fun MeScreen() {
                     }
                     items(data.cards, key = { "card-" + it.id }) { card ->
                         ValueCardItem(card, "I care about", actions, busy, Modifier.padding(horizontal = ScreenPadding))
+                    }
+                    item(key = "whole-graph") {
+                        LinkRow(
+                            Icons.Outlined.Hub,
+                            "The whole Meaning Graph",
+                            "Where your values sit among everyone's, and why",
+                        ) { navigator.meaningGraph() }
                     }
                     if (data.cards.isNotEmpty()) {
                         item(key = "legend") { FranklLegend(Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp)) }

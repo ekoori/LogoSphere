@@ -26,6 +26,9 @@ sealed interface AppLink {
     data class Community(val kind: CommunityKind, val id: String, val tab: String? = null) : AppLink
     data class Manage(val kind: CommunityKind, val id: String) : AppLink
     data class Person(val id: String, val tab: String? = null) : AppLink
+
+    /** [owner]: opened on that person's or group's cards. */
+    data class MeaningGraph(val owner: String? = null) : AppLink
     data object Me : AppLink
     data object EditProfile : AppLink
     data object Admin : AppLink
@@ -57,6 +60,7 @@ object Links {
             path == "/profile" -> AppLink.Me
             path == "/settings" -> AppLink.EditProfile
             path == "/admin" -> AppLink.Admin
+            path == "/meaning-graph" -> AppLink.MeaningGraph(params["owner"]?.takeIf { it.isNotBlank() })
             path == "/opening" -> id?.let { AppLink.Opening(it) }
             path == "/exchange" -> id?.let { AppLink.Exchange(it) }
             path == "/user" -> id?.let { AppLink.Person(it, tab) }

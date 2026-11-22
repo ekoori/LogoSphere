@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -139,6 +140,9 @@ fun TrailScreen() {
             TopAppBar(
                 title = { Wordmark(fontSize = MaterialTheme.typography.titleLarge.fontSize) },
                 actions = {
+                    IconButton(onClick = { navigator.meaningGraph() }) {
+                        Icon(Icons.Outlined.Hub, contentDescription = "Meaning Graph")
+                    }
                     IconButton(onClick = navigator::search) { Icon(Icons.Filled.Search, contentDescription = "Search") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),

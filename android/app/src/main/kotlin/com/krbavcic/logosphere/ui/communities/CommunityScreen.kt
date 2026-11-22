@@ -400,8 +400,11 @@ private fun Charter(data: CommunityData, modifier: Modifier = Modifier, onEdit: 
             SectionHeading("Meaning Graph") {
                 if (onEdit != null) TextButton(onClick = onEdit) { Text(if (c.valueCards.isEmpty()) "+ Add values" else "Edit") }
             }
-            if (c.valueCards.isNotEmpty()) ValueChips(c.valueCards, subjectLabel = "We care about")
-            else MetaText("No value cards yet. Add the values this group holds itself to.", maxLines = 2)
+            if (c.valueCards.isNotEmpty()) {
+                ValueChips(c.valueCards, subjectLabel = "We care about")
+                LinkText("See them in the Meaning Graph", { navigator.meaningGraph(c.id) })
+            }
+            if (c.valueCards.isEmpty()) MetaText("No value cards yet. Add the values this group holds itself to.", maxLines = 2)
         }
         if (c.values.isNotEmpty()) {
             SectionHeading("Values")

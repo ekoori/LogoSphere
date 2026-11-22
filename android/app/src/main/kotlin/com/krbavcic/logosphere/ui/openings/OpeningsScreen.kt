@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -98,6 +99,9 @@ fun OpeningsScreen() {
             TopAppBar(
                 title = { Text("Openings", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    IconButton(onClick = { navigator.meaningGraph() }) {
+                        Icon(Icons.Outlined.Hub, contentDescription = "Meaning Graph")
+                    }
                     IconButton(onClick = navigator::search) { Icon(Icons.Filled.Search, contentDescription = "Search") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),

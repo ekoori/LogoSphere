@@ -8,6 +8,7 @@ import com.krbavcic.logosphere.core.model.AdminOverview
 import com.krbavcic.logosphere.core.model.AdminUser
 import com.krbavcic.logosphere.core.model.AdminUsers
 import com.krbavcic.logosphere.core.model.AppNotification
+import com.krbavcic.logosphere.core.model.ClosenessMethod
 import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.DemoStatus
@@ -15,10 +16,13 @@ import com.krbavcic.logosphere.core.model.ConfirmResult
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.ExchangeDetail
 import com.krbavcic.logosphere.core.model.ExchangeLikeResult
+import com.krbavcic.logosphere.core.model.GraphEdge
 import com.krbavcic.logosphere.core.model.GroupGovernance
 import com.krbavcic.logosphere.core.model.JoinResult
+import com.krbavcic.logosphere.core.model.JudgementResult
 import com.krbavcic.logosphere.core.model.LikeTarget
 import com.krbavcic.logosphere.core.model.LoginResponse
+import com.krbavcic.logosphere.core.model.MeaningGraph
 import com.krbavcic.logosphere.core.model.NewComment
 import com.krbavcic.logosphere.core.model.NewCommunity
 import com.krbavcic.logosphere.core.model.NewOpening
@@ -157,6 +161,20 @@ class LogoSphereApi(
 
     /** The value cards on a person's, sphere's, alliance's or project's Meaning Graph. */
     suspend fun valueCards(ownerId: String): List<ValueCard> = get("/api/value_cards/$ownerId")
+
+    // ── The Meaning Graph ───────────────────────────────────────────────────
+
+    /** Every card the member may read, and how close they are. */
+    suspend fun meaningGraph(): MeaningGraph = get("/api/meaning_graph")
+
+    /** How closeness is worked out, in full. */
+    suspend fun meaningGraphMethod(): ClosenessMethod = get("/api/meaning_graph/method")
+
+    /** The member's judgement of a pair; null takes it back. */
+    suspend fun judgeCloseness(a: String, b: String, close: Boolean?): GraphEdge = post<JudgementResult>(
+        "/api/meaning_graph/judgement",
+        buildJsonObject { put("a", a); put("b", b); put("close", close) },
+    ).edge
 
     // ── Your profile ────────────────────────────────────────────────────────
 
