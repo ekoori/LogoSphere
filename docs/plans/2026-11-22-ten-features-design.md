@@ -30,9 +30,17 @@ commit. Tick the boxes as they land.
 - [x] S3 Meaning Graph (seen on the phone 2026-11-22)
 - [x] S4 Simple / Advanced (seen on the phone 2026-11-22)
 - [x] S5 AI help and pictures (tried on the phone 2026-11-22)
-- [ ] S6 Places and nearby
-- [ ] S7 Kindista gaps
-- [ ] S8 Privacy, Terms, How it works, app info text; end-to-end pass
+- [x] S6 Places and nearby (live 2026-11-23)
+- [x] S7 Kindista gaps (live 2026-11-23)
+- [x] S8 Privacy, Terms, How it works, app info text (live 2026-11-23)
+- [x] S9 Email, asked for 2026-11-23: built and deployed, **off until there is a Mailgun key and domain**
+- [ ] See S6-S9 on the phone (none was attached when they were built)
+- [ ] A real email delivered
+- [ ] Signed-in screens of S6-S9 looked at on production
+
+How S6-S9 were checked: the backend suite on the host under keyspace_guard; the site against a local stand-in, whose
+response shapes were then compared with the real server's; the app's own API client against a staging copy of the
+server (79 checks); a sweep of every GET as an outsider, a visitor and an administrator (`test_api_outsiders.py`).
 
 ## S0 Access holes (they contradict the Privacy page, and item 9 relies on them)
 
@@ -119,7 +127,7 @@ version history, ids, "near my values", graph tuning. Presentation only: never a
 - `place` (JSON) beside the old text on people, groups, openings, events: label, point, precision
   (country, region, town, postcode, about 5 km, about 1 km, exact). The point is coarsened before storing.
 - Other members never get a person's point; distances use cells of 1 km or more and come back in bands.
-- Search: self-hosted GeoNames (CC BY 4.0) in SQLite FTS5 on the host. Needs Igor's OK to download.
+- Search: self-hosted GeoNames (CC BY 4.0) in SQLite FTS5 on the host (Igor approved the download 2026-11-23).
 - Pin: device location, or a map (OpenStreetMap tiles with attribution, loaded only when opened).
 - Nominatim rejected: autocomplete forbidden. Photon self-host rejected: ~95 GB, 64 GB RAM.
 
@@ -143,10 +151,29 @@ So this covers what is publicly documented, which may not be everything it had.
 | events | - | events, repeats, attendance |
 | announcements | - | group announcements |
 | sharing near you, by radius | free-text place | S6 |
-| joining by invitation | reset links only | invitation links (no email service) |
+| joining by invitation | reset links only | invitation links, which the inviter shares themselves |
 | no selling or barter | Terms | - |
 
 Messaging requires block and report, with an admin queue.
+
+## S9 Email (Mailgun)
+
+- `backend/mail.env` on the host (chmod 600, never committed), read on each call, so no restart: `MAILGUN_API_KEY`,
+  `MAILGUN_DOMAIN`, `MAILGUN_BASE`, `MAIL_FROM`, `SITE_URL`; `MAIL_TEST_MODE` for Mailgun's test mode.
+- Off without a key: joining and admin-made reset links work as before, and `GET /api/mail` says off.
+- On: joining starts with the address (the link finishes it), forgotten passwords get a link, a changed password is
+  told, and notifications go by email only for the topics someone chose. One-press unsubscribe (RFC 8058). Opens and
+  clicks untracked. Tokens in URL fragments where a person follows the link.
+- Personas are never emailed. Tests never send.
+
+## Left open
+
+- Profile, group and opening pictures are public by exact address (Privacy says so). Replaced pictures and those of
+  deleted accounts stay in the bucket.
+- Loans have no due date or reminder. No calendar export. Invitation links open on the website only.
+- Someone who left a sphere still counts in attendance they gave.
+- The server also answers the API over plain HTTP by its IP address (nginx's catch-all block).
+- Older server logs hold email addresses.
 
 ## Rules that hold throughout
 
