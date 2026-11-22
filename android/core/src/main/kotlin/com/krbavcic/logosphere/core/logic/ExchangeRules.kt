@@ -65,7 +65,7 @@ object ExchangeRules {
     }
 
     /** The single public acknowledgement is first come, open to anyone signed in. */
-    fun canAcknowledge(detail: ExchangeDetail): Boolean = detail.exchange.acknowledgement == null
+    fun canAcknowledge(detail: ExchangeDetail): Boolean = detail.canAcknowledge
 
     fun hasFollowUp(exchange: Exchange): Boolean =
         exchange.initiatorFollowUp != null || exchange.recipientFollowUp != null || status(exchange) == FOLLOW_UP

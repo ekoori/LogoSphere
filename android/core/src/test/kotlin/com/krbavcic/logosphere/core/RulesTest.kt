@@ -192,9 +192,11 @@ class ExchangeRulesTest {
     }
 
     @Test
-    fun acknowledgementIsFirstCome() {
-        assertTrue(ExchangeRules.canAcknowledge(detail()))
-        assertFalse(ExchangeRules.canAcknowledge(detail(acknowledgement = "well done")))
+    fun acknowledgingIsTheServersCall() {
+        // Any number now: who may depends on the exchange's sphere.
+        val open = detail(acknowledgement = "well done").copy(canAcknowledge = true)
+        assertTrue(ExchangeRules.canAcknowledge(open))
+        assertFalse(ExchangeRules.canAcknowledge(open.copy(canAcknowledge = false)))
     }
 
     @Test

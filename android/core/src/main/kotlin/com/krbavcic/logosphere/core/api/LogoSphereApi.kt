@@ -64,6 +64,7 @@ import okhttp3.Response
 import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.krbavcic.logosphere.core.model.MeaningTrail
 
 /** Lenient on input: unknown fields are ignored and a null where a default exists takes the default. */
 val LogoSphereJson: Json = Json {
@@ -233,6 +234,33 @@ class LogoSphereApi(
 
     /** Exchanges anyone tagged with a project. */
     suspend fun projectTrail(projectId: String): List<Exchange> = get("/api/meaning_trail/by_project/$projectId")
+
+    /** A trail as one timeline: a person's, sphere's, alliance's, project's or exchange's. */
+    suspend fun trail(id: String): MeaningTrail = get("/api/trails/$id")
+
+    /** Anyone may, except in spheres they aren't in. */
+    suspend fun acknowledge(trailId: String, text: String, cardIds: List<String>) {
+        post<JsonElement>(
+            "/api/trails/$trailId/acknowledgements",
+            buildJsonObject {
+                put("text", text.trim())
+                put("card_ids", buildJsonArray { cardIds.forEach { add(JsonPrimitive(it)) } })
+            },
+        )
+    }
+
+    /** Sets (not toggles) the like. */
+    suspend fun likeAcknowledgement(trailId: String, ackId: String, liked: Boolean): ExchangeLikeResult =
+        post("/api/trails/$trailId/acknowledgements/$ackId/like", buildJsonObject { put("liked", liked) })
+
+    /** The trail's owner's: two at most in a run (the server answers 409 for a third). */
+    suspend fun highlightAcknowledgement(trailId: String, ackId: String, highlighted: Boolean) {
+        post<JsonElement>("/api/trails/$trailId/acknowledgements/$ackId/highlight", buildJsonObject { put("highlighted", highlighted) })
+    }
+
+    suspend fun removeAcknowledgement(trailId: String, ackId: String) {
+        delete<JsonElement>("/api/trails/$trailId/acknowledgements/$ackId")
+    }
 
     suspend fun exchange(id: String): ExchangeDetail = get("/api/exchange/$id")
 

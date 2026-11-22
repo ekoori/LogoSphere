@@ -28,7 +28,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class CommunityRoute(val kind: String, val id: String, val tab: String? = null)
 @Serializable data class ManageCommunityRoute(val kind: String, val id: String)
 @Serializable data class NewCommunityRoute(val kind: String)
-@Serializable data class PersonRoute(val id: String)
+@Serializable data class PersonRoute(val id: String, val tab: String? = null)
 @Serializable data object SearchRoute
 @Serializable data object EditProfileRoute
 @Serializable data object AccountRoute
@@ -74,6 +74,9 @@ class Navigator(
 
     fun person(id: String) = controller.navigate(PersonRoute(id))
 
+    /** Someone's page on one of its tabs (their trail, from a notification). */
+    fun personTab(id: String, tab: String?) = controller.navigate(PersonRoute(id, tab))
+
     fun search() = controller.navigate(SearchRoute)
 
     fun register() = controller.navigate(RegisterRoute)
@@ -103,7 +106,7 @@ class Navigator(
         is AppLink.Exchange -> exchange(link.id)
         is AppLink.Community -> community(link.kind, link.id, link.tab)
         is AppLink.Manage -> manageCommunity(link.kind, link.id)
-        is AppLink.Person -> person(link.id)
+        is AppLink.Person -> personTab(link.id, link.tab)
         AppLink.Me -> tab(Tab.Me)
         AppLink.EditProfile -> editProfile()
         AppLink.Admin -> admin()

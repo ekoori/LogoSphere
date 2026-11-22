@@ -287,12 +287,14 @@ data class Exchange(
     @SerialName("user_comment") val initiatorNote: String? = null,
     @SerialName("user_comment_timestamp") val initiatorNoteAt: String? = null,
     @SerialName("user_comment_cards") val initiatorNoteCards: List<ValueCard> = emptyList(),
-    // The single public acknowledgement, by anyone.
+    // The first acknowledgement, as the older single slot; [acknowledgements] has them all.
     @SerialName("other_comment") val acknowledgement: String? = null,
     @SerialName("other_comment_timestamp") val acknowledgementAt: String? = null,
     @SerialName("other_comment_author_id") val acknowledgementAuthorId: String? = null,
     @SerialName("other_comment_author_name") val acknowledgementAuthorName: String? = null,
     @SerialName("other_comment_cards") val acknowledgementCards: List<ValueCard> = emptyList(),
+    /** Any number, newest first. */
+    val acknowledgements: List<Acknowledgement> = emptyList(),
     // One lighter follow-up per side, once both sides have written.
     @SerialName("initiator_comment") val initiatorFollowUp: String? = null,
     @SerialName("initiator_comment_timestamp") val initiatorFollowUpAt: String? = null,
@@ -324,6 +326,8 @@ data class ExchangeDetail(
     @SerialName("is_initiator") val isInitiator: Boolean = false,
     @SerialName("is_other") val isOther: Boolean = false,
     @SerialName("is_participant") val isParticipant: Boolean = false,
+    /** In its sphere, or a side of it. */
+    @SerialName("can_acknowledge") val canAcknowledge: Boolean = false,
 )
 
 @Serializable

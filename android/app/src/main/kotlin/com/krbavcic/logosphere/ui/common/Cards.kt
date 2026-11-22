@@ -136,7 +136,8 @@ fun ExchangeCard(
             }
             exchange.acknowledgement?.let {
                 QuoteLine(
-                    author = "Acknowledgement · ${exchange.acknowledgementAuthorName ?: "A neighbour"}",
+                    author = "Acknowledgement · ${exchange.acknowledgementAuthorName ?: "A neighbour"}" +
+                        if (exchange.acknowledgements.size > 1) " (+${exchange.acknowledgements.size - 1} more)" else "",
                     text = it,
                     accent = Brand.colors.acknowledgementAccent,
                 )

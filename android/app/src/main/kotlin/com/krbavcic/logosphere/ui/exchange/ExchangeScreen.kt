@@ -98,6 +98,9 @@ import com.krbavcic.logosphere.ui.common.ValueChips
 import com.krbavcic.logosphere.ui.theme.Brand
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.ui.trail.AcknowledgeButton
+import com.krbavcic.logosphere.ui.trail.AcknowledgementRun
+import com.krbavcic.logosphere.ui.trail.CardOwner
 
 data class ExchangeData(
     val detail: ExchangeDetail,
@@ -109,6 +112,7 @@ data class ExchangeData(
 
 class ExchangeViewModel(private val app: AppContainer, private val id: String) : LoadViewModel<ExchangeData>() {
     val viewerId: String? get() = app.session.user?.id
+    val acknowledgements = acknowledgementActions(app.api)
 
     init {
         load()
@@ -404,30 +408,17 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     SectionHeading("Acknowledgements")
                     MetaText("Public thanks — warmth, not currency.")
-                    x.acknowledgement?.let { text ->
-                        val authorId = x.acknowledgementAuthorId
-                        Written(
-                            author = if (authorId != null && authorId == me) "You" else x.acknowledgementAuthorName ?: "A neighbour",
-                            authorParty = authorId?.let { Party(it, x.acknowledgementAuthorName ?: "", null, null, null, it == me) },
-                            badge = null,
-                            text = text,
-                            cards = x.acknowledgementCards,
-                            context = null,
-                            at = x.acknowledgementAt,
-                            accent = Brand.colors.acknowledgementAccent,
-                            likes = x.likesFor(LikeTarget.Acknowledgement),
-                            onLike = { vm.like(LikeTarget.Acknowledgement) },
-                        )
-                    } ?: Text("No acknowledgements yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (x.acknowledgements.isEmpty()) {
+                        Text("No acknowledgements yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        AcknowledgementRun(x.acknowledgements, me, vm.acknowledgements, busy)
+                    }
                     if (ExchangeRules.canAcknowledge(detail)) {
-                        Composer(
-                            type = CommentType.Acknowledgement,
-                            open = "Acknowledge this exchange",
-                            prompt = "Celebrate this exchange publicly — let the community know!",
-                            myCards = data.myCards,
-                            busy = busy,
-                            onSubmit = vm::write,
+                        val sides = listOfNotNull(
+                            x.userId?.let { CardOwner(it, "${x.initiatorName ?: "The initiator"}'s values") },
+                            x.otherUserId?.let { CardOwner(it, "${x.otherUserName ?: "The recipient"}'s values") },
                         )
+                        AcknowledgeButton(x.id, sides, vm.acknowledgements, busy)
                     }
                 }
             }

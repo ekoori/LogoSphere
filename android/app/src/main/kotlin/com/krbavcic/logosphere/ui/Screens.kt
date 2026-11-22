@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import com.krbavcic.logosphere.core.model.Acknowledgement
+import com.krbavcic.logosphere.ui.trail.AcknowledgementActions
 
 val LocalAppContainer = staticCompositionLocalOf<AppContainer> { error("No AppContainer provided") }
 
@@ -175,6 +177,21 @@ abstract class LoadViewModel<T> : ViewModel() {
                 if (e !is UnauthorizedException) say(e.userMessage())
             }
         }
+    }
+
+    /** Acknowledgements on the trail this screen shows: each change re-reads it. */
+    protected fun acknowledgementActions(api: LogoSphereApi): AcknowledgementActions = object : AcknowledgementActions {
+        override fun add(trailId: String, text: String, cardIds: List<String>, onDone: () -> Unit) =
+            act(onSuccess = { onDone(); reload() }) { api.acknowledge(trailId, text, cardIds) }
+
+        override fun like(ack: Acknowledgement) =
+            act(onSuccess = { reload() }) { api.likeAcknowledgement(ack.trailId, ack.id, !ack.likes.liked) }
+
+        override fun highlight(ack: Acknowledgement) =
+            act(onSuccess = { reload() }) { api.highlightAcknowledgement(ack.trailId, ack.id, !ack.highlighted) }
+
+        override fun remove(ack: Acknowledgement) =
+            act(onSuccess = { reload() }) { api.removeAcknowledgement(ack.trailId, ack.id) }
     }
 
     /**

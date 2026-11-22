@@ -52,7 +52,6 @@ import com.krbavcic.logosphere.ui.Tab
 import com.krbavcic.logosphere.ui.common.Avatar
 import com.krbavcic.logosphere.ui.common.DemoInviteCard
 import com.krbavcic.logosphere.ui.common.EmptyNote
-import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.OpeningCard
 import com.krbavcic.logosphere.ui.common.Refreshable
@@ -62,9 +61,10 @@ import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.Wordmark
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.core.model.MeaningTrail
 
 data class TrailData(
-    val trail: List<Exchange>,
+    val trail: MeaningTrail,
     val myOpenings: List<Opening>,
     val following: List<PersonRef>,
     /** Demo spheres, when the member is in none of them yet: the invitation. */
@@ -73,6 +73,7 @@ data class TrailData(
 
 class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>() {
     val viewerId: String? get() = app.session.user?.id
+    val acknowledgements = acknowledgementActions(app.api)
 
     init {
         load()
@@ -80,7 +81,7 @@ class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>()
     }
 
     override suspend fun fetch(force: Boolean): TrailData = coroutineScope {
-        val trail = async { app.api.myTrail() }
+        val trail = async { viewerId?.let { app.api.trail(it) } ?: MeaningTrail() }
         val openings = async { app.openings.list(force) }
         val following = async { app.api.following() }
         val demo = async { runCatching { app.api.demo() }.getOrNull() }
@@ -104,7 +105,7 @@ class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>()
     }) { app.api.joinDemo() }
 
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
-        data.copy(trail = data.trail.map(f))
+        data.copy(trail = data.trail.mapExchanges(f))
     }
 
     fun likeOpening(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
@@ -120,6 +121,7 @@ fun TrailScreen() {
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    val busy by vm.busy.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableIntStateOf(1) } // Openings, though Trail comes first
     // "Not now" on the demo invitation is remembered on this device.
     val context = LocalContext.current
@@ -178,20 +180,15 @@ fun TrailScreen() {
                         )
                     }
                     when (tab) {
-                        0 -> if (data.trail.isEmpty()) {
-                            item {
-                                EmptyNote("Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.")
-                            }
-                        } else {
-                            items(data.trail, key = { "x-" + it.id }) { exchange ->
-                                ExchangeCard(
-                                    exchange,
-                                    viewerId = vm.viewerId,
-                                    onClick = { navigator.exchange(exchange.id) },
-                                    onLike = { vm.likeExchange(exchange) },
-                                )
-                            }
-                        }
+                        0 -> trailItems(
+                            data.trail,
+                            viewerId = vm.viewerId,
+                            actions = vm.acknowledgements,
+                            busy = busy,
+                            empty = "Your Meaning Trail is empty. Give a little — help a neighbour, share a skill — and your trail of trust will grow here.",
+                            onExchange = { navigator.exchange(it.id) },
+                            onLike = vm::likeExchange,
+                        )
                         1 -> if (data.myOpenings.isEmpty()) {
                             item { EmptyNote("You haven't posted any offers or needs yet. Share something with your community.") }
                         } else {

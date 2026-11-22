@@ -242,7 +242,10 @@ fun LogoSphereRoot() {
                         ManageCommunityScreen(CommunityKind.valueOf(route.kind), route.id)
                     }
                     composable<NewCommunityRoute> { NewCommunityScreen(CommunityKind.valueOf(it.toRoute<NewCommunityRoute>().kind)) }
-                    composable<PersonRoute> { PersonScreen(it.toRoute<PersonRoute>().id) }
+                    composable<PersonRoute> {
+                        val route = it.toRoute<PersonRoute>()
+                        PersonScreen(route.id, route.tab)
+                    }
                     composable<SearchRoute> { SearchScreen() }
                     composable<EditProfileRoute> { EditProfileScreen() }
                     composable<AccountRoute> { AccountScreen() }

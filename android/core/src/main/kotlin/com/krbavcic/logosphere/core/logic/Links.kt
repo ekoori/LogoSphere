@@ -25,7 +25,7 @@ sealed interface AppLink {
     /** [tab] names a tab to open on (`governance` from a proposal's notification). */
     data class Community(val kind: CommunityKind, val id: String, val tab: String? = null) : AppLink
     data class Manage(val kind: CommunityKind, val id: String) : AppLink
-    data class Person(val id: String) : AppLink
+    data class Person(val id: String, val tab: String? = null) : AppLink
     data object Me : AppLink
     data object EditProfile : AppLink
     data object Admin : AppLink
@@ -59,7 +59,7 @@ object Links {
             path == "/admin" -> AppLink.Admin
             path == "/opening" -> id?.let { AppLink.Opening(it) }
             path == "/exchange" -> id?.let { AppLink.Exchange(it) }
-            path == "/user" -> id?.let { AppLink.Person(it) }
+            path == "/user" -> id?.let { AppLink.Person(it, tab) }
             kind != null && path.endsWith("-management") -> id?.let { AppLink.Manage(kind, it) }
             kind != null -> id?.let { AppLink.Community(kind, it, tab) }
             else -> InfoPage.of(path)?.let { AppLink.Info(it) }

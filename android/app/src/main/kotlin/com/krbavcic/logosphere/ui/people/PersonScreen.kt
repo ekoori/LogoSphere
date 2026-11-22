@@ -42,7 +42,6 @@ import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.Avatar
 import com.krbavcic.logosphere.ui.common.BackTopBar
 import com.krbavcic.logosphere.ui.common.EmptyNote
-import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.OpeningCard
@@ -55,17 +54,21 @@ import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.ValueChips
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.core.model.MeaningTrail
+import com.krbavcic.logosphere.core.logic.Tabs
+import com.krbavcic.logosphere.ui.trail.trailItems
 
 data class PersonData(
     val user: PublicUser,
     val cards: List<ValueCard>,
-    val trail: List<Exchange>,
+    val trail: MeaningTrail,
     val openings: List<Opening>,
 )
 
 class PersonViewModel(private val app: AppContainer, private val id: String) : LoadViewModel<PersonData>() {
     val viewerId: String? get() = app.session.user?.id
     val isSelf: Boolean get() = viewerId == id
+    val acknowledgements = acknowledgementActions(app.api)
 
     init {
         load()
@@ -75,7 +78,7 @@ class PersonViewModel(private val app: AppContainer, private val id: String) : L
     override suspend fun fetch(force: Boolean): PersonData = coroutineScope {
         val user = async { app.api.user(id) }
         val cards = async { runCatching { app.api.valueCards(id) }.getOrDefault(emptyList()) }
-        val trail = async { runCatching { app.api.trailOf(id) }.getOrDefault(emptyList()) }
+        val trail = async { runCatching { app.api.trail(id) }.getOrDefault(MeaningTrail(id = id)) }
         val openings = async { runCatching { app.openings.list(force) }.getOrDefault(emptyList()) }
         PersonData(
             user = user.await(),
@@ -91,7 +94,7 @@ class PersonViewModel(private val app: AppContainer, private val id: String) : L
     }
 
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
-        data.copy(trail = data.trail.map(f))
+        data.copy(trail = data.trail.mapExchanges(f))
     }
 
     fun likeOpening(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
@@ -100,14 +103,14 @@ class PersonViewModel(private val app: AppContainer, private val id: String) : L
 }
 
 @Composable
-fun PersonScreen(id: String) {
+fun PersonScreen(id: String, initialTab: String? = null) {
     val app = LocalAppContainer.current
     val vm: PersonViewModel = viewModel(key = "person-$id") { PersonViewModel(app, id) }
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
-    var tab by rememberSaveable { mutableIntStateOf(1) } // Openings, though Trail comes first
+    var tab by rememberSaveable { mutableIntStateOf(Tabs.indexOf(initialTab, listOf(Tabs.TRAIL, Tabs.OPENINGS))) }
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -129,7 +132,7 @@ fun PersonScreen(id: String) {
                                 Text(data.user.displayName, style = MaterialTheme.typography.headlineSmall)
                                 if (data.user.isAgent) PersonaTag()
                                 data.user.location?.let { MetaText("📍 $it") }
-                                MetaText("${data.trail.size} exchanges  ·  ${data.openings.size} openings")
+                                MetaText("${data.trail.exchanges.size} exchanges  ·  ${data.openings.size} openings")
                             }
                         }
                     }
@@ -161,10 +164,15 @@ fun PersonScreen(id: String) {
                         }
                     }
                     if (tab == 0) {
-                        if (data.trail.isEmpty()) item { EmptyNote("No meaning trail recorded yet.") }
-                        items(data.trail, key = { "x-" + it.id }) { exchange ->
-                            ExchangeCard(exchange, vm.viewerId, onClick = { navigator.exchange(exchange.id) }, onLike = { vm.likeExchange(exchange) })
-                        }
+                        trailItems(
+                            data.trail,
+                            viewerId = vm.viewerId,
+                            actions = vm.acknowledgements,
+                            busy = busy,
+                            empty = "No meaning trail recorded yet.",
+                            onExchange = { navigator.exchange(it.id) },
+                            onLike = vm::likeExchange,
+                        )
                     } else {
                         if (data.openings.isEmpty()) item { EmptyNote("No offers or needs posted.") }
                         items(data.openings, key = { "o-" + it.id }) { opening ->

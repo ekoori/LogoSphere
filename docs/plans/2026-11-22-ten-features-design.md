@@ -25,7 +25,7 @@ commit. Tick the boxes as they land.
 
 - [x] S0 Close the access holes found while reading (below)
 - [x] S1 Openings default, centred initials, camera
-- [ ] S2 Acknowledgements
+- [x] S2 Acknowledgements
 - [ ] S3 Meaning Graph
 - [ ] S4 Simple / Advanced
 - [ ] S5 AI help and pictures

@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krbavcic.logosphere.AppContainer
-import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.Membership
 import com.krbavcic.logosphere.core.logic.Tabs
 import com.krbavcic.logosphere.core.model.Community
@@ -57,7 +56,6 @@ import com.krbavcic.logosphere.ui.common.Banner
 import com.krbavcic.logosphere.ui.common.DemoNote
 import com.krbavcic.logosphere.ui.common.DemoTag
 import com.krbavcic.logosphere.ui.common.EmptyNote
-import com.krbavcic.logosphere.ui.common.ExchangeCard
 import com.krbavcic.logosphere.ui.common.GroupAvatar
 import com.krbavcic.logosphere.ui.common.LinkText
 import com.krbavcic.logosphere.ui.common.LoadContent
@@ -73,13 +71,15 @@ import com.krbavcic.logosphere.ui.common.SectionHeading
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import com.krbavcic.logosphere.ui.common.ValueChips
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import com.krbavcic.logosphere.core.model.MeaningTrail
+import com.krbavcic.logosphere.ui.trail.trailItems
 
 data class CommunityData(
     val community: Community,
     val canViewActivity: Boolean,
-    val trail: List<Exchange>,
+    /** Null when it couldn't be had (it's for the sphere's members). */
+    val trail: MeaningTrail?,
     val openings: List<Opening>,
     /** A sphere's alliances. */
     val alliances: List<PersonRef>,
@@ -96,6 +96,7 @@ class CommunityViewModel(
 ) : LoadViewModel<CommunityData>() {
     val viewerId: String? get() = app.session.user?.id
     private val isPlatformAdmin: Boolean get() = app.session.user?.isPlatformAdmin == true
+    val acknowledgements = acknowledgementActions(app.api)
 
     init {
         load()
@@ -119,17 +120,10 @@ class CommunityViewModel(
             alliancesList.await().firstOrNull { it.name == name }?.let { PersonRef(it.id, it.name) } ?: PersonRef("", name)
         }
 
-        if (!canView) return@coroutineScope CommunityData(community, false, emptyList(), emptyList(), alliances, projects, ownerAlliance)
+        if (!canView) return@coroutineScope CommunityData(community, false, null, emptyList(), alliances, projects, ownerAlliance)
 
-        // The trail of a group gathers its own exchanges, its alliances' (for a sphere) and
-        // everything tagged with its projects — as the web's entity pages do.
-        val own = listOf(id) + alliances.map { it.id }
-        val projectIds = when (kind) {
-            CommunityKind.Project -> listOf(id)
-            else -> projects.map { it.id }.filter { it.isNotEmpty() }
-        }
-        val trailCalls = own.map { owner -> async { runCatching { app.api.trailOf(owner) }.getOrDefault(emptyList()) } } +
-            projectIds.map { project -> async { runCatching { app.api.projectTrail(project) }.getOrDefault(emptyList()) } }
+        // The server gathers a group's trail: its own, its alliances' and projects', its sphere's.
+        val trail = async { runCatching { app.api.trail(id) }.getOrNull() }
         val openings = async { app.openings.list(force) }
 
         val projectNames = projects.map { it.name }.toSet()
@@ -139,8 +133,7 @@ class CommunityViewModel(
                 (kind != CommunityKind.Sphere && it.projectName != null && it.projectName in projectNames) ||
                 (kind == CommunityKind.Project && it.projectName == community.name)
         }
-        val trail = trailCalls.awaitAll().flatten().distinctBy { it.id }.sortedByDescending { Dates.parse(it.startedAt) }
-        CommunityData(community, true, trail, related, alliances, projects, ownerAlliance)
+        CommunityData(community, true, trail.await(), related, alliances, projects, ownerAlliance)
     }
 
     fun join() = act {
@@ -175,7 +168,7 @@ class CommunityViewModel(
     }) { app.api.setMemberRole(kind, id, memberId, role) }
 
     fun likeExchange(exchange: Exchange) = toggleExchangeLike(app.api, exchange, LikeTarget.Exchange) { data, f ->
-        data.copy(trail = data.trail.map(f))
+        data.copy(trail = data.trail?.mapExchanges(f))
     }
 
     fun likeOpening(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
@@ -317,15 +310,19 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
             ScrollingTabs(listOf("Trail", "Openings", "People (${members.size})", "Governance", "Charter"), tab, { tab = it }, Modifier.padding(horizontal = ScreenPadding))
         }
         when (tab) {
-            0 -> if (data.trail.isEmpty()) {
-                item { EmptyNote("No meaning trail recorded yet for this ${c.kind.noun.lowercase()}.") }
-            } else {
-                items(data.trail, key = { "x-" + it.id }) { exchange ->
-                    ExchangeCard(
-                        exchange,
+            0 -> {
+                val trail = data.trail
+                if (trail == null) {
+                    item(key = "trail-none") { EmptyNote("This Meaning Trail is for the members of its sphere.") }
+                } else {
+                    trailItems(
+                        trail,
                         viewerId = me,
-                        onClick = { navigator.exchange(exchange.id) },
-                        onLike = { vm.likeExchange(exchange) },
+                        actions = vm.acknowledgements,
+                        busy = busy,
+                        empty = "No meaning trail recorded yet for this ${c.kind.noun.lowercase()}.",
+                        onExchange = { navigator.exchange(it.id) },
+                        onLike = vm::likeExchange,
                         modifier = Modifier.padding(horizontal = ScreenPadding),
                     )
                 }
