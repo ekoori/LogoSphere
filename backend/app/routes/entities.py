@@ -26,6 +26,7 @@ from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
+from app.utils.access import Sight, without_people
 
 logger = logging.getLogger(__name__)
 
@@ -102,9 +103,12 @@ def _can_view(entity, k, viewer):
 def _detail_dict(entity, k, viewer):
     d = entity.to_dict(include_image=False)
     if k['noun'] == 'sphere':
-        d['members'] = entity.members_list()
-        d['alliance_list'] = Alliance.list_for_sphere(entity.sphere_id)
-        d['project_list'] = Project.list_for_sphere(entity.sphere_id)
+        if Sight(viewer).people_of(entity):
+            d['members'] = entity.members_list()
+            d['alliance_list'] = Alliance.list_for_sphere(entity.sphere_id)
+            d['project_list'] = Project.list_for_sphere(entity.sphere_id)
+        else:
+            d = without_people({**d, 'members': [], 'alliance_list': [], 'project_list': []})
     d['value_cards'] = [c.to_dict() for c in ValueCard.get_for_user(_entity_id(entity, k))]
     d['can_manage'] = can_manage_entity(_entity_id(entity, k), viewer)
     if d['can_manage']:

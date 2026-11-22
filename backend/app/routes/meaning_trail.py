@@ -9,6 +9,7 @@ Methods:
 
 import logging
 import uuid
+from datetime import datetime, timedelta
 from flask import request, jsonify, current_app as app, Response
 from app.models.meaning_trail import MeaningTrail, Likes, LIKE_TYPES, own_like_targets
 
@@ -19,35 +20,21 @@ from app.utils.pictures import picture_response
 from app.middleware.session_middleware import validate_session
 from app.models.spheres import Sphere
 from app.utils.permissions import is_platform_admin
+from app.utils.access import Sight, exchange_sphere, resolve_cards
 
 logger = logging.getLogger(__name__)
 
 
 # ── Visibility ──────────────────────────────────────────────────────────────
 # An exchange has no sphere column of its own; it inherits one from the opening
-# it came from, or from its project. Participants (and platform admins) always
-# see it; anyone else must belong to that sphere. Exchanges with no resolvable
-# sphere (legacy/direct ones) stay visible to any signed-in member.
-def _exchange_sphere_id(tx_dict):
-    from app.models.openings import Service
-    from app.models.project import Project
-    sid = tx_dict.get('source_service_id')
-    if sid:
-        svc = Service.get_by_id(uuid.UUID(str(sid)))
-        if svc and svc.sphere_id:
-            return svc.sphere_id
-    pid = tx_dict.get('project_id')
-    if pid:
-        prj = Project.get_by_id(pid)
-        if prj and prj.sphere_id:
-            return prj.sphere_id
-    return None
-
-
+# it came from, or from its project (app/utils/access.py). Participants (and
+# platform admins) always see it; anyone else must belong to that sphere.
+# Exchanges with no resolvable sphere (legacy/direct ones) stay visible to any
+# signed-in member.
 def _can_view_exchange(tx_dict, is_participant, viewer_id):
     if is_participant or is_platform_admin(viewer_id):
         return True
-    sphere_id = _exchange_sphere_id(tx_dict)
+    sphere_id = exchange_sphere(tx_dict)
     if sphere_id is None:
         return True
     return sphere_id in Sphere.member_sphere_ids(viewer_id)
@@ -126,6 +113,21 @@ def get_exchange_image(exchange_id, user_id=None):
         return ('', 404)
 
 
+# Photos are sent just after the receipt that may itself finish the exchange.
+PHOTOS_FOLLOW_RECEIPT = timedelta(hours=1)
+
+
+def _evidence_is_settled(tx_dict, exchange_id):
+    """Receipt photos are evidence: once the exchange is finished they may be
+    added once, soon after the receipt, and never replaced."""
+    if not MeaningTrail.is_finished(exchange_id):
+        return False
+    if MeaningTrail.receipt_photo_count(exchange_id):
+        return True
+    written = tx_dict.get('gratitude_comment_timestamp')
+    return not written or datetime.utcnow() - datetime.fromisoformat(written) > PHOTOS_FOLLOW_RECEIPT
+
+
 @validate_session
 def upload_receipt_photos(exchange_id, user_id=None):
     """Attach up to 3 photos to the receipt. Only the recipient (who gives the
@@ -138,6 +140,8 @@ def upload_receipt_photos(exchange_id, user_id=None):
             return jsonify({'message': 'Exchange not found'}), 404
         if not is_other:
             return jsonify({'message': 'Only the recipient can add receipt photos'}), 403
+        if _evidence_is_settled(tx_dict, exchange_id):
+            return jsonify({'message': "This exchange is finished: its receipt photos can't be changed"}), 409
         images = []
         for f in request.files.getlist('photos')[:3]:
             b = f.read()
@@ -180,7 +184,9 @@ def get_meaning_trail(user_id=None):
     # outage raises, and the app answers 503). An error is not "not found".
     if trust_trail is None:
         return jsonify({'message': 'Could not load the Meaning Trail'}), 500
-    return jsonify(trust_trail), 200
+    # Someone else's trail shows only what could be opened one by one.
+    sight = Sight(user_id)
+    return jsonify([row for row in trust_trail if sight.exchange(row)]), 200
 
 
 @validate_session
@@ -198,7 +204,9 @@ def get_meaning_trail_by_project(project_id, user_id=None):
     if project.sphere_id and project.sphere_id not in Sphere.member_sphere_ids(viewer) \
             and viewer not in (project.participants or []) and not is_platform_admin(viewer):
         return jsonify({'message': 'Project not found'}), 404
-    return jsonify(MeaningTrail.get_by_project_id(project_id, viewer_id=user_id)), 200
+    sight = Sight(user_id)
+    rows = MeaningTrail.get_by_project_id(project_id, viewer_id=user_id)
+    return jsonify([row for row in rows if sight.exchange(row)]), 200
 
 
 @validate_session
@@ -322,14 +330,15 @@ def add_xc_comment(exchange_id, user_id=None):
             if u:
                 author_name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
 
-        # A receipt may name the value card(s) it expressed (by id, so it pins
-        # the exact version) and the kind of meaning it was.
-        card_ids = []
-        for c in (data.get('card_ids') or []):
-            try:
-                card_ids.append(str(uuid.UUID(str(c))))
-            except (ValueError, TypeError):
-                pass
+        # A comment may name the value card(s) it expressed: by id, so it pins
+        # the exact version. The wording kept with it is the stored card's, not
+        # whatever the client sent along.
+        named = data.get('card_ids') or [c.get('card_id') for c in cards if isinstance(c, dict)]
+        resolved = resolve_cards(named, [
+            user_id, tx_dict.get('user_id'), tx_dict.get('other_user_id'),
+            tx_dict.get('initiator_acting_user_id'), tx_dict.get('recipient_acting_user_id')])
+        cards = [c.to_dict() for c in resolved]
+        card_ids = [str(c.card_id) for c in resolved]
         frankl_mode = data.get('frankl_mode')
         if frankl_mode not in ('creative', 'experiential', 'attitudinal'):
             frankl_mode = None

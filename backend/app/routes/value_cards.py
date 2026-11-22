@@ -1,5 +1,5 @@
 # Routes: Value Cards API
-# GET    /api/value_cards/<user_id>  — public, returns all current cards for a user
+# GET    /api/value_cards/<owner_id> — members (signed out: only a public sphere's charter)
 # POST   /api/value_cards             — authenticated, creates a card for the session user
 # PATCH  /api/value_cards/<card_id>   — authenticated, edits own card (versioned, see below)
 # DELETE /api/value_cards/<card_id>   — authenticated, deletes own card
@@ -13,7 +13,8 @@ import logging
 from flask import request, jsonify, current_app as app
 from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity as _can_manage_entity, get_entity_info
-from app.middleware.session_middleware import validate_session
+from app.middleware.session_middleware import validate_session, optional_session
+from app.utils.access import Sight
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,18 @@ def _may_write_entity_cards(entity_id, user_id):
     return get_entity_info(entity_id) is not None and _can_manage_entity(entity_id, user_id)
 
 
-def get_value_cards(target_user_id):
-    """Public — no auth required."""
+@optional_session
+def get_value_cards(target_user_id, user_id=None):
+    """Members read each other's cards and the charters of groups they may
+    see. Signed out, only a public sphere's charter."""
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
+        verdict = Sight(user_id).value_cards(target_user_id)
+        if verdict == 'signin':
+            return jsonify({'message': 'Sign in to see these value cards'}), 401
+        if verdict == 'hidden':
+            return jsonify({'message': 'Not found'}), 404
         cards = ValueCard.get_for_user(target_user_id)
         return jsonify([c.to_dict() for c in cards]), 200
     except Exception as e:

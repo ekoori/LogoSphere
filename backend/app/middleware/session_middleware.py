@@ -45,6 +45,27 @@ def _refused(message, status=401):
     return response, status
 
 
+def optional_session(f):
+    """For the few routes signed-out visitors may use too: user_id is the
+    session's member, or None (no, bad or expired token)."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        kwargs['user_id'] = None
+        token = get_session_token() if request.method != 'OPTIONS' else None
+        if token:
+            try:
+                key = uuid.UUID(token)
+            except ValueError:
+                key = None
+            row = key and current_app.session_interface.cassandra_session.execute(
+                "SELECT user_id, expire_at FROM sessions WHERE session_id = %s", [key]).one()
+            if row and row.expire_at and row.expire_at > datetime.utcnow():
+                kwargs['user_id'] = row.user_id
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 def validate_session(f):
     """Runs the route with the session's user_id, or answers 401. Only the
     session lookup is guarded here: an error inside the route used to come back

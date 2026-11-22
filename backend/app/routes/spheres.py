@@ -5,6 +5,7 @@ from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
+from app.utils.access import Sight, group_without_people, without_people
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -75,8 +76,12 @@ def get_spheres(user_id=None):
         spheres = Sphere.get_all()
         cards = ValueCard.get_for_users([s.sphere_id for s in spheres])
         out = []
+        sight = Sight(user_id)
         for sp in spheres:
-            d = sp.to_dict(include_members=True, include_image=False)
+            listed = sight.people_of(sp)
+            d = sp.to_dict(include_members=listed, include_image=False)
+            if not listed:
+                d = without_people({**d, 'members': []})
             d['participant_names'] = [m['name'] for m in d['members']]
             d['value_cards'] = [c.to_dict() for c in cards.get(sp.sphere_id, [])]
             out.append(d)
@@ -139,13 +144,14 @@ def get_public_sphere(sphere_id):
         from app.models.openings import Service
 
         sid = sphere.sphere_id
-        d = sphere.to_dict(include_members=True, include_image=False)
+        # Signed-out visitors see what happens in the sphere, not who is in it.
+        d = without_people({**sphere.to_dict(include_image=False), 'members': []})
 
         d['project_list'] = [
-            p.to_dict(include_image=False) for p in Project.get_all()
+            group_without_people(p.to_dict(include_image=False)) for p in Project.get_all()
             if getattr(p, 'sphere_id', None) == sid]
         d['alliance_list'] = [
-            a.to_dict(include_image=False) for a in Alliance.get_all()
+            group_without_people(a.to_dict(include_image=False)) for a in Alliance.get_all()
             if getattr(a, 'sphere_id', None) == sid]
         d['openings'] = [
             s.to_dict(include_image=False) for s in Service.get_all()

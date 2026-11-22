@@ -42,7 +42,7 @@ def test_second_confirm_is_idempotent(api, exchange):
 
 def test_receipt_names_value_cards_and_kind_of_meaning(api, exchange):
     xid = exchange['id']
-    _, cards = api.get(f'/api/value_cards/{JOE}')
+    _, cards = api.get(f'/api/value_cards/{JOE}', who='marie')
     ids = [c['card_id'] for c in cards[:2]]
     status, body = api.post(f'/api/exchange/{xid}/comment', who='marie', json={
         'type': 'gratitude', 'text': 'Patient and generous.', 'card_ids': ids,

@@ -64,6 +64,7 @@ class Sphere:
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
             'admin1': str(self.admin1),
             'participants': self.participants,
+            'member_count': len(_dedupe(self.participants or [])),
             'alliances': self.alliances,
             'projects': self.projects,
             'values': self.values,

@@ -398,6 +398,8 @@ data class Community(
     val location: String? = null,
     @SerialName("sphere_name") val sphereName: String? = null,
     val members: List<Member> = emptyList(),
+    /** A sphere's size; its [members] are empty for someone outside a private one. */
+    @SerialName("member_count") val memberCount: Int? = null,
     val values: List<String> = emptyList(),
     @SerialName("value_cards") val valueCards: List<ValueCard> = emptyList(),
     @SerialName("has_image") val hasImage: Boolean = false,
@@ -443,6 +445,9 @@ data class Community(
     val parentSphereId: String? get() = if (kind == CommunityKind.Sphere) null else sphereId
 
     val isClosed: Boolean get() = kind == CommunityKind.Project && phase == "closed"
+
+    /** How many are in it, whether or not the viewer may see who. */
+    val peopleCount: Int get() = memberCount ?: members.count { it.role != "pending" }
 }
 
 @Serializable

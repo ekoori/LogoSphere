@@ -10,6 +10,7 @@ from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
+from app.utils.access import Sight
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,35 @@ def _project_is_closed(name=None, project_id=None):
             if p.name == name:
                 return getattr(p, 'phase', 'ongoing') == 'closed'
     return False
+
+
+OPENING_TYPES = ('offer', 'need')
+# Said by the server, never taken from the request.
+SERVER_SET = ('status', 'provider_name', 'acting_user_id', 'acting_user_name', 'sphere_name')
+
+
+def _clean_new_opening(data, user_id):
+    """(data ready to store, None), or (None, (message, status))."""
+    out = {k: v for k, v in data.items() if k not in SERVER_SET}
+    out['type'] = data.get('type') or 'offer'
+    if out['type'] not in OPENING_TYPES:
+        return None, ('An opening is an offer or a need', 400)
+    sight = Sight(user_id)
+    if data.get('sphere_id'):
+        sphere = Sphere.get_by_id(data['sphere_id'])
+        if not sphere:
+            return None, ('Sphere not found', 404)
+        if not sight.sphere(sphere.sphere_id):
+            return None, ('Join the sphere first', 403)
+        out['sphere_id'], out['sphere_name'] = str(sphere.sphere_id), sphere.name
+    name = data.get('project_name')
+    if name:
+        # A project shows openings that carry its name: only those who can see it add to it.
+        from app.models.project import Project
+        named = [p for p in Project.get_all() if p.name == name]
+        if named and not any(sight.sphere(p.sphere_id) or sight.id in (p.participants or []) for p in named):
+            return None, ("You can't post for that project", 403)
+    return out, None
 
 
 class _ListContext:
@@ -162,6 +192,9 @@ def create_service(user_id=None):
         data = request.get_json() or {}
         if not data.get('title'):
             return jsonify({'message': 'Service title is required'}), 400
+        data, refused = _clean_new_opening(data, user_id)
+        if refused:
+            return jsonify({'message': refused[0]}), refused[1]
 
         # An opening may be posted "as" a sphere/alliance/project instead of
         # the human posting it — the entity becomes the provider, so the
@@ -343,6 +376,8 @@ def accept_service(service_id, user_id=None):
             return jsonify({'message': 'Opening not found'}), 404
         if _is_party(service, user_id):
             return jsonify({'message': 'You cannot accept your own opening'}), 400
+        if not Sight(user_id).sphere(service.sphere_id):
+            return jsonify({'message': "Join this opening's sphere first"}), 403
         # A single opening stays open to everyone until the provider confirms one
         # acceptance (which moves it to 'In Progress' and out of the marketplace);
         # only then — or if completed/cancelled — is it closed to new accepters.
@@ -637,6 +672,8 @@ def like_service(service_id, user_id=None):
         # self-like can still be taken off).
         if adding and _is_party(service, user_id):
             return jsonify({'message': "You can't appreciate your own opening"}), 403
+        if adding and not Sight(user_id).sphere(service.sphere_id):
+            return jsonify({'message': "Join this opening's sphere first"}), 403
         if isinstance(data.get('liked'), bool):
             liked, count = Service.set_like(service_uuid, uuid.UUID(str(user_id)), data['liked'])
         else:

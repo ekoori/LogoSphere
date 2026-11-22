@@ -134,6 +134,7 @@ export default function EntityPage({ kind }) {
         ).map(mapService);
 
     const members = entity.members || [];
+    const memberCount = entity.member_count ?? members.length;
     const isClosed = kind === 'project' && entity.phase === 'closed';
     const statusInfo = kind !== 'project' ? null
         : isClosed ? { cls: 'status--paused', label: 'Closed' }
@@ -193,8 +194,8 @@ export default function EntityPage({ kind }) {
                     {kind !== 'sphere' && entity.sphere_name && (
                         <Link to={entityHref('sphere', entity.sphere_name, entity.sphere_id)} className="ep-sphere-chip">{entity.sphere_name}</Link>
                     )}
-                    {members.length > 0 && (
-                        <span className="ep-location-chip">{members.length} member{members.length !== 1 ? 's' : ''}</span>
+                    {memberCount > 0 && (
+                        <span className="ep-location-chip">{memberCount} member{memberCount !== 1 ? 's' : ''}</span>
                     )}
                     {entity.is_public && kind === 'sphere' && <span className="ep-location-chip">Public</span>}
                     {perms.canManage && (
@@ -300,7 +301,8 @@ export default function EntityPage({ kind }) {
                             tabs={[
                                 { key: 'meaning_trail', label: 'Meaning Trail' },
                                 { key: 'offers-needs', label: 'Offers & Needs' },
-                                { key: 'members', label: `People (${members.length})` },
+                                // Visitors get the count on the banner, not the people.
+                                ...(userId ? [{ key: 'members', label: `People (${members.length})` }] : []),
                                 ...(userId ? [{ key: 'governance', label: 'Governance' }] : []),
                             ]}
                             active={activeTab}

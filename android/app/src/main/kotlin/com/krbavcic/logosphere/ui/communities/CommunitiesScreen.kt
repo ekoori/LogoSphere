@@ -203,7 +203,7 @@ fun CommunityCard(community: Community, viewerId: String?, onClick: () -> Unit) 
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                val members = community.members.count { it.role != "pending" }
+                val members = community.peopleCount
                 MetaText(
                     listOfNotNull(
                         "$members member${if (members == 1) "" else "s"}",

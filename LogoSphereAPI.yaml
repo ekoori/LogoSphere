@@ -1793,9 +1793,14 @@ paths:
   /api/value_cards/{target_user_id}:
     get:
       summary: List a user's or entity's current value cards
-      description: Public — no session required. Only returns the current (non-superseded) version of each card; edits are versioned, not overwritten in place.
+      description: >-
+        Signed-in members read each other's cards and the charters of groups
+        they may see (404 otherwise). Without a session only a public sphere's
+        charter, or that of an alliance or project inside one, is returned (401
+        otherwise). Only the current (non-superseded) version of each card;
+        edits are versioned, not overwritten in place.
       operationId: listValueCards
-      security: []
+      security: [{}, { bearerAuth: [] }]
       parameters:
         - name: target_user_id
           in: path

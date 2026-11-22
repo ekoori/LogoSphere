@@ -37,6 +37,8 @@ export default function EntityCard({ kind, entity, onJoin }) {
     const href = `/${kind}?id=${id}`;
     const manageHref = `/${kind}-management?id=${id}`;
     const members = entity.members || [];
+    // A private sphere tells outsiders how many are in it, not who.
+    const memberCount = entity.member_count ?? members.length;
     const me = userId ? members.find((m) => String(m.id) === String(userId)) : null;
     const canManage = isPlatformAdmin || (me && MANAGE_ROLES[kind].includes(me.role));
     const isPending = entity.pending_for_me;
@@ -102,7 +104,7 @@ export default function EntityCard({ kind, entity, onJoin }) {
                             </React.Fragment>
                         ))}
                         {members.length > 3 && <>, <Link to={href}>{members.length - 3} more…</Link></>}
-                        {members.length === 0 && <span>No members yet</span>}
+                        {members.length === 0 && <span>{memberCount > 0 ? 'Members see who is here' : 'No members yet'}</span>}
                     </div>
                 </div>
                 <div className="entity-card-right">
@@ -117,7 +119,7 @@ export default function EntityCard({ kind, entity, onJoin }) {
                             {joining ? 'Joining…' : `Join ${NOUN[kind]}`}
                         </button>
                     ) : null}
-                    <span className="entity-card-count">{members.length} member{members.length !== 1 ? 's' : ''}</span>
+                    <span className="entity-card-count">{memberCount} member{memberCount !== 1 ? 's' : ''}</span>
                     {joinNote && <span className={joinNote.ok ? 'entity-card-pending' : 'entity-card-error'}>{joinNote.text}</span>}
                 </div>
             </div>

@@ -249,7 +249,7 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
             Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (c.isDemo) DemoTag()
-                    QuietPill("${members.size} member${if (members.size == 1) "" else "s"}")
+                    QuietPill("${c.peopleCount} member${if (c.peopleCount == 1) "" else "s"}")
                     c.location?.takeIf { c.kind == CommunityKind.Sphere && it.isNotBlank() }?.let { QuietPill(it) }
                     if (c.kind == CommunityKind.Sphere && c.isPublic) QuietPill("Public")
                     if (c.kind == CommunityKind.Project) QuietPill(if (c.isClosed) "Closed" else c.status ?: "Ongoing")
