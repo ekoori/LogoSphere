@@ -29,7 +29,7 @@ commit. Tick the boxes as they land.
 - [x] S2 Acknowledgements
 - [x] S3 Meaning Graph (seen on the phone 2026-11-22)
 - [x] S4 Simple / Advanced (seen on the phone 2026-11-22)
-- [ ] S5 AI help and pictures
+- [x] S5 AI help and pictures (tried on the phone 2026-11-22)
 - [ ] S6 Places and nearby
 - [ ] S7 Kindista gaps
 - [ ] S8 Privacy, Terms, How it works, app info text; end-to-end pass
@@ -111,7 +111,8 @@ version history, ids, "near my values", graph tuning. Presentation only: never a
   AI generation in their metadata; demo spheres accept them. A real exchange never inherits or shows an AI picture
   or a stock stand-in.
   AI pictures are labelled wherever they show. Detection can't catch every outside AI picture: say so.
-- Per-member and platform daily caps; off cleanly without keys.
+- Per-member and platform daily caps (cards 20 each / 100 in all, pictures 5 / 30; `AI_*` settings change them);
+  off cleanly without keys or with `AI_ASSIST=off`. Keys: the platform's own, read from `backend/agents.env`.
 
 ## S6 Places
 
