@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { Picture } from './AiTag';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
@@ -72,7 +73,7 @@ const TYPE_PILL  = { completed: 'pill-leaf', offer: 'pill-clay', need: 'pill-hon
 function ExchangeCard({
     id,
     type, title, spheres, participants, description,
-    project, projectId, imageUrl, time, status,
+    project, projectId, imageUrl, imageIsAi = false, time, status,
     likesCount, likedByCurrentUser, likedBy: likedByInitial = [], canLike = true,
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
@@ -258,7 +259,9 @@ function ExchangeCard({
                     {(img || description) && (
                         <div className="description-container">
                             {img && (
-                                <img
+                                <Picture
+                                    isAi={imageIsAi}
+                                    short
                                     src={img}
                                     alt={title}
                                     className="exchange-image"
@@ -357,6 +360,7 @@ ExchangeCard.propTypes = {
     project: PropTypes.string,
     projectId: PropTypes.string,
     imageUrl: PropTypes.string,
+    imageIsAi: PropTypes.bool,
     time: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,

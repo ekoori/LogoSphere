@@ -3,6 +3,9 @@ import '../styles/App.css';
 import api from '../api';
 import { useSimple } from '../utils/useSimple';
 import { useLogin } from '../App';
+import { forUpload } from '../utils/pictures';
+import AiPictureMaker from './AiPictureMaker';
+import { Picture } from './AiTag';
 
 // `actingAs` (optional): { id, name, sphereId, sphereName, projectName } — when
 // set, the opening is posted on behalf of that sphere/alliance/project instead
@@ -22,6 +25,9 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     const [spheres, setSpheres] = useState([]);
     const [projects, setProjects] = useState([]);
     const [submitting, setSubmitting] = useState(false);
+    const [picture, setPicture] = useState(null);       // {file, url, isAi}
+    useEffect(() => () => { if (picture) URL.revokeObjectURL(picture.url); }, [picture]);
+    const choosePicture = (file, isAi = false) => setPicture(file ? { file, isAi, url: URL.createObjectURL(file) } : null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
@@ -52,7 +58,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
         setSubmitting(true);
         setError('');
         try {
-            await api.post('/api/openings', {
+            const created = await api.post('/api/openings', {
                 type: formData.type,
                 title: formData.title.trim(),
                 description: formData.description.trim(),
@@ -63,6 +69,16 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                 status: 'Posted',
                 acting_as_id: actingAs?.id || undefined,
             });
+            if (picture) {
+                try {
+                    const fd = new FormData();
+                    fd.append('image', await forUpload(picture.file));
+                    await api.post(`/api/openings/${created.data.service_id}/image`, fd);
+                } catch (err) {
+                    setError('Posted, but the picture didn\'t save. You can add one from its page.');
+                }
+                setPicture(null);
+            }
             setSuccess(true);
             setFormData({
                 type: 'offer', title: '', description: '', cadence: 'single',
@@ -151,6 +167,21 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                         ))}
                     </select>
                 </div>}
+
+                <div>
+                    <span className="picture-label">Picture (optional)</span>
+                    <div className="picture-field">
+                        {picture && <Picture isAi={picture.isAi} src={picture.url} alt="Your opening's picture" />}
+                        <label className="ai-open">
+                            {picture ? 'Choose another' : 'Choose a picture'}
+                            <input type="file" accept="image/*" hidden
+                                   onChange={(e) => { choosePicture(e.target.files?.[0]); e.target.value = ''; }} />
+                        </label>
+                        {picture && <button type="button" className="ai-open" onClick={() => choosePicture(null)}>Remove</button>}
+                        <AiPictureMaker purpose="opening" title={formData.title} description={formData.description}
+                                        onUse={(file) => choosePicture(file, true)} />
+                    </div>
+                </div>
 
                 <button
                     type="submit"

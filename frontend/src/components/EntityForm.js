@@ -9,6 +9,8 @@ import { useSimple } from '../utils/useSimple';
 import { MoreInAdvanced } from './UiMode';
 import api from '../api';
 import SphereBanner from './SphereBanner';
+import AiPictureMaker from './AiPictureMaker';
+import { AiTag } from './AiTag';
 import { useLogin } from '../App';
 import { useEntityList, useManagedEntities, useInvalidate, KIND_PATH } from '../utils/queries';
 import '../styles/EntityCard.css';
@@ -31,6 +33,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
     const [joinPolicy, setJoinPolicy] = useState('open');
     const [image, setImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [imageIsAi, setImageIsAi] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
@@ -50,6 +53,12 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
         reader.onloadend = () => setPreviewUrl(reader.result);
         reader.readAsDataURL(file);
         setImage(file);
+        setImageIsAi(false);
+    };
+    const useDrawn = (file) => {
+        setPreviewUrl(URL.createObjectURL(file));
+        setImage(file);
+        setImageIsAi(true);
     };
 
     const handleSubmit = async (e) => {
@@ -80,7 +89,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
             }
             await invalidate.entity(kind, newId);
             setName(''); setDescription(''); setLocation(''); setSphereId(''); setOwnerAllianceId('');
-            setJoinPolicy('open'); setImage(null); setPreviewUrl('');
+            setJoinPolicy('open'); setImage(null); setPreviewUrl(''); setImageIsAi(false);
             if (onCreated) onCreated(created);
         } catch (err) {
             setError(err.response?.data?.message || `Failed to create ${kind}.`);
@@ -98,6 +107,8 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
             {error && <p className="form-error">{error}</p>}
             <form onSubmit={handleSubmit}>
                 <SphereBanner previewUrl={previewUrl} onImageChange={handleImageChange} />
+                {previewUrl && imageIsAi && <AiTag />}
+                <AiPictureMaker purpose={kind} title={name} description={description} onUse={useDrawn} />
 
                 <label htmlFor="entity-name">{NOUN[kind]} name</label>
                 <input type="text" id="entity-name" value={name} onChange={(e) => setName(e.target.value)} required />

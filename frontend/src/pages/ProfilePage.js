@@ -12,6 +12,7 @@ import ValueCardState from '../components/ValueCardState';
 import { initialsOf } from '../components/Avatar';
 import { useSimple } from '../utils/useSimple';
 import { MoreInAdvanced } from '../components/UiMode';
+import AiCardHelp from '../components/AiCardHelp';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -187,6 +188,7 @@ function NewValueCardForm({ onSaved, onCancel, editingCard }) {
         <form className="vc-new-form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
             <h4 className="vc-new-heading">{editingCard ? 'Edit Value Card' : 'New Value Card'}</h4>
             {err && <p className="vc-error">{err}</p>}
+            <AiCardHelp form={form} onChange={setForm} brief={simple} />
 
             <div className="vc-form-row">
                 <label>Title (short name for this value)</label>

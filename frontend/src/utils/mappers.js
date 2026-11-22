@@ -49,6 +49,8 @@ export function mapService(s) {
         // the demo's only: in a real sphere one would pass for the thing on offer.
         imageUrl: s.has_image ? `/api/openings/${s.service_id}/image`
             : s.is_demo ? imageForService(s.image_key, s.title) : null,
+        // The demo's illustrations are AI-drawn too.
+        imageIsAi: s.has_image ? !!s.image_is_ai : !!s.is_demo,
         // Whether the opening has a real uploaded banner (vs the fallback).
         hasImage: !!s.has_image,
         time: fmtDate(s.created_at) || 'recently',
@@ -230,6 +232,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         // their illustrations; a real exchange shows only its own picture.
         imageUrl: row.has_image ? `/api/exchange/${row.exchange_id}/image`
             : row.is_demo ? imageFor(row.exchange_description) : null,
+        imageIsAi: row.has_image ? !!row.image_is_ai : !!(row.is_demo && imageFor(row.exchange_description)),
         time: fmtDate(row.project_start_timestamp) || 'recently',
         status: row.exchange_status || 'Initiated',
         ...likeOf('exchange'),

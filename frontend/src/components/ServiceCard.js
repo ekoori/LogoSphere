@@ -9,6 +9,7 @@ import api from '../api';
 import LikeTimestamp from './LikeTimestamp';
 import StatusProgression from './StatusProgression';
 import Avatar from './Avatar';
+import { Picture } from './AiTag';
 import { DemoTag, PersonaTag } from './DemoTags';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
@@ -26,7 +27,7 @@ function ServiceCard({
     id,
     type, title, spheres, sphereId, provider, providerId, actingUser, actingUserId,
     description, project, projectId,
-    imageUrl, time, status, likesCount, likedByCurrentUser, likedBy: likedByInitial = [], cadence, acceptedByName,
+    imageUrl, imageIsAi = false, time, status, likesCount, likedByCurrentUser, likedBy: likedByInitial = [], cadence, acceptedByName,
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
     isProvider = false, canManage = false, actionError = null, isDemo = false, providerIsAgent = false,
@@ -207,7 +208,9 @@ function ServiceCard({
 
             <div className="description-container">
                 {img && (
-                    <img
+                    <Picture
+                        isAi={imageIsAi}
+                        short
                         src={img}
                         alt={title}
                         className="exchange-image"
@@ -342,6 +345,7 @@ ServiceCard.propTypes = {
     project: PropTypes.string,
     projectId: PropTypes.string,
     imageUrl: PropTypes.string,
+    imageIsAi: PropTypes.bool,
     time: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     likesCount: PropTypes.number.isRequired,

@@ -228,7 +228,8 @@ function OpeningPage() {
     return (
         <div className="xc-page xc-page--banner">
             {/* ── Banner ───────────────────────────────────────────────── */}
-            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={canManage && !isCancelled ? handleImageUpload : undefined} asAdmin={!isOwnOpening}>
+            <EntityBanner kind="opening" imageUrl={service.hasImage ? `/api/openings/${openingId}/image?v=${imgVersion}` : undefined} onUpload={canManage && !isCancelled ? handleImageUpload : undefined} asAdmin={!isOwnOpening}
+                          isAi={service.imageIsAi} aiSubject={isOwnOpening ? { title: service.title, description: service.description } : null}>
                 <div className="xc-page-breadcrumb">
                     <Link to="/openings">Openings</Link>
                     <span>›</span>

@@ -78,7 +78,7 @@ export default function EntityCard({ kind, entity, onJoin }) {
 
     return (
         <article className={`entity-card entity-card--${kind}`}>
-            <CardBanner imageUrl={entity.has_image ? `/api/${KIND_PATH[kind]}/${id}/image` : null} alt={entity.name} />
+            <CardBanner imageUrl={entity.has_image ? `/api/${KIND_PATH[kind]}/${id}/image` : null} alt={entity.name} isAi={!!entity.image_is_ai} />
             <div className="entity-card-header">
                 <div className="entity-card-left">
                     {breadcrumb}

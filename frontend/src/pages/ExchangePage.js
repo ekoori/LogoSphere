@@ -8,6 +8,7 @@ import ValueCardPicker from '../components/ValueCardPicker';
 import Avatar from '../components/Avatar';
 import PhotoInput from '../components/PhotoInput';
 import { useSimple } from '../utils/useSimple';
+import { Picture } from '../components/AiTag';
 import { Acknowledge, AcknowledgementRun } from '../components/Acknowledgements';
 import { forUpload } from '../utils/pictures';
 import * as rules from '../utils/exchangeRules';
@@ -107,11 +108,13 @@ function ExchangePage() {
     const [editTitle, setEditTitle] = useState('');
     const [editDesc, setEditDesc] = useState('');
     const [editImage, setEditImage] = useState(null);
+    const [editError, setEditError] = useState('');
 
     const openEdit = () => {
         setEditTitle(xc?.exchange_description || '');
         setEditDesc(xc?.exchange_long_description || '');
         setEditImage(null);
+        setEditError('');
         setEditing(true);
     };
     const handleEditSubmit = async (e) => {
@@ -122,12 +125,12 @@ function ExchangePage() {
             const fd = new FormData();
             fd.append('title', editTitle);
             fd.append('description', editDesc);
-            if (editImage) fd.append('image', editImage);
+            if (editImage) fd.append('image', await forUpload(editImage));
             await api.post(`/api/exchange/${xcId}/edit`, fd);
             setEditing(false);
             await fetchXc();
         } catch (err) {
-            console.error('Failed to edit exchange:', err);
+            setEditError(err.response?.data?.message || "Your changes couldn't be saved. Try again.");
         } finally {
             setSubmitting(false);
         }
@@ -329,6 +332,7 @@ function ExchangePage() {
                                 <textarea rows={3} value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
                                 <label>Banner image</label>
                                 <input type="file" accept="image/*" onChange={(e) => setEditImage(e.target.files?.[0] || null)} />
+                                {editError && <p className="xc-receipt-error" role="alert">{editError}</p>}
                                 <div className="xc-edit-actions">
                                     <button type="submit" className="btn btn-primary" disabled={submitting}>
                                         {submitting ? 'Saving…' : 'Save changes'}
@@ -339,7 +343,7 @@ function ExchangePage() {
                         ) : (
                             <>
                                 {xc.has_image && (
-                                    <img src={`/api/exchange/${xcId}/image`} alt="" className="xc-exchange-image" />
+                                    <Picture isAi={!!xc.image_is_ai} src={`/api/exchange/${xcId}/image`} alt="" className="xc-exchange-image" />
                                 )}
                                 {/* Only what the people wrote - no stand-in text. */}
                                 {xc.exchange_long_description && (
@@ -482,6 +486,7 @@ function ExchangePage() {
                                 </>)}
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Photos (up to 3)</label>
                                 <PhotoInput photos={gratitudePhotos} onChange={setGratitudePhotos} />
+                                {!xc.is_demo && <small className="xc-section-hint">A receipt is evidence: real photos only, no AI pictures.</small>}
                                 <button
                                     className="xc-comment-submit xc-submit-receipt"
                                     disabled={submitting || !gratitudeText.trim()}

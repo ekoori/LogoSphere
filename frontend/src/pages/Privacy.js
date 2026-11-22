@@ -5,7 +5,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
-export const PRIVACY_UPDATED = '21 November 2026';
+export const PRIVACY_UPDATED = '22 November 2026';
 
 const sections = [
     {
@@ -28,6 +28,20 @@ const sections = [
                             The openings you post and accept; the exchanges you take part in, with their receipts, photos,
                             notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and
                             governance proposals, votes and the members you lend your vote to.
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Your choices on the Meaning Graph and in Settings</dt>
+                        <dd>
+                            Which pairs of value cards you judged close or not (others see only totals, from two people up),
+                            and whether you use Simple or Advanced.
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>AI help</dt>
+                        <dd>
+                            That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it
+                            draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.
                         </dd>
                     </div>
                     <div>
@@ -94,6 +108,28 @@ const sections = [
         ),
     },
     {
+        id: 'ai-help',
+        title: 'AI help, when you ask for it',
+        body: (
+            <>
+                <p>
+                    AI can help you word a value card, or draw a picture for an offer, need or group. It does nothing
+                    until you press its button, and it saves nothing by itself.
+                </p>
+                <ul>
+                    <li><strong>Wording a card</strong> sends what you typed for that card to Anthropic&rsquo;s Claude.</li>
+                    <li><strong>Drawing a picture</strong> sends the title, the description and your hint to OpenAI.</li>
+                    <li>Neither gets your name, email address, location or anything else about you, unless you type it there yourself.</li>
+                    <li>
+                        <strong>AI pictures are labelled</strong>, and in real spheres they can&rsquo;t be receipt photos or
+                        exchange pictures. We can&rsquo;t recognise every AI picture made elsewhere. In demo spheres,
+                        evidence may be AI-made.
+                    </li>
+                </ul>
+            </>
+        ),
+    },
+    {
         id: 'who-helps',
         title: 'Who helps us run it',
         body: (
@@ -102,7 +138,7 @@ const sections = [
                 <dl className="dp-defs">
                     <div><dt>Linode (Akamai Cloud)</dt><dd>Runs the server and stores pictures, in a private storage bucket in London.</dd></div>
                     <div><dt>Google Fonts</dt><dd>Serves the website's two typefaces, so your browser contacts Google to load them.</dd></div>
-                    <div><dt>Anthropic and OpenAI</dt><dd>Write the AI personas in the demo spheres (see above).</dd></div>
+                    <div><dt>Anthropic and OpenAI</dt><dd>Write the AI personas in the demo spheres, and give AI help when you ask for it (see above).</dd></div>
                     <div><dt>Google Firebase</dt><dd>Delivers push notifications to Android phones, once they're switched on, with only a notification's text and link.</dd></div>
                     <div><dt>PayPal</dt><dd>Handles donations, if you make one. We get only what PayPal shares about a payment.</dd></div>
                 </dl>
@@ -165,6 +201,7 @@ export default function Privacy() {
                 'No ads, no analytics, no tracking — and we never sell your data.',
                 'Your group sees what happens in your group; your email stays private.',
                 'AI personas live only in the labelled demo spheres.',
+                'AI help runs only when you press its button, and gets only what you typed there.',
                 'Download everything we hold about you, or delete your account, yourself.',
             ]}
             sections={sections}

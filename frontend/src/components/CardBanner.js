@@ -6,12 +6,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import '../styles/CardBanner.css';
+import { AiTag } from './AiTag';
 
-const CardBanner = ({ imageUrl, alt }) => {
+const CardBanner = ({ imageUrl, alt, isAi = false }) => {
   if (!imageUrl) return null;
   return (
     <div className="card-banner" aria-hidden={!alt}>
       <img src={imageUrl} alt={alt || ''} loading="lazy" />
+      {isAi && <AiTag className="ai-tag--on" />}
     </div>
   );
 };
@@ -19,6 +21,7 @@ const CardBanner = ({ imageUrl, alt }) => {
 CardBanner.propTypes = {
   imageUrl: PropTypes.string,
   alt: PropTypes.string,
+  isAi: PropTypes.bool,
 };
 
 export default CardBanner;

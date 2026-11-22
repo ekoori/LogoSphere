@@ -11,6 +11,7 @@ import api from '../api';
 import ValueCardState from './ValueCardState';
 import { useSimple } from '../utils/useSimple';
 import { MoreInAdvanced } from './UiMode';
+import AiCardHelp from './AiCardHelp';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -154,6 +155,7 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }
         <form className="vc-new-form" onSubmit={handleSubmit} style={{ marginTop: '1.4rem' }}>
             <h4 className="vc-new-heading">{editingCard ? 'Edit Value Card' : 'New Value Card'}</h4>
             {err && <p className="vc-error">{err}</p>}
+            <AiCardHelp form={form} onChange={setForm} brief={simple} group />
             <div className="vc-form-row"><label>Title</label><input type="text" value={form.title} onChange={set('title')} placeholder="e.g. Honest dialogue" /></div>
             <div className="vc-form-row"><label>We care about *</label><textarea rows={2} value={form.care_about} onChange={set('care_about')} placeholder={`What specifically does this ${entityNoun} care about?`} required /></div>
             <div className="vc-form-row"><label>Because</label><textarea rows={2} value={form.because} onChange={set('because')} placeholder="The reason underneath it" /></div>

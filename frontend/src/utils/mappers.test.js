@@ -64,6 +64,13 @@ describe('mapExchange', () => {
         expect(mapExchange(row({ has_image: true, is_demo: true })).imageUrl).toBe('/api/exchange/x1/image');
     });
 
+    it('says which pictures are AI-made', () => {
+        expect(mapExchange(row({ has_image: true })).imageIsAi).toBe(false);
+        expect(mapExchange(row({ has_image: true, image_is_ai: true })).imageIsAi).toBe(true);
+        expect(mapExchange(row({ is_demo: true })).imageIsAi).toBe(true); // a "Fence" stand-in
+        expect(mapExchange(row()).imageIsAi).toBe(false);
+    });
+
     it('treats settled statuses as completed', () => {
         expect(mapExchange(row({ exchange_status: 'Receipted' })).type).toBe('completed');
         expect(mapExchange(row({ exchange_status: 'In Progress' })).type).toBe('offer');

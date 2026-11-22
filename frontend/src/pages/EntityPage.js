@@ -169,7 +169,7 @@ export default function EntityPage({ kind }) {
 
     return (
         <div className={`ep-page ep-page--${kind}`}>
-            <EntityBanner kind={kind} imageUrl={entity.has_image ? `/api/${kind}s/${eid}/image` : undefined}>
+            <EntityBanner kind={kind} imageUrl={entity.has_image ? `/api/${kind}s/${eid}/image` : undefined} isAi={!!entity.image_is_ai}>
                 <div className="ep-meta-row">
                     <span className="ep-eyebrow">{NOUN[kind]}</span>
                     {entity.is_demo && <DemoTag />}

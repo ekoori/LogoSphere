@@ -4,16 +4,20 @@
 // finished even before a photo is set. When `onUpload` is provided (only on
 // the respective management pages, or the opening's own page for its
 // provider/manager), an overlaid "Set image…" button lets you attach one.
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import '../styles/EntityBanner.css';
+import { AiTag } from './AiTag';
+import AiPictureMaker from './AiPictureMaker';
 
 const GLYPH = { sphere: '✦', alliance: '◈', project: '◻', opening: '◍' };
 
-function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, children }) {
+function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, isAi = false, aiSubject = null, children }) {
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [imgFailed, setImgFailed] = useState(false);
+    // A new picture gets its chance after one failed to load.
+    useEffect(() => setImgFailed(false), [imageUrl]);
     const fileInputRef = useRef(null);
 
     // Prefer an image URL (served lazily from the entity's /image endpoint) over
@@ -30,13 +34,14 @@ function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, childr
         try {
             await onUpload(file);
         } catch (err) {
-            setError('Could not update the image.');
+            setError(err.response?.data?.message || 'Could not update the image.');
         } finally {
             setUploading(false);
         }
     };
 
     return (
+        <>
         <header className={`ep-banner ep-banner--${kind}`}>
             {hasImage ? (
                 <img src={src} alt="" className="ep-banner-img" onError={() => setImgFailed(true)} />
@@ -46,6 +51,7 @@ function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, childr
                 </div>
             )}
             <div className="ep-banner-scrim" />
+            {hasImage && isAi && <AiTag className="ai-tag--banner" />}
             <div className="ep-banner-content">{children}</div>
 
             {onUpload && (
@@ -70,6 +76,12 @@ function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, childr
                 </div>
             )}
         </header>
+        {onUpload && aiSubject && (
+            <div className="ep-ai-panel">
+                <AiPictureMaker purpose={kind} title={aiSubject.title} description={aiSubject.description} onUse={onUpload} />
+            </div>
+        )}
+        </>
     );
 }
 
@@ -80,6 +92,9 @@ EntityBanner.propTypes = {
     onUpload: PropTypes.func,
     // Uploading only through the platform-admin override: the button says so.
     asAdmin: PropTypes.bool,
+    isAi: PropTypes.bool,
+    // What an AI picture would be of; offered only with onUpload.
+    aiSubject: PropTypes.shape({ title: PropTypes.string, description: PropTypes.string }),
     children: PropTypes.node,
 };
 

@@ -123,7 +123,8 @@ export default function EntityManagement({ kind }) {
     return (
         <>
         <div className="ep-page-banner">
-            <EntityBanner kind={kind} imageUrl={entity.has_image ? `/api/${path}/${eid}/image?v=${imgVersion}` : undefined} onUpload={handleImageUpload}>
+            <EntityBanner kind={kind} imageUrl={entity.has_image ? `/api/${path}/${eid}/image?v=${imgVersion}` : undefined} onUpload={handleImageUpload}
+                          isAi={!!entity.image_is_ai} aiSubject={{ title: entity.name, description: entity.description || '' }}>
                 <span className="ep-eyebrow">{NOUN[kind]} Management</span>
                 <h1 className="ep-title">{entity.name}</h1>
                 {entity.description && <p className="ep-description">{entity.description}</p>}

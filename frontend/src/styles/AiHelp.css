@@ -1,0 +1,72 @@
+/* AI help and the label on AI pictures. Prefix ai-: all CSS here is global. */
+.ai-pic { position: relative; display: inline-block; flex: none; max-width: 100%; line-height: 0; }
+.ai-tag {
+    display: inline-block;
+    padding: 0.22em 0.6em;
+    background: rgba(24, 29, 20, 0.78);
+    color: #f7f4e8;
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.ai-tag--on { position: absolute; left: 6px; bottom: 6px; z-index: 2; pointer-events: none; }
+.ai-tag--banner { position: absolute; left: 12px; top: 12px; z-index: 3; }
+.card-banner { position: relative; }
+
+.ai-closed { margin: 0.2em 0 0.7em; }
+.ai-open {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0.4em 0.9em;
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1px dashed var(--sage);
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.ai-open:hover { background: var(--surface-2); }
+.ai-panel {
+    margin: 0.5em 0 0.9em;
+    padding: 0.8em 0.9em;
+    background: var(--surface-2);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    text-align: left;
+}
+.ai-panel label.ai-field { display: block; margin: 0 0 0.4em; color: var(--ink); font-size: 0.9rem; }
+.ai-field input, .ai-field textarea { display: block; width: 100%; box-sizing: border-box; margin-top: 0.3em; }
+.ai-note { margin: 0.35em 0; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; }
+.ai-problem { margin: 0.35em 0; color: var(--danger); font-size: 0.85rem; }
+.ai-question { margin: 0.5em 0; color: var(--ink); font-size: 0.9rem; font-style: italic; line-height: 1.45; }
+.ai-preview { margin: 0.6em 0; }
+.ai-preview img { display: block; max-width: 100%; max-height: 260px; border-radius: var(--r-sm); }
+.ai-suggestion { margin: 0.6em 0; }
+.ai-suggestion dt { color: var(--ink-soft); font-size: 0.76rem; font-weight: 700; }
+.ai-suggestion dd { margin: 0 0 0.45em; color: var(--ink); font-size: 0.92rem; line-height: 1.45; }
+.ai-actions { display: flex; flex-wrap: wrap; gap: 0.45em; margin-top: 0.6em; }
+.ai-btn {
+    min-height: 40px;
+    padding: 0.4em 1em;
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1px solid var(--sage);
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+.ai-btn--main { background: var(--moss); color: var(--on-fill); border-color: transparent; }
+.ai-btn:disabled { opacity: 0.55; cursor: default; }
+.ep-ai-panel { max-width: 720px; box-sizing: border-box; margin: 0.6rem auto 0; padding: 0 1rem; }
+
+.picture-field { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin-top: 0.3em; }
+.picture-field img { display: block; max-width: 220px; max-height: 140px; border-radius: var(--r-sm); }
