@@ -13,8 +13,9 @@ from app.utils.demo import agent_ids
 
 class Sphere:
     def __init__(self, sphere_id, name, description, meaning_graph, location, image, admin1, participants, alliances, projects, values, member_roles=None, is_sandbox=False, is_public=False, join_policy=None, has_image=None,
-                 decision_policy=None, is_demo=False, image_object=None):
+                 decision_policy=None, is_demo=False, image_object=None, place=None):
         self.image_object = image_object
+        self.place = place          # JSON (app/utils/places.py); never in to_dict
         self.sphere_id = sphere_id
         self.name = name
         self.description = description
@@ -199,7 +200,7 @@ class Sphere:
     # Every column except the banner blob - lists and detail never need it.
     _COLS = ("sphere_id, name, description, meaning_graph, location, admin1, participants, "
              "alliances, projects, values, member_roles, is_sandbox, is_public, join_policy, has_image, decision_policy, "
-             "is_demo, image_object")
+             "is_demo, image_object, place")
 
     @classmethod
     def _from_row(cls, row):
@@ -215,7 +216,8 @@ class Sphere:
             has_image=getattr(row, 'has_image', None),
             decision_policy=getattr(row, 'decision_policy', None),
             is_demo=getattr(row, 'is_demo', False),
-            image_object=getattr(row, 'image_object', None))
+            image_object=getattr(row, 'image_object', None),
+            place=getattr(row, 'place', None))
 
     @classmethod
     def get_all(cls):

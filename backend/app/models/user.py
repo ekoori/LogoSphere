@@ -267,6 +267,9 @@ class User(UserMixin):
             update_fields.append("surname = %s")
             update_values.append(surname.strip() or None)
         if location is not None:
+            from app.utils import places    # imported here: places imports models
+            if places.words_changed(user_id, location):
+                update_fields.append("place = null")
             update_fields.append("location = %s")
             update_values.append(location.strip() or None)
         if profile_picture:

@@ -21,7 +21,7 @@ from app.models.notification import Notification
 from app.models.openings import Service
 from app.models.value_card import ValueCard
 from app.routes.entities import KINDS, _entity_id, _members, _roles
-from app.utils import password_reset, preferences
+from app.utils import password_reset, places, preferences
 from app.utils.accounts import MIN_PASSWORD_LEN, end_sessions, password_matches, remove_account, set_password
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def set_preferences(user_id=None):
 def _profile(uid):
     # writetime() tells whether a picture is set without loading it (as app/models/user.py does).
     row = session.execute(
-        'SELECT user_id, name, surname, email, location, joined_datetime, is_platform_admin, ui_mode, '
+        'SELECT user_id, name, surname, email, location, joined_datetime, is_platform_admin, ui_mode, place, '
         'picture_object, writetime(profile_picture) AS picture_wt FROM users WHERE user_id = %s', [uid]).one()
     if not row:
         return None
@@ -80,6 +80,7 @@ def _profile(uid):
         'location': row.location, 'joined': row.joined_datetime,
         'is_platform_admin': bool(getattr(row, 'is_platform_admin', False)),
         'ui_mode': preferences.mode_of(getattr(row, 'ui_mode', None)),
+        'place': places.load(row.place),
         'has_profile_picture': row.picture_wt is not None or bool(getattr(row, 'picture_object', None)),
     }
 

@@ -10,7 +10,7 @@ from app.utils.demo import is_agent
 from datetime import datetime
 
 from app.db import session as cassandra_session
-from app.utils import ai_pictures, image_store
+from app.utils import ai_pictures, image_store, places
 
 
 class Service:
@@ -20,7 +20,8 @@ class Service:
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
                  acting_user_id=None, acting_user_name=None,
                  version=1, is_current=True, replaces_service_id=None,
-                 image_ref_service_id=None, has_image=None, image_object=None):
+                 image_ref_service_id=None, has_image=None, image_object=None, place=None):
+        self.place = place          # JSON (app/utils/places.py); to_dict tells only its words
         self.service_id = service_id
         self.type = type
         self.title = title
@@ -95,6 +96,7 @@ class Service:
             'accepted_at': _iso(self.accepted_at),
             'in_progress_at': _iso(self.in_progress_at),
             'completed_at': _iso(self.completed_at),
+            'location': places.label_of(self.place),
             'image_is_ai': ai_pictures.is_ai_key(self.picture_key()),
             'has_image': bool(self.image or self.image_ref_service_id) if self._has_image is None else bool(self._has_image or self.image_ref_service_id),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
@@ -176,6 +178,7 @@ class Service:
             image_ref_service_id=getattr(r, 'image_ref_service_id', None),
             has_image=getattr(r, 'has_image', None),
             image_object=getattr(r, 'image_object', None),
+            place=getattr(r, 'place', None),
         )
 
     # Every column except the banner blob - the marketplace list never needs it.
@@ -183,7 +186,7 @@ class Service:
                   "sphere_name, status, values, likes, project_name, image_key, cadence, accepted_by, "
                   "accepted_by_name, created_at, accepted_at, in_progress_at, completed_at, "
                   "acting_user_id, acting_user_name, version, is_current, replaces_service_id, "
-                  "image_ref_service_id, has_image, image_object")
+                  "image_ref_service_id, has_image, image_object, place")
 
     @classmethod
     def get_all(cls):
@@ -310,12 +313,12 @@ class Service:
             """INSERT INTO services (service_id, type, title, description, provider_id,
                provider_name, sphere_id, sphere_name, status, created_at, values, likes,
                project_name, image_key, cadence, acting_user_id, acting_user_name,
-               version, is_current, replaces_service_id, image_ref_service_id)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+               version, is_current, replaces_service_id, image_ref_service_id, place)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             [new_id, old.type, title, description, old.provider_id, old.provider_name,
              old.sphere_id, old.sphere_name, 'Posted', created_at, values or [], 0,
              old.project_name, old.image_key, old.cadence, old.acting_user_id,
-             old.acting_user_name, (old.version or 1) + 1, True, old.service_id, image_ref])
+             old.acting_user_name, (old.version or 1) + 1, True, old.service_id, image_ref, old.place])
         # Freeze the previous version so it no longer appears as the live opening.
         cassandra_session.execute(
             "UPDATE services SET is_current = false WHERE service_id = %s", [old.service_id])

@@ -30,6 +30,7 @@ from app.models.value_card import ValueCard
 from app.routes.entities import KINDS, _members, _roles
 from app.utils.accounts import remove_account
 from app.utils.permissions import is_platform_admin, forget_admin_flag
+from app.utils import places
 from app.utils.password_reset import issue_reset_token
 from app.utils.search_vectors import invalidate_index
 
@@ -146,6 +147,8 @@ def patch_user(target_id, user_id=None):
             value = (data.get(field) or '').strip()
             if field == 'name' and not value:
                 return jsonify({'message': 'Name cannot be empty'}), 400
+            if field == 'location' and places.words_changed(tid, value):
+                sets.append('place = null')     # the old point doesn't say the new words
             sets.append(f'{field} = %s'); params.append(value or None)
     if not sets:
         return jsonify({'message': 'Nothing to update'}), 400

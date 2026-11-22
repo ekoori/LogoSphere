@@ -10,7 +10,7 @@ from app.utils.demo import agent_ids, is_demo_sphere
 from datetime import datetime
 
 from app.db import session as cassandra_session
-from app.utils import ai_pictures, image_store
+from app.utils import ai_pictures, image_store, places
 from app.utils.names import resolve_user_names, dedupe
 
 
@@ -18,7 +18,8 @@ class Project:
     def __init__(self, project_id, name, description, owner, owner_alliance, status,
                  sphere_id, sphere_name, participants, participant_names, values,
                  participant_roles=None, image=None, join_policy=None, has_image=None,
-                 decision_policy=None, phase=None, image_object=None):
+                 decision_policy=None, phase=None, image_object=None, place=None):
+        self.place = place          # JSON (app/utils/places.py)
         self.image_object = image_object
         self.project_id = project_id
         self.name = name
@@ -78,6 +79,7 @@ class Project:
             'decision_policy': self.decision_policy,
             'phase': self.phase,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
+            'location': places.label_of(self.place),
             'image_is_ai': ai_pictures.is_ai_key(self.image_object),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
@@ -122,7 +124,7 @@ class Project:
                    participant_roles=participant_roles, image=image, has_image=bool(image))
 
     _COLS = ("project_id, name, description, owner, owner_alliance, status, sphere_id, sphere_name, "
-             "participants, participant_names, values, participant_roles, join_policy, has_image, decision_policy, phase, image_object")
+             "participants, participant_names, values, participant_roles, join_policy, has_image, decision_policy, phase, image_object, place")
 
     @classmethod
     def get_all(cls):
@@ -161,6 +163,7 @@ class Project:
             decision_policy=getattr(r, 'decision_policy', None),
             phase=getattr(r, 'phase', None),
             image_object=getattr(r, 'image_object', None),
+            place=getattr(r, 'place', None),
         )
 
     @classmethod

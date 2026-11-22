@@ -3042,6 +3042,138 @@ paths:
         '503': { description: AI help is off or not answering. }
       tags: [AI help]
 
+  /api/places/search:
+    post:
+      summary: Places by name
+      description: >-
+        Offline search over GeoNames data on this server. In the body, so what
+        people look for stays out of URLs and logs. `available` is false when
+        the data isn't installed: pins still work.
+      operationId: searchPlaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q: { type: string }
+      responses:
+        '200':
+          description: Best first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available: { type: boolean }
+                  attribution: { type: object }
+                  results: { type: array, items: { $ref: '#/components/schemas/FoundPlace' } }
+      tags: [Places]
+
+  /api/places/nearest:
+    post:
+      summary: Names to offer for a pin
+      operationId: nearestPlaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lon]
+              properties:
+                lat: { type: number }
+                lon: { type: number }
+      responses:
+        '200':
+          description: Towns about it, nearest first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available: { type: boolean }
+                  results: { type: array, items: { $ref: '#/components/schemas/FoundPlace' } }
+        '400': { description: Not a point on Earth. }
+      tags: [Places]
+
+  /api/places/{kind}/{owner_id}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [users, spheres, alliances, projects, openings] } }
+      - { name: owner_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: A place, whole
+      description: >-
+        Only for whoever may change it; a person's is theirs alone, platform
+        admins included. Everyone else gets the words (`location`) and a banded
+        `distance`, plus `point` on a group's or opening's detail when its
+        people chose `exact`.
+      operationId: getPlace
+      responses:
+        '200':
+          description: The place.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  place: { $ref: '#/components/schemas/Place' }
+                  findable: { type: boolean, description: People only }
+                  search_available: { type: boolean }
+        '403': { description: Not yours to see whole. }
+        '404': { description: No such thing. }
+      tags: [Places]
+    post:
+      summary: Set or clear a place
+      description: >-
+        `place` is one from search (`id`), a pin (`lat`, `lon`, `precision`,
+        `label`), only words (`label`), or null. A pin is rounded to its
+        precision before it is stored. `findable` lets members nearby find a
+        person; it is off unless sent true.
+      operationId: setPlace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [place]
+              properties:
+                place: { $ref: '#/components/schemas/Place' }
+                findable: { type: boolean }
+      responses:
+        '200': { description: As stored. }
+        '400': { description: Not a place. }
+        '403': { description: Not yours to change. }
+        '404': { description: No such thing. }
+        '409': { description: A past version of an opening. }
+      tags: [Places]
+
+  /api/nearby:
+    get:
+      summary: Who and what is near you
+      description: >-
+        Members who chose to be findable, and spheres, by banded distance from
+        your own place. Distances are worked out between 1 km squares and never
+        told more finely than a band.
+      operationId: nearby
+      parameters:
+        - { name: km, in: query, schema: { type: integer, enum: [5, 10, 25, 50, 100, 250], default: 25 } }
+      responses:
+        '200':
+          description: Nearest band first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_place: { type: boolean }
+                  findable: { type: boolean }
+                  km: { type: integer }
+                  people: { type: array, items: { type: object } }
+                  spheres: { type: array, items: { type: object } }
+        '400': { description: Not one of the distances offered. }
+      tags: [Places]
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3140,6 +3272,29 @@ components:
       properties:
         'on': { type: boolean }
         left: { type: integer }
+
+    Place:
+      type: object
+      nullable: true
+      properties:
+        id: { type: integer, description: From a search; sending it is enough. }
+        label: { type: string, maxLength: 120, description: The words others see. }
+        lat: { type: number }
+        lon: { type: number }
+        precision:
+          type: string
+          enum: [exact, 1km, 5km, 10km, 100km, postcode, town, region, country]
+          description: A pin takes the first five; the others come from search.
+
+    FoundPlace:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        label: { type: string }
+        precision: { type: string, enum: [postcode, town, region, country] }
+        lat: { type: number }
+        lon: { type: number }
 
     SessionStatus:
       type: object

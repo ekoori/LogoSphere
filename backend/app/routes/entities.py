@@ -27,6 +27,7 @@ from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.utils.access import Sight, without_people
+from app.utils import places
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,8 @@ def _detail_dict(entity, k, viewer):
             d = without_people({**d, 'members': [], 'alliance_list': [], 'project_list': []})
     d['value_cards'] = [c.to_dict() for c in ValueCard.get_for_user(_entity_id(entity, k))]
     d['can_manage'] = can_manage_entity(_entity_id(entity, k), viewer)
+    d['distance'] = places.how_far(places.of_person(viewer), entity.place)
+    d['point'] = places.exact_spot(entity.place)
     if d['can_manage']:
         # Join requests awaiting approval (only meaningful to managers).
         roles = _roles(entity, k)

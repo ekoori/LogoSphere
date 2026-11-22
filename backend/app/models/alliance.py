@@ -11,7 +11,7 @@ from datetime import datetime
 import base64
 
 from app.db import session as cassandra_session
-from app.utils import ai_pictures, image_store
+from app.utils import ai_pictures, image_store, places
 from app.utils.names import resolve_user_names, dedupe
 
 
@@ -19,7 +19,8 @@ class Alliance:
     def __init__(self, alliance_id, name, description, admin1, sphere_id, sphere_name,
                  members, member_names, projects, values, meaning_graph, image, member_roles=None,
                  join_policy=None, has_image=None,
-                 decision_policy=None, pm_policy=None, confirm_policy=None, image_object=None):
+                 decision_policy=None, pm_policy=None, confirm_policy=None, image_object=None, place=None):
+        self.place = place          # JSON (app/utils/places.py)
         self.image_object = image_object
         self.alliance_id = alliance_id
         self.name = name
@@ -80,6 +81,7 @@ class Alliance:
             'pm_policy': self.pm_policy,
             'confirm_policy': self.confirm_policy,
             'has_image': bool(self.image) if self._has_image is None else bool(self._has_image),
+            'location': places.label_of(self.place),
             'image_is_ai': ai_pictures.is_ai_key(self.image_object),
             'image': (base64.b64encode(self.image).decode('utf-8') if self.image else None) if include_image else None,
         }
@@ -119,7 +121,7 @@ class Alliance:
 
     _COLS = ("alliance_id, name, description, admin1, sphere_id, sphere_name, members, "
              "member_names, projects, values, meaning_graph, member_roles, join_policy, has_image, "
-             "decision_policy, pm_policy, confirm_policy, image_object")
+             "decision_policy, pm_policy, confirm_policy, image_object, place")
 
     @classmethod
     def get_all(cls):
@@ -156,6 +158,7 @@ class Alliance:
             pm_policy=getattr(r, 'pm_policy', None),
             confirm_policy=getattr(r, 'confirm_policy', None),
             image_object=getattr(r, 'image_object', None),
+            place=getattr(r, 'place', None),
         )
 
     @classmethod

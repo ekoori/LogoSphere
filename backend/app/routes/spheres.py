@@ -7,6 +7,7 @@ from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.utils.access import Sight, group_without_people, without_people
 from app.utils.demo import is_agent, is_demo_sphere
+from app.utils import places
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ def get_spheres(user_id=None):
         cards = ValueCard.get_for_users([s.sphere_id for s in spheres])
         out = []
         sight = Sight(user_id)
+        origin = places.of_person(user_id)
         for sp in spheres:
             listed = sight.people_of(sp)
             d = sp.to_dict(include_members=listed, include_image=False)
@@ -85,6 +87,7 @@ def get_spheres(user_id=None):
                 d = without_people({**d, 'members': []})
             d['participant_names'] = [m['name'] for m in d['members']]
             d['value_cards'] = [c.to_dict() for c in cards.get(sp.sphere_id, [])]
+            d['distance'] = places.how_far(origin, sp.place)
             out.append(d)
         return jsonify(out), 200
     except Exception as e:

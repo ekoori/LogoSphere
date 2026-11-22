@@ -11,7 +11,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
 from app.utils.access import Sight
-from app.utils import evidence
+from app.utils import evidence, places
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +111,8 @@ class _ListContext:
         self.likes = Service.all_likes()
         self.acceptances = Service.all_acceptances()
         self.names = resolve_user_names({u for ids in self.likes.values() for u in ids})
+        self.origin = places.of_person(viewer)
+        self.sphere_places = places.sphere_places() if self.origin else {}
         self._party = {}
 
     def is_party(self, s):
@@ -172,7 +174,15 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     else:
         d['my_acceptance'] = Service.acceptance_for_actor(sid, viewer)
     d['activity'] = Service.activity_summary(sid, s.provider_id, accs=accs) if s.cadence == 'perpetual' else None
+    origin = ctx.origin if ctx is not None else places.of_person(viewer)
+    if origin:
+        spheres = ctx.sphere_places if ctx is not None else places.sphere_places()
+        # An opening that doesn't say where is as near as its sphere.
+        d['distance'] = places.how_far(origin, s.place, spheres.get(s.sphere_id))
+    else:
+        d['distance'] = None
     if include_exchanges:
+        d['point'] = places.exact_spot(s.place)
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
         # Previous versions of this opening (each frozen because it had a
         # related exchange), with the exchange(s) that linked to them.
