@@ -48,6 +48,7 @@ from app.routes.openings import create_service, get_services, get_service, accep
 from app.routes import admin as admin_routes
 from app.routes import account as account_routes
 from app.routes import trails as trail_routes
+from app.routes import meaning_graph as meaning_graph_routes
 from app.routes.search import search, search_vicinity
 from app.routes.demo import get_demo, join_demo
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card, endorse_value_card, review_value_card, endorse_entity_value_card, review_entity_value_card
@@ -160,6 +161,8 @@ admin_routes.register(app)
 account_routes.register(app)
 # Meaning Trails as one timeline, with acknowledgements on each.
 trail_routes.register(app)
+# The Meaning Graph and the published method behind it.
+meaning_graph_routes.register(app)
 app.add_url_rule('/api/search', view_func=search, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/search/vicinity', view_func=search_vicinity, methods=['GET', 'OPTIONS'])
 # The demonstration's spheres (AI personas live there; new members are invited).

@@ -96,7 +96,7 @@ class ValueCard:
         )
 
     @classmethod
-    def create(cls, data, user_id, replaces_card_id=None):
+    def create(cls, data, user_id, replaces_card_id=None, cloned_from=None):
         card_id = uuid.uuid4()
         if isinstance(user_id, str):
             user_id = uuid.UUID(user_id)
@@ -122,6 +122,11 @@ class ValueCard:
              drift_looks_like, in_conflict, never_do, frankl_mode, color_key, now,
              True, replaces_card_id)
         )
+        if cloned_from:
+            # Where a copy came from (the Meaning Graph's lineage).
+            cassandra_session.execute(
+                "UPDATE value_cards SET cloned_from = %s WHERE user_id = %s AND card_id = %s",
+                [cloned_from, user_id, card_id])
         return cls(card_id, user_id, title, care_about, because, looks_like,
                    drift_looks_like, in_conflict, never_do, frankl_mode, color_key, now,
                    is_current=True, replaces_card_id=replaces_card_id)

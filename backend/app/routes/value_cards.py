@@ -14,7 +14,7 @@ from flask import request, jsonify, current_app as app
 from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity as _can_manage_entity, get_entity_info
 from app.middleware.session_middleware import validate_session, optional_session
-from app.utils.access import Sight
+from app.utils.access import Sight, as_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,16 @@ def delete_entity_value_card(entity_id, card_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
+def _copied_from(source, user_id):
+    """The stored card a copy was made from, if there is one its maker may
+    read: lineage is never taken on the client's word."""
+    owner, card_id = as_uuid(source.get('user_id')), as_uuid(source.get('card_id'))
+    if not owner or not card_id or Sight(user_id).value_cards(owner) != 'ok':
+        return None
+    stored = ValueCard.get_one(owner, card_id)
+    return stored.card_id if stored else None
+
+
 @validate_session
 def clone_value_card(user_id=None):
     """Copy someone else's (or an entity's) value card onto your own Meaning
@@ -184,7 +194,7 @@ def clone_value_card(user_id=None):
             'frankl_mode': source.get('frankl_mode', 'creative'),
             'color_key': source.get('color_key', 'honey'),
         }
-        card = ValueCard.create(clone_data, target_id)
+        card = ValueCard.create(clone_data, target_id, cloned_from=_copied_from(source, user_id))
         return jsonify(card.to_dict()), 201
     except Exception as e:
         logger.error(f'Error cloning value card: {e}')

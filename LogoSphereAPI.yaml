@@ -68,6 +68,7 @@ tags:
   - name: Openings
   - name: Value Cards
   - name: Notifications
+  - name: Meaning Graph
   - name: Governance
   - name: Search
   - name: Administration
@@ -2864,6 +2865,56 @@ paths:
         '404': { description: Not found }
         '409': { description: Two in that run are highlighted already }
       tags: [Meaning Trail]
+
+  /api/meaning_graph:
+    get:
+      summary: The Meaning Graph
+      description: >-
+        Every current value card the viewer may read (a node; its id is the
+        card's first version, so it survives rewording), and the closeness of
+        each card's strongest pairs. A pair scores the same for every viewer.
+        Each edge carries its parts: words (with the shared words), people
+        (from two), lineage, judges (from two) and the viewer's own judgement.
+      operationId: getMeaningGraph
+      responses:
+        '200': { description: "method_version, shown_from, nodes, edges" }
+      tags: [Meaning Graph]
+
+  /api/meaning_graph/method:
+    get:
+      summary: How closeness is worked out
+      description: The method in full (formula, weights, stop words, word families, rules, limits).
+      operationId: getMeaningGraphMethod
+      security: []
+      responses:
+        '200': { description: The method }
+      tags: [Meaning Graph]
+
+  /api/meaning_graph/judgement:
+    post:
+      summary: Say whether two cards are close
+      description: >-
+        One person, one judgement for each pair (`close: null` takes it back).
+        Never a pair with your own card, or one of a group you manage, in it;
+        AI personas never judge. It counts once two people have judged.
+      operationId: judgeCloseness
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [a, b, close]
+              properties:
+                a: { type: string, format: uuid }
+                b: { type: string, format: uuid }
+                close: { type: boolean, nullable: true }
+      responses:
+        '200': { description: The pair's edge as it now stands }
+        '400': { description: The same card twice, or close isn't true, false or null }
+        '403': { description: Not the caller's to judge }
+        '404': { description: Not cards the caller may see }
+      tags: [Meaning Graph]
 
 components:
   securitySchemes:

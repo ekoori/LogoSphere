@@ -62,6 +62,8 @@ def remove_account(user_id):
     for r in session.execute('SELECT follower_id, followee_id FROM follows'):
         if r.followee_id == tid:
             session.execute('DELETE FROM follows WHERE follower_id = %s AND followee_id = %s', [r.follower_id, tid])
+    from app.utils.meaning_graph import forget_judge
+    forget_judge(tid)
     end_sessions(tid)
     session.execute('DELETE FROM value_cards WHERE user_id = %s', [tid])
     session.execute('DELETE FROM notifications WHERE user_id = %s', [tid])

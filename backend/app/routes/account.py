@@ -101,6 +101,7 @@ def export_data(user_id=None):
         {'on_trail': str(x.trail_id), 'text': x.body, 'cards': [c.get('title') for c in x.cards],
          'at': x.created_at, 'highlighted': bool(x.highlighted_at)}
         for x in Acknowledgement.everything() if x.author_id == uid]
+    from app.utils.meaning_graph import judgements_by
     out = {
         'exported_at': datetime.utcnow().isoformat() + 'Z',
         'note': 'Everything LogoSphere holds about you. Your password is stored only as a hash and is not included.',
@@ -110,6 +111,7 @@ def export_data(user_id=None):
         'openings': openings,
         'exchanges': exchanges,
         'acknowledgements': acknowledgements,
+        'meaning_graph_judgements': judgements_by(uid),
         'following': following,
         'followers': followers,
         'governance': {'votes': votes, 'proposals': proposals},
