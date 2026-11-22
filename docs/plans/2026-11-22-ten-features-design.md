@@ -175,7 +175,8 @@ Messaging requires block and report, with an admin queue.
 
 - Profile, group and opening pictures are public by exact address (Privacy says so). Replaced pictures and those of
   deleted accounts stay in the bucket.
-- Nobody can change their account's email address, and the administrator's own is at example.com, so it gets no mail.
+- Nobody can change their account's email address themselves (the administrator's was changed by hand, at their
+  request, on 2026-11-23, to one that gets mail).
 - A LogoSphere sending domain with a sending-only key, before the production cut-off.
 - Loans have no due date or reminder. No calendar export. Invitation links open on the website only.
 - Someone who left a sphere still counts in attendance they gave.
