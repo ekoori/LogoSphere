@@ -62,6 +62,13 @@ const sections = [
                         </dd>
                     </div>
                     <div>
+                        <dt>Messages, blocks and reports</dt>
+                        <dd>
+                            Messages you send and get, whom you blocked, and the reports you make with a copy of what you
+                            reported.
+                        </dd>
+                    </div>
+                    <div>
                         <dt>Notifications</dt>
                         <dd>The messages LogoSphere writes for you when something happens that concerns you.</dd>
                     </div>
@@ -96,10 +103,17 @@ const sections = [
                     </li>
                     <li><strong>Your email address</strong> is never shown to other members.</li>
                     <li>
-                        <strong>Platform administrators</strong> — the few people who run LogoSphere — can see everything,
-                        including email addresses, so they can keep the platform working and safe. They use that access only
-                        for that. LogoSphere doesn&rsquo;t show them your point on the map; like all that is stored, it can be
-                        reached by whoever runs the server.
+                        <strong>A message</strong> is for the two people in it. Writing to everyone who responded to an
+                        opening sends each their own, so they don&rsquo;t learn who else responded. AI personas neither read
+                        nor send messages, and none go to an AI provider.
+                    </li>
+                    <li><strong>Blocks and reports</strong> aren&rsquo;t told to the person they&rsquo;re about.</li>
+                    <li>
+                        <strong>Platform administrators</strong> — the few people who run LogoSphere — see email
+                        addresses and what happens in every group, so they can keep the platform working and safe, and use
+                        that access only for that. They don&rsquo;t see your point on the map, and of private messages they
+                        see only what was reported. Like all that is stored, both can be reached by whoever runs the server:
+                        messages aren&rsquo;t end-to-end encrypted.
                     </li>
                 </ul>
                 <p>Exchanges belong to both people in them, so an exchange stays in the other person's trail as well as yours.</p>
@@ -208,7 +222,8 @@ const sections = [
                 <p>
                     For as long as you have an account. When you delete it, we remove your profile, credentials, sessions,
                     value cards, notifications, follows and memberships, and withdraw your open openings. Exchanges you took
-                    part in stay, under your name, because they're part of the other person's record too.
+                    part in stay, under your name, because they're part of the other person's record too. So do the messages
+                    you sent, for the person who got them, without your name; and reports, as the safety record.
                 </p>
                 <p>Backup copies of the database may hold your data for a while longer before they're replaced.</p>
             </>

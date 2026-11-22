@@ -15,9 +15,11 @@ import * as rules from '../utils/exchangeRules';
 import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchangeRules';
 import { formatServerDate } from '../utils/dates';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
+import { messagesHref } from '../utils/thread';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
+import '../styles/Messages.css';
 
 const fmtDate = (val) => formatServerDate(val);
 
@@ -42,6 +44,16 @@ const partHref = (kind, id) => {
     return ENTITY_PATH[kind] ? `/${ENTITY_PATH[kind]}?id=${id}` : `/user?id=${id}`;
 };
 const KIND_GLYPH = { sphere: '✦', alliance: '◈', project: '◻' };
+
+// "Message" for whoever is on a side, shown only to the other: the human there, if any.
+function MessageOtherSide({ xc, isInitiator, isOther, userId }) {
+    if (!isInitiator && !isOther) return null;
+    const other = isInitiator
+        ? { id: xc.recipient_acting_user_id || (xc.other_kind === 'user' ? xc.other_user_id : null), agent: xc.other_is_agent }
+        : { id: xc.initiator_acting_user_id || (xc.initiator_kind === 'user' ? xc.user_id : null), agent: xc.initiator_is_agent };
+    if (!other.id || other.agent || String(other.id) === String(userId)) return null;
+    return <Link className="msg-link" to={messagesHref(other.id, xc.source_service_id)}>Send a message</Link>;
+}
 
 // One participant row: differentiates a person from a group, shows "You" only
 // for the viewer when they're a person, and "· via <human>" when a person acted
@@ -655,6 +667,7 @@ function ExchangePage() {
                                 />
                             )}
                         </div>
+                        <MessageOtherSide xc={xc} isInitiator={isInitiator} isOther={isOther} userId={userId} />
                     </div>
 
                     {/* Details */}

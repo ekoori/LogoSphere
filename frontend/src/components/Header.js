@@ -148,6 +148,7 @@ const Header = () => {
                     <li><Link to="/meaning-graph" onClick={closeMenu}>Meaning Graph</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
                         drawer on mobile. */}
+                    {isLoggedIn && <li className="nav-drawer-only"><Link to="/messages" onClick={closeMenu}>Messages</Link></li>}
                     {isLoggedIn && <li className="nav-drawer-only"><Link to="/nearby" onClick={closeMenu}>Near you</Link></li>}
                     {isLoggedIn && <li className="nav-drawer-only nav-drawer-search"><SearchForm onSubmitted={closeMenu} /></li>}
                     <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
@@ -212,6 +213,7 @@ const Header = () => {
                         <div className="account-menu" role="menu">
                             <Link to="/profile" onClick={() => setAccountOpen(false)}>Profile</Link>
                             <Link to="/settings" onClick={() => setAccountOpen(false)}>Settings</Link>
+                            {isLoggedIn && <Link to="/messages" onClick={() => setAccountOpen(false)}>Messages</Link>}
                             {isLoggedIn && <Link to="/nearby" onClick={() => setAccountOpen(false)}>Near you</Link>}
                             {isLoggedIn && <ModeSwitch onDone={() => setAccountOpen(false)} />}
                             {isPlatformAdmin && <Link to="/admin" onClick={() => setAccountOpen(false)}>Platform admin</Link>}

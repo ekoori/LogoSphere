@@ -58,6 +58,8 @@ export function mapService(s) {
         location: s.location || null,
         distance: s.distance || null,
         point: s.point || null,
+        // Who to write to about it (the opening's own page): a group's is its poster.
+        contactId: s.contact_id || null,
         time: fmtDate(s.created_at) || 'recently',
         status: s.status || 'Posted',
         likesCount: s.likes || 0,

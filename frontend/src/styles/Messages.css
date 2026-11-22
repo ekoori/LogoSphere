@@ -1,0 +1,122 @@
+/* Messages, blocking and reporting. Prefixes msg- and safe-: all CSS here is global. */
+.msg-page {
+    display: grid;
+    grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
+    gap: 1rem;
+    width: 100%;
+    max-width: 1080px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 1.4rem 1rem 3rem;
+    color: var(--ink);
+}
+.msg-list, .msg-thread {
+    min-width: 0;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-lg);
+}
+.msg-list { align-self: start; padding: 1rem 0.6rem; }
+.msg-list h1 { margin: 0 0.5rem 0.6rem; font-size: 1.5rem; }
+.msg-list ul { margin: 0; padding: 0; list-style: none; }
+.msg-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 60px;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border-radius: var(--r-md);
+    color: var(--ink);
+}
+.msg-row:hover, .msg-row.is-selected { background: var(--surface-2); color: var(--ink); }
+.msg-row-words { flex: 1; min-width: 0; }
+.msg-row-words strong, .msg-row-words > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-row-words > span { color: var(--ink-soft); font-size: 0.85rem; }
+.msg-row.is-unread .msg-row-words > span { color: var(--ink); font-weight: 700; }
+.msg-when { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; color: var(--ink-soft); font-size: 0.75rem; white-space: nowrap; }
+.msg-new { padding: 0.1em 0.55em; background: var(--moss); color: var(--on-fill); border-radius: var(--r-pill); font-style: normal; font-weight: 700; }
+.msg-note { margin: 0.8rem; color: var(--ink-soft); line-height: 1.5; }
+
+.msg-thread { display: flex; flex-direction: column; padding: 0.8rem; }
+.msg-thread--none { align-items: center; justify-content: center; min-height: 320px; }
+.msg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border-soft); }
+.msg-head h2 { margin: 0; min-width: 0; font-size: 1.2rem; overflow-wrap: anywhere; }
+.msg-head h2 a { color: var(--ink); }
+.msg-head-actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.9rem; margin-left: auto; }
+.msg-head-actions:has(.safe-report) { flex-basis: 100%; }
+.msg-back { display: none; min-width: 40px; min-height: 40px; align-items: center; justify-content: center; font-size: 1.3rem; }
+.msg-about { margin: 0.6rem 0 0; color: var(--ink-soft); font-size: 0.88rem; }
+.msg-log {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    height: 52vh;
+    min-height: 260px;
+    padding: 0.8rem 0.6rem 0.8rem 0.2rem;
+    overflow-y: auto;
+}
+.msg-earlier { align-self: center; }
+.msg-item { display: flex; flex-direction: column; align-items: flex-start; max-width: 85%; }
+.msg-item.is-mine { align-self: flex-end; align-items: flex-end; }
+.msg-subject { margin-bottom: 0.2rem; font-size: 0.78rem; }
+.msg-bubble {
+    margin: 0;
+    padding: 0.55rem 0.85rem;
+    background: var(--surface-2);
+    color: var(--ink);
+    border-radius: var(--r-lg);
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.msg-item.is-mine .msg-bubble { background: var(--moss); color: var(--on-fill); }
+.msg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.6rem; color: var(--ink-soft); font-size: 0.74rem; }
+.msg-write { display: flex; align-items: flex-end; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--border-soft); }
+.msg-write textarea, .msg-respondents textarea, .safe-report textarea { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
+.msg-write button, .safe-btn {
+    flex: none;
+    min-height: 44px;
+    padding: 0.5em 1.2em;
+    background: var(--moss);
+    color: var(--on-fill);
+    border: 0;
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+.msg-write button:disabled, .safe-btn:disabled { opacity: 0.55; cursor: default; }
+.msg-cant { margin: 0; padding-top: 0.7rem; border-top: 1px solid var(--border-soft); }
+.msg-respondents { margin-top: 0.8em; }
+.msg-link { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; box-sizing: border-box; margin-top: 0.5em; padding: 0.4em 1em; border: 1px solid var(--sage); border-radius: var(--r-pill); color: var(--moss-deep); font-weight: 600; }
+
+.safe-link {
+    padding: 0.35em 0;
+    background: none;
+    border: 0;
+    color: var(--ink-soft);
+    font: inherit;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.safe-link.is-danger { color: var(--danger); font-weight: 700; }
+.safe-block { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.4rem; }
+.safe-report { flex-basis: 100%; width: 100%; min-width: min(240px, 100%); margin: 0.4rem 0; }
+.safe-about { margin: 0.25rem 0; color: var(--ink-soft); font-size: 0.78rem; }
+.safe-error { margin: 0.25rem 0; color: var(--danger); font-size: 0.82rem; }
+.safe-said { margin: 0.25rem 0; color: var(--moss-deep); font-size: 0.82rem; }
+.safe-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+.safe-blocked { margin: 0; padding: 0; list-style: none; }
+.safe-blocked li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; min-height: 44px; border-bottom: 1px solid var(--border-soft); }
+.safe-profile { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1rem; margin: 0.4rem 0; }
+
+@media (max-width: 800px) {
+    .msg-page { display: block; padding: 0.8rem 0.6rem 2rem; }
+    .msg-page.has-thread .msg-list { display: none; }
+    .msg-page:not(.has-thread) .msg-thread--none { display: none; }
+    .msg-back { display: inline-flex; }
+    .msg-log { height: 50vh; }
+}

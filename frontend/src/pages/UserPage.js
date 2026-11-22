@@ -21,6 +21,8 @@ import { useLogin } from '../App';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import '../styles/ValueCardChip.css';
 import { PersonaTag } from '../components/DemoTags';
+import { BlockButton, ReportButton } from '../components/Safety';
+import { messagesHref } from '../utils/thread';
 
 function UserPage() {
     const { userId: viewerId } = useLogin();
@@ -106,6 +108,15 @@ function UserPage() {
                         >
                             {following ? '✓ Following' : '+ Follow'}
                         </button>
+                    )}
+                    {viewerId && !isOwnPage && user.can_message && (
+                        <Link className="msg-link" to={messagesHref(id)}>Message</Link>
+                    )}
+                    {viewerId && !isOwnPage && (
+                        <div className="safe-profile">
+                            <BlockButton personId={id} blocked={!!user.blocked} onChanged={fetchAll} />
+                            <ReportButton report={{ kind: 'person', id }} noteRequired />
+                        </div>
                     )}
                     {user.location && (
                         <p className="user-aside-meta">📍 {user.location}</p>

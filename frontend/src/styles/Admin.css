@@ -42,6 +42,11 @@
 .adm-filter input:focus { outline: none; box-shadow: var(--ring); border-color: var(--moss); }
 .adm-check { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; color: var(--ink-soft); }
 
+.adm-reports { margin: 0; padding: 0; list-style: none; }
+.adm-reports li { padding: 0.7rem 0; border-bottom: 1px solid var(--border-soft); color: var(--ink); }
+.adm-reports p { margin: 0.25rem 0; overflow-wrap: anywhere; }
+.adm-reports blockquote { margin: 0.4rem 0; padding: 0.5rem 0.8rem; background: var(--surface-2); border-radius: var(--r-md, 12px); white-space: pre-wrap; overflow-wrap: anywhere; }
+.adm-reports input[type="text"] { flex: 1 1 200px; }
 .adm-table-wrap { overflow-x: auto; }
 .adm-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .adm-table th, .adm-table td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }

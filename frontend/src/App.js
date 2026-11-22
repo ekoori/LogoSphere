@@ -36,6 +36,7 @@ import { ConfirmEmailPage, JoinPage, UnsubscribePage } from './pages/EmailLinkPa
 import SearchPage from './pages/SearchPage';
 import MeaningGraphPage from './pages/MeaningGraphPage';
 import NearbyPage from './pages/NearbyPage';
+import MessagesPage from './pages/MessagesPage';
 import MapPickerPage from './pages/MapPickerPage';
 import { SIMPLE, modeOfAccount, rememberMode, rememberedMode } from './utils/modes';
 import Contribute from './pages/Contribute';
@@ -114,6 +115,7 @@ function AppContent() {
         <Route path="/openings" element={<ErrorBoundary><ProtectedRoute><OpeningsPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/messages" element={<ErrorBoundary><ProtectedRoute><MessagesPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/nearby" element={<ErrorBoundary><ProtectedRoute><NearbyPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />

@@ -19,6 +19,9 @@ import { DemoTag, PersonaTag } from '../components/DemoTags';
 import PlaceFields from '../components/PlaceFields';
 import { ExactSpot, WhereLine } from '../components/WhereLine';
 import { usePlace } from '../utils/usePlace';
+import MessageRespondents from '../components/MessageRespondents';
+import { ReportButton } from '../components/Safety';
+import { messagesHref } from '../utils/thread';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
@@ -372,6 +375,12 @@ function OpeningPage() {
                                             ) : (
                                                 <Link to={`/user?id=${p.accepter_id}`}>{p.accepter_name}</Link>
                                             )}
+                                            {isOwnOpening && !p.is_agent && (
+                                                <>
+                                                    {' · '}
+                                                    <Link to={messagesHref(p.acting_user_id || p.accepter_id, openingId)}>Message</Link>
+                                                </>
+                                            )}
                                         </span>
                                         <span className="service-pending-actions">
                                             <button className="service-confirm-btn" disabled={busy} onClick={() => handleConfirm(p.accepter_id)}>✓ Confirm</button>
@@ -431,6 +440,17 @@ function OpeningPage() {
                             >
                                 → View your exchange
                             </button>
+                        )}
+                        {userId && service.contactId && service.contactId !== userId && !service.providerIsAgent && (
+                            <Link className="msg-link" to={messagesHref(service.contactId, openingId)}>
+                                {service.type === 'need' ? 'Message who needs it' : 'Message who offers it'}
+                            </Link>
+                        )}
+                        {isOwnOpening && (service.pendingAcceptances.length + service.exchanges.length > 0) && (
+                            <MessageRespondents openingId={openingId} />
+                        )}
+                        {userId && !isOwnOpening && (
+                            <div><ReportButton report={{ kind: 'opening', id: openingId }} label="Report this opening" /></div>
                         )}
                         {isCancelled && (
                             <p style={{ fontSize: '0.85rem', color: 'var(--ink-faint)', marginTop: '0.8em' }}>

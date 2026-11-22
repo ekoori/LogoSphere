@@ -10,6 +10,7 @@ import { MODE_CHOICES } from '../utils/modes';
 import { usePlace } from '../utils/usePlace';
 import PlaceFields from '../components/PlaceFields';
 import EmailSettings from '../components/EmailSettings';
+import { BlockedPeople } from '../components/Safety';
 import '../styles/Settings.css';
 
 const MIN_PASSWORD = 8;
@@ -329,6 +330,7 @@ const SettingsPage = () => (
                 <a href="#email">Email</a>
                 <a href="#simple-or-advanced">Simple or Advanced</a>
                 <a href="#appearance">Appearance</a>
+                <a href="#blocked">Blocked</a>
                 <a href="#password">Password</a>
                 <a href="#your-data">Your data</a>
                 <a href="#delete-account">Delete account</a>
@@ -339,6 +341,7 @@ const SettingsPage = () => (
         <EmailSettings />
         <ModeSection />
         <AppearanceSection />
+        <BlockedPeople />
         <PasswordSection />
         <DataSection />
         <DeleteSection />

@@ -14,7 +14,7 @@ import '../styles/Admin.css';
 
 const TABS = [
     ['overview', 'Overview'], ['users', 'Users'], ['spheres', 'Spheres'],
-    ['alliances', 'Alliances'], ['projects', 'Projects'], ['openings', 'Openings'],
+    ['alliances', 'Alliances'], ['projects', 'Projects'], ['openings', 'Openings'], ['reports', 'Reports'],
 ];
 const KIND_OF = { spheres: 'sphere', alliances: 'alliance', projects: 'project' };
 const PAGE_OF = { sphere: '/sphere', alliance: '/alliance', project: '/project' };
@@ -451,6 +451,84 @@ function OpeningsTab({ notify }) {
     );
 }
 
+// ── Reports ──────────────────────────────────────────────────────────────────
+const REPORTED = { person: 'A person', message: 'A private message', acknowledgement: 'An acknowledgement', opening: 'An opening' };
+
+function ReportsTab({ notify }) {
+    const [status, setStatus] = useState('open');
+    const { data, loading, error, reload } = useAdminData(`/api/admin/reports?status=${status}`);
+    const [notes, setNotes] = useState({});
+    const [busyId, setBusyId] = useState(null);
+
+    const settle = async (report, outcome, remove = false) => {
+        setBusyId(report.id);
+        try {
+            await api.post(`/api/admin/reports/${report.id}`, { status: outcome, remove, note: notes[report.id] || '' });
+            notify({ ok: true, text: remove ? 'Removed, and the report closed.' : 'Report closed.' });
+            await reload();
+        } catch (e) {
+            notify({ ok: false, text: e.response?.data?.message || 'Action failed.' });
+        } finally {
+            setBusyId(null);
+        }
+    };
+
+    if (error) return <p className="adm-error">{error}</p>;
+    return (
+        <div>
+            <div className="adm-toolbar">
+                <label className="adm-check">
+                    Show
+                    <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <option value="open">Waiting</option>
+                        <option value="handled">Handled</option>
+                        <option value="dismissed">Dismissed</option>
+                        <option value="all">All</option>
+                    </select>
+                </label>
+                {data && <span className="adm-muted">{data.open} waiting</span>}
+            </div>
+            <p className="adm-muted adm-note">A report is all of a private message an administrator ever sees. Nobody reported is told.</p>
+            {loading && <p className="adm-status">Loading…</p>}
+            {!loading && data?.reports.length === 0 && <p className="adm-status">None.</p>}
+            <ul className="adm-reports">
+                {(data?.reports || []).map((r) => (
+                    <li key={r.id}>
+                        <p className="adm-report-what">
+                            <strong>{REPORTED[r.kind] || r.kind}</strong>
+                            {r.subject && <> by <Link to={`/user?id=${r.subject.id}`}>{r.subject.name}</Link></>}
+                            {r.kind === 'opening' && <> (<Link to={`/opening?id=${r.item_id}`}>open it</Link>)</>}
+                            <span className="adm-muted"> reported by {r.reporter?.name} on {fmtDate(r.made_at)}</span>
+                        </p>
+                        {r.excerpt && <blockquote>{r.excerpt}</blockquote>}
+                        {r.note && <p>{r.note}</p>}
+                        {r.status === 'open' ? (
+                            <div className="adm-toolbar">
+                                <input type="text" value={notes[r.id] || ''} maxLength={1000} aria-label="What you did"
+                                       placeholder="What you did (optional)"
+                                       onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} />
+                                <button type="button" className="adm-btn adm-btn--primary" disabled={busyId === r.id}
+                                        onClick={() => settle(r, 'handled')}>Handled</button>
+                                <button type="button" className="adm-btn" disabled={busyId === r.id}
+                                        onClick={() => settle(r, 'dismissed')}>Dismiss</button>
+                                {r.removable && (
+                                    <TwoStep className="adm-btn--danger" label="Remove it" confirmLabel="Really remove it"
+                                             disabled={busyId === r.id} onConfirm={() => settle(r, 'handled', true)} />
+                                )}
+                            </div>
+                        ) : (
+                            <p className="adm-muted">
+                                {r.status === 'handled' ? 'Handled' : 'Dismissed'}{r.handled_by ? ` by ${r.handled_by.name}` : ''}
+                                {r.outcome ? `: ${r.outcome}` : ''}
+                            </p>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 const AdminPage = () => {
     const { isPlatformAdmin, authChecked } = useLogin();
@@ -497,6 +575,7 @@ const AdminPage = () => {
                 {tab === 'users' && <UsersTab notify={notify} />}
                 {(tab === 'spheres' || tab === 'alliances' || tab === 'projects') && <EntitiesTab key={tab} table={tab} notify={notify} />}
                 {tab === 'openings' && <OpeningsTab notify={notify} />}
+                {tab === 'reports' && <ReportsTab notify={notify} />}
             </section>
         </div>
     );

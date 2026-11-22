@@ -11,6 +11,7 @@ import LikeTimestamp from './LikeTimestamp';
 import ValueCardChip from './ValueCardChip';
 import WordsForm from './WordsForm';
 import { PersonaTag } from './DemoTags';
+import { ReportButton } from './Safety';
 import { fmtDate } from '../utils/mappers';
 import '../styles/Acknowledgements.css';
 import '../styles/ValueCardChip.css';
@@ -91,6 +92,9 @@ function AcknowledgementItem({ trailId, item, onChanged }) {
                                 onBlur={() => setArmed(false)} disabled={busy}>
                             {armed ? 'Really remove it?' : 'Remove'}
                         </button>
+                    )}
+                    {!mine && item.author_id && (
+                        <ReportButton report={{ kind: 'acknowledgement', id: item.ack_id, trail_id: trailId }} />
                     )}
                 </div>
                 {problem && <p className="ack-problem" role="alert">{problem}</p>}
