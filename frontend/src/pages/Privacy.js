@@ -251,8 +251,9 @@ const sections = [
                     <div>
                         <dt>Mailgun</dt>
                         <dd>
-                            Delivers email, once it&rsquo;s switched on: joining, password links, and the notifications you
-                            chose. It gets your address and that email. We switch off its tracking of opens and clicks.
+                            Delivers email: joining, password links, and the notifications you chose. It gets your
+                            address and that email. We switch off its tracking of opens and clicks. For now our email
+                            comes from no-reply@hrana.app.
                         </dd>
                     </div>
                     <div><dt>Google Firebase</dt><dd>Delivers push notifications to Android phones, once they're switched on, with only a notification's text and link.</dd></div>
