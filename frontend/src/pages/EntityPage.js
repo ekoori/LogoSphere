@@ -115,7 +115,7 @@ export default function EntityPage({ kind }) {
     const myOpenings = anonymous
         ? (entity.openings || []).map(mapService)
         : (openings.data || []).filter((s) =>
-            (kind === 'sphere' && s.sphere_id === eid)
+            (kind === 'sphere' && (s.sphere_id === eid || (s.shared_with || []).some((x) => x.id === eid)))
             || s.provider_id === eid
             || (kind !== 'sphere' && s.project_name && projectNames.has(s.project_name))
             || (kind === 'project' && s.project_name === entity.name)

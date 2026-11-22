@@ -22,9 +22,12 @@ import { usePlace } from '../utils/usePlace';
 import MessageRespondents from '../components/MessageRespondents';
 import { ReportButton } from '../components/Safety';
 import { messagesHref } from '../utils/thread';
+import { ShareOpening } from '../components/Sharing';
+import { inSphere, loanLabel, loanQuestion } from '../utils/sharing';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
+import '../styles/Sharing.css';
 
 const TYPE_LABEL = { offer: 'Offer', need: 'Need' };
 const TYPE_PILL  = { offer: 'pill-clay', need: 'pill-honey' };
@@ -49,6 +52,7 @@ function OpeningPage() {
     const [editing, setEditing] = useState(false);
     const [editTitle, setEditTitle] = useState('');
     const [editDesc, setEditDesc] = useState('');
+    const [editBorrow, setEditBorrow] = useState(false);
     const [savingEdit, setSavingEdit] = useState(false);
     const [editNote, setEditNote] = useState(null);
     // Two-step cancel: first click asks, second confirms (no modal dialogs).
@@ -127,6 +131,7 @@ function OpeningPage() {
     const startEditing = () => {
         setEditTitle(service.title || '');
         setEditDesc(service.description || '');
+        setEditBorrow(service.borrow);
         setEditNote(null);
         setEditing(true);
     };
@@ -142,8 +147,8 @@ function OpeningPage() {
         // an exchange links to it): follow to whichever is current now.
         let currentId = openingId;
         try {
-            if (title !== service.title || editDesc !== service.description) {
-                const res = await api.patch(`/api/openings/${openingId}`, { title, description: editDesc });
+            if (title !== service.title || editDesc !== service.description || editBorrow !== service.borrow) {
+                const res = await api.patch(`/api/openings/${openingId}`, { title, description: editDesc, borrow: editBorrow });
                 if (res.data?.versioned && res.data.service?.service_id) currentId = res.data.service.service_id;
             }
             const placed = await place.save(currentId);
@@ -214,7 +219,7 @@ function OpeningPage() {
     // Alliances/projects the viewer manages that may accept this opening: only
     // those within the opening's sphere (or any, if the opening is standalone).
     const acceptAsOptions = managed.filter(
-        (m) => m.kind !== 'sphere' && (!service.sphereId || String(m.sphere_id) === String(service.sphereId))
+        (m) => m.kind !== 'sphere' && (!service.sphereId || inSphere(service, m.sphere_id))
     );
 
     const { steps, currentIndex: stepIdx } = buildOpeningProgress({
@@ -252,6 +257,7 @@ function OpeningPage() {
 
                 <div className="xc-page-header">
                     <span className={`pill ${pillClass} type-pill`}>{typeLabel}</span>
+                    {service.borrow && <span className="loan-badge">{loanLabel(service.type)}</span>}
                     {isPerpetual && (
                         <span className="cadence-badge cadence-badge--perpetual" title="Ongoing — can be accepted repeatedly">
                             ↻ Ongoing
@@ -331,6 +337,10 @@ function OpeningPage() {
                                     onChange={(e) => setEditDesc(e.target.value)}
                                 />
                                 <PlaceFields editor={place} label="Where" />
+                                <label className="loan-check">
+                                    <input type="checkbox" checked={editBorrow} onChange={(e) => setEditBorrow(e.target.checked)} />
+                                    {loanQuestion(service.type)}
+                                </label>
                                 <p className="xc-edit-hint">
                                     If an exchange has already started from this opening, saving keeps the
                                     current version and creates a new one, so those exchanges stay unchanged.
@@ -480,6 +490,15 @@ function OpeningPage() {
                             </div>
                         )}
                     </div>
+
+                    <ShareOpening
+                        key={openingId}
+                        opening={service}
+                        userId={userId}
+                        isOwn={isOwnOpening}
+                        canEdit={canManage && service.isCurrent && !isCancelled}
+                        onSaved={fetchService}
+                    />
 
                     <div className="xc-sidebar-card">
                         <p className="xc-sidebar-heading">{service.type === 'need' ? 'Requested by' : 'Provided by'}</p>

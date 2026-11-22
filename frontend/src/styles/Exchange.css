@@ -173,7 +173,10 @@
     display: block;
     width: 100%;
     padding: 0.68em 1em;
-    border: none;
+    /* Quiet unless a variant says otherwise: alone it was the browser's grey. */
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1px solid var(--sage);
     border-radius: var(--r-pill);
     font-family: var(--font-body);
     font-weight: 600;
@@ -188,6 +191,7 @@
 .xc-action-advance {
     background: var(--moss);
     color: var(--on-fill);
+    border-color: transparent;
 }
 .xc-action-advance:hover { background: var(--moss-deep); transform: translateY(-1px); }
 

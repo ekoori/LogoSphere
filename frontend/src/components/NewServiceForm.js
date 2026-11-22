@@ -8,6 +8,9 @@ import AiPictureMaker from './AiPictureMaker';
 import { Picture } from './AiTag';
 import PlacePicker from './PlacePicker';
 import { placeProblem, toPayload } from '../utils/places';
+import { SharePicker } from './Sharing';
+import { loanQuestion, shareChoices } from '../utils/sharing';
+import '../styles/Sharing.css';
 
 // `actingAs` (optional): { id, name, sphereId, sphereName, projectName } — when
 // set, the opening is posted on behalf of that sphere/alliance/project instead
@@ -34,6 +37,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     const [success, setSuccess] = useState(false);
     const [place, setPlace] = useState(null);
     const [posted, setPosted] = useState(0);            // a fresh picker for each opening
+    const [borrow, setBorrow] = useState(false);
+    const [alsoIn, setAlsoIn] = useState([]);
 
     useEffect(() => {
         if (!isVisible) return;
@@ -49,6 +54,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
 
     const handleSphereChange = (e) => {
         const selected = spheres.find((s) => s.sphere_id === e.target.value);
+        setAlsoIn([]);      // what it could be shared with follows from its own sphere
         setFormData((prev) => ({
             ...prev,
             sphere_id: selected ? selected.sphere_id : '',
@@ -72,6 +78,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                 sphere_name: formData.sphere_name || null,
                 project_name: formData.project_name || null,
                 cadence: formData.cadence,
+                borrow,
+                also_sphere_ids: !simple && formData.sphere_id && alsoIn.length ? alsoIn : undefined,
                 status: 'Posted',
                 acting_as_id: actingAs?.id || undefined,
             });
@@ -96,6 +104,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
             }
             if (lost.length) setError(`Posted, but ${lost.join(' and ')} didn't save. You can add that from its page.`);
             setPlace(null);
+            setBorrow(false);
+            setAlsoIn([]);
             setPosted((n) => n + 1);
             setSuccess(true);
             setFormData({
@@ -115,6 +125,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     // Only where it can be posted: the server refuses a sphere you aren't in.
     const postable = spheres.filter((s) => isPlatformAdmin || s.sphere_id === actingAs?.sphereId
         || (s.members || []).some((m) => String(m.id) === String(userId)));
+    const home = spheres.find((s) => s.sphere_id === formData.sphere_id);
+    const shareable = !simple && home ? shareChoices(spheres, { homeId: home.sphere_id, userId, isDemo: home.is_demo }) : [];
 
     return (
         <div className="card" style={{ padding: '1.2em 1.4em', marginBottom: '1.2em' }}>
@@ -146,6 +158,11 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                     </label>
                 </div>
 
+                <label className="loan-check">
+                    <input type="checkbox" checked={borrow} onChange={(e) => setBorrow(e.target.checked)} />
+                    {loanQuestion(formData.type)}
+                </label>
+
                 <div>
                     <label htmlFor="nsf-title">Title *</label>
                     <input
@@ -175,6 +192,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                         ))}
                     </select>
                 </div>
+
+                {shareable.length > 0 && <SharePicker choices={shareable} value={alsoIn} onChange={setAlsoIn} />}
 
                 <div>
                     <PlacePicker key={posted} value={place} onChange={setPlace} label="Where (optional)" />

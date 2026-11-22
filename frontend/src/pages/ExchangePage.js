@@ -16,6 +16,7 @@ import { XC_STEPS, XC_FOLLOWUP_STEP, XC_FOLLOWUP_STATUS } from '../utils/exchang
 import { formatServerDate } from '../utils/dates';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { messagesHref } from '../utils/thread';
+import '../styles/Sharing.css';
 import '../styles/Exchange.css';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
@@ -360,6 +361,13 @@ function ExchangePage() {
                                 {/* Only what the people wrote - no stand-in text. */}
                                 {xc.exchange_long_description && (
                                     <p className="xc-about-text">{xc.exchange_long_description}</p>
+                                )}
+                                {xc.borrow && (
+                                    <p className="loan-note">
+                                        {['Initiated', 'In Progress'].includes(xc.exchange_status || 'Initiated')
+                                            ? "A loan. Mark the exchange finished when it's back."
+                                            : 'This was a loan.'}
+                                    </p>
                                 )}
                                 {xc.is_finished && (
                                     <p className="xc-finished-note">✓ This exchange is finished — its details are now locked.</p>

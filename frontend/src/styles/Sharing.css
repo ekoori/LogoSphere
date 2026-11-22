@@ -1,0 +1,83 @@
+/* Sharing, loans, activity, whom you both know. Prefixes share-, loan-, act-, known: all CSS here is global. */
+.share-picker { min-width: 0; margin: 0; padding: 0; border: 0; text-align: left; }
+.share-picker legend { padding: 0; margin-bottom: 0.3rem; color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 600; }
+label.share-choice, label.loan-check {
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    min-height: 40px;
+    color: var(--ink);
+    font-weight: 500;
+    cursor: pointer;
+}
+.share-choice input[type="checkbox"], .loan-check input[type="checkbox"] {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    min-height: 0;
+    margin: 0;
+    accent-color: var(--moss);
+}
+.share-choice span { min-width: 0; overflow-wrap: anywhere; }
+.share-note { margin: 0.35rem 0; color: var(--ink-soft); font-size: 0.84rem; line-height: 1.45; }
+.share-problem { margin: 0.35rem 0; color: var(--danger); font-size: 0.85rem; }
+.share-list { margin: 0 0 0.4rem; padding: 0; list-style: none; }
+.share-list li { padding: 0.2rem 0; overflow-wrap: anywhere; }
+.share-btn {
+    width: auto;
+    min-height: 40px;
+    padding: 0.4em 1em;
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1px solid var(--sage);
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.share-btn--main { background: var(--moss); color: var(--on-fill); border-color: transparent; }
+.share-btn:disabled { opacity: 0.55; cursor: default; }
+.share-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.share-also { color: var(--ink-soft); }
+
+.loan-badge {
+    display: inline-block;
+    margin-left: 0.5em;
+    padding: 0.15em 0.6em;
+    border: 1px solid var(--sage);
+    border-radius: var(--r-pill);
+    color: var(--moss-deep);
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.ep-banner-content .loan-badge { color: #fdfaf2; background: rgba(0, 0, 0, 0.45); border-color: rgba(247, 244, 232, 0.6); }
+.loan-note { margin: 0.6rem 0; color: var(--moss-deep); font-weight: 600; }
+
+.act-head { margin: 0 0 0.6rem; font-size: 1.1rem; }
+.act-head:not(:first-child) { margin-top: 1.6rem; }
+.act-list { margin: 0; padding: 0; list-style: none; }
+.act-list > li + li { border-top: 1px solid var(--border-soft); }
+.act-row { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.7rem 0.2rem; color: var(--ink); }
+.act-row:hover { color: var(--ink); background: var(--surface-2); }
+.act-words { flex: 1; min-width: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.act-words > span { display: block; }
+.act-title { color: var(--moss-deep); font-weight: 600; }
+.act-quote { margin-top: 0.2rem; padding-left: 0.6rem; border-left: 3px solid var(--honey); color: var(--ink-soft); font-size: 0.9rem; }
+.act-when { margin-top: 0.15rem; color: var(--ink-soft); font-size: 0.78rem; }
+
+.known { margin: 1rem 0; text-align: left; }
+.known h4 {
+    margin: 0 0 0.4rem;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.known ul { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; margin: 0; padding: 0; list-style: none; }
+.known a { display: inline-flex; align-items: center; gap: 0.4em; min-height: 36px; color: var(--ink); }

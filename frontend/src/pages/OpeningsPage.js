@@ -10,6 +10,7 @@ import api from '../api';
 import { mapService } from '../utils/mappers';
 import { useLogin } from '../App';
 import { NEAR_KM, canMeasure } from '../utils/places';
+import { inSphere } from '../utils/sharing';
 import '../styles/Places.css';
 
 function OpeningsPage() {
@@ -53,10 +54,13 @@ function OpeningsPage() {
         if (sphereFilter === 'all') return true;
         if (sphereFilter === 'real') return !s.isDemo;
         if (sphereFilter === 'demo') return s.isDemo;
-        return s.spheres.some((sp) => sp.id === sphereFilter);
+        return inSphere(s, sphereFilter);
     };
     const shown = services
-        .filter((s) => filter === 'all' ? true : filter === 'offers' ? s.type === 'offer' : s.type === 'need')
+        .filter((s) => {
+            if (filter === 'loans') return s.borrow;
+            return filter === 'all' || (filter === 'offers' ? s.type === 'offer' : s.type === 'need');
+        })
         .filter(bySphere)
         .filter((s) => !near || (!!s.distance && s.distance.km <= near))
         .filter((s) => !q || [s.title, s.description, s.provider, s.actingUser, s.project, s.location]
@@ -83,6 +87,7 @@ function OpeningsPage() {
                     <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>Show All</button>
                     <button className={filter === 'offers' ? 'active' : ''} onClick={() => setFilter('offers')}>Offers</button>
                     <button className={filter === 'needs' ? 'active' : ''} onClick={() => setFilter('needs')}>Needs</button>
+                    <button className={filter === 'loans' ? 'active' : ''} onClick={() => setFilter('loans')}>To lend or borrow</button>
                 </div>
                 <div className="opening-sphere-filter">
                     <label htmlFor="opening-sphere-select">Sphere</label>

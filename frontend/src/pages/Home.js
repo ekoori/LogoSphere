@@ -12,6 +12,7 @@ import TabSelector from '../components/TabSelector';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import Avatar from '../components/Avatar';
 import DemoInvite from '../components/DemoInvite';
+import { FollowedActivity } from '../components/Following';
 import api from '../api';
 import { mapService } from '../utils/mappers';
 import { useLogin } from '../App';
@@ -90,14 +91,19 @@ function Home() {
                     following.length === 0
                         ? <p className="empty-state">You're not following anyone yet. Open a member's profile and hit Follow to see them here.</p>
                         : (
-                            <div className="following-list">
-                                {following.map((f) => (
-                                    <Link key={f.id} to={`/user?id=${f.id}`} className="following-row">
-                                        <Avatar userId={f.id} name={f.name} size={40} />
-                                        <span className="following-name">{f.name}</span>
-                                    </Link>
-                                ))}
-                            </div>
+                            <>
+                                <h2 className="act-head">Lately</h2>
+                                <FollowedActivity />
+                                <h2 className="act-head">People you follow</h2>
+                                <div className="following-list">
+                                    {following.map((f) => (
+                                        <Link key={f.id} to={`/user?id=${f.id}`} className="following-row">
+                                            <Avatar userId={f.id} name={f.name} size={40} />
+                                            <span className="following-name">{f.name}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </>
                         )
                 )}
             </main>

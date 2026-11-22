@@ -33,7 +33,8 @@ const sections = [
                     <div>
                         <dt>What you do here</dt>
                         <dd>
-                            The openings you post and accept; the exchanges you take part in, with their receipts, photos,
+                            The openings you post and accept, and the spheres you share them with; the exchanges you take
+                            part in, with their receipts, photos,
                             notes, follow-ups and acknowledgements; likes; who you follow; the groups you belong to; and
                             governance proposals, votes and the members you lend your vote to.
                         </dd>
@@ -112,6 +113,16 @@ const sections = [
                     </li>
                     <li><strong>Your email address</strong> is never shown to other members.</li>
                     <li>
+                        <strong>An opening you share with other spheres</strong> shows there with your name, the sphere it
+                        comes from and how many liked it. It doesn&rsquo;t show that sphere&rsquo;s other people. Its exchanges
+                        are seen in its own sphere and by both sides.
+                    </li>
+                    <li>
+                        <strong>Whom you follow</strong> isn&rsquo;t shown to others, though each person is told when you start
+                        following them. The activity of people you follow, and whom you both know, show you only what you
+                        could open anyway.
+                    </li>
+                    <li>
                         <strong>An event</strong>, with who is coming, is seen by the members of its sphere, or by every
                         signed-in member when it is for everyone.
                     </li>
@@ -156,7 +167,7 @@ const sections = [
                     <li>
                         <strong>A group, opening or event</strong> shows its words and a rough distance. It shows the spot
                         itself only when whoever runs it chose &ldquo;the exact spot&rdquo;, and for a private sphere only to
-                        those inside it. An event for everyone shows it to every signed-in member.
+                        those inside it, or whom an opening was shared with. An event for everyone shows it to every signed-in member.
                     </li>
                     <li>
                         <strong>Your device&rsquo;s location</strong> is read once, when you press &ldquo;Use where I am

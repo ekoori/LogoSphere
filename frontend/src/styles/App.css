@@ -694,6 +694,7 @@ footer ul li a:hover { color: var(--honey); }
 @media (max-width: 900px) {
     .container { flex-direction: column; align-items: stretch; }
     aside { position: static; flex-basis: auto; max-width: none; }
+    .container > aside { align-self: stretch; }     /* an aside's own flex-start left it as wide as its words */
     main { max-width: none; }
 
     /* Header collapses to a hamburger + slide-down drawer. */

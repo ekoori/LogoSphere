@@ -23,6 +23,7 @@ import '../styles/ValueCardChip.css';
 import { PersonaTag } from '../components/DemoTags';
 import { BlockButton, ReportButton } from '../components/Safety';
 import { messagesHref } from '../utils/thread';
+import { BothKnow } from '../components/Following';
 
 function UserPage() {
     const { userId: viewerId } = useLogin();
@@ -145,6 +146,7 @@ function UserPage() {
                     </div>
                 </div>
 
+                {viewerId && !isOwnPage && <BothKnow personId={id} />}
                 <ConnectionsPanel ownerId={id} viewerId={viewerId} />
             </aside>
 

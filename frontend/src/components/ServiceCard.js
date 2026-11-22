@@ -15,7 +15,9 @@ import { WhereLine } from './WhereLine';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import { useSimple } from '../utils/useSimple';
+import { inSphere, loanLabel } from '../utils/sharing';
 import '../styles/Openings.css';
+import '../styles/Sharing.css';
 
 // Spheres may be strings or {id, name} pairs — prefer UUID link when available.
 const sName = (s) => (typeof s === 'string' ? s : s.name);
@@ -32,7 +34,7 @@ function ServiceCard({
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
     isProvider = false, canManage = false, actionError = null, isDemo = false, providerIsAgent = false,
-    location = null, distance = null,
+    location = null, distance = null, borrow = false, sharedWith = [],
     currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
@@ -50,7 +52,7 @@ function ServiceCard({
     const managed = useManagedEntities(currentUserId);
     const simple = useSimple();
     const acceptAsOptions = managed.filter(
-        (m) => m.kind !== 'sphere' && (!sphereId || String(m.sphere_id) === String(sphereId))
+        (m) => m.kind !== 'sphere' && (!sphereId || inSphere({ sphereId, sharedWith }, m.sphere_id))
     );
     const [acceptAs, setAcceptAs] = useState('');
 
@@ -137,6 +139,17 @@ function ServiceCard({
                                 {index < spheres.length - 1 && ', '}
                             </React.Fragment>
                         ))}
+                        {sharedWith.length > 0 && (
+                            <span className="share-also">
+                                {spheres.length > 0 ? ' · also in ' : 'Also in '}
+                                {sharedWith.map((s, i) => (
+                                    <React.Fragment key={s.id}>
+                                        {i > 0 && ', '}
+                                        <Link to={`/sphere?id=${s.id}`} onClick={(e) => e.stopPropagation()}>{s.name}</Link>
+                                    </React.Fragment>
+                                ))}
+                            </span>
+                        )}
                         {isDemo && <DemoTag />}
                         {project && (
                             <>
@@ -158,6 +171,7 @@ function ServiceCard({
                         >
                             {title}
                         </Link>
+                        {borrow && <span className="loan-badge">{loanLabel(type)}</span>}
                         {cadence === 'perpetual' && (
                             <span className="cadence-badge cadence-badge--perpetual" title="Ongoing — can be accepted repeatedly">
                                 ↻ Ongoing
@@ -365,6 +379,8 @@ ServiceCard.propTypes = {
     myAcceptance: PropTypes.object,
     isProvider: PropTypes.bool,
     isDemo: PropTypes.bool,
+    borrow: PropTypes.bool,
+    sharedWith: PropTypes.array,
     providerIsAgent: PropTypes.bool,
     canManage: PropTypes.bool,
     actionError: PropTypes.string,

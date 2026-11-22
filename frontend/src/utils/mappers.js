@@ -36,6 +36,10 @@ export function mapService(s) {
         // The opening's sphere id (if scoped) — used to offer only entities that
         // belong to that sphere when accepting on behalf of one.
         sphereId: s.sphere_id || null,
+        // Spheres it's shared with beside its own: those the viewer is in (all, for who runs it).
+        sharedWith: s.shared_with || [],
+        // A loan: an offer to lend, or a need to borrow.
+        borrow: !!s.borrow,
         provider: s.provider || 'A member',
         providerId: s.provider_id || null,
         // When posted on behalf of an entity, the human who acted.
