@@ -67,7 +67,8 @@ def test_your_data_comes_whole_and_never_with_the_password(app, member):
     assert data['profile']['email'] == email
     assert data['profile']['user_id'] == uid
     assert [c['care_about'] for c in data['value_cards']] == ['Testing the export']
-    for key in ('memberships', 'openings', 'exchanges', 'acknowledgements', 'following', 'followers', 'governance', 'notifications'):
+    for key in ('memberships', 'openings', 'exchanges', 'acknowledgements', 'following', 'followers', 'governance', 'notifications',
+                'likes', 'phones_for_push', 'joined_by_invitation'):
         assert key in data
     text = r.get_data(as_text=True)
     assert token not in text

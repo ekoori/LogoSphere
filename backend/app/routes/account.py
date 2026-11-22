@@ -96,9 +96,10 @@ def _profile(uid):
 @validate_session
 def export_data(user_id=None):
     """Everything about you, in one file: profile, value cards, memberships,
-    openings, exchanges (with what both sides wrote), follows, your votes and
-    notifications. Your password (stored only as a hash) and session tokens
-    are never part of it; pictures are listed, not embedded."""
+    openings, exchanges (with what both sides wrote), likes, follows, your
+    votes and those you lent, and notifications. Your password (stored only as
+    a hash), session and push tokens are never part of it; pictures are listed,
+    not embedded."""
     uid = uuid.UUID(str(user_id))
     profile = _profile(uid)
     if not profile:
@@ -123,6 +124,18 @@ def export_data(user_id=None):
     votes = [{'proposal_id': str(r.proposal_id), 'choice': r.choice, 'at': r.created_at}
              for r in session.execute('SELECT proposal_id, user_id, choice, created_at FROM governance_votes') if r.user_id == uid]
     proposals = [proposal_dict(r) for r in session.execute('SELECT * FROM governance_proposals') if r.created_by == uid]
+    lent = [{'in_group': str(r.entity_id), 'to': str(r.delegate_id), 'at': r.created_at}
+            for r in session.execute('SELECT entity_id, delegator_id, delegate_id, created_at FROM governance_delegations')
+            if r.delegator_id == uid]
+    likes = {
+        'openings': [str(r.service_id) for r in session.execute('SELECT service_id, user_id FROM opening_likes')
+                     if r.user_id == uid],
+        # An exchange's note or receipt, or an acknowledgement by its own id.
+        'words': [{'on': str(r.exchange_id), 'what': r.comment_type}
+                  for r in session.execute('SELECT exchange_id, comment_type, user_id FROM likes') if r.user_id == uid],
+    }
+    phones = [{'platform': r.platform, 'since': r.added_at}
+              for r in session.execute('SELECT platform, added_at FROM push_devices WHERE user_id = %s', [uid])]
     from app.models.acknowledgement import Acknowledgement
     acknowledgements = [
         {'on_trail': str(x.trail_id), 'text': x.body, 'cards': [c.get('title') for c in x.cards],
@@ -141,16 +154,19 @@ def export_data(user_id=None):
         'acknowledgements': acknowledgements,
         'meaning_graph_judgements': judgements_by(uid),
         'ai_help_used_lately': uses_by(uid),
+        'likes': likes,
         'following': following,
         'followers': followers,
         'messages': messaging.export(uid),
         'events': events.export(uid),
         'announcements': announcements.export(uid),
         'invitations': invites.export(uid),
+        'joined_by_invitation': invites.used_by(uid),
+        'phones_for_push': phones,
         'blocked': [str(who) for who, _ in safety.blocked_by(uid)],
-        'reports_made': [{'kind': r.kind, 'note': r.note, 'at': r.made_at, 'status': r.status}
+        'reports_made': [{'kind': r.kind, 'reported': r.excerpt, 'note': r.note, 'at': r.made_at, 'status': r.status}
                          for r in safety.all_reports() if r.reporter_id == uid],
-        'governance': {'votes': votes, 'proposals': proposals},
+        'governance': {'votes': votes, 'proposals': proposals, 'votes_lent': lent},
         'notifications': Notification.list_for_user(uid),
     }
     body = json.dumps(out, default=str, indent=2, ensure_ascii=False)

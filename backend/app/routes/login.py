@@ -22,8 +22,9 @@ from app.db import is_unavailable, UNAVAILABLE
 from flask import request, jsonify, session, make_response, current_app
 from flask_login import login_user, logout_user, current_user
 
-from app.models.user import User
+from app.models.user import User, normalize_email
 from app.middleware.session_middleware import get_session_token
+from app.utils import attempts
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,14 @@ def login():
         return response, 200
 
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or not all(isinstance(data.get(k), str) for k in ('email', 'password')):
+            return jsonify({'message': 'Invalid email or password'}), 401
+        email = normalize_email(data['email'])
+        # nginx sets X-Real-IP itself and the backend listens only locally.
+        address = request.headers.get('X-Real-IP') or request.remote_addr
+        if attempts.too_many(email, address):
+            return jsonify({'message': attempts.TOO_MANY}), 429
         
         # Authenticate user
         user = User.login(data)
@@ -108,6 +116,7 @@ def login():
 
         else:
             logger.warning('Invalid login credentials')
+            attempts.failed(email, address)
             response = jsonify({'message': 'Invalid email or password'})
             return response, 401
 

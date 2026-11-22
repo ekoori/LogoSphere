@@ -132,6 +132,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+        '429': { description: "Too many wrong tries from this connection. Wait 15 minutes." }
         '500':
           $ref: '#/components/responses/InternalError'
       tags: [Authentication]

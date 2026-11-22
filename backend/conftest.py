@@ -234,6 +234,18 @@ def new_member(db, keep_rows):
         db.execute('DELETE FROM notifications WHERE user_id = %s', [row.user_id])   # the demo invitation
 
 
+@pytest.fixture(autouse=True)
+def wrong_passwords(monkeypatch):
+    """Each test counts its own failed sign-ins, in memory: never the real allowances."""
+    if not CASSANDRA_UP:
+        return None
+    from app.utils import attempts
+    counts = {}
+    monkeypatch.setattr(attempts, '_used', lambda name: counts.get(name, 0))
+    monkeypatch.setattr(attempts, '_count', lambda name, most: counts.update({name: counts.get(name, 0) + 1}))
+    return counts
+
+
 PERSON_PASSWORD = 'a-long-password-1'
 
 

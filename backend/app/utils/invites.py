@@ -147,6 +147,12 @@ def export(user_id):
              'joined': len(uses(r.invite_hash))} for r in made_by(user_id)]
 
 
+def used_by(user_id):
+    """When this member came in by someone's link, while that is still kept."""
+    me = as_uuid(user_id)
+    return [r.used_at for r in session.execute('SELECT user_id, used_at FROM invite_uses') if r.user_id == me]
+
+
 def forget(user_id):
     for row in made_by(user_id):
         revoke(row.invite_hash)

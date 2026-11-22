@@ -46,6 +46,29 @@ def test_bad_password_is_401_with_message(api):
     assert body == {'message': 'Invalid email or password'}
 
 
+def test_wrong_passwords_are_limited_where_they_come_from(api, app):
+    from app.utils import attempts
+    from conftest import USERS
+    email, password = USERS['admin']
+    client = app.test_client()
+
+    def sign_in(secret, address):
+        return client.post('/api/login', json={'email': email, 'password': secret}, headers={'X-Real-IP': address})
+
+    for _ in range(attempts.PER_ADDRESS):
+        assert sign_in('not-it-at-all', '203.0.113.7').status_code == 401
+    assert sign_in(password, '203.0.113.7').status_code == 429
+    # Nobody is locked out by someone else's guessing.
+    elsewhere = sign_in(password, '198.51.100.9')
+    assert elsewhere.status_code == 200
+    api.logout_token(elsewhere.get_json()['session_id'])
+
+
+def test_login_with_no_strings_is_401(app):
+    for body in (None, [], {'email': 7, 'password': 'x'}, {'email': 'a@example.com'}):
+        assert app.test_client().post('/api/login', json=body).status_code == 401
+
+
 def test_protected_route_without_token_is_401(app):
     # A fresh client: the shared one carries the session cookie from login.
     r = app.test_client().get('/api/spheres')

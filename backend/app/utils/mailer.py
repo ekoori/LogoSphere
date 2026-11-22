@@ -174,6 +174,11 @@ def take(name, most, seconds=DAY):
     return True
 
 
+def used(name):
+    """How much of `name`'s allowance is used, without using any."""
+    return session.execute('SELECT count(*) AS n FROM mail_counts WHERE bucket = %s', [_bucket(name)]).one().n
+
+
 def network(address):
     """Who is asking, for limits: an IPv4 address, or an IPv6 /64 (a household gets that many)."""
     try:
