@@ -53,6 +53,11 @@ export function mapService(s) {
         imageIsAi: s.has_image ? !!s.image_is_ai : !!s.is_demo,
         // Whether the opening has a real uploaded banner (vs the fallback).
         hasImage: !!s.has_image,
+        // Where, as others may know it: words, a banded distance, and the spot
+        // only where it was shown exactly (on the opening's own page).
+        location: s.location || null,
+        distance: s.distance || null,
+        point: s.point || null,
         time: fmtDate(s.created_at) || 'recently',
         status: s.status || 'Posted',
         likesCount: s.likes || 0,

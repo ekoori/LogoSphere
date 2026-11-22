@@ -11,6 +11,8 @@ import api from '../api';
 import SphereBanner from './SphereBanner';
 import AiPictureMaker from './AiPictureMaker';
 import { AiTag } from './AiTag';
+import PlacePicker from './PlacePicker';
+import { placeProblem, toPayload } from '../utils/places';
 import { useLogin } from '../App';
 import { useEntityList, useManagedEntities, useInvalidate, KIND_PATH } from '../utils/queries';
 import '../styles/EntityCard.css';
@@ -27,7 +29,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
     const simple = useSimple();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [location, setLocation] = useState('');
+    const [place, setPlace] = useState(null);
     const [sphereId, setSphereId] = useState('');
     const [ownerAllianceId, setOwnerAllianceId] = useState('');
     const [joinPolicy, setJoinPolicy] = useState('open');
@@ -64,13 +66,14 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (kind !== 'sphere' && !sphereId) { setError(`Please choose the sphere this ${kind} belongs to.`); return; }
+        const wrongPlace = placeProblem(place);
+        if (wrongPlace) { setError(wrongPlace); return; }
         setError('');
         setSubmitting(true);
         try {
             const fd = new FormData();
             fd.append('name', name.trim());
             fd.append('description', description.trim());
-            fd.append('location', location.trim());
             if (kind !== 'sphere') {
                 const sphere = mySpheres.find((s) => s.sphere_id === sphereId);
                 fd.append('sphere_id', sphereId);
@@ -87,10 +90,20 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
             if (newId && joinPolicy !== 'open') {
                 await api.patch(`/api/${KIND_PATH[kind]}/${newId}`, { join_policy: joinPolicy });
             }
+            let placeLost = false;
+            const where = toPayload(place);
+            if (newId && where) {
+                try {
+                    await api.post(`/api/places/${KIND_PATH[kind]}/${newId}`, { place: where });
+                } catch (err) {
+                    placeLost = true;
+                }
+            }
             await invalidate.entity(kind, newId);
-            setName(''); setDescription(''); setLocation(''); setSphereId(''); setOwnerAllianceId('');
+            setName(''); setDescription(''); setPlace(null); setSphereId(''); setOwnerAllianceId('');
             setJoinPolicy('open'); setImage(null); setPreviewUrl(''); setImageIsAi(false);
-            if (onCreated) onCreated(created);
+            if (placeLost) setError(`Created, but where it is didn't save. You can add it on the ${kind}'s Manage page.`);
+            else if (onCreated) onCreated(created);
         } catch (err) {
             setError(err.response?.data?.message || `Failed to create ${kind}.`);
         } finally {
@@ -150,8 +163,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
                     </>
                 )}
 
-                <label htmlFor="entity-location">Geographical location</label>
-                <input type="text" id="entity-location" value={location} onChange={(e) => setLocation(e.target.value)} />
+                <PlacePicker value={place} onChange={setPlace} label="Where it is (optional)" />
 
                 <div className="form-buttons">
                     <button type="submit" className="btn-orange" disabled={submitting || noSphere}>

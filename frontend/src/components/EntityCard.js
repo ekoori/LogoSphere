@@ -15,6 +15,7 @@ import { useLogin } from '../App';
 import '../styles/EntityCard.css';
 import '../styles/ValueCardChip.css';
 import { DemoTag } from './DemoTags';
+import { WhereLine } from './WhereLine';
 
 const MANAGE_ROLES = { sphere: ['admin'], alliance: ['admin', 'steward'], project: ['manager', 'steward'] };
 const ROLE_LABEL = {
@@ -96,6 +97,9 @@ export default function EntityCard({ kind, entity, onJoin }) {
                                 </React.Fragment>
                             ))}
                         </div>
+                    )}
+                    {(entity.location || entity.distance) && (
+                        <div className="entity-card-meta"><WhereLine location={entity.location} distance={entity.distance} /></div>
                     )}
                     <div className="entity-card-meta">
                         👤 {members.slice(0, 3).map((p, i) => (

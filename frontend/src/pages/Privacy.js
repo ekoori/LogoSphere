@@ -23,6 +23,14 @@ const sections = [
                         <dd>Whatever you add: a surname, where you are, a photo, and the value cards on your Meaning Graph.</dd>
                     </div>
                     <div>
+                        <dt>Places</dt>
+                        <dd>
+                            The words you use for a place and, if you put it on the map, a point no more exact than you chose:
+                            a pin is rounded before it is saved. For yourself we also keep whether members nearby may find
+                            you. That is off unless you switch it on.
+                        </dd>
+                    </div>
+                    <div>
                         <dt>What you do here</dt>
                         <dd>
                             The openings you post and accept; the exchanges you take part in, with their receipts, photos,
@@ -71,7 +79,7 @@ const sections = [
         body: (
             <>
                 <ul>
-                    <li><strong>Members</strong> see your name, photo, location and value cards.</li>
+                    <li><strong>Members</strong> see your name, photo, the words you use for where you are, and your value cards.</li>
                     <li>
                         <strong>Your groups</strong> see what happens in them: a sphere's openings, exchanges, receipts and
                         people are for its members — unless its managers switch on <em>public activity</em>, which lets
@@ -81,10 +89,40 @@ const sections = [
                     <li>
                         <strong>Platform administrators</strong> — the few people who run LogoSphere — can see everything,
                         including email addresses, so they can keep the platform working and safe. They use that access only
-                        for that.
+                        for that. LogoSphere doesn&rsquo;t show them your point on the map; like all that is stored, it can be
+                        reached by whoever runs the server.
                     </li>
                 </ul>
                 <p>Exchanges belong to both people in them, so an exchange stays in the other person's trail as well as yours.</p>
+            </>
+        ),
+    },
+    {
+        id: 'places',
+        title: 'Places and who is near',
+        body: (
+            <>
+                <ul>
+                    <li><strong>Your point</strong> is never shown to another member, however exact you made it.</li>
+                    <li>
+                        <strong>Distances</strong> are worked out between squares a kilometre across and told only in steps
+                        (within 2 km, 5 km, 10 km and so on). Someone determined could work out your square from several of
+                        them, and only if you chose to be findable. A rougher place blurs that further.
+                    </li>
+                    <li>
+                        <strong>A group or an opening</strong> shows its words and a rough distance. It shows the spot itself
+                        only when whoever runs it chose &ldquo;the exact spot&rdquo;, and for a private sphere only to those
+                        inside it.
+                    </li>
+                    <li>
+                        <strong>Your device&rsquo;s location</strong> is read once, when you press &ldquo;Use where I am
+                        now&rdquo;, and is never followed.
+                    </li>
+                    <li>
+                        <strong>Maps</strong> come from OpenStreetMap, only when you open one. It then learns your IP address,
+                        that you came from LogoSphere, and the part of the world you&rsquo;re looking at.
+                    </li>
+                </ul>
             </>
         ),
     },
@@ -137,6 +175,7 @@ const sections = [
                 <p>A few services do part of the work. Each gets only what its job needs:</p>
                 <dl className="dp-defs">
                     <div><dt>Linode (Akamai Cloud)</dt><dd>Runs the server and stores pictures, in a private storage bucket in London.</dd></div>
+                    <div><dt>OpenStreetMap</dt><dd>Draws the map, when you open one (see Places above).</dd></div>
                     <div><dt>Google Fonts</dt><dd>Serves the website's two typefaces, so your browser contacts Google to load them.</dd></div>
                     <div><dt>Anthropic and OpenAI</dt><dd>Write the AI personas in the demo spheres, and give AI help when you ask for it (see above).</dd></div>
                     <div><dt>Google Firebase</dt><dd>Delivers push notifications to Android phones, once they're switched on, with only a notification's text and link.</dd></div>
@@ -200,6 +239,7 @@ export default function Privacy() {
             glance={[
                 'No ads, no analytics, no tracking — and we never sell your data.',
                 'Your group sees what happens in your group; your email stays private.',
+                'Your spot on the map is never shown to other members.',
                 'AI personas live only in the labelled demo spheres.',
                 'AI help runs only when you press its button, and gets only what you typed there.',
                 'Download everything we hold about you, or delete your account, yourself.',

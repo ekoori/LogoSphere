@@ -17,6 +17,8 @@ import EntityBanner from '../components/EntityBanner';
 import { MoreInAdvanced } from '../components/UiMode';
 import MembersList from '../components/MembersList';
 import { useSimple } from '../utils/useSimple';
+import { usePlace } from '../utils/usePlace';
+import PlaceFields from '../components/PlaceFields';
 import '../styles/AllianceManagement.css';
 import '../styles/EntityPage.css';
 
@@ -32,6 +34,7 @@ export default function EntityManagement({ kind }) {
     const invalidate = useInvalidate();
     const { data: entity, isLoading } = useEntity(kind, id);
     const perms = usePermissions(kind, entity);
+    const place = usePlace(KIND_PATH[kind], perms.canManage ? id : null);
 
     const [activeTab, setActiveTab] = useState('governance');
     const [name, setName] = useState('');
@@ -80,6 +83,7 @@ export default function EntityManagement({ kind }) {
 
     const saveGovernance = async (e) => {
         e.preventDefault();
+        if (place.problem) { setNote({ ok: false, text: place.problem }); return; }
         setSaving(true);
         setNote(null);
         try {
@@ -97,6 +101,7 @@ export default function EntityManagement({ kind }) {
                 if (isPlatformAdmin) gov.is_sandbox = isSandbox;
                 await api.post(`/api/spheres/${eid}/governance`, gov);
             }
+            await place.save();
             await invalidate.entity(kind, eid);
             setNote({ ok: true, text: 'Saved.' });
         } catch (err) {
@@ -154,6 +159,9 @@ export default function EntityManagement({ kind }) {
                         <div className="form-group">
                             <label htmlFor="ent-description">Description</label>
                             <textarea id="ent-description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                            <PlaceFields editor={place} label="Where it is" />
                         </div>
                         {/* Hidden isn't cleared: saving in Simple sends these back as they were. */}
                         {!simple && (<>

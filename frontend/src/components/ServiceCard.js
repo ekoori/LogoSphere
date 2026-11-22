@@ -11,6 +11,7 @@ import StatusProgression from './StatusProgression';
 import Avatar from './Avatar';
 import { Picture } from './AiTag';
 import { DemoTag, PersonaTag } from './DemoTags';
+import { WhereLine } from './WhereLine';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import { useSimple } from '../utils/useSimple';
@@ -31,6 +32,7 @@ function ServiceCard({
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
     isProvider = false, canManage = false, actionError = null, isDemo = false, providerIsAgent = false,
+    location = null, distance = null,
     currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
@@ -193,6 +195,7 @@ function ServiceCard({
                             </span>
                         )}
                     </div>
+                    <WhereLine location={location} distance={distance} />
                 </div>
                 <div className="right">
                     <LikeTimestamp

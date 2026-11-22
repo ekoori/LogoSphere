@@ -26,6 +26,7 @@ import { mapService } from '../utils/mappers';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import { useSimple } from '../utils/useSimple';
+import { ExactSpot } from '../components/WhereLine';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -174,7 +175,8 @@ export default function EntityPage({ kind }) {
                     <span className="ep-eyebrow">{NOUN[kind]}</span>
                     {entity.is_demo && <DemoTag />}
                     {statusInfo && <span className={`ep-status-badge ${statusInfo.cls}`}>{statusInfo.label}</span>}
-                    {kind === 'sphere' && entity.location && <span className="ep-location-chip">{entity.location}</span>}
+                    {entity.location && <span className="ep-location-chip">{entity.location}</span>}
+                    {entity.distance && <span className="ep-location-chip">{entity.distance.text}</span>}
                     {kind !== 'sphere' && entity.sphere_name && (
                         <Link to={entityHref('sphere', entity.sphere_name, entity.sphere_id)} className="ep-sphere-chip">{entity.sphere_name}</Link>
                     )}
@@ -218,6 +220,8 @@ export default function EntityPage({ kind }) {
                     </div>
                 </div>
             )}
+
+            <ExactSpot key={eid} point={entity.point} />
 
             {!canViewActivity ? (
                 <p className="ep-empty" style={{ padding: '0 0.5rem' }}>

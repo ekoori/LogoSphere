@@ -34,6 +34,8 @@ import SettingsPage from './pages/Settings';
 import ResetPassword from './pages/ResetPassword';
 import SearchPage from './pages/SearchPage';
 import MeaningGraphPage from './pages/MeaningGraphPage';
+import NearbyPage from './pages/NearbyPage';
+import MapPickerPage from './pages/MapPickerPage';
 import { SIMPLE, modeOfAccount, rememberMode, rememberedMode } from './utils/modes';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
@@ -107,6 +109,7 @@ function AppContent() {
         <Route path="/openings" element={<ErrorBoundary><ProtectedRoute><OpeningsPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/nearby" element={<ErrorBoundary><ProtectedRoute><NearbyPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/search" element={<ErrorBoundary><ProtectedRoute><SearchPage/></ProtectedRoute></ErrorBoundary>} />
@@ -246,12 +249,21 @@ export function useLogin() {
   return context;
 }
 
+// The app's map page is only a map: no header, no session, no API calls.
+function Shell() {
+  const { pathname } = useLocation();
+  if (pathname === '/map-picker') return <ErrorBoundary><MapPickerPage/></ErrorBoundary>;
+  return (
+    <LoginProvider>
+      <AppContent />
+    </LoginProvider>
+  );
+}
+
 function App() {
   return (
     <Router>
-      <LoginProvider>
-        <AppContent />
-      </LoginProvider>
+      <Shell />
     </Router>
   );
 }

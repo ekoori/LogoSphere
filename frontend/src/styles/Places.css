@@ -1,0 +1,133 @@
+/* Places: the picker, the small map and Near you. Prefixes map-, place-, near-, where-: all CSS here is global. */
+.map {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    background: #d9d6cc;
+    border-radius: var(--r-md);
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+}
+.map:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.map img.map-tile { position: absolute; width: 256px; height: 256px; max-width: none; margin: 0; border-radius: 0; box-shadow: none; pointer-events: none; }
+.map-square { position: absolute; box-sizing: border-box; background: rgba(47, 116, 181, 0.18); border: 2px solid #2f74b5; pointer-events: none; }
+.map-pin {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+    background: #a8456b;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+.map-pin--middle { left: 50%; top: 50%; }
+.map-zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 6px; }
+.map-zoom button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: #fdfaf2;
+    color: #232a1d;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.map a.map-credit {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #232a1d;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.map-only { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--paper); }
+.map-only .map { flex: 1; height: auto; min-height: 0; border-radius: 0; }
+.map-only-foot { padding: 10px 12px; text-align: center; }
+.map-only-foot .place-btn { width: 100%; }
+
+.place-picker, .place-fields { text-align: left; }
+.place-picker > label { display: block; margin-bottom: 0.25em; }
+.place-picker > input[type="text"] { width: 100%; box-sizing: border-box; }
+.place-found {
+    max-height: 250px;
+    margin: 0.2em 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+}
+.place-found li + li { border-top: 1px solid var(--border-soft); }
+.place-found button {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6em;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5em 0.7em;
+    background: var(--surface);
+    color: var(--ink);
+    border: 0;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+}
+.place-found button:hover { background: var(--surface-2); }
+.place-found small, .place-credit { color: var(--ink-soft); font-size: 0.75rem; }
+.place-state, .place-note { margin: 0.35em 0; color: var(--ink-soft); font-size: 0.84rem; line-height: 1.45; }
+.place-state.is-linked { color: var(--moss-deep); font-weight: 600; }
+.place-problem { margin: 0.35em 0; color: var(--danger); font-size: 0.85rem; }
+.place-buttons { display: flex; flex-wrap: wrap; gap: 0.4em; margin-top: 0.45em; }
+.place-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 0.4em 0.95em;
+    background: transparent;
+    color: var(--moss-deep);
+    border: 1px solid var(--sage);
+    border-radius: var(--r-pill);
+    font: inherit;
+    font-size: 0.86rem;
+    cursor: pointer;
+}
+.place-btn--main, a.place-btn--main { margin-top: 0.5em; background: var(--moss); color: var(--on-fill); border-color: transparent; }
+.place-btn:disabled { opacity: 0.55; cursor: default; }
+.place-picker label.place-precision { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin-top: 0.6em; }
+.place-precision select { width: auto; }
+.place-map { margin-top: 0.5em; }
+.place-fields label.place-findable { display: flex; align-items: flex-start; gap: 0.55em; margin-top: 0.8em; color: var(--ink); cursor: pointer; }
+.place-fields .place-findable input { flex: none; width: auto; min-height: 0; margin: 0.25em 0 0; }
+.place-findable small { display: block; color: var(--ink-soft); font-weight: 400; }
+
+.where-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.6em; color: var(--ink-soft); font-size: 0.82rem; }
+.where-distance { color: var(--ink-soft); font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.exact-spot { margin: 0.5em 0; }
+.service .where-line { margin-top: 0.3em; }
+.xc-page-meta .where-line, .xc-page-meta .where-distance { color: inherit; font-size: inherit; }
+.place-anchor { scroll-margin-top: 90px; }
+.near-link { display: inline-block; margin-top: 0.9em; }
+
+.near-page { width: 100%; max-width: 760px; box-sizing: border-box; margin: 0 auto; padding: 1.6rem 1rem 3rem; color: var(--ink); }
+.near-page h2 { margin: 1.3em 0 0.4em; font-size: 1.2rem; }
+.near-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6em; margin-top: 0.8em; }
+.near-controls label { display: inline-flex; align-items: center; gap: 0.5em; }
+.near-controls select { width: auto; }
+.near-hint, .near-empty { margin-top: 0.8em; padding: 0.7em 0.9em; background: var(--surface-2); border-radius: var(--r-md); }
+.near-list { margin: 0; padding: 0; list-style: none; }
+.near-list li { border-bottom: 1px solid var(--border-soft); }
+.near-row { display: flex; align-items: center; gap: 0.8em; min-height: 56px; padding: 0.45em 0; color: var(--ink); }
+.near-who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.near-who small { display: block; color: var(--ink-soft); }
+.near-glyph { width: 40px; color: var(--terracotta-deep); font-size: 1.4rem; text-align: center; }

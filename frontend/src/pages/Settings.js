@@ -1,12 +1,14 @@
-// Settings — your account: name and place, how the site looks, your password,
+// Settings — your account: name, where you are, how the site looks, your password,
 // your data and, at the end, deleting the account. Every section saves on its
 // own; nothing here pretends to save what doesn't exist yet.
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useLogin } from '../App';
 import api from '../api';
 import { THEME_CHOICES, useTheme } from '../utils/theme';
 import { MODE_CHOICES } from '../utils/modes';
+import { usePlace } from '../utils/usePlace';
+import PlaceFields from '../components/PlaceFields';
 import '../styles/Settings.css';
 
 const MIN_PASSWORD = 8;
@@ -21,7 +23,7 @@ const errorText = (e, fallback) => e?.response?.data?.message || fallback;
 function AccountSection() {
     const { userId, setUserName } = useLogin();
     const [profile, setProfile] = useState(null);
-    const [fields, setFields] = useState({ name: '', surname: '', location: '' });
+    const [fields, setFields] = useState({ name: '', surname: '' });
     const [saving, setSaving] = useState(false);
     const [note, setNote] = useState(null);
 
@@ -29,7 +31,7 @@ function AccountSection() {
         api.get('/api/user/profile').then((r) => {
             const u = r.data;
             setProfile(u);
-            setFields({ name: u.name || '', surname: u.surname || '', location: u.location || '' });
+            setFields({ name: u.name || '', surname: u.surname || '' });
         }).catch(() => {});
     }, [userId]);
 
@@ -51,7 +53,7 @@ function AccountSection() {
 
     return (
         <section id="account-settings" className="settings-card">
-            <h3>Your name and place</h3>
+            <h3>Your name</h3>
             <form onSubmit={save}>
                 <div className="form-group">
                     <label htmlFor="name">First name</label>
@@ -62,10 +64,6 @@ function AccountSection() {
                     <input type="text" id="surname" value={fields.surname} onChange={set('surname')} autoComplete="family-name" />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="location">Location</label>
-                    <input type="text" id="location" value={fields.location} onChange={set('location')} placeholder="City, Country" />
-                </div>
-                <div className="form-group">
                     <label htmlFor="settings-email">Email</label>
                     <input type="email" id="settings-email" value={profile?.email || ''} disabled />
                     <small className="settings-hint">Your email can't be changed here.</small>
@@ -74,6 +72,49 @@ function AccountSection() {
                 <div className="settings-actions">
                     <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
                 </div>
+            </form>
+        </section>
+    );
+}
+
+function PlaceSection() {
+    const { userId } = useLogin();
+    const { hash } = useLocation();
+    const editor = usePlace('users', userId);
+    const [saving, setSaving] = useState(false);
+    const [note, setNote] = useState(null);
+
+    useEffect(() => {
+        if (hash === '#place' && editor.loaded) document.getElementById('place')?.scrollIntoView({ block: 'start' });
+    }, [hash, editor.loaded]);
+
+    const save = async (e) => {
+        e.preventDefault();
+        if (editor.problem) { setNote({ ok: false, text: editor.problem }); return; }
+        setSaving(true);
+        setNote(null);
+        try {
+            await editor.save();
+            setNote({ ok: true, text: 'Saved.' });
+        } catch (err) {
+            setNote({ ok: false, text: errorText(err, 'Could not save where you are.') });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <section id="place" className="settings-card place-anchor">
+            <h3>Where you are</h3>
+            <p className="settings-sub">As exactly or as roughly as you like, or not at all. It shows you what&rsquo;s near you.</p>
+            <form onSubmit={save}>
+                <PlaceFields editor={editor} label="Your place" />
+                <Note note={note} />
+                {editor.loaded && (
+                    <div className="settings-actions">
+                        <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save where you are'}</button>
+                    </div>
+                )}
             </form>
         </section>
     );
@@ -288,6 +329,7 @@ const SettingsPage = () => (
             </nav>
         </div>
         <AccountSection />
+                <PlaceSection />
         <ModeSection />
         <AppearanceSection />
         <PasswordSection />

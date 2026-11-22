@@ -6,6 +6,8 @@ import { useLogin } from '../App';
 import { forUpload } from '../utils/pictures';
 import AiPictureMaker from './AiPictureMaker';
 import { Picture } from './AiTag';
+import PlacePicker from './PlacePicker';
+import { placeProblem, toPayload } from '../utils/places';
 
 // `actingAs` (optional): { id, name, sphereId, sphereName, projectName } — when
 // set, the opening is posted on behalf of that sphere/alliance/project instead
@@ -30,6 +32,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     const choosePicture = (file, isAi = false) => setPicture(file ? { file, isAi, url: URL.createObjectURL(file) } : null);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [place, setPlace] = useState(null);
+    const [posted, setPosted] = useState(0);            // a fresh picker for each opening
 
     useEffect(() => {
         if (!isVisible) return;
@@ -55,6 +59,8 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.title.trim()) { setError('Title is required.'); return; }
+        const wrongPlace = placeProblem(place);
+        if (wrongPlace) { setError(wrongPlace); return; }
         setSubmitting(true);
         setError('');
         try {
@@ -69,16 +75,28 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                 status: 'Posted',
                 acting_as_id: actingAs?.id || undefined,
             });
+            const lost = [];
+            const where = toPayload(place);
+            if (where) {
+                try {
+                    await api.post(`/api/places/openings/${created.data.service_id}`, { place: where });
+                } catch (err) {
+                    lost.push('where it is');
+                }
+            }
             if (picture) {
                 try {
                     const fd = new FormData();
                     fd.append('image', await forUpload(picture.file));
                     await api.post(`/api/openings/${created.data.service_id}/image`, fd);
                 } catch (err) {
-                    setError('Posted, but the picture didn\'t save. You can add one from its page.');
+                    lost.push('the picture');
                 }
                 setPicture(null);
             }
+            if (lost.length) setError(`Posted, but ${lost.join(' and ')} didn't save. You can add that from its page.`);
+            setPlace(null);
+            setPosted((n) => n + 1);
             setSuccess(true);
             setFormData({
                 type: 'offer', title: '', description: '', cadence: 'single',
@@ -156,6 +174,10 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                             <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
                         ))}
                     </select>
+                </div>
+
+                <div>
+                    <PlacePicker key={posted} value={place} onChange={setPlace} label="Where (optional)" />
                 </div>
 
                 {!simple && <div>

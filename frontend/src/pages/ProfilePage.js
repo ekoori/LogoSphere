@@ -13,6 +13,8 @@ import { initialsOf } from '../components/Avatar';
 import { useSimple } from '../utils/useSimple';
 import { MoreInAdvanced } from '../components/UiMode';
 import AiCardHelp from '../components/AiCardHelp';
+import PlaceFields from '../components/PlaceFields';
+import { usePlace } from '../utils/usePlace';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -266,8 +268,9 @@ const ProfilePage = () => {
     const [imageFile, setImageFile] = useState(null);
     // Bumped after a new picture is saved so the avatar <img> refetches it.
     const [avatarVersion, setAvatarVersion] = useState(0);
-    const [editForm, setEditForm] = useState({ name: '', location: '' });
+    const [editForm, setEditForm] = useState({ name: '' });
     const [saving, setSaving] = useState(false);
+    const place = usePlace('users', isEditing ? profileData?.user_id : null);
 
     const navigate = useNavigate();
 
@@ -276,7 +279,7 @@ const ProfilePage = () => {
             const res = await api.get('/api/user/profile');
             const data = res.data;
             setProfileData(data);
-            setEditForm({ name: data.name || '', location: data.location || '' });
+            setEditForm({ name: data.name || '' });
             if (data.user_id) {
                 try {
                     const vcRes = await api.get(`/api/value_cards/${data.user_id}`);
@@ -298,21 +301,23 @@ const ProfilePage = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        if (place.problem) { setError(place.problem); return; }
         setSaving(true);
+        setError(null);
         try {
             const fd = new FormData();
             fd.append('name', editForm.name);
-            fd.append('location', editForm.location);
             if (imageFile) fd.append('profile_picture', imageFile);
             const res = await api.post('/api/updateuser', fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            setProfileData(prev => ({ ...prev, ...res.data }));
+            const placed = await place.save();
+            setProfileData(prev => ({ ...prev, ...res.data, ...(placed && { location: placed.place?.label || '' }) }));
             // A new picture has the same URL: bust the browser's cached copy.
             if (imageFile) setAvatarVersion(Date.now());
             setIsEditing(false);
-        } catch (_) {
-            setError('Failed to save changes.');
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to save changes.');
         } finally {
             setSaving(false);
         }
@@ -384,10 +389,7 @@ const ProfilePage = () => {
                                 onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} />
                         </div>
                         <div className="pf-edit-row">
-                            <label>Location</label>
-                            <input type="text" value={editForm.location}
-                                onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))}
-                                placeholder="City, Country" />
+                            <PlaceFields editor={place} label="Where you are" />
                         </div>
                         <div className="pf-edit-row">
                             <label>Profile image</label>

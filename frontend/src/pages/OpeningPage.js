@@ -16,6 +16,9 @@ import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import { useSimple } from '../utils/useSimple';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
+import PlaceFields from '../components/PlaceFields';
+import { ExactSpot, WhereLine } from '../components/WhereLine';
+import { usePlace } from '../utils/usePlace';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
 import '../styles/EntityPage.css';
@@ -48,6 +51,7 @@ function OpeningPage() {
     // Two-step cancel: first click asks, second confirms (no modal dialogs).
     const [confirmCancel, setConfirmCancel] = useState(false);
     const managed = useManagedEntities(userId);
+    const place = usePlace('openings', editing ? openingId : null);
 
     const fetchService = useCallback(async () => {
         if (!openingId) { setFetchError('No opening ID provided.'); setLoading(false); return; }
@@ -129,21 +133,28 @@ function OpeningPage() {
         if (savingEdit) return;
         const title = editTitle.trim();
         if (!title) { setEditNote({ ok: false, text: 'Title cannot be empty.' }); return; }
+        if (place.problem) { setEditNote({ ok: false, text: place.problem }); return; }
         setSavingEdit(true);
+        // Either change may branch a new version (the old one is frozen because
+        // an exchange links to it): follow to whichever is current now.
+        let currentId = openingId;
         try {
-            const res = await api.patch(`/api/openings/${openingId}`, { title, description: editDesc });
-            setEditing(false);
-            const newId = res.data?.service?.service_id;
-            if (res.data?.versioned && newId && newId !== openingId) {
-                // A new version was branched (the old one is now frozen because
-                // an exchange links to it) — jump to the new current version.
-                navigate(`/opening?id=${newId}`);
-            } else {
-                await fetchService();
-                setEditNote({ ok: true, text: 'Opening updated.' });
+            if (title !== service.title || editDesc !== service.description) {
+                const res = await api.patch(`/api/openings/${openingId}`, { title, description: editDesc });
+                if (res.data?.versioned && res.data.service?.service_id) currentId = res.data.service.service_id;
             }
+            const placed = await place.save(currentId);
+            if (placed?.id) currentId = placed.id;
+            setEditing(false);
+            setEditNote({ ok: true, text: 'Opening updated.' });
+            if (currentId !== openingId) navigate(`/opening?id=${currentId}`);
+            else await fetchService();
         } catch (err) {
             setEditNote({ ok: false, text: err.response?.data?.message || 'Could not save changes.' });
+            if (currentId !== openingId) {      // half of it did save, as a new version
+                setEditing(false);
+                navigate(`/opening?id=${currentId}`);
+            }
         } finally {
             setSavingEdit(false);
         }
@@ -260,6 +271,12 @@ function OpeningPage() {
                             </Link>
                         </>
                     )}
+                    {(service.location || service.distance) && (
+                        <>
+                            <span>·</span>
+                            <WhereLine location={service.location} distance={service.distance} />
+                        </>
+                    )}
                     {service.postedAt && (
                         <>
                             <span>·</span>
@@ -310,6 +327,7 @@ function OpeningPage() {
                                     value={editDesc}
                                     onChange={(e) => setEditDesc(e.target.value)}
                                 />
+                                <PlaceFields editor={place} label="Where" />
                                 <p className="xc-edit-hint">
                                     If an exchange has already started from this opening, saving keeps the
                                     current version and creates a new one, so those exchanges stay unchanged.
@@ -324,7 +342,10 @@ function OpeningPage() {
                                 </div>
                             </form>
                         ) : (
-                            <p className="xc-about-text">{service.description}</p>
+                            <>
+                                <p className="xc-about-text">{service.description}</p>
+                                <ExactSpot key={openingId} point={service.point} />
+                            </>
                         )}
                         {editNote && (
                             <p className={editNote.ok ? 'xc-edit-ok' : 'xc-edit-err'}>{editNote.text}</p>

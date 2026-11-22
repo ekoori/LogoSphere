@@ -56,6 +56,7 @@ function Home() {
                 <button className="btn-orange" onClick={() => { setIsFormVisible((v) => !v); setActiveTab(OPENINGS_TAB); }}>
                     {isFormVisible ? 'Hide New Opening Form' : 'New Opening'}
                 </button>
+                {userId && <Link className="near-link" to="/nearby">Who and what is near you &rarr;</Link>}
                 <ConnectionsPanel ownerId={userId} viewerId={userId} />
             </aside>
             <main>
