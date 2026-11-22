@@ -15,6 +15,7 @@ import '../styles/UserLogin.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLogin } from '../App';  // Import useLogin hook
 import { modeOfAccount } from '../utils/modes';
+import { useMailOn } from '../utils/useMail';
 
 
 
@@ -26,6 +27,21 @@ const UserLogin = () => {
     const [forgot, setForgot] = useState(false);
     const { setIsLoggedIn, setUserId, setUserName, setIsPlatformAdmin, adoptUiMode } = useLogin();
     const navigate = useNavigate();
+    const mailOn = useMailOn();
+    const [asked, setAsked] = useState({});
+
+    const emailLink = async () => {
+        if (!email.trim()) {
+            setAsked({ error: 'Type your email address above first.' });
+            return;
+        }
+        setAsked({ busy: true });
+        try {
+            setAsked({ ok: (await api.post('/api/password/forgot', { email: email.trim() })).data.message });
+        } catch (err) {
+            setAsked({ error: err.response?.data?.message || "That didn't send. Please try again." });
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -87,7 +103,22 @@ const UserLogin = () => {
                         Forgot your password?
                     </button>
                 </p>
-                {forgot && (
+                {forgot && mailOn && (
+                    <div className="auth-forgot">
+                        {asked.ok ? (
+                            <p role="status">{asked.ok}</p>
+                        ) : (
+                            <>
+                                <p>We&rsquo;ll email you a link to choose a new password. It works once, for 2 hours.</p>
+                                {asked.error && <p className="auth-error" role="alert">{asked.error}</p>}
+                                <button type="button" onClick={emailLink} disabled={asked.busy}>
+                                    {asked.busy ? 'Sending…' : 'Email me a reset link'}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
+                {forgot && mailOn === false && (
                     <p className="auth-forgot" role="note">
                         LogoSphere can't send email yet. Ask a platform administrator for a password reset link — it
                         works once, for 24 hours. If you don't know one, write to{' '}

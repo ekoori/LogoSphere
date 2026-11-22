@@ -9,6 +9,7 @@ import { THEME_CHOICES, useTheme } from '../utils/theme';
 import { MODE_CHOICES } from '../utils/modes';
 import { usePlace } from '../utils/usePlace';
 import PlaceFields from '../components/PlaceFields';
+import EmailSettings from '../components/EmailSettings';
 import '../styles/Settings.css';
 
 const MIN_PASSWORD = 8;
@@ -325,6 +326,7 @@ const SettingsPage = () => (
             <nav className="settings-jump" aria-label="Sections">
                 <a href="#account-settings">Your name</a>
                 <a href="#place">Where you are</a>
+                <a href="#email">Email</a>
                 <a href="#simple-or-advanced">Simple or Advanced</a>
                 <a href="#appearance">Appearance</a>
                 <a href="#password">Password</a>
@@ -334,6 +336,7 @@ const SettingsPage = () => (
         </div>
         <AccountSection />
         <PlaceSection />
+        <EmailSettings />
         <ModeSection />
         <AppearanceSection />
         <PasswordSection />

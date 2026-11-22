@@ -53,6 +53,15 @@ const sections = [
                         </dd>
                     </div>
                     <div>
+                        <dt>Email</dt>
+                        <dd>
+                            Whether you confirmed your address, and which notifications you chose to get by email. When
+                            someone starts to join, their name and address for up to a day, until the emailed link is used.
+                            To prevent misuse, we count emails and requests for up to a day, without storing the address or
+                            the connection they count.
+                        </dd>
+                    </div>
+                    <div>
                         <dt>Notifications</dt>
                         <dd>The messages LogoSphere writes for you when something happens that concerns you.</dd>
                     </div>
@@ -178,6 +187,13 @@ const sections = [
                     <div><dt>OpenStreetMap</dt><dd>Draws the map, when you open one (see Places above).</dd></div>
                     <div><dt>Google Fonts</dt><dd>Serves the website's two typefaces, so your browser contacts Google to load them.</dd></div>
                     <div><dt>Anthropic and OpenAI</dt><dd>Write the AI personas in the demo spheres, and give AI help when you ask for it (see above).</dd></div>
+                    <div>
+                        <dt>Mailgun</dt>
+                        <dd>
+                            Delivers email, once it&rsquo;s switched on: joining, password links, and the notifications you
+                            chose. It gets your address and that email. We switch off its tracking of opens and clicks.
+                        </dd>
+                    </div>
                     <div><dt>Google Firebase</dt><dd>Delivers push notifications to Android phones, once they're switched on, with only a notification's text and link.</dd></div>
                     <div><dt>PayPal</dt><dd>Handles donations, if you make one. We get only what PayPal shares about a payment.</dd></div>
                 </dl>
@@ -206,6 +222,7 @@ const sections = [
                 <ul>
                     <li><strong>Change</strong> your name, place and photo any time, in <Link to="/settings">Settings</Link> or on the Me tab in the app.</li>
                     <li><strong>Take a copy</strong> of everything we hold about you: Settings → Your data, or Me → Password, data &amp; account in the app.</li>
+                    <li><strong>Choose</strong> which notifications are emailed (none unless you pick some), or stop them from any of those emails.</li>
                     <li><strong>Leave</strong> any group from its page.</li>
                     <li><strong>Delete</strong> your account yourself, in Settings or the app.</li>
                     <li><strong>Ask</strong> us anything, or for anything those don't cover, at <a href="mailto:privacy@logosphere.net">privacy@logosphere.net</a>.</li>
@@ -240,6 +257,7 @@ export default function Privacy() {
                 'No ads, no analytics, no tracking — and we never sell your data.',
                 'Your group sees what happens in your group; your email stays private.',
                 'Your spot on the map is never shown to other members.',
+                'Notification emails are off until you switch them on.',
                 'AI personas live only in the labelled demo spheres.',
                 'AI help runs only when you press its button, and gets only what you typed there.',
                 'Download everything we hold about you, or delete your account, yourself.',

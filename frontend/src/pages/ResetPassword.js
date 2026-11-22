@@ -1,5 +1,5 @@
 // ResetPassword — where a one-time reset link lands (/reset-password#token=…).
-// A platform admin makes the link for a member who forgot their password; the
+// It is emailed to a member who forgot their password, or made by an admin; the
 // token sits in the URL fragment, which the browser never sends to the server,
 // so it stays out of access logs. It reaches the API only in the POST body.
 import React, { useEffect, useState } from 'react';
@@ -58,7 +58,7 @@ export default function ResetPassword() {
                 <h2>Choose a new password</h2>
                 {!token && (
                     <p className="auth-error">
-                        This page needs the whole reset link. Ask the administrator who sent it for a new one.
+                        This page needs the whole reset link. For a new one, press &ldquo;Forgot your password?&rdquo; on the log in page.
                     </p>
                 )}
                 {error && <p className="auth-error">{error}</p>}
@@ -67,7 +67,7 @@ export default function ResetPassword() {
                 <input type="password" placeholder="New password again" value={again} onChange={(e) => setAgain(e.target.value)}
                        autoComplete="new-password" required disabled={!token} />
                 <button type="submit" disabled={busy || !token}>{busy ? 'Saving…' : 'Set my password'}</button>
-                <p className="auth-alt">The link works once, for 24 hours. <Link to="/login">Back to log in</Link></p>
+                <p className="auth-alt">The link works once, and not for long. <Link to="/login">Back to log in</Link></p>
             </form>
         </div>
     );
