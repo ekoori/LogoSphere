@@ -37,7 +37,8 @@ commit. Tick the boxes as they land.
       flows accepted by Mailgun in test mode first
 - [x] App 0.2.0 installed on Igor's phone; email settings, Privacy, events, nearby and inbox opened there
 - [ ] The rest of S6-S9 used on the phone (actions, map, pickers, signed-out email forms)
-- [ ] A real email delivered
+- [x] A real email delivered (2026-11-23: a confirmation, accepted by the recipient's provider over TLS within a
+      second; whether it lands in the inbox or in spam is for the recipient to say)
 - [ ] Signed-in screens of S6-S9 looked at on production
 
 How S6-S9 were checked: the backend suite on the host under keyspace_guard; the site against a local stand-in, whose
