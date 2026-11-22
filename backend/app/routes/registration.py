@@ -12,7 +12,7 @@ from flask import request, jsonify
 from app.models.user import User
 from app.models.spheres import Sphere
 from app.routes.demo import invite_to_demo
-from app.utils import mailer
+from app.utils import invites, mailer
 
 
 def welcome(user_id):
@@ -41,4 +41,7 @@ def register():
     if not user:
         return jsonify({'message': 'Registration failed.'}), 400
     welcome(user.user_id)
+    if data.get('invite'):
+        from app.routes.invites import arrived
+        arrived(invites.hashed(data['invite']), user.user_id)
     return jsonify({'reg_success': True, 'message': 'User registered successfully.', 'user_id': user.user_id}), 200

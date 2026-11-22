@@ -21,7 +21,8 @@ from app.models.notification import Notification
 from app.models.openings import Service
 from app.models.value_card import ValueCard
 from app.routes.entities import KINDS, _entity_id, _members, _roles
-from app.utils import email_accounts, email_news, mailer, messaging, password_reset, places, preferences, safety
+from app.utils import (announcements, email_accounts, email_news, events, invites, mailer, messaging, password_reset,
+                       places, preferences, safety)
 from app.utils.accounts import MIN_PASSWORD_LEN, end_sessions, password_matches, remove_account, set_password
 
 logger = logging.getLogger(__name__)
@@ -142,6 +143,9 @@ def export_data(user_id=None):
         'following': following,
         'followers': followers,
         'messages': messaging.export(uid),
+        'events': events.export(uid),
+        'announcements': announcements.export(uid),
+        'invitations': invites.export(uid),
         'blocked': [str(who) for who, _ in safety.blocked_by(uid)],
         'reports_made': [{'kind': r.kind, 'note': r.note, 'at': r.made_at, 'status': r.status}
                          for r in safety.all_reports() if r.reporter_id == uid],

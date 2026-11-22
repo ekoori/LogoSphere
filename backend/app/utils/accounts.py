@@ -66,7 +66,9 @@ def remove_account(user_id):
     forget_judge(tid)
     from app.utils.assist import forget as forget_ai_uses
     forget_ai_uses(tid)
-    from app.utils import email_accounts, messaging, password_reset, safety
+    from app.utils import email_accounts, events, invites, messaging, password_reset, safety
+    events.forget(tid)
+    invites.forget(tid)
     messaging.forget(tid)
     safety.forget(tid)
     email_accounts.forget(tid)

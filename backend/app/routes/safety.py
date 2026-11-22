@@ -2,8 +2,9 @@
 
   GET  /api/blocks                     whom you blocked
   POST /api/blocks/<person>            {blocked}
-  POST /api/reports                    {kind: person|message|acknowledgement|opening, id, note,
-                                        person_id (a message), trail_id (an acknowledgement)}
+  POST /api/reports                    {kind: person|message|acknowledgement|opening|event|announcement, id, note,
+                                        person_id (a message), trail_id (an acknowledgement),
+                                        group_id (an announcement)}
   GET  /api/admin/reports?status=      the administrators' queue
   POST /api/admin/reports/<id>         {status: handled|dismissed, note, remove}
 """
@@ -15,13 +16,13 @@ from app.models.acknowledgement import Acknowledgement
 from app.models.notification import Notification
 from app.models.openings import Service
 from app.routes.admin import admin_only
-from app.utils import mailer, messaging, safety
+from app.utils import announcements, events, groups, mailer, messaging, safety
 from app.utils.access import Sight, as_uuid
 from app.utils.names import resolve_user_names
 from app.utils.trails import Trail
 
 REPORTS_A_DAY = 20
-REMOVABLE = ('message', 'acknowledgement')
+REMOVABLE = ('message', 'acknowledgement', 'announcement')
 
 
 def _options():
@@ -83,6 +84,17 @@ def _reported(me, data):
             return None
         words = f"{opening.title or ''}: {opening.description or ''}"
         return messaging.contact(opening), opening.service_id, None, words
+    if kind == 'event':
+        event = events.get(item)
+        if not event or not event.visible(Sight(me)):
+            return None
+        return event.creator_id, event.event_id, None, f"{event.title or ''}: {event.description or ''}"
+    if kind == 'announcement':
+        group = groups.find(data.get('group_id'))
+        if not group or not announcements.readable(Sight(me), group):
+            return None
+        said = announcements.get(group.id, item)
+        return (said.author_id, said.announcement_id, group.id, said.body) if said else None
     if kind == 'message':
         other, key = as_uuid(data.get('person_id')), messaging.message_key(item)
         if not other or not key:
@@ -106,7 +118,7 @@ def make_report(user_id=None):
     if request.method == 'OPTIONS':
         return _options()
     me, data = as_uuid(user_id), _body()
-    if data.get('kind') not in ('person', 'message', 'acknowledgement', 'opening'):
+    if data.get('kind') not in ('person', 'message', 'acknowledgement', 'opening', 'event', 'announcement'):
         return jsonify({'message': 'Say what you are reporting.'}), 400
     note = _said(data.get('note'))
     if len(note) > safety.NOTE_MAX:
@@ -160,10 +172,12 @@ def settle_report(report_id, user_id=None):
         return jsonify({'message': 'Handled or dismissed?'}), 400
     if data.get('remove') is True:
         if report.kind not in REMOVABLE or data['status'] != safety.HANDLED:
-            return jsonify({'message': 'Only a message or an acknowledgement can be removed, when handling it.'}), 400
+            return jsonify({'message': 'Only a message, acknowledgement or announcement can be removed, when handling it.'}), 400
         if report.kind == 'message':
             key = messaging.message_key(report.item_id)
             messaging.remove(report.context_id, key, report.reporter_id, report.subject_id)
+        elif report.kind == 'announcement':
+            announcements.remove(report.context_id, report.item_id)
         else:
             ack = Acknowledgement.find(report.context_id, report.item_id)
             if ack:

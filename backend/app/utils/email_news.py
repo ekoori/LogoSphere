@@ -21,8 +21,8 @@ EXCHANGES, MESSAGES, GROUPS, THANKS, PERSONAS = 'exchanges', 'messages', 'groups
 TOPICS = (
     (EXCHANGES, 'Offers, needs and exchanges', 'Someone takes up, confirms or withdraws one, or leaves you a receipt.'),
     (MESSAGES, 'Messages', 'Someone writes to you. The email never has their words.'),
-    (GROUPS, 'Your groups', 'A new proposal in a group you belong to.'),
-    (THANKS, 'Thanks and follows', 'An acknowledgement, a highlight, or a new follower.'),
+    (GROUPS, 'Your groups', 'A proposal, event or announcement, or a change to an event you said you might come to.'),
+    (THANKS, 'Thanks and follows', 'An acknowledgement, a highlight, a follower, or someone who came with your invitation.'),
     (PERSONAS, 'AI personas too', 'Also when it is one of the AI personas from the demo spheres.'),
 )
 KEYS = tuple(key for key, _, _ in TOPICS)
@@ -39,6 +39,10 @@ KINDS = {
     'proposal_opened': (GROUPS, 'A new proposal in your group'),
     'acknowledgement': (THANKS, 'A new acknowledgement'),
     'acknowledgement_highlighted': (THANKS, 'Your acknowledgement was highlighted'),
+    'event_new': (GROUPS, 'A new event in your group'),
+    'event_changed': (GROUPS, 'An event changed'),
+    'announcement': (GROUPS, 'A new announcement in your group'),
+    'invite_accepted': (THANKS, 'Your invitation was used'),
     'new_follower': (THANKS, 'You have a new follower'),
     'demo_invite': None,
     'report': None,

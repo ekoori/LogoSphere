@@ -75,6 +75,9 @@ tags:
   - name: Email
   - name: Messages
   - name: Safety
+  - name: Events
+  - name: Announcements
+  - name: Invitations
 
 paths:
 
@@ -212,6 +215,7 @@ paths:
               properties:
                 name: { type: string }
                 email: { type: string, format: email }
+                invite: { type: string, description: An invitation link's code }
                 password:
                   type: string
                   minLength: 8
@@ -3111,7 +3115,7 @@ paths:
 
   /api/places/{kind}/{owner_id}:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [users, spheres, alliances, projects, openings] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [users, spheres, alliances, projects, openings, events] } }
       - { name: owner_id, in: path, required: true, schema: { type: string, format: uuid } }
     get:
       summary: A place, whole
@@ -3535,7 +3539,8 @@ paths:
               type: object
               required: [kind, id]
               properties:
-                kind: { type: string, enum: [person, message, acknowledgement, opening] }
+                kind: { type: string, enum: [person, message, acknowledgement, opening, event, announcement] }
+                group_id: { type: string, description: "An announcement: whose" }
                 id: { type: string }
                 person_id: { type: string, description: "A message: who you were talking with" }
                 trail_id: { type: string, description: "An acknowledgement: whose trail" }
@@ -3582,6 +3587,216 @@ paths:
         '403': { description: Platform administrators only. }
         '404': { description: No such report. }
       tags: [Administration]
+
+  /api/events:
+    get:
+      summary: What's on, soonest first
+      operationId: listEvents
+      parameters:
+        - { name: group, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: "`events`: each an Event with `upcoming`, its next time. Only what you may see." }
+        '400': { description: "Not a group id." }
+      tags: [Events]
+    post:
+      summary: Put on an event
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventFields' }
+      responses:
+        '201': { content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } }, description: Made. The group's members are told. }
+        '400': { description: "No name, time or zone, or it has passed." }
+        '403': { description: "Not a member of that group." }
+        '404': { description: "No such group." }
+        '429': { description: "Too many for one day." }
+      tags: [Events]
+
+  /api/events/{event_id}:
+    parameters:
+      - { name: event_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: One event
+      operationId: getEvent
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } }, description: The event. }
+        '404': { description: "Not there, or not yours to see." }
+      tags: [Events]
+    patch:
+      summary: Change an event
+      operationId: editEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventFields' }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } }, description: The event. }
+        '400': { description: "Not an event." }
+        '403': { description: "Not yours to change." }
+        '404': { description: "Not there." }
+        '409': { description: "Cancelled." }
+      tags: [Events]
+
+  /api/events/{event_id}/cancel:
+    parameters:
+      - { name: event_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Cancel it, or one of its dates
+      operationId: cancelEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { day: { type: string, format: date }, cancelled: { type: boolean } } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } }, description: The event. }
+        '400': { description: "Not one of its dates." }
+        '403': { description: "Not yours to change." }
+        '404': { description: "Not there." }
+        '409': { description: "All of it was cancelled already." }
+      tags: [Events]
+
+  /api/events/{event_id}/reply:
+    parameters:
+      - { name: event_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Say whether you are coming
+      operationId: replyEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [day, answer], properties: { day: { type: string, format: date }, answer: { type: string, nullable: true, enum: [going, maybe, "no", null] } } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } }, description: The event. }
+        '400': { description: "Not a date or answer." }
+        '404': { description: "Not there." }
+        '409': { description: "That one isn't on." }
+      tags: [Events]
+
+  /api/events/{event_id}/image:
+    parameters:
+      - { name: event_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: An event's picture
+      operationId: getEventImage
+      responses:
+        '200': { description: The picture, privately cacheable. }
+        '404': { description: "None, or not yours to see." }
+      tags: [Events]
+    post:
+      summary: Set an event's picture
+      operationId: setEventImage
+      responses:
+        '200': { description: "Saved (multipart, field image)." }
+        '400': { description: "Not a picture." }
+        '403': { description: "Not yours to change." }
+        '404': { description: "Not there." }
+      tags: [Events]
+
+  /api/announcements/{group_id}:
+    parameters:
+      - { name: group_id, in: path, required: true, schema: { type: string } }
+    get:
+      summary: A group's announcements
+      operationId: listAnnouncements
+      responses:
+        '200': { description: "`announcements` newest first, and `can_announce`." }
+        '404': { description: "Not there, or not yours to read." }
+      tags: [Announcements]
+    post:
+      summary: Announce to a group's members
+      operationId: makeAnnouncement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [text], properties: { text: { type: string, maxLength: 2000 } } }
+      responses:
+        '201': { description: Announced. Notifications never carry its words. }
+        '400': { description: "No words." }
+        '403': { description: "Not a manager." }
+        '404': { description: "Not there." }
+        '429': { description: "Enough for one day." }
+      tags: [Announcements]
+
+  /api/announcements/{group_id}/{announcement_id}:
+    parameters:
+      - { name: group_id, in: path, required: true, schema: { type: string } }
+      - { name: announcement_id, in: path, required: true, schema: { type: string } }
+    delete:
+      summary: Remove an announcement
+      operationId: removeAnnouncement
+      responses:
+        '200': { description: Done. }
+        '403': { description: "Neither its writer nor a manager." }
+        '404': { description: "Not there." }
+      tags: [Announcements]
+
+  /api/invites:
+    get:
+      summary: Invitations you made
+      operationId: listInvites
+      responses:
+        '200': { description: "Yours, with how many joined. Never the codes." }
+      tags: [Invitations]
+    post:
+      summary: Make an invitation link
+      operationId: makeInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, properties: { group_id: { type: string, format: uuid } } }
+      responses:
+        '201': { description: "`path` is the link, with its code in the fragment: shown only now." }
+        '403': { description: "Not yours to invite to." }
+        '404': { description: "No such group." }
+        '429': { description: "Too many out." }
+      tags: [Invitations]
+
+  /api/invites/look:
+    post:
+      summary: Who invites to what
+      operationId: lookInvite
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [code], properties: { code: { type: string } } }
+      responses:
+        '200': { description: Done. }
+        '404': { description: "It doesn't work." }
+      tags: [Invitations]
+
+  /api/invites/accept:
+    post:
+      summary: Use an invitation
+      operationId: acceptInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [code], properties: { code: { type: string } } }
+      responses:
+        '200': { description: Done. }
+        '404': { description: "It doesn't work." }
+      tags: [Invitations]
+
+  /api/invites/{invite_id}/revoke:
+    parameters:
+      - { name: invite_id, in: path, required: true, schema: { type: string } }
+    post:
+      summary: Revoke an invitation
+      operationId: revokeInvite
+      responses:
+        '200': { description: Done. }
+        '404': { description: "Not one of yours." }
+      tags: [Invitations]
 
 components:
   securitySchemes:
@@ -3734,6 +3949,45 @@ components:
           type: object
           nullable: true
           properties: { id: { type: string }, title: { type: string } }
+
+    EventFields:
+      type: object
+      description: Required when making one, `title`, `starts` and `tz`.
+      properties:
+        title: { type: string, maxLength: 120 }
+        description: { type: string }
+        host_id: { type: string, format: uuid, description: "The group putting it on, when making one. None is for everyone" }
+        starts: { type: string, example: "2027-03-25T19:00", description: The wall-clock time in `tz` }
+        tz: { type: string, example: Europe/Paris }
+        length_min: { type: integer, minimum: 15, maximum: 10080 }
+        repeats: { type: string, enum: [never, weekly, fortnightly, monthly, monthly_weekday] }
+        until: { type: string, format: date, nullable: true }
+
+    Event:
+      allOf:
+        - $ref: '#/components/schemas/EventFields'
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            host: { type: object, nullable: true }
+            cancelled: { type: boolean }
+            can_manage: { type: boolean }
+            location: { type: string, nullable: true }
+            distance: { type: object, nullable: true }
+            point: { type: object, nullable: true, description: Only where it was shown exactly }
+            times:
+              type: array
+              items:
+                type: object
+                properties:
+                  day: { type: string, format: date, description: Its local date }
+                  starts_at: { type: string, description: UTC }
+                  ends_at: { type: string, description: UTC }
+                  skipped: { type: boolean }
+                  going: { type: integer }
+                  maybe: { type: integer }
+                  my_answer: { type: string, nullable: true }
+                  people: { type: array, items: { type: object } }
 
     SessionStatus:
       type: object

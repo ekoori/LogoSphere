@@ -28,6 +28,8 @@ LINKS_DDL = ('CREATE TABLE IF NOT EXISTS email_links ('
              'link_hash text PRIMARY KEY, purpose text, email text, name text, user_id uuid, made_at timestamp) '
              'WITH default_time_to_live = 86400')
 USER_DDL = 'ALTER TABLE users ADD IF NOT EXISTS email_confirmed_at timestamp'
+# The invitation someone is signing up with, as its hash (app/utils/invites.py).
+INVITE_DDL = 'ALTER TABLE email_links ADD IF NOT EXISTS invite text'
 
 # Account email, at most: per address an hour, per address a day, altogether a day.
 PER_ADDRESS_HOUR, PER_ADDRESS_DAY, ALL_DAY = 3, 8, 300
@@ -35,6 +37,7 @@ PER_ADDRESS_HOUR, PER_ADDRESS_DAY, ALL_DAY = 3, 8, 300
 
 def ensure_tables():
     session.execute(LINKS_DDL)
+    session.execute(INVITE_DDL)
     session.execute(USER_DDL)
 
 
@@ -42,18 +45,19 @@ def _hash(token):
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-def _issue(purpose, email, name=None, user_id=None):
+def _issue(purpose, email, name=None, user_id=None, invite=None):
     token = secrets.token_urlsafe(32)
     session.execute(
-        'INSERT INTO email_links (link_hash, purpose, email, name, user_id, made_at) VALUES (%s, %s, %s, %s, %s, %s)',
-        [_hash(token), purpose, email, name, user_id, datetime.utcnow()])
+        'INSERT INTO email_links (link_hash, purpose, email, name, user_id, invite, made_at) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+        [_hash(token), purpose, email, name, user_id, invite, datetime.utcnow()])
     return token
 
 
 def _read(purpose, token):
     if not isinstance(token, str) or not 20 <= len(token) <= 200:
         return None
-    row = session.execute('SELECT purpose, email, name, user_id FROM email_links WHERE link_hash = %s', [_hash(token)]).one()
+    row = session.execute('SELECT purpose, email, name, user_id, invite FROM email_links WHERE link_hash = %s', [_hash(token)]).one()
     return row if row and row.purpose == purpose else None
 
 
@@ -86,30 +90,30 @@ def set_confirmed(user_id):
 
 
 # -- Joining -----------------------------------------------------------------
-def send_sign_up(email, name):
+def send_sign_up(email, name, invite=None):
     """Either letter looks the same from outside: who has an account isn't told."""
     if not _may_write(email):
         return
     if _account(email):
         mailer.send(email, mails.have_account(mailer.site('/login')), 'sign-up')
         return
-    token = _issue(SIGNUP, email, name=name)
+    token = _issue(SIGNUP, email, name=name, invite=invite)
     mailer.send(email, mails.finish_sign_up(mailer.site(f'/join#token={token}'), LINK_HOURS), 'sign-up')
 
 
 def finish_sign_up(token, password):
-    """(the new User, None) or (None, why not: 'expired' | 'taken')."""
+    """(the new User, None, the invitation's hash if any) or (None, 'expired' | 'taken', None)."""
     from app.models.user import User        # models import utils
     link = _read(SIGNUP, token)
     if not link or not _spend(token):
-        return None, 'expired'
+        return None, 'expired', None
     if _account(link.email):
-        return None, 'taken'
+        return None, 'taken', None
     user = User.register({'name': link.name, 'email': link.email, 'password': password})
     if not user:
-        return None, 'taken'
+        return None, 'taken', None
     set_confirmed(user.user_id)
-    return user, None
+    return user, None, link.invite
 
 
 # -- A forgotten password ----------------------------------------------------

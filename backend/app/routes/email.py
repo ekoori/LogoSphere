@@ -15,8 +15,9 @@ from flask import current_app as app, jsonify, redirect, request
 
 from app.middleware.session_middleware import validate_session
 from app.models.user import normalize_email
+from app.routes.invites import arrived
 from app.routes.registration import welcome
-from app.utils import email_accounts, email_news, mailer
+from app.utils import email_accounts, email_news, groups, invites, mailer
 from app.utils.accounts import MIN_PASSWORD_LEN
 
 ASKS_PER_NETWORK_HOUR = 30      # a hall of people joining together share one
@@ -57,7 +58,7 @@ def begin_sign_up(data):
     refused = too_many_asks()
     if refused:
         return refused
-    mailer.queue(email_accounts.send_sign_up, email, name)
+    mailer.queue(email_accounts.send_sign_up, email, name, invites.hashed(data.get('invite')))
     return jsonify({'reg_success': True, 'confirm_email': True,
                     'message': 'Check your email: there is a link to finish joining.'}), 200
 
@@ -73,13 +74,15 @@ def finish_sign_up():
     password = _said(data.get('password'))
     if len(password) < MIN_PASSWORD_LEN:
         return jsonify({'message': f'A password needs at least {MIN_PASSWORD_LEN} characters.'}), 400
-    user, why = email_accounts.finish_sign_up(data.get('token'), password)
+    user, why, invite = email_accounts.finish_sign_up(data.get('token'), password)
     if why == 'taken':
         return jsonify({'message': 'There is an account with this email already. Log in with it.'}), 400
     if why:
         return jsonify({'message': 'This link has expired or was already used. Sign up again for a new one.'}), 400
     welcome(user.user_id)
+    joined = arrived(invite, user.user_id)
     return jsonify({'reg_success': True, 'user_id': str(user.user_id), 'email': user.email,
+                    'invited_to': groups.summary(joined[1]) if joined else None,
                     'message': 'Your account is ready.'}), 200
 
 

@@ -22,7 +22,8 @@ DDL = (
     'excerpt text, note text, made_at timestamp, status text, handled_by uuid, handled_at timestamp, outcome text)',
 )
 # Notifications that are only social: none arrive from someone you blocked.
-SOCIAL = ('message', 'new_follower', 'acknowledgement', 'acknowledgement_highlighted')
+SOCIAL = ('message', 'new_follower', 'acknowledgement', 'acknowledgement_highlighted', 'event_new', 'announcement',
+          'invite_accepted')
 
 OPEN, HANDLED, DISMISSED = 'open', 'handled', 'dismissed'
 EXCERPT_MAX, NOTE_MAX = 500, 1000

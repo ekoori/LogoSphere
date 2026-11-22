@@ -23,8 +23,10 @@ KINDS = {
     'alliances': ('alliances', 'alliance_id', False),
     'projects': ('projects', 'project_id', False),
     'openings': ('services', 'service_id', False),
+    'events': ('events', 'event_id', False),
 }
-DDL = [f'ALTER TABLE {table} ADD IF NOT EXISTS place text' for table, _, _ in KINDS.values()]
+# (events is newer than places: its table is made with the column.)
+DDL = [f'ALTER TABLE {table} ADD IF NOT EXISTS place text' for table, _, _ in KINDS.values() if table != 'events']
 LABEL_MAX = 120
 
 

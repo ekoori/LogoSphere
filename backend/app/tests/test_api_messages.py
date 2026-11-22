@@ -4,92 +4,11 @@ import re
 import uuid
 from pathlib import Path
 
-import pytest
-
+from conftest import PERSON_PASSWORD
 from app.models.notification import Notification
-from app.utils import mailer, messaging, safety
+from app.utils import messaging
 
-PASSWORD = 'a-long-password-1'
 APP = Path(__file__).resolve().parents[1]
-
-
-class Person:
-    def __init__(self, client, email, user_id, token):
-        self.client, self.email, self.id = client, email, user_id
-        self.headers = {'Authorization': f'Bearer {token}'}
-
-    def get(self, path):
-        r = self.client.get(path, headers=self.headers)
-        return r.status_code, r.get_json(silent=True)
-
-    def post(self, path, json=None):
-        r = self.client.post(path, headers=self.headers, json=json if json is not None else {})
-        return r.status_code, r.get_json(silent=True)
-
-    def told(self, kind):
-        return [n for n in self.get('/api/notifications')[1]['notifications'] if n['type'] == kind]
-
-
-@pytest.fixture
-def people(app, db, keep_rows, test_admin, monkeypatch):
-    """Ada and Ben share only a sphere of their own; Cy shares nothing with either."""
-    from app.models.spheres import Sphere
-    used, run = set(), uuid.uuid4().hex
-
-    def bucket(name):
-        key = f'test:{run}:{name}'
-        used.add(key)
-        return key
-
-    monkeypatch.setattr(mailer, '_bucket', bucket)              # never the real allowances
-    monkeypatch.setattr(safety, 'administrators', lambda: [test_admin])     # never the real one's inbox
-    sandboxes = Sphere.sandbox_ids()
-    for sid in sandboxes:
-        keep_rows('spheres', sphere_id=sid)
-    made = {}
-    for name in ('Ada', 'Ben', 'Cy'):
-        client = app.test_client()
-        email = f'test-{name.lower()}-{uuid.uuid4().hex[:10]}@example.com'
-        r = client.post('/api/register', json={'name': f'Test {name}', 'email': email, 'password': PASSWORD})
-        assert r.status_code == 200, r.get_json()
-        uid = uuid.UUID(str(r.get_json()['user_id']))
-        token = client.post('/api/login', json={'email': email, 'password': PASSWORD}).get_json()['session_id']
-        made[name.lower()] = Person(client, email, uid, token)
-        for sid in sandboxes:       # a sandbox would make every newcomer sphere-mates
-            db.execute('UPDATE spheres SET participants = participants - %s WHERE sphere_id = %s', [[uid], sid])
-    status, shared = made['ada'].post('/api/spheres', {'name': 'Messages test sphere (delete me)', 'description': 'x'})
-    assert status == 201, shared
-    sphere = uuid.UUID(shared['sphere_id'])
-    assert made['ben'].post(f'/api/spheres/{sphere}/join')[0] in (200, 201)
-    made['sphere'] = sphere
-    yield made
-
-    ids = {p.id for p in (made['ada'], made['ben'], made['cy'])}
-    everyone = list(ids)
-    for a in everyone:
-        for b in everyone:
-            if str(a) < str(b):
-                db.execute('DELETE FROM direct_messages WHERE conversation_id = %s', [messaging.conversation(a, b)])
-        for table in ('message_inbox', 'notifications', 'blocks', 'trail_acknowledgements'):
-            key = 'trail_id' if table == 'trail_acknowledgements' else 'user_id'
-            db.execute(f'DELETE FROM {table} WHERE {key} = %s', [a])
-        db.execute('DELETE FROM follows WHERE follower_id = %s', [a])
-        for table in ('users', 'user_credentials'):
-            db.execute(f'DELETE FROM {table} WHERE user_id = %s', [a])
-    for r in db.execute('SELECT session_id, user_id FROM sessions'):
-        if r.user_id in ids:
-            db.execute('DELETE FROM sessions WHERE session_id = %s', [r.session_id])
-    for r in db.execute('SELECT report_id, reporter_id FROM reports'):
-        if r.reporter_id in ids:
-            db.execute('DELETE FROM reports WHERE report_id = %s', [r.report_id])
-    for r in db.execute('SELECT service_id, provider_id FROM services'):
-        if r.provider_id in ids:
-            for table in ('services', 'opening_acceptances', 'opening_likes'):
-                db.execute(f'DELETE FROM {table} WHERE service_id = %s', [r.service_id])
-    db.execute('DELETE FROM spheres WHERE sphere_id = %s', [sphere])
-    db.execute('DELETE FROM notifications WHERE user_id = %s', [test_admin])
-    for key in used:
-        db.execute('DELETE FROM mail_counts WHERE bucket = %s', [key])
 
 
 def say(sender, to, text='Hello there', **more):
@@ -296,7 +215,7 @@ def test_export_has_messages_and_leaving_keeps_the_others_copy(people):
     assert data['messages'][0]['messages'][0]['text'] == 'Kept for both'
     assert data['blocked'] == [str(people['cy'].id)]
 
-    assert ada.post('/api/account/delete', {'password': PASSWORD})[0] == 200
+    assert ada.post('/api/account/delete', {'password': PERSON_PASSWORD})[0] == 200
     left = ben.get(f'/api/messages/{ada.id}')[1]
     assert left['person']['name'] == 'A former member' and left['can_send'] is False
     assert [m['text'] for m in left['messages']] == ['Kept for both']

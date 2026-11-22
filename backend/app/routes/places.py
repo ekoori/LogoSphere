@@ -6,6 +6,8 @@
   POST /api/places/<kind>/<id>   set or clear it
   GET  /api/nearby               members who chose to be findable, and spheres, near you
 """
+from datetime import datetime
+
 from flask import current_app as app, jsonify, request
 
 from app.db import session
@@ -15,8 +17,8 @@ from app.models.openings import Service
 from app.models.project import Project
 from app.models.spheres import Sphere
 from app.routes.openings import _is_provider_or_manager
-from app.utils import gazetteer, geo, places, safety
-from app.utils.access import as_uuid
+from app.utils import events, gazetteer, geo, places, safety
+from app.utils.access import Sight, as_uuid
 from app.utils.permissions import can_manage_entity
 from app.utils.search_vectors import invalidate_index
 
@@ -51,6 +53,11 @@ def _refusal(kind, owner_id, viewer):
         if not opening.is_current:
             return 'This is a past version and can no longer be edited', 409
         return None
+    if kind == 'events':
+        event = events.get(owner)
+        if not event or not event.visible(Sight(viewer)):
+            return 'Not found', 404
+        return None if event.managed(viewer) else ("Only whoever put it on, or the group's managers, can say where it is.", 403)
     if not MODELS[kind].get_by_id(owner):
         return 'Not found', 404
     return None if can_manage_entity(owner, viewer) else ('Only its managers can say where it is.', 403)
@@ -112,7 +119,15 @@ def set_place(kind, owner_id, user_id=None):
             return jsonify({'message': str(e)}), 400
         if kind == 'openings':
             owner_id = _version_to_change(owner_id, place)
+        moved = None
+        if kind == 'events':
+            event = events.get(owner_id)
+            was = places.load(event.place)
+            moved = event if was and was != place and event.upcoming(datetime.utcnow()) else None
         places.save(kind, owner_id, place, findable=data.get('findable') is True)
+        if moved:       # it was somewhere, and now is somewhere else
+            from app.routes.events import tell_expecting
+            tell_expecting(moved, user_id, f'The place changed: "{moved.title}"')
     elif kind == 'users' and isinstance(data.get('findable'), bool):
         if not places.set_findable(owner_id, data['findable']):
             return jsonify({'message': 'Put yourself on the map first, then others can find you.'}), 400

@@ -294,6 +294,11 @@ def delete_entity(kind, entity_id, user_id=None):
             session.execute("UPDATE spheres SET projects = projects - %s WHERE sphere_id = %s",
                             [[entity.name], entity.sphere_id])
 
+    from app.routes.events import group_deleted
+    from app.utils import announcements, invites
+    group_deleted(eid, user_id)         # first: those coming are told while they can still see it
+    announcements.forget_group(eid)
+    invites.forget_group(eid)
     session.execute("DELETE FROM value_cards WHERE user_id = %s", [eid])
     session.execute(f"DELETE FROM {k['table']} WHERE {k['id_col']} = %s", [eid])
     invalidate_index()
