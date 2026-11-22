@@ -72,7 +72,7 @@ function Why({ edge, node, other, onJudged }) {
                                 const [here, there] = thisIsA ? [w.here, w.there] : [w.there, w.here];
                                 return (
                                     <li key={w.counts_as}>
-                                        <b>{here.join(', ')}</b> ↔ <b>{there.join(', ')}</b>
+                                        <b>{here.join(', ')}</b> ≈ <b>{there.join(', ')}</b>
                                         {w.family && <span> (counted as {w.counts_as})</span>}
                                     </li>
                                 );

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -283,7 +284,8 @@ fun GraphScreen(startOwner: String?) {
                     }
                 }
 
-                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                // As tall with a card chosen as without, so the graph doesn't shift under the finger.
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth().heightIn(min = 116.dp)) {
                     if (chosen != null) {
                         ChosenCard(chosen, shown.degree[chosen.id] ?: 0, onOpen = { details = true })
                     } else {

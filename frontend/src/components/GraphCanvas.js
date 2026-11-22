@@ -13,7 +13,8 @@ const MAX_ZOOM = 4;
 const HIT_PX = 16; // at least this far from a node still hits it
 const LABEL_ZOOM = 1.05;
 const STEPS_A_FRAME = 2; // so it settles in about two seconds
-const GLYPH_FROM = 6; // smaller than this and the glyph is a smudge
+const ZOOM_BUTTONS = { wide: 56, high: 144 }; // their corner: no label runs under them
+const GLYPH_FROM = 5; // smaller than this and the glyph is a smudge
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 const radiusFor = (degree) => 5.5 + Math.min(9, Math.sqrt(degree || 0) * 2.3);
 const stillPlease = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -143,6 +144,7 @@ export default function GraphCanvas({ nodes, edges, degree, found, selected, onS
                 .map((top) => ({ y: top, l: x - w / 2 - 3, r: x + w / 2 + 3, t: top - 1, b: top + 15 }))
                 .find((box) => n.id === centre || (
                     box.l >= 0 && box.r <= s.width && box.t >= 0 && box.b <= s.height
+                    && !(box.r > s.width - ZOOM_BUTTONS.wide && box.t < ZOOM_BUTTONS.high)
                     && !taken.some((o) => overlaps(box, o))
                     && !marks.some((o) => o.id !== n.id && overlaps(box, o))
                 ));

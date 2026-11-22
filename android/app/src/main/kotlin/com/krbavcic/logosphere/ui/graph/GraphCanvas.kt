@@ -58,6 +58,10 @@ private const val STEPS_A_FRAME = 2
 private const val UNSEEN_STEPS = 40
 private const val MAX_LABEL = 34
 
+/** The corner the screen's zoom buttons sit in: no label runs under them. */
+private val BUTTONS_WIDE = 56.dp
+private val BUTTONS_HIGH = 156.dp
+
 /** The colour of a kind of meaning. Never alone: its glyph is drawn in it, its word is beside it. */
 internal fun BrandColors.meaning(mode: FranklMode): Color = when (mode) {
     FranklMode.Creative -> graphCreative
@@ -320,7 +324,7 @@ fun GraphCanvas(
                 drawCircle(fill, r, at, alpha = alpha)
                 drawCircle(surface, r, at, alpha = alpha, style = ring)
             }
-            if (r >= 6.dp.toPx()) {
+            if (r >= 5.dp.toPx()) {
                 val glyph = measurer.measure(
                     node.mode.glyph,
                     TextStyle(fontSize = (r * 1.15f).roundToInt().toFloat().toSp(), fontWeight = FontWeight.Bold),
@@ -346,6 +350,7 @@ fun GraphCanvas(
         val allow = if (centre != null || searching || zoom >= LABEL_ZOOM) wanted.size else max(6, wanted.size / 5)
         val halo = Stroke(width = 3.dp.toPx(), join = StrokeJoin.Round)
         val placed = ArrayList<Rect>()
+        val buttons = Rect(size.width - BUTTONS_WIDE.toPx(), 0f, size.width, BUTTONS_HIGH.toPx())
         for (node in wanted) {
             if (placed.size >= allow) break
             val body = bodies[node.id]?.takeIf { bright(node.id) } ?: continue
@@ -359,7 +364,7 @@ fun GraphCanvas(
                 .firstOrNull { box ->
                     node.id == centre || (
                         box.left >= 0 && box.right <= size.width && box.top >= 0 && box.bottom <= size.height &&
-                            placed.none { it.overlaps(box) } &&
+                            !box.overlaps(buttons) && placed.none { it.overlaps(box) } &&
                             marks.none { (id, mark) -> id != node.id && mark.overlaps(box) }
                         )
                 } ?: continue

@@ -198,7 +198,8 @@ private fun Why(edge: GraphEdge, node: GraphNode, other: GraphNode, busy: Boolea
             val here = if (edge.a == node.id) word.here else word.there
             val there = if (edge.a == node.id) word.there else word.here
             val family = if (word.family) " (counted as ${word.countsAs})" else ""
-            MetaText("${here.joinToString(", ")} ↔ ${there.joinToString(", ")}$family", maxLines = 3)
+            // Not ↔, which phones draw as an emoji.
+            MetaText("${here.joinToString(", ")} ≈ ${there.joinToString(", ")}$family", maxLines = 3)
         }
         val simple = LocalSimple.current
         if (!simple || edge.people > 0) Part("Lived together", if (edge.people > 0) "${edge.people} people" else "not yet")
