@@ -11,6 +11,7 @@ from flask import request, jsonify, current_app as app, Response
 from app.models.user import User
 from app.models.follow import Follow
 from app.models.notification import Notification
+from app.utils import messaging, safety
 from app.utils.validation import is_supported_image
 from app.utils.pictures import picture_response
 from app.utils.permissions import is_platform_admin
@@ -61,10 +62,12 @@ def toggle_follow(target_id, user_id=None):
         # for a person who doesn't exist.
         if not User.get(str(target_id)):
             return jsonify({'message': 'User not found'}), 404
+        if safety.between(user_id, target_id) and not Follow.is_following(user_id, target_id):
+            return jsonify({'message': "You can't follow this person."}), 403
         following = Follow.toggle(user_id, target_id)
         if following:
             follower = User.get(str(user_id))
-            follower_name = (f"{follower.name or ''} {follower.surname or ''}".strip() or follower.email) if follower else 'Someone'
+            follower_name = (f"{follower.name or ''} {follower.surname or ''}".strip() or 'A member') if follower else 'Someone'
             Notification.create(
                 user_id=target_id, actor_id=user_id, actor_name=follower_name,
                 type_='new_follower',
@@ -90,7 +93,7 @@ def get_following(user_id=None):
         for uid in ids:
             u = User.get(str(uid))
             if u:
-                name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
+                name = f"{u.name or ''} {u.surname or ''}".strip() or 'A member'
                 out.append({'id': str(uid), 'name': name})
         return jsonify(out), 200
     except Exception as e:
@@ -173,6 +176,10 @@ def get_public_user(target_id, user_id=None):
                 d.pop('email', None)
         # Whether the viewer follows this user, + their follower/following counts.
         d['is_following'] = (str(target_id) != str(user_id)) and Follow.is_following(user_id, target_id)
+        other = str(target_id) != str(user_id)
+        # Whether *you* blocked them; whether they blocked you is never told.
+        d['blocked'] = other and safety.blocked(user_id, target_id)
+        d['can_message'] = other and messaging.why_not(user_id, target_id) is None
         d['following_count'] = Follow.following_count(target_id)
         return jsonify(d), 200
     except Exception as e:

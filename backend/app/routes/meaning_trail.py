@@ -348,7 +348,7 @@ def add_xc_comment(exchange_id, user_id=None):
             from app.models.user import User
             u = User.get(str(user_id))
             if u:
-                author_name = f"{u.name or ''} {u.surname or ''}".strip() or u.email
+                author_name = f"{u.name or ''} {u.surname or ''}".strip() or 'A member'
 
         # A comment may name the value card(s) it expressed: by id, so it pins
         # the exact version. The wording kept with it is the stored card's, not

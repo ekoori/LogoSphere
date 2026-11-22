@@ -22,6 +22,9 @@ class Notification:
         """Emit a notification to user_id. Silently no-ops on failure — a
         missed notification should never break the action that triggered it."""
         try:
+            from app.utils import safety
+            if type_ in safety.SOCIAL and actor_id and safety.blocked(user_id, actor_id):
+                return      # nothing social from someone they blocked
             notification_id = uuid.uuid4()
             cassandra_session.execute(
                 """INSERT INTO notifications

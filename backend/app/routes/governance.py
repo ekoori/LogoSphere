@@ -171,7 +171,7 @@ def create_proposal(kind, entity_id, user_id=None):
         # Let every other member know there's something to vote on (best effort).
         try:
             actor = User.get(str(viewer))
-            actor_name = (f"{actor.name or ''} {actor.surname or ''}".strip() or actor.email) if actor else 'A member'
+            actor_name = (f"{actor.name or ''} {actor.surname or ''}".strip() or 'A member') if actor else 'A member'
             for m in members:
                 if m != viewer:
                     Notification.create(

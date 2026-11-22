@@ -15,7 +15,7 @@ from app.models.openings import Service
 from app.models.project import Project
 from app.models.spheres import Sphere
 from app.routes.openings import _is_provider_or_manager
-from app.utils import gazetteer, geo, places
+from app.utils import gazetteer, geo, places, safety
 from app.utils.access import as_uuid
 from app.utils.permissions import can_manage_entity
 from app.utils.search_vectors import invalidate_index
@@ -139,10 +139,10 @@ def nearby(user_id=None):
     if not out['has_place']:
         return jsonify(out), 200
 
-    people = []
+    people, hidden = [], safety.hidden_from(me)
     for r in session.execute('SELECT user_id, name, surname, location, is_agent, place FROM users'):
         theirs = places.load(r.place)
-        if r.user_id == me or not theirs or theirs.get('findable') is not True:
+        if r.user_id == me or r.user_id in hidden or not theirs or theirs.get('findable') is not True:
             continue
         away = geo.distance(place, theirs)
         if away and away['km'] <= km:

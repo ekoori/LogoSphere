@@ -16,7 +16,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.acknowledgement import MAX_CARDS, MAX_TEXT, Acknowledgement, ensure_tables
 from app.models.meaning_trail import MeaningTrail
 from app.models.notification import Notification
-from app.utils import timeline
+from app.utils import safety, timeline
 from app.utils.access import Sight, resolve_cards
 from app.utils.names import resolve_user_names
 from app.utils.trails import Trail
@@ -89,6 +89,11 @@ def add_acknowledgement(trail_id, user_id, text, card_ids):
         return NOT_FOUND, 404
     if not trail.writable(sight):
         return {'message': 'Join the sphere first to acknowledge here'}, 403
+    # A person's trail, or an exchange of theirs, after a block either way.
+    if trail.kind in ('user', 'exchange'):
+        people = trail.people()
+        if sight.id not in people and any(safety.between(sight.id, person) for person in people):
+            return {'message': "You can't acknowledge here."}, 403
     text = text.strip() if isinstance(text, str) else ''
     if not text:
         return {'message': 'Write a few words first'}, 400

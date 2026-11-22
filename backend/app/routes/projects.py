@@ -38,7 +38,7 @@ def create_project(user_id=None):
         creator = User.get(str(user_id))
         creator_name = None
         if creator:
-            creator_name = f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email
+            creator_name = f"{creator.name or ''} {creator.surname or ''}".strip() or 'A member'
             data['participant_names'] = [creator_name]
         # Optionally run the project on behalf of an alliance the founder manages
         # (must be an alliance within the project's sphere). Stored as the

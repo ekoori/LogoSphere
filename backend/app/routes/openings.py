@@ -11,7 +11,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
 from app.utils.access import Sight
-from app.utils import evidence, places
+from app.utils import evidence, messaging, places, safety
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +183,9 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
         d['distance'] = None
     if include_exchanges:
         d['point'] = places.exact_spot(s.place)
+        who = messaging.contact(s) if viewer else None
+        # Who to write to about it: a group's opening is its poster's.
+        d['contact_id'] = str(who) if who else None
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
         # Previous versions of this opening (each frozen because it had a
         # related exchange), with the exchange(s) that linked to them.
@@ -228,7 +231,7 @@ def create_service(user_id=None):
             actor = User.get(str(user_id))
             actor_name = None
             if actor:
-                actor_name = f"{actor.name or ''} {actor.surname or ''}".strip() or actor.email
+                actor_name = f"{actor.name or ''} {actor.surname or ''}".strip() or 'A member'
             data = {**data, 'provider_name': info['name'],
                     'acting_user_id': str(user_id), 'acting_user_name': actor_name}
         else:
@@ -397,6 +400,8 @@ def accept_service(service_id, user_id=None):
             return jsonify({'message': 'This opening is no longer open'}), 409
 
         # Optionally accept "as" an alliance/project the caller manages.
+        if safety.between(user_id, getattr(service, 'acting_user_id', None) or service.provider_id):
+            return jsonify({'message': "You can't take up this opening."}), 403
         data = request.get_json(silent=True) or {}
         acting_as_id = data.get('acting_as_id')
         acting_user_id = None
@@ -417,13 +422,13 @@ def accept_service(service_id, user_id=None):
             acting_user_id = uuid.UUID(str(user_id))
             actor = User.get(str(user_id))
             if actor:
-                acting_user_name = f"{actor.name or ''} {actor.surname or ''}".strip() or actor.email
+                acting_user_name = f"{actor.name or ''} {actor.surname or ''}".strip() or 'A member'
         else:
             accepter_uuid = uuid.UUID(str(user_id))
             accepter = User.get(str(user_id))
             if not accepter:
                 return jsonify({'message': 'User not found'}), 404
-            accepter_name = f"{accepter.name or ''} {accepter.surname or ''}".strip() or accepter.email
+            accepter_name = f"{accepter.name or ''} {accepter.surname or ''}".strip() or 'A member'
 
         # One acceptance per actor. The opening is NOT locked here — it stays
         # available to others until the provider confirms one of the pending
@@ -534,7 +539,7 @@ def confirm_service(service_id, user_id=None):
         Service.mark_confirmed(service_uuid, accepter_uuid, exchange_id)
 
         confirmer = User.get(str(user_id))
-        confirmer_name = (f"{confirmer.name or ''} {confirmer.surname or ''}".strip() or confirmer.email) if confirmer else service.provider_name
+        confirmer_name = (f"{confirmer.name or ''} {confirmer.surname or ''}".strip() or 'A member') if confirmer else service.provider_name
         # Notify the human on the accepter side — the one who acted for the
         # entity if it was an entity acceptance, else the accepter directly.
         notify_accepter = acceptance.get('acting_user_id') or accepter_uuid
@@ -647,7 +652,7 @@ def cancel_service(service_id, user_id=None):
             return jsonify({'message': 'This opening was just confirmed for someone and can no longer be cancelled'}), 409
 
         canceller = User.get(str(user_id))
-        canceller_name = (f"{canceller.name or ''} {canceller.surname or ''}".strip() or canceller.email) if canceller else service.provider_name
+        canceller_name = (f"{canceller.name or ''} {canceller.surname or ''}".strip() or 'A member') if canceller else service.provider_name
         # Pending accepters are waiting on a confirmation that will never come.
         for a in Service.acceptances(service_uuid, status='pending'):
             Service.remove_acceptance(service_uuid, uuid.UUID(a['accepter_id']))

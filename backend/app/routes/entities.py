@@ -230,7 +230,7 @@ def join_entity(kind, entity_id, user_id=None):
             return jsonify({'message': f"Join the {k['noun']}'s sphere first"}), 403
 
         user = User.get(str(uid))
-        name = (f"{user.name or ''} {user.surname or ''}".strip() or user.email) if user else 'Member'
+        name = (f"{user.name or ''} {user.surname or ''}".strip() or 'A member') if user else 'Member'
 
         policy = getattr(entity, 'join_policy', None) or 'open'
         if policy == 'approval' and not is_platform_admin(uid):
@@ -315,7 +315,7 @@ def set_entity_role(kind, entity_id, target_id, user_id=None):
 
         if is_pending:
             user = User.get(str(tid))
-            name = (f"{user.name or ''} {user.surname or ''}".strip() or user.email) if user else 'Member'
+            name = (f"{user.name or ''} {user.surname or ''}".strip() or 'A member') if user else 'Member'
             _add_member(entity, k, tid, name)
         _set_role(entity, k, tid, role)
         return jsonify({'message': 'Role updated', 'role': role}), 200

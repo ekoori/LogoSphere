@@ -37,7 +37,7 @@ def create_alliance(user_id=None):
         # Record the founder's display name so they aren't shown as a generic member.
         creator = User.get(str(user_id))
         if creator:
-            data['member_names'] = [f"{creator.name or ''} {creator.surname or ''}".strip() or creator.email]
+            data['member_names'] = [f"{creator.name or ''} {creator.surname or ''}".strip() or 'A member']
         new_alliance = Alliance.create(data=data, admin1=uuid.UUID(str(user_id)))
         logger.info(f"Created alliance {new_alliance.alliance_id}")
         return jsonify(new_alliance.to_dict()), 201

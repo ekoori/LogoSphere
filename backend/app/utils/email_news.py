@@ -17,9 +17,10 @@ log = logging.getLogger(__name__)
 
 USER_DDL = 'ALTER TABLE users ADD IF NOT EXISTS email_topics set<text>'
 
-EXCHANGES, GROUPS, THANKS, PERSONAS = 'exchanges', 'groups', 'thanks', 'personas'
+EXCHANGES, MESSAGES, GROUPS, THANKS, PERSONAS = 'exchanges', 'messages', 'groups', 'thanks', 'personas'
 TOPICS = (
     (EXCHANGES, 'Offers, needs and exchanges', 'Someone takes up, confirms or withdraws one, or leaves you a receipt.'),
+    (MESSAGES, 'Messages', 'Someone writes to you. The email never has their words.'),
     (GROUPS, 'Your groups', 'A new proposal in a group you belong to.'),
     (THANKS, 'Thanks and follows', 'An acknowledgement, a highlight, or a new follower.'),
     (PERSONAS, 'AI personas too', 'Also when it is one of the AI personas from the demo spheres.'),
@@ -34,11 +35,13 @@ KINDS = {
     'opening_declined': (EXCHANGES, 'Your acceptance was declined'),
     'opening_cancelled': (EXCHANGES, 'An opening you accepted was withdrawn'),
     'receipt_received': (EXCHANGES, 'You were left a receipt'),
+    'message': (MESSAGES, 'You have a new message'),
     'proposal_opened': (GROUPS, 'A new proposal in your group'),
     'acknowledgement': (THANKS, 'A new acknowledgement'),
     'acknowledgement_highlighted': (THANKS, 'Your acknowledgement was highlighted'),
     'new_follower': (THANKS, 'You have a new follower'),
     'demo_invite': None,
+    'report': None,
 }
 PER_PERSON_DAY, ALL_DAY = 20, 500
 _STOP = re.compile(r'([0-9a-f]{32})\.([0-9a-f]{32})')

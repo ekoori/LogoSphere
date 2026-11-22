@@ -73,6 +73,8 @@ tags:
   - name: Search
   - name: Administration
   - name: Email
+  - name: Messages
+  - name: Safety
 
 paths:
 
@@ -3306,7 +3308,7 @@ paths:
               type: object
               required: [topics]
               properties:
-                topics: { type: array, items: { type: string, enum: [exchanges, groups, thanks, personas] } }
+                topics: { type: array, items: { type: string, enum: [exchanges, messages, groups, thanks, personas] } }
       responses:
         '200':
           description: As saved, plus `confirmation_sent`.
@@ -3348,6 +3350,238 @@ paths:
         '200': { description: All topics are off. }
         '400': { description: Not a link of ours. }
       tags: [Email]
+
+  /api/messages:
+    get:
+      summary: Your conversations
+      description: Always between two people. Newest first.
+      operationId: listConversations
+      responses:
+        '200':
+          description: Yours.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count: { type: integer }
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        person: { type: object, properties: { id: { type: string }, name: { type: string } } }
+                        last: { type: object, properties: { text: { type: string }, at: { type: string }, mine: { type: boolean } } }
+                        unread: { type: boolean }
+      tags: [Messages]
+
+  /api/messages/{person_id}:
+    parameters:
+      - { name: person_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: One conversation
+      description: >-
+        Readable by the two in it, and by nobody else, administrators
+        included. Oldest first within a page; `before` fetches older ones.
+        `opening` says what it is about, which can make writing allowed.
+      operationId: getConversation
+      parameters:
+        - { name: before, in: query, schema: { type: string }, description: "A message id" }
+        - { name: opening, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: The page, with whether you may write.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  person: { type: object }
+                  messages: { type: array, items: { $ref: '#/components/schemas/DirectMessage' } }
+                  more: { type: boolean }
+                  about: { type: object, nullable: true }
+                  can_send: { type: boolean }
+                  why_not: { type: string, nullable: true }
+                  blocked: { type: boolean, description: You blocked them }
+        '404': { description: No such person. }
+      tags: [Messages]
+    post:
+      summary: Write to someone
+      description: >-
+        To start, you share a sphere, they follow you or chose to be found
+        nearby, or `opening_id` is one you both have a part in. A conversation
+        that exists carries on until one blocks the other. AI personas neither
+        read nor send messages.
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 2000 }
+                opening_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Sent.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  sent: { $ref: '#/components/schemas/DirectMessage' }
+        '400': { description: "Empty, or too long." }
+        '403': { description: "Not allowed. A block reads the same as any refusal." }
+        '404': { description: No such person. }
+        '429': { description: Too many. }
+      tags: [Messages]
+
+  /api/messages/{person_id}/read:
+    parameters:
+      - { name: person_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Mark a conversation read
+      operationId: readConversation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                up_to: { type: string, description: The last message seen (all when left out) }
+      responses:
+        '200': { description: "`unread` says whether any are left." }
+        '400': { description: Not a message id. }
+      tags: [Messages]
+
+  /api/openings/{service_id}/message_respondents:
+    parameters:
+      - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Write privately to everyone who responded
+      description: >-
+        For whoever runs the opening. Each gets a message of their own and
+        doesn't learn who else responded.
+      operationId: messageRespondents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 2000 }
+      responses:
+        '200': { description: "`sent` and `skipped` count them." }
+        '400': { description: "No words, or nobody to write to." }
+        '403': { description: Not yours. }
+        '404': { description: No such opening. }
+        '429': { description: Too many. }
+      tags: [Messages]
+
+  /api/blocks:
+    get:
+      summary: Whom you blocked
+      operationId: listBlocks
+      responses:
+        '200':
+          description: Yours alone.
+          content:
+            application/json:
+              schema: { type: array, items: { type: object } }
+      tags: [Safety]
+
+  /api/blocks/{person_id}:
+    parameters:
+      - { name: person_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Block or unblock someone
+      description: >-
+        Either way round, the two can't then message, follow, take up each
+        other's openings, acknowledge on each other's trails or exchanges, or
+        be found near each other. They aren't told.
+      operationId: setBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [blocked]
+              properties:
+                blocked: { type: boolean }
+      responses:
+        '200': { description: As it is now. }
+        '400': { description: "Yourself, or neither true nor false." }
+        '404': { description: No such person. }
+      tags: [Safety]
+
+  /api/reports:
+    post:
+      summary: Report to the administrators
+      description: >-
+        What was reported is read on the server, never taken from the client.
+        The person reported isn't told.
+      operationId: makeReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, id]
+              properties:
+                kind: { type: string, enum: [person, message, acknowledgement, opening] }
+                id: { type: string }
+                person_id: { type: string, description: "A message: who you were talking with" }
+                trail_id: { type: string, description: "An acknowledgement: whose trail" }
+                note: { type: string, maxLength: 1000, description: Required for a person }
+      responses:
+        '201': { description: Filed. }
+        '400': { description: Not reportable. }
+        '404': { description: "Not there, or not yours to see." }
+        '429': { description: Too many. }
+      tags: [Safety]
+
+  /api/admin/reports:
+    get:
+      summary: The reports queue
+      operationId: listReports
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [open, handled, dismissed, all], default: open } }
+      responses:
+        '200': { description: "`open` counts those waiting; `reports` newest first." }
+        '403': { description: Platform administrators only. }
+      tags: [Administration]
+
+  /api/admin/reports/{report_id}:
+    parameters:
+      - { name: report_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Settle a report
+      description: "`remove` also deletes a reported message or acknowledgement."
+      operationId: settleReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [handled, dismissed] }
+                note: { type: string }
+                remove: { type: boolean }
+      responses:
+        '200': { description: Saved. }
+        '400': { description: "Neither, or nothing removable." }
+        '403': { description: Platform administrators only. }
+        '404': { description: No such report. }
+      tags: [Administration]
 
 components:
   securitySchemes:
@@ -3488,6 +3722,18 @@ components:
               label: { type: string }
               about: { type: string }
         confirmation_sent: { type: boolean, description: Only in answer to a change }
+
+    DirectMessage:
+      type: object
+      properties:
+        id: { type: string }
+        text: { type: string }
+        at: { type: string, description: UTC }
+        mine: { type: boolean }
+        opening:
+          type: object
+          nullable: true
+          properties: { id: { type: string }, title: { type: string } }
 
     SessionStatus:
       type: object
