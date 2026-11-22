@@ -18,6 +18,8 @@ import pytest
 # The suite never pushes to real phones, though it runs with production's
 # settings (app/utils/push); test_api_push stands in for Firebase.
 os.environ.pop('FCM_CREDENTIALS', None)
+# Nor sends email, whatever mail.env holds; test_api_email stands in for Mailgun.
+os.environ['MAIL'] = 'off'
 
 os.environ.setdefault('CASSANDRA_HOST', '127.0.0.1')
 os.environ.setdefault('LOG_LEVEL', 'WARNING')

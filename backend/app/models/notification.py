@@ -35,9 +35,11 @@ class Notification:
         except Exception as e:
             logging.error(f'Error creating notification: {e}')
             return
-        # And to the member's phones (in the background; see app/utils/push).
-        from app.utils import push
+        # And to the member's phones (in the background; see app/utils/push),
+        # and by email if they asked for that (app/utils/email_news).
+        from app.utils import email_news, push
         push.notify(user_id, message, link=link, kind=type_, notification_id=notification_id)
+        email_news.notify(user_id, actor_id, type_, message, link)
 
     @classmethod
     def withdraw(cls, user_id, type_, link, actor_id=None):

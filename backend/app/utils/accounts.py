@@ -66,6 +66,9 @@ def remove_account(user_id):
     forget_judge(tid)
     from app.utils.assist import forget as forget_ai_uses
     forget_ai_uses(tid)
+    from app.utils import email_accounts, password_reset
+    email_accounts.forget(tid)
+    password_reset.revoke(tid)      # used later, one would bring back a row with the new password
     end_sessions(tid)
     session.execute('DELETE FROM value_cards WHERE user_id = %s', [tid])
     session.execute('DELETE FROM notifications WHERE user_id = %s', [tid])

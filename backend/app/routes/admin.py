@@ -188,8 +188,8 @@ def delete_user(target_id, user_id=None):
 
 @admin_only
 def create_reset_link(target_id, user_id=None):
-    """A one-time password reset link for a member who forgot theirs. There's
-    no email yet, so the admin passes it on however they talk; it works once,
+    """A one-time password reset link for a member who can't use email for it:
+    the admin passes it on however they talk; it works once,
     for 24 hours, and signs the member out everywhere when used. The token
     rides in the URL fragment, which browsers never send to the server, so it
     stays out of access logs."""

@@ -4,7 +4,7 @@
   POST /api/account/preferences  Simple or Advanced
   GET  /api/account/export     everything LogoSphere holds about you, as a JSON file
   POST /api/account/delete     delete your account (asks for your password)
-  POST /api/password/reset     set a new password with an admin's one-time reset link
+  POST /api/password/reset     set a new password with a one-time reset link (emailed, or an admin's)
 """
 import json
 import logging
@@ -21,7 +21,7 @@ from app.models.notification import Notification
 from app.models.openings import Service
 from app.models.value_card import ValueCard
 from app.routes.entities import KINDS, _entity_id, _members, _roles
-from app.utils import password_reset, places, preferences
+from app.utils import email_accounts, email_news, mailer, password_reset, places, preferences
 from app.utils.accounts import MIN_PASSWORD_LEN, end_sessions, password_matches, remove_account, set_password
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,11 @@ def _options():
 
 def _too_short(password):
     return len(password or '') < MIN_PASSWORD_LEN
+
+
+def _say_it_changed(user_id):
+    if mailer.enabled():
+        mailer.queue(email_accounts.send_password_changed, user_id)
 
 
 @validate_session
@@ -48,6 +53,8 @@ def change_password(user_id=None):
     if new == current:
         return jsonify({'message': "That's the password you have already."}), 400
     set_password(user_id, new)
+    password_reset.revoke(user_id)
+    _say_it_changed(user_id)
     ended = end_sessions(user_id, keep=get_session_token())
     logger.info(f'User {user_id} changed their password ({ended} other sessions ended)')
     return jsonify({
@@ -95,6 +102,9 @@ def export_data(user_id=None):
     profile = _profile(uid)
     if not profile:
         return jsonify({'message': 'User not found'}), 404
+    mail = email_news.settings_of(uid)
+    profile['email_confirmed'] = mail['confirmed']
+    profile['email_notifications'] = mail['topics']
     memberships = []
     for kind, k in KINDS.items():
         for entity in k['model'].get_all():
@@ -171,9 +181,14 @@ def reset_password():
         return jsonify({'message': 'This reset link has expired or was already used. Ask for a new one.'}), 400
     if _too_short(new):
         return jsonify({'message': f'A password needs at least {MIN_PASSWORD_LEN} characters.'}), 400
+    emailed = password_reset.was_emailed(token)
     set_password(uid, new)
     password_reset.spend(token)
+    password_reset.revoke(uid)
+    if emailed:
+        email_accounts.set_confirmed(uid)
     end_sessions(uid)
+    _say_it_changed(uid)
     logger.info(f'User {uid} reset their password with a link')
     return jsonify({'message': 'Your password was changed. Sign in with the new one.'}), 200
 

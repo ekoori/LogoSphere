@@ -72,6 +72,7 @@ tags:
   - name: Governance
   - name: Search
   - name: Administration
+  - name: Email
 
 paths:
 
@@ -191,6 +192,12 @@ paths:
   /api/register:
     post:
       summary: Register a new user
+      description: >-
+        While email works (`GET /api/mail`) this only starts joining: send
+        `name` and `email` (a password is ignored), and a link is mailed whose
+        token goes to `POST /api/register/confirm`. The answer is the same
+        whether or not the address has an account. Without email the account is
+        made at once, with the password.
       operationId: registerUser
       security: []
       requestBody:
@@ -199,7 +206,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name, email, password]
+              required: [name, email]
               properties:
                 name: { type: string }
                 email: { type: string, format: email }
@@ -207,6 +214,7 @@ paths:
                   type: string
                   minLength: 8
                   description: >-
+                    Needed only while email is off.
                     Plaintext password, sent once over TLS; the server hashes
                     it before storage. Minimum 8 characters. Never logged or
                     returned in any response.
@@ -219,16 +227,17 @@ paths:
                 type: object
                 properties:
                   reg_success: { type: boolean, example: true }
+                  confirm_email: { type: boolean, description: "Only while email works: no account yet, look in the inbox." }
                   message: { type: string }
-                  user_id: { type: string, format: uuid }
+                  user_id: { type: string, format: uuid, description: Only once the account exists }
         '400':
           description: >-
             Missing fields, invalid email, password under 8 characters, or
-            the email is already registered — all collapse to the same
-            message/status.
+            (only while email is off) the email is already registered.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+        '429': { description: Too many tries from this connection. }
       tags: [Authentication]
 
   # ─────────────────────────── User Management ───────────────────────────
@@ -543,9 +552,11 @@ paths:
     post:
       summary: Set a new password with a reset link
       description: >-
-        Redeems a one-time token from a reset link a platform administrator
-        issued (POST /api/admin/users/{target_id}/reset_link). Works once,
-        within 24 hours; every session of the member ends. No sign-in needed.
+        Redeems a one-time token from a reset link: emailed (POST
+        /api/password/forgot; 2 hours, and using it confirms the address) or
+        issued by a platform administrator (POST
+        /api/admin/users/{target_id}/reset_link; 24 hours). Works once; every
+        session and other reset link of the member ends. No sign-in needed.
       operationId: resetPassword
       security: []
       requestBody:
@@ -3185,6 +3196,159 @@ paths:
         '400': { description: Not one of the distances offered. }
       tags: [Places]
 
+  /api/mail:
+    get:
+      summary: Whether LogoSphere can send email
+      description: Decides the join and forgotten-password forms a client shows.
+      operationId: mailStatus
+      security: []
+      responses:
+        '200':
+          description: The answer.
+          content:
+            application/json:
+              schema: { type: object, properties: { 'on': { type: boolean } } }
+      tags: [Email]
+
+  /api/register/confirm:
+    post:
+      summary: Finish joining with the emailed link
+      operationId: finishSignUp
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string, description: From the link's fragment }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: The account exists and its address is confirmed. Sign in with POST /api/login.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reg_success: { type: boolean }
+                  user_id: { type: string, format: uuid }
+                  email: { type: string, format: email }
+                  message: { type: string }
+        '400': { description: "The link expired or was used, the address has an account, or the password is too short." }
+      tags: [Email]
+
+  /api/password/forgot:
+    post:
+      summary: Email me a reset link
+      description: The answer is the same whether or not the address has an account.
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: "If there is an account, a link is on its way." }
+        '400': { description: No address. }
+        '429': { description: Too many tries from this connection. }
+        '503': { description: Email is off. }
+      tags: [Email]
+
+  /api/email/confirm:
+    post:
+      summary: Confirm an address with its link
+      operationId: confirmEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: Confirmed. }
+        '400': { description: The link expired or was used. }
+      tags: [Email]
+
+  /api/account/email:
+    get:
+      summary: Your email settings
+      operationId: getEmailSettings
+      responses:
+        '200':
+          description: Yours.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmailSettings' }
+      tags: [Email]
+    post:
+      summary: Choose which notifications are emailed
+      description: >-
+        All off until chosen, and nothing goes to an address that isn't
+        confirmed: switching on the first topic mails the confirmation link.
+      operationId: chooseEmailTopics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topics]
+              properties:
+                topics: { type: array, items: { type: string, enum: [exchanges, groups, thanks, personas] } }
+      responses:
+        '200':
+          description: As saved, plus `confirmation_sent`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EmailSettings' }
+        '400': { description: Not a topic. }
+      tags: [Email]
+
+  /api/account/email/confirm:
+    post:
+      summary: Send me the confirmation link
+      operationId: sendEmailConfirmation
+      responses:
+        '200': { description: "On its way, or confirmed already." }
+        '400': { description: The address can't receive email. }
+        '503': { description: Email is off. }
+      tags: [Email]
+
+  /api/email/unsubscribe/{unsubscribe_token}:
+    parameters:
+      - { name: unsubscribe_token, in: path, required: true, schema: { type: string } }
+    get:
+      summary: The unsubscribe page
+      description: Only redirects to the page with the button; changes nothing.
+      operationId: unsubscribePage
+      security: []
+      responses:
+        '302': { description: To /unsubscribe. }
+      tags: [Email]
+    post:
+      summary: Stop notification emails
+      description: >-
+        One-click unsubscribe (RFC 8058): no session, any body. The token can
+        do nothing but switch these emails off.
+      operationId: unsubscribe
+      security: []
+      responses:
+        '200': { description: All topics are off. }
+        '400': { description: Not a link of ours. }
+      tags: [Email]
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3306,6 +3470,24 @@ components:
         precision: { type: string, enum: [postcode, town, region, country] }
         lat: { type: number }
         lon: { type: number }
+
+    EmailSettings:
+      type: object
+      properties:
+        'on': { type: boolean, description: LogoSphere can send email }
+        email: { type: string, format: email }
+        can_receive: { type: boolean }
+        confirmed: { type: boolean }
+        topics: { type: array, items: { type: string } }
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              about: { type: string }
+        confirmation_sent: { type: boolean, description: Only in answer to a change }
 
     SessionStatus:
       type: object

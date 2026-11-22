@@ -27,8 +27,8 @@ import os
 import re
 from datetime import datetime, timedelta
 
-# Basic email shape check + minimum password length. This is input validation,
-# not account/ownership verification (no confirmation email is sent).
+# Basic email shape check + minimum password length. This is input validation;
+# owning the address is shown by app/utils/email_accounts.py.
 _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 _MIN_PASSWORD_LEN = 8
 

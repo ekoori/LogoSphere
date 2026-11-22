@@ -51,6 +51,7 @@ from app.routes import trails as trail_routes
 from app.routes import meaning_graph as meaning_graph_routes
 from app.routes import assist as assist_routes
 from app.routes import places as place_routes
+from app.routes import email as email_routes
 from app.routes.search import search, search_vicinity
 from app.routes.demo import get_demo, join_demo
 from app.routes.value_cards import get_value_cards, create_value_card, edit_value_card, delete_value_card, create_entity_value_card, edit_entity_value_card, delete_entity_value_card, clone_value_card, endorse_value_card, review_value_card, endorse_entity_value_card, review_entity_value_card
@@ -167,6 +168,7 @@ trail_routes.register(app)
 meaning_graph_routes.register(app)
 assist_routes.register(app)
 place_routes.register(app)
+email_routes.register(app)
 app.add_url_rule('/api/search', view_func=search, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/search/vicinity', view_func=search_vicinity, methods=['GET', 'OPTIONS'])
 # The demonstration's spheres (AI personas live there; new members are invited).
