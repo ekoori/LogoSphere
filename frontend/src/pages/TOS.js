@@ -5,7 +5,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
-export const TERMS_UPDATED = '21 November 2026';
+export const TERMS_UPDATED = '23 November 2026';
 
 const sections = [
     {
@@ -43,10 +43,28 @@ const sections = [
             <>
                 <p>
                     What you write and the photos you add stay <strong>yours</strong>. By posting them you let LogoSphere
-                    store them and show them to the people who can see that place — your group's members, or everyone if its
-                    managers have made its activity public — and keep exchanges as shared history for both people in them.
+                    store them and show them to the people who can see that place — your group's members, the spheres you share
+                    an opening with, every member for what you post to everyone, or anyone if a group's managers have made
+                    its activity public — and keep exchanges as shared history for both people in them.
                 </p>
                 <p>Only post what's yours to share: no one else's photos, words or private details without their agreement.</p>
+            </>
+        ),
+    },
+    {
+        id: 'ai-and-evidence',
+        title: 'AI, pictures and evidence',
+        body: (
+            <>
+                <p>
+                    AI can help you word a value card, or draw a picture for an offer, need, group or event. It can be wrong:
+                    what you post with it is yours to check.
+                </p>
+                <p>
+                    Receipts are evidence. <strong>Outside the demo spheres, don&rsquo;t use AI-made pictures as receipt photos
+                    or exchange pictures.</strong> LogoSphere refuses those it recognises, and it can&rsquo;t recognise every
+                    one. In demo spheres evidence may be AI-made.
+                </p>
             </>
         ),
     },
@@ -58,13 +76,18 @@ const sections = [
                 <ul>
                     <li><strong>Be honest.</strong> Offer what you can really give; ask for what you really need; write receipts that say what happened.</li>
                     <li><strong>Keep it a gift.</strong> No selling, bartering for money, advertising or fundraising through openings.</li>
-                    <li><strong>Be kind.</strong> No harassment, threats, hate or discrimination — in posts, receipts, acknowledgements or anywhere else.</li>
+                    <li><strong>Be kind.</strong> No harassment, threats, hate or discrimination — in posts, messages, receipts, acknowledgements or anywhere else.</li>
+                    <li><strong>Don&rsquo;t spam.</strong> Messages, invitations, events and announcements are for people who&rsquo;d want them.</li>
                     <li><strong>Respect privacy.</strong> Don't share someone's personal details, or what they told you in confidence.</li>
                     <li><strong>Be yourself.</strong> Don't pretend to be someone else — another member, a famous person, or an AI persona.</li>
                     <li><strong>Keep it legal and safe.</strong> Nothing illegal, dangerous or exploitative.</li>
                 </ul>
+                <p>
+                    You can block anyone, and report a person, message, opening, event, announcement or acknowledgement to
+                    the platform&rsquo;s administrators. Nobody else is told.
+                </p>
                 <p className="dp-note">
-                    LogoSphere doesn't check members or guarantee that help will happen. When you meet people or go to their
+                    LogoSphere doesn't check members, run members' events or guarantee that help will happen. When you meet people or go to their
                     homes, use the same care you would anywhere: meet somewhere you're comfortable, and trust your instincts.
                 </p>
             </>
@@ -81,7 +104,8 @@ const sections = [
                 </p>
                 <p>
                     Platform administrators may remove content or close accounts that break these terms or put people at
-                    risk, and can see everything on the platform so they can keep it running. They act for the good of the
+                    risk. So they can keep it running, LogoSphere shows them what happens in every group, but not your
+                    point on the map, and of private messages only what was reported. They act for the good of the
                     community, not to take sides in a group's own decisions.
                 </p>
             </>
@@ -157,6 +181,8 @@ export default function TOS() {
                 'Help here is a gift: nothing is bought or sold.',
                 'What you post stays yours; your group gets to see it.',
                 'Be honest, be kind, respect privacy, be yourself.',
+                'Outside the demo spheres, evidence mustn’t be AI-made.',
+                'You can block and report.',
                 'Demo spheres are practice: their AI personas are labelled, and not the real people.',
             ]}
             sections={sections}

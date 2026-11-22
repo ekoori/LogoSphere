@@ -58,6 +58,14 @@ const TERMS = [
     { term: 'Value Card', gloss: 'Optional. A short note on what you personally care about, so people find kindred spirits, not just favours.' },
     { term: 'Alliance & Project', gloss: 'An alliance joins groups inside a sphere; a project gathers people around a piece of shared work.' },
     { term: 'Governance', gloss: 'How your group decides: anyone can propose a change, everyone can vote — or lend their vote to someone they trust.' },
+    { term: 'Acknowledgement', gloss: 'A few public words of thanks on anyone’s trail, with value cards if you like. The trail’s owner can highlight them.' },
+    { term: 'Meaning Graph', gloss: 'Everyone’s value cards as a map. Cards sit closer when they attend to the same things, and each link shows why.' },
+    { term: 'To lend, to borrow', gloss: 'An opening for something that comes back. You finish the exchange once it’s home.' },
+    { term: 'Events & announcements', gloss: 'What’s on, once or repeating, with who’s coming; and a short word from a group’s managers to its members.' },
+    { term: 'Near you', gloss: 'Say where you are, as roughly as you like, and see what’s near as rough distances. Others find you only if you allow it.' },
+    { term: 'Messages', gloss: 'Private, between two people. You can block and report.' },
+    { term: 'Invitation', gloss: 'A link you share yourself, to LogoSphere or straight into a group. It works for two weeks.' },
+    { term: 'Simple & Advanced', gloss: 'How much you’re shown. Simple keeps to giving, asking and thanking; switch whenever you like.' },
 ];
 
 const COMPARE = [
@@ -78,7 +86,15 @@ const FAQ = [
     },
     {
         q: 'Is any of this visible outside our group?',
-        a: 'Not unless your group chooses it. A Sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet — unless the sphere’s admin explicitly switches on “public activity”, in which case its projects, alliances and openings become viewable by anyone.',
+        a: 'A sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet. Three exceptions, all chosen: what you post to everyone is seen by every member; an opening you share with your other spheres shows there, without this sphere’s other people; and a sphere whose admin switches on “public activity” shows its projects, alliances and openings to anyone.',
+    },
+    {
+        q: 'Is AI used here?',
+        a: 'Only where it says so. It can help you word a value card or draw a picture, when you press its button, and it plays the labelled personas in demo spheres. Outside the demo spheres, pictures made with AI aren’t evidence: not receipt photos, not exchange pictures.',
+    },
+    {
+        q: 'Will it email me?',
+        a: 'Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on.',
     },
     {
         q: 'What if I just want to watch for now?',
@@ -90,7 +106,7 @@ const FAQ = [
     },
     {
         q: 'Is there a phone app?',
-        a: 'Yes — an Android app does everything the website does. On other phones, the website works in your browser.',
+        a: 'Yes — an Android app does nearly everything the website does (invitation links open on the website). On other phones, the website works in your browser.',
     },
     {
         q: 'Can I leave a group, or delete my account?',

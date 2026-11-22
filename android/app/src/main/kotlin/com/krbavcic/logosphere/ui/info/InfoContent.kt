@@ -156,6 +156,12 @@ object InfoContent {
                 "✦ Spheres & groups" to "Your group’s own space. Alliances bring groups together; projects gather shared work.",
                 "△ Deciding together" to "Propose a change, vote on it, or lend your vote to someone you trust. Policies that pass apply themselves.",
                 "❍ Demo spheres" to "Practice spaces where AI personas play everyday neighbours — clearly labelled — so you can try everything first.",
+                "♡ Acknowledgements" to "Thank someone on their trail, and say which values it showed. Whose trail it is chooses what to highlight.",
+                "◎ Closeness, explained" to "One map of everyone’s value cards. How close two are is worked out in the open, the same for every viewer, and people can disagree.",
+                "⇄ Lend & borrow" to "Share an opening with your other spheres, and lend what can come back.",
+                "◷ Gather" to "Events with who’s coming, announcements from a group, and links to invite people in.",
+                "◌ Near you" to "Real places, as exact or as rough as you choose. Others never get your point, only a rough distance.",
+                "✉ Talk" to "Private messages between two people, with blocking and reporting.",
             ),
         ),
         Block.Heading("What we won’t do", "07"),
@@ -164,6 +170,7 @@ object InfoContent {
                 "No ads, no tracking." to "Nothing here is paid for by watching you, and nothing about you is ever sold.",
                 "No scores." to "No points, ranks or leaderboards: receipts and reasons, not numbers to chase.",
                 "No AI posing as people." to "AI personas live only in the demo spheres, and every one is labelled.",
+                "No AI evidence." to "Outside the demo spheres, AI pictures can’t stand as receipts or as what happened.",
                 "No lock-in." to "Download everything we hold about you, or delete your account, whenever you like.",
             ),
         ),
@@ -240,6 +247,14 @@ object InfoContent {
                 "Value Card" to "Optional. A short note on what you personally care about, so people find kindred spirits, not just favours.",
                 "Alliance & Project" to "An alliance joins groups inside a sphere; a project gathers people around a piece of shared work.",
                 "Governance" to "How your group decides: anyone can propose a change, everyone can vote — or lend their vote to someone they trust.",
+                "Acknowledgement" to "A few public words of thanks on anyone’s trail, with value cards if you like. The trail’s owner can highlight them.",
+                "Meaning Graph" to "Everyone’s value cards as a map. Cards sit closer when they attend to the same things, and each link shows why.",
+                "To lend, to borrow" to "An opening for something that comes back. You finish the exchange once it’s home.",
+                "Events & announcements" to "What’s on, once or repeating, with who’s coming; and a short word from a group’s managers to its members.",
+                "Near you" to "Say where you are, as roughly as you like, and see what’s near as rough distances. Others find you only if you allow it.",
+                "Messages" to "Private, between two people. You can block and report.",
+                "Invitation" to "A link you share yourself, to LogoSphere or straight into a group. It works for two weeks.",
+                "Simple & Advanced" to "How much you’re shown. Simple keeps to giving, asking and thanking; switch whenever you like.",
             ),
         ),
         Block.Heading("Working together, deciding together"),
@@ -293,11 +308,13 @@ object InfoContent {
             listOf(
                 "Does money change hands?" to "No. LogoSphere is for help freely given — a fence fixed, a ride offered, an afternoon of childcare. If people sometimes call this a “gift economy,” that’s the plain meaning of the term: helping, no money involved.",
                 "Do I have to write a receipt every single time?" to "No — but it’s the whole mechanism. It’s how the person who helped actually gets seen, and how your group’s trail grows into something worth looking at.",
-                "Is any of this visible outside our group?" to "Not unless your group chooses it. A Sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet — unless the sphere’s admin explicitly switches on “public activity”, in which case its projects, alliances and openings become viewable by anyone.",
+                "Is any of this visible outside our group?" to "A sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet. Three exceptions, all chosen: what you post to everyone is seen by every member; an opening you share with your other spheres shows there, without this sphere’s other people; and a sphere whose admin switches on “public activity” shows its projects, alliances and openings to anyone.",
+                "Is AI used here?" to "Only where it says so. It can help you word a value card or draw a picture, when you press its button, and it plays the labelled personas in demo spheres. Outside the demo spheres, pictures made with AI aren’t evidence: not receipt photos, not exchange pictures.",
+                "Will it email me?" to "Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on.",
                 "What if I just want to watch for now?" to "That’s completely fine. You can see what’s being offered and needed before you ever post anything yourself.",
                 "What are the demo spheres, and who are the “AI personas”?" to "Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real.",
-                "Is there a phone app?" to "Yes — this Android app does everything the website does. On other phones, the website works in your browser.",
-                "Can I leave a group, or delete my account?" to "Any time. Leave a group from its page; download your data or delete your account on the Me tab, under Password, data & account.",
+                "Is there a phone app?" to "Yes — this Android app does nearly everything the website does (invitation links open on the website). On other phones, the website works in your browser.",
+                "Can I leave a group, or delete my account?" to "Any time. Leave a group from its page; download your data or delete your account on the Me tab, under Password, email, data & account.",
                 "Isn’t this just one more app to manage?" to "It’s meant to replace the digging-through-the-group-chat step, not add to it — one place where who-needs-what and who’s-already-helping actually lives.",
             ),
         ),
@@ -410,7 +427,7 @@ object InfoContent {
                 "AI help" to "That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.",
                 "Notifications" to "The messages LogoSphere writes for you when something happens that concerns you.",
                 "Keeping you signed in" to "A random session identifier — in a cookie on the web, on your phone in the app — that lasts up to 30 days or until you sign out. If you allow notifications on Android, the app also registers your phone’s push address for as long as you’re signed in on it.",
-                "Server records" to "Like any website, the server notes requests (including your IP address) to keep it secure and fix problems. These records are kept for a short time.",
+                "Server records" to "Like any website, the server notes requests (including your IP address) to keep it secure and fix problems. The list of requests is kept for about two weeks, and the server’s own log for some months. To stop password guessing, we count wrong passwords for 15 minutes, without storing the address or the connection they came from.",
             ),
         ),
         Block.Para("We don’t use analytics, advertising or tracking of any kind, and we never sell or rent anything about you."),
@@ -418,7 +435,9 @@ object InfoContent {
         Block.Bullets(
             listOf(
                 "Members see your name, photo, the words you use for where you are, and your value cards.",
-                "Your groups see what happens in them: a sphere’s openings, exchanges, receipts and people are for its members — unless its managers switch on public activity, which lets anyone, even visitors without an account, see its projects, alliances and openings.",
+                "Your groups see what happens in them: a sphere’s openings, exchanges, receipts and people are for its members. If its managers switch on public activity, anyone, even visitors without an account, can see its projects, alliances and openings, and every signed-in member can see who is in it. A demo sphere shows who is in it to every member.",
+                "Every signed-in member can also see a sphere’s name, description, place, value cards and how many are in it, so it can be found; what is posted to everyone, and the exchanges that come of it; and the acknowledgements left on your own trail.",
+                "Profile, group and opening pictures can be fetched by anyone who has their exact web address, signed in or not. Receipt, exchange and event pictures are only for those who may see them.",
                 "Your email address is never shown to other members.",
                 "An opening you share with other spheres shows there with your name, the sphere it comes from and how many liked it. It doesn’t show that sphere’s other people. Its exchanges are seen in its own sphere and by both sides.",
                 "Whom you follow isn’t shown to others, though each person is told when you start following them. The activity of people you follow, and whom you both know, show you only what you could open anyway.",
@@ -426,7 +445,7 @@ object InfoContent {
                 "An announcement is read by the group’s members, and for an alliance or project by the rest of its sphere. Its notification never has the words.",
                 "An invitation link shows your name, and the group’s, to whoever holds it. You’re told who joined with it.",
                 "A message is for the two people in it. Writing to everyone who responded to an opening sends each their own, so they don’t learn who else responded. AI personas neither read nor send messages, and none go to an AI provider.",
-                "Blocks and reports aren’t told to the person they’re about.",
+                "A block isn’t told to the person it’s about. A report goes only to the platform’s administrators.",
                 "Platform administrators — the few people who run LogoSphere — can see email addresses and what happens in every group, so they can keep the platform working and safe, and use that access only for that. They don’t see your point on the map, and of private messages they see only what was reported. Like all that is stored, both can be reached by whoever runs the server: messages aren’t end-to-end encrypted.",
             ),
         ),
@@ -448,7 +467,7 @@ object InfoContent {
                 "pictures by OpenAI. They are not the real people, and every one of them is labelled.",
         ),
         Block.Note(
-            "To write the personas’ replies, what happens in the demo spheres — including what you post there — is sent to " +
+            "To write the personas’ replies, what happens in the demo spheres — including your name and what you post there — is sent to " +
                 "Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real spheres is sent to " +
                 "write them. If you’d rather not, simply don’t join the demo spheres.",
         ),
@@ -512,12 +531,14 @@ object InfoContent {
         Block.Eyebrow("Terms of service"),
         Block.Title("The terms, in plain words"),
         Block.Lead("What you can expect from LogoSphere, and what LogoSphere and its members expect of you."),
-        Block.Updated("Last updated 21 November 2026"),
+        Block.Updated("Last updated 23 November 2026"),
         Block.Glance(
             listOf(
                 "Help here is a gift: nothing is bought or sold.",
                 "What you post stays yours; your group gets to see it.",
                 "Be honest, be kind, respect privacy, be yourself.",
+                "Outside the demo spheres, evidence mustn’t be AI-made.",
+                "You can block and report.",
                 "Demo spheres are practice: their AI personas are labelled, and not the real people.",
             ),
         ),
@@ -533,54 +554,69 @@ object InfoContent {
             listOf(
                 "Use your own name and a real email address; one person per account.",
                 "Keep your password to yourself. You’re responsible for what’s done with your account.",
-                "If you think someone else has used it, change your password (Me → Password, data & account) — that signs out every other device — and tell us at support@logosphere.net.",
+                "If you think someone else has used it, change your password (Me → Password, email, data & account) — that signs out every other device — and tell us at support@logosphere.net.",
             ),
         ),
         Block.Heading("What you post", "03"),
         Block.Para(
             "What you write and the photos you add stay yours. By posting them you let LogoSphere store them and show them to the " +
-                "people who can see that place — your group’s members, or everyone if its managers have made its activity public " +
-                "— and keep exchanges as shared history for both people in them.",
+                "people who can see that place — your group’s members, the spheres you share an opening with, every member for " +
+                "what you post to everyone, or anyone if a group’s managers have made its activity public — and keep exchanges " +
+                "as shared history for both people in them.",
         ),
         Block.Para("Only post what’s yours to share: no one else’s photos, words or private details without their agreement."),
-        Block.Heading("How we treat each other", "04"),
+        Block.Heading("AI, pictures and evidence", "04"),
+        Block.Para(
+            "AI can help you word a value card, or draw a picture for an offer, need, group or event. It can be wrong: what " +
+                "you post with it is yours to check.",
+        ),
+        Block.Para(
+            "Receipts are evidence. Outside the demo spheres, don’t use AI-made pictures as receipt photos or exchange pictures. " +
+                "LogoSphere refuses those it recognises, and it can’t recognise every one. In demo spheres evidence may be AI-made.",
+        ),
+        Block.Heading("How we treat each other", "05"),
         Block.Terms(
             listOf(
                 "Be honest." to "Offer what you can really give; ask for what you really need; write receipts that say what happened.",
                 "Keep it a gift." to "No selling, bartering for money, advertising or fundraising through openings.",
-                "Be kind." to "No harassment, threats, hate or discrimination — in posts, receipts, acknowledgements or anywhere else.",
+                "Be kind." to "No harassment, threats, hate or discrimination — in posts, messages, receipts, acknowledgements or anywhere else.",
+                "Don’t spam." to "Messages, invitations, events and announcements are for people who’d want them.",
                 "Respect privacy." to "Don’t share someone’s personal details, or what they told you in confidence.",
                 "Be yourself." to "Don’t pretend to be someone else — another member, a famous person, or an AI persona.",
                 "Keep it legal and safe." to "Nothing illegal, dangerous or exploitative.",
             ),
         ),
+        Block.Para(
+            "You can block anyone, and report a person, message, opening, event, announcement or acknowledgement to the " +
+                "platform’s administrators. Nobody else is told.",
+        ),
         Block.Note(
-            "LogoSphere doesn’t check members or guarantee that help will happen. When you meet people or go to their homes, use " +
+            "LogoSphere doesn’t check members, run members’ events or guarantee that help will happen. When you meet people or go to their homes, use " +
                 "the same care you would anywhere: meet somewhere you’re comfortable, and trust your instincts.",
         ),
-        Block.Heading("Groups and the people who run them", "05"),
+        Block.Heading("Groups and the people who run them", "06"),
         Block.Para(
             "Spheres, alliances and projects set their own rules — who may join, how decisions pass — and members can change them " +
                 "by proposal and vote. A group’s managers can approve and remove members and edit the group.",
         ),
         Block.Para(
-            "Platform administrators may remove content or close accounts that break these terms or put people at risk, and can " +
-                "see everything on the platform so they can keep it running. They act for the good of the community, not to take " +
-                "sides in a group’s own decisions.",
+            "Platform administrators may remove content or close accounts that break these terms or put people at risk. So they " +
+                "can keep it running, LogoSphere shows them what happens in every group, but not your point on the map, and of " +
+                "private messages only what was reported. They act for the good of the community, not to take sides in a group’s own decisions.",
         ),
-        Block.Heading("Demo spheres and AI personas", "06"),
+        Block.Heading("Demo spheres and AI personas", "07"),
         Block.Para(
             "The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters with famous " +
                 "names, playing everyday neighbours, written by AI. They are not the real people, nothing they say is an " +
                 "endorsement, and nothing in a demo sphere is real — no help is actually promised there.",
         ),
         Block.Para("What you post in a demo sphere is processed by AI services to write the personas’ replies — see the privacy policy."),
-        Block.Heading("Leaving", "07"),
+        Block.Heading("Leaving", "08"),
         Block.Para(
             "You can leave any group from its page, and delete your account yourself, any time. We may close an account that " +
                 "seriously or repeatedly breaks these terms; where we can, we’ll tell you why first.",
         ),
-        Block.Heading("What we can and can’t promise", "08"),
+        Block.Heading("What we can and can’t promise", "09"),
         Block.Para(
             "LogoSphere is run by a small, volunteer-built project. We work to keep it running and your data safe, but we provide " +
                 "it as it is, without guarantees that it will always be available, free of mistakes, or suitable for any " +
@@ -591,12 +627,12 @@ object InfoContent {
                 "themselves, on LogoSphere or off it. Nothing in these terms takes away rights that the law where you live gives " +
                 "you and that can’t be signed away.",
         ),
-        Block.Heading("Changes to these terms", "09"),
+        Block.Heading("Changes to these terms", "10"),
         Block.Para(
             "If we change these terms, we’ll update this page and its date, and for changes that matter we’ll tell members in " +
                 "LogoSphere before they take effect. Using LogoSphere after that means you accept the new terms.",
         ),
-        Block.Heading("Questions", "10"),
+        Block.Heading("Questions", "11"),
         Block.Para("Write to support@logosphere.net."),
         Block.Link("Read the privacy policy →", page = InfoPage.Privacy),
     )

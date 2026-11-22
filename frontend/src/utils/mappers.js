@@ -7,7 +7,7 @@ const IMAGE_BY_KEY = {
     garden: '/static/garden_old.webp',
     podcast: '/static/yoga_classes.webp',
     seeds: '/static/garden_new.webp',
-    tools: '/static/receipts.png',
+    tools: '/static/gift_economy.png',
     solar: '/static/projects_spheres.png',
 };
 

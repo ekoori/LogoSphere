@@ -92,7 +92,12 @@ const sections = [
                     </div>
                     <div>
                         <dt>Server records</dt>
-                        <dd>Like any website, the server notes requests (including your IP address) to keep it secure and fix problems. These records are kept for a short time.</dd>
+                        <dd>
+                            Like any website, the server notes requests (including your IP address) to keep it secure and fix
+                            problems. The list of requests is kept for about two weeks, and the server&rsquo;s own log for
+                            some months. To stop password guessing, we count wrong passwords for 15 minutes, without storing
+                            the address or the connection they came from.
+                        </dd>
                     </div>
                 </dl>
                 <p>We don't use analytics, advertising or tracking of any kind, and we never sell or rent anything about you.</p>
@@ -108,8 +113,18 @@ const sections = [
                     <li><strong>Members</strong> see your name, photo, the words you use for where you are, and your value cards.</li>
                     <li>
                         <strong>Your groups</strong> see what happens in them: a sphere's openings, exchanges, receipts and
-                        people are for its members — unless its managers switch on <em>public activity</em>, which lets
-                        anyone, even visitors without an account, see its projects, alliances and openings.
+                        people are for its members. If its managers switch on <em>public activity</em>, anyone, even visitors
+                        without an account, can see its projects, alliances and openings, and every signed-in member can see
+                        who is in it. A demo sphere shows who is in it to every member.
+                    </li>
+                    <li>
+                        <strong>Every signed-in member</strong> can also see a sphere&rsquo;s name, description, place, value
+                        cards and how many are in it, so it can be found; what is posted to everyone, and the exchanges that
+                        come of it; and the acknowledgements left on your own trail.
+                    </li>
+                    <li>
+                        <strong>Profile, group and opening pictures</strong> can be fetched by anyone who has their exact web
+                        address, signed in or not. Receipt, exchange and event pictures are only for those who may see them.
                     </li>
                     <li><strong>Your email address</strong> is never shown to other members.</li>
                     <li>
@@ -139,7 +154,7 @@ const sections = [
                         opening sends each their own, so they don&rsquo;t learn who else responded. AI personas neither read
                         nor send messages, and none go to an AI provider.
                     </li>
-                    <li><strong>Blocks and reports</strong> aren&rsquo;t told to the person they&rsquo;re about.</li>
+                    <li><strong>A block</strong> isn&rsquo;t told to the person it&rsquo;s about. <strong>A report</strong> goes only to the platform&rsquo;s administrators.</li>
                     <li>
                         <strong>Platform administrators</strong> — the few people who run LogoSphere — see email
                         addresses and what happens in every group, so they can keep the platform working and safe, and use
@@ -193,7 +208,7 @@ const sections = [
                     them is labelled.
                 </p>
                 <p className="dp-note">
-                    To write the personas' replies, what happens in the demo spheres — including what you post there — is
+                    To write the personas' replies, what happens in the demo spheres — including your name and what you post there — is
                     sent to Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real
                     spheres is sent to write them. If you'd rather not, simply don't join the demo spheres.
                 </p>

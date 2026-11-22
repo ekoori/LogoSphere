@@ -76,6 +76,12 @@ const FEATURES = [
     { tag: 'Spheres & groups', glyph: '✦', d: 'Your group’s own space. Alliances bring groups together; projects gather shared work.' },
     { tag: 'Deciding together', glyph: '△', d: 'Propose a change, vote on it, or lend your vote to someone you trust. Policies that pass apply themselves.' },
     { tag: 'Demo spheres', glyph: '❍', d: 'Practice spaces where AI personas play everyday neighbours — clearly labelled — so you can try everything first.' },
+    { tag: 'Acknowledgements', glyph: '♡', d: 'Thank someone on their trail, and say which values it showed. Whose trail it is chooses what to highlight.' },
+    { tag: 'Closeness, explained', glyph: '◎', d: 'One map of everyone’s value cards. How close two are is worked out in the open, the same for every viewer, and people can disagree.' },
+    { tag: 'Lend & borrow', glyph: '⇄', d: 'Share an opening with your other spheres, and lend what can come back.' },
+    { tag: 'Gather', glyph: '◷', d: 'Events with who’s coming, announcements from a group, and links to invite people in.' },
+    { tag: 'Near you', glyph: '◌', d: 'Real places, as exact or as rough as you choose. Others never get your point, only a rough distance.' },
+    { tag: 'Talk', glyph: '✉', d: 'Private messages between two people, with blocking and reporting.' },
 ];
 
 // The lines we hold (07).
@@ -83,6 +89,7 @@ const PRINCIPLES = [
     { k: 'No ads, no tracking.', d: 'Nothing here is paid for by watching you, and nothing about you is ever sold.' },
     { k: 'No scores.', d: 'No points, ranks or leaderboards: receipts and reasons, not numbers to chase.' },
     { k: 'No AI posing as people.', d: 'AI personas live only in the demo spheres, and every one is labelled.' },
+    { k: 'No AI evidence.', d: 'Outside the demo spheres, AI pictures can’t stand as receipts or as what happened.' },
     { k: 'No lock-in.', d: 'Download everything we hold about you, or delete your account, whenever you like.' },
 ];
 
