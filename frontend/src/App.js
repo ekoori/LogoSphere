@@ -37,6 +37,10 @@ import SearchPage from './pages/SearchPage';
 import MeaningGraphPage from './pages/MeaningGraphPage';
 import NearbyPage from './pages/NearbyPage';
 import MessagesPage from './pages/MessagesPage';
+import EventsPage from './pages/EventsPage';
+import EventPage from './pages/EventPage';
+import EventEditPage from './pages/EventEditPage';
+import InvitePage from './pages/InvitePage';
 import MapPickerPage from './pages/MapPickerPage';
 import { SIMPLE, modeOfAccount, rememberMode, rememberedMode } from './utils/modes';
 import Contribute from './pages/Contribute';
@@ -91,6 +95,7 @@ function AppContent() {
         <Route path="/join" element={<div className='container'><JoinPage/></div>}/>
         <Route path="/confirm-email" element={<div className='container'><ConfirmEmailPage/></div>}/>
         <Route path="/unsubscribe" element={<div className='container'><UnsubscribePage/></div>}/>
+        <Route path="/invite" element={<div className='container'><InvitePage/></div>}/>
         {/* The method is public; the page itself gates the graph. */}
         <Route path="/meaning-graph" element={<ErrorBoundary><MeaningGraphPage/></ErrorBoundary>}/>
         <Route path="/privacy" element={<Privacy/>}/>
@@ -116,6 +121,9 @@ function AppContent() {
         <Route path="/exchange" element={<ErrorBoundary><ProtectedRoute><ExchangePage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/opening" element={<ErrorBoundary><ProtectedRoute><OpeningPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/messages" element={<ErrorBoundary><ProtectedRoute><MessagesPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/events" element={<ErrorBoundary><ProtectedRoute><EventsPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/event" element={<ErrorBoundary><ProtectedRoute><EventPage/></ProtectedRoute></ErrorBoundary>} />
+        <Route path="/event-edit" element={<ErrorBoundary><ProtectedRoute><EventEditPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/nearby" element={<ErrorBoundary><ProtectedRoute><NearbyPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/user" element={<ErrorBoundary><ProtectedRoute><UserPage/></ProtectedRoute></ErrorBoundary>} />
         <Route path="/admin" element={<ErrorBoundary><ProtectedRoute><AdminPage/></ProtectedRoute></ErrorBoundary>} />

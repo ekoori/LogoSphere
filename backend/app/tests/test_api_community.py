@@ -245,6 +245,7 @@ def test_signing_up_with_one(app, db, people, new_member):
     assert r.status_code == 200, r.get_json()
     uid = uuid.UUID(str(r.get_json()['user_id']))
     assert uid in db.execute('SELECT participants FROM spheres WHERE sphere_id = %s', [sphere]).one().participants
+    assert r.get_json()['invited_to']['id'] == str(sphere)
     assert len(ada.told('invite_accepted')) == 1
 
 

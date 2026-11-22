@@ -54,6 +54,10 @@
     background: linear-gradient(135deg, var(--bn-terracotta) 0%, var(--bn-honey) 60%, var(--bn-moss-deep) 130%);
 }
 
+.ep-banner--event .ep-banner-fallback {
+    background: linear-gradient(135deg, var(--bn-honey) 0%, var(--bn-leaf) 55%, var(--bn-moss-deep) 130%);
+}
+
 .ep-banner-glyph {
     font-size: clamp(6rem, 16vw, 11rem);
     line-height: 1;

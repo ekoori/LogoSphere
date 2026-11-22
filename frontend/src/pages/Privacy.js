@@ -62,6 +62,15 @@ const sections = [
                         </dd>
                     </div>
                     <div>
+                        <dt>Events, announcements and invitations</dt>
+                        <dd>
+                            Events you put on, with their pictures and places, and whether you said you would come to which
+                            date. Announcements you write. For an invitation link, a one-way hash of it, who made it and who
+                            joined with it, for two weeks. If someone signs up with one, that hash waits with their name
+                            and address until they finish.
+                        </dd>
+                    </div>
+                    <div>
                         <dt>Messages, blocks and reports</dt>
                         <dd>
                             Messages you send and get, whom you blocked, and the reports you make with a copy of what you
@@ -103,6 +112,18 @@ const sections = [
                     </li>
                     <li><strong>Your email address</strong> is never shown to other members.</li>
                     <li>
+                        <strong>An event</strong>, with who is coming, is seen by the members of its sphere, or by every
+                        signed-in member when it is for everyone.
+                    </li>
+                    <li>
+                        <strong>An announcement</strong> is read by the group&rsquo;s members, and for an alliance or project
+                        by the rest of its sphere. Its notification never has the words.
+                    </li>
+                    <li>
+                        <strong>An invitation link</strong> shows your name, and the group&rsquo;s, to whoever holds it.
+                        You&rsquo;re told who joined with it.
+                    </li>
+                    <li>
                         <strong>A message</strong> is for the two people in it. Writing to everyone who responded to an
                         opening sends each their own, so they don&rsquo;t learn who else responded. AI personas neither read
                         nor send messages, and none go to an AI provider.
@@ -133,9 +154,9 @@ const sections = [
                         them, and only if you chose to be findable. A rougher place blurs that further.
                     </li>
                     <li>
-                        <strong>A group or an opening</strong> shows its words and a rough distance. It shows the spot itself
-                        only when whoever runs it chose &ldquo;the exact spot&rdquo;, and for a private sphere only to those
-                        inside it.
+                        <strong>A group, opening or event</strong> shows its words and a rough distance. It shows the spot
+                        itself only when whoever runs it chose &ldquo;the exact spot&rdquo;, and for a private sphere only to
+                        those inside it. An event for everyone shows it to every signed-in member.
                     </li>
                     <li>
                         <strong>Your device&rsquo;s location</strong> is read once, when you press &ldquo;Use where I am
@@ -174,7 +195,7 @@ const sections = [
         body: (
             <>
                 <p>
-                    AI can help you word a value card, or draw a picture for an offer, need or group. It does nothing
+                    AI can help you word a value card, or draw a picture for an offer, need, group or event. It does nothing
                     until you press its button, and it saves nothing by itself.
                 </p>
                 <ul>
@@ -223,7 +244,9 @@ const sections = [
                     For as long as you have an account. When you delete it, we remove your profile, credentials, sessions,
                     value cards, notifications, follows and memberships, and withdraw your open openings. Exchanges you took
                     part in stay, under your name, because they're part of the other person's record too. So do the messages
-                    you sent, for the person who got them, without your name; and reports, as the safety record.
+                    you sent, for the person who got them, without your name; and reports, as the safety record. A
+                    group&rsquo;s events and announcements stay with it, without your name. Your events for everyone are
+                    cancelled, keeping only their name and time; your replies to events and your invitation links go.
                 </p>
                 <p>Backup copies of the database may hold your data for a while longer before they're replaced.</p>
             </>

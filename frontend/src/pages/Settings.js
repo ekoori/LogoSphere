@@ -11,6 +11,7 @@ import { usePlace } from '../utils/usePlace';
 import PlaceFields from '../components/PlaceFields';
 import EmailSettings from '../components/EmailSettings';
 import { BlockedPeople } from '../components/Safety';
+import { MyInvitations } from '../components/Invitations';
 import '../styles/Settings.css';
 
 const MIN_PASSWORD = 8;
@@ -254,7 +255,7 @@ function DataSection() {
             <h3>Your data</h3>
             <p className="settings-sub">
                 Everything LogoSphere holds about you — your profile, value cards, memberships, openings, exchanges,
-                follows, votes and notifications — in one file you can keep. Your password isn't in it: it's only
+                follows, votes, messages, events and notifications — in one file you can keep. Your password isn't in it: it's only
                 stored as a one-way hash.
             </p>
             <Note note={note} />
@@ -298,8 +299,9 @@ function DeleteSection() {
             <h3>Delete your account</h3>
             <p className="settings-sub">
                 Your profile, value cards, notifications, follows and memberships are removed, and your open openings
-                are withdrawn. Exchanges you took part in stay as history for the other people in them, under your
-                name. This can't be undone.
+                are withdrawn. Events you put on for everyone are cancelled, and your invitation links stop. A group's
+                events and announcements stay with the group, without your name. Exchanges you took part in stay as
+                history for the other people in them, under your name. This can't be undone.
             </p>
             <form onSubmit={remove}>
                 <div className="form-group">
@@ -328,6 +330,7 @@ const SettingsPage = () => (
                 <a href="#account-settings">Your name</a>
                 <a href="#place">Where you are</a>
                 <a href="#email">Email</a>
+                <a href="#invitations">Invitations</a>
                 <a href="#simple-or-advanced">Simple or Advanced</a>
                 <a href="#appearance">Appearance</a>
                 <a href="#blocked">Blocked</a>
@@ -339,6 +342,7 @@ const SettingsPage = () => (
         <AccountSection />
         <PlaceSection />
         <EmailSettings />
+        <MyInvitations />
         <ModeSection />
         <AppearanceSection />
         <BlockedPeople />

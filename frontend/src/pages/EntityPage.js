@@ -27,11 +27,14 @@ import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import { useSimple } from '../utils/useSimple';
 import { ExactSpot } from '../components/WhereLine';
+import Announcements from '../components/Announcements';
+import EventList from '../components/EventList';
+import { InviteLink } from '../components/Invitations';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
 const NOUN = { sphere: 'Sphere', alliance: 'Alliance', project: 'Project' };
-const TAB_KEYS = [TRAIL_TAB, OPENINGS_TAB, 'members', 'governance'];
+const TAB_KEYS = [TRAIL_TAB, OPENINGS_TAB, 'events', 'members', 'governance'];
 const STATUS_META = {
     'Initiated':   { cls: 'status--initiated',   label: 'Initiated' },
     'In Progress': { cls: 'status--in-progress',  label: 'In Progress' },
@@ -124,6 +127,9 @@ export default function EntityPage({ kind }) {
     const statusInfo = kind !== 'project' ? null
         : isClosed ? { cls: 'status--paused', label: 'Closed' }
             : (STATUS_META[entity.status] || { cls: 'status--in-progress', label: 'Ongoing' });
+    const inGroup = !!userId && (perms.isMember || perms.canManage);
+    // The server's rule: in an open group any member invites, else its managers.
+    const canInvite = inGroup && !isClosed && (perms.canManage || (entity.join_policy || 'open') === 'open');
     const actingAs = {
         id: eid, name: entity.name,
         sphereId: kind === 'sphere' ? eid : entity.sphere_id,
@@ -223,6 +229,13 @@ export default function EntityPage({ kind }) {
 
             <ExactSpot key={eid} point={entity.point} />
 
+            {inGroup && (
+                <div className="grp-top" key={`top-${eid}`}>
+                    <Announcements groupId={eid} />
+                    {canInvite && <InviteLink groupId={eid} />}
+                </div>
+            )}
+
             {!canViewActivity ? (
                 <p className="ep-empty" style={{ padding: '0 0.5rem' }}>
                     {userId
@@ -292,6 +305,7 @@ export default function EntityPage({ kind }) {
                             tabs={[
                                 { key: 'meaning_trail', label: 'Meaning Trail' },
                                 { key: 'offers-needs', label: 'Offers & Needs' },
+                                ...(inGroup ? [{ key: 'events', label: 'Events' }] : []),
                                 // Visitors get the count on the banner, not the people.
                                 ...(userId ? [{ key: 'members', label: `People (${members.length})` }] : []),
                                 // Simple has no Governance tab, but a link to a vote still opens it.
@@ -300,6 +314,17 @@ export default function EntityPage({ kind }) {
                             active={activeTab}
                             onChange={setActiveTab}
                         />
+
+                        {activeTab === 'events' && inGroup && (
+                            <>
+                                {!isClosed && (
+                                    <div className="ep-manage-form-toggle">
+                                        <Link className="btn btn-accent" to={`/event-edit?group=${eid}&kind=${kind}`}>+ Put on an event</Link>
+                                    </div>
+                                )}
+                                <EventList groupId={eid} empty={`Nothing is on in this ${kind} yet.`} />
+                            </>
+                        )}
 
                         {activeTab === 'governance' && (
                             <GovernancePanel kind={kind} entityId={eid} canManage={perms.canManage} />

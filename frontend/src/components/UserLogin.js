@@ -12,10 +12,11 @@ import React, { useState } from 'react';
 import api from '../api';
 import '../styles/App.css'; 
 import '../styles/UserLogin.css'; 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLogin } from '../App';  // Import useLogin hook
 import { modeOfAccount } from '../utils/modes';
 import { useMailOn } from '../utils/useMail';
+import { inviteFromHash, returnTo } from '../utils/returnTo';
 
 
 
@@ -29,6 +30,8 @@ const UserLogin = () => {
     const navigate = useNavigate();
     const mailOn = useMailOn();
     const [asked, setAsked] = useState({});
+    const { state } = useLocation();
+    const invite = state?.from?.pathname === '/invite' ? inviteFromHash(state.from.hash) : '';
 
     const emailLink = async () => {
         if (!email.trim()) {
@@ -61,7 +64,7 @@ const UserLogin = () => {
                 setUserName((response.data.data.name || '').trim());
                 setIsPlatformAdmin(!!response.data.data.is_platform_admin);
                 adoptUiMode(modeOfAccount(response.data.data));
-                navigate('/profile');
+                navigate(returnTo(state), { replace: true });
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -96,7 +99,7 @@ const UserLogin = () => {
                     {submitting ? 'Logging in…' : 'Log in'}
                 </button>
                 <p className="auth-alt">
-                    New to LogoSphere? <Link to="/register">Create an account</Link>
+                    New to LogoSphere? <Link to={invite ? `/register#invite=${invite}` : '/register'}>Create an account</Link>
                 </p>
                 <p className="auth-alt">
                     <button type="button" className="auth-link-btn" onClick={() => setForgot((v) => !v)} aria-expanded={forgot}>

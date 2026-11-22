@@ -452,7 +452,10 @@ function OpeningsTab({ notify }) {
 }
 
 // ── Reports ──────────────────────────────────────────────────────────────────
-const REPORTED = { person: 'A person', message: 'A private message', acknowledgement: 'An acknowledgement', opening: 'An opening' };
+const REPORTED = {
+    person: 'A person', message: 'A private message', acknowledgement: 'An acknowledgement', opening: 'An opening',
+    event: 'An event', announcement: 'An announcement',
+};
 
 function ReportsTab({ notify }) {
     const [status, setStatus] = useState('open');
@@ -498,6 +501,7 @@ function ReportsTab({ notify }) {
                             <strong>{REPORTED[r.kind] || r.kind}</strong>
                             {r.subject && <> by <Link to={`/user?id=${r.subject.id}`}>{r.subject.name}</Link></>}
                             {r.kind === 'opening' && <> (<Link to={`/opening?id=${r.item_id}`}>open it</Link>)</>}
+                            {r.kind === 'event' && <> (<Link to={`/event?id=${r.item_id}`}>open it</Link>)</>}
                             <span className="adm-muted"> reported by {r.reporter?.name} on {fmtDate(r.made_at)}</span>
                         </p>
                         {r.excerpt && <blockquote>{r.excerpt}</blockquote>}

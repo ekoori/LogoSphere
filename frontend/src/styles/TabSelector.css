@@ -3,12 +3,13 @@
 
 .seg-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.4em;
     padding: 0.35em;
     margin-bottom: var(--sp-5, 1.5rem);
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-xl); /* a pill on one row, still a shape on two */
 }
 
 .seg-tab {
@@ -44,6 +45,5 @@
 
 /* On narrow screens let the strip wrap rather than overflow. */
 @media (max-width: 560px) {
-    .seg-tabs { flex-wrap: wrap; }
     .seg-tab { flex: 1 1 40%; }
 }

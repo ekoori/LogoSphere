@@ -145,6 +145,7 @@ const Header = () => {
                     {!simple && <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>}
                     {!simple && <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>}
                     <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
+                    <li><Link to="/events" onClick={closeMenu}>Events</Link></li>
                     <li><Link to="/meaning-graph" onClick={closeMenu}>Meaning Graph</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
                         drawer on mobile. */}

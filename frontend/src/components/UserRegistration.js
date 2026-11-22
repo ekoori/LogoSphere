@@ -2,12 +2,13 @@
 // With email working it is email first: name and address here, the password
 // on the page the emailed link opens (pages/EmailLinkPages.js). Without email
 // the account is made here, signed in at once and routed to its profile.
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
 import { modeOfAccount } from '../utils/modes';
 import { useMailOn } from '../utils/useMail';
+import { groupHref, inviteFromHash } from '../utils/returnTo';
 import '../styles/App.css';
 import '../styles/UserLogin.css';
 
@@ -25,6 +26,19 @@ const UserRegistration = () => {
     const { setIsLoggedIn, setUserId, setUserName, adoptUiMode } = useLogin();
     const navigate = useNavigate();
     const withPassword = mailOn === false;
+    const { hash } = useLocation();
+    const invite = inviteFromHash(hash);
+    const [invited, setInvited] = useState(null);
+
+    useEffect(() => {
+        setInvited(null);
+        if (!invite) return undefined;
+        let current = true;
+        api.post('/api/invites/look', { code: invite })
+            .then((r) => { if (current) setInvited(r.data); })
+            .catch(() => { if (current) setInvited({ broken: true }); });
+        return () => { current = false; };
+    }, [invite]);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -40,7 +54,7 @@ const UserRegistration = () => {
 
         setSubmitting(true);
         try {
-            const details = { name: name.trim(), email: email.trim(), ...(withPassword && { password }) };
+            const details = { name: name.trim(), email: email.trim(), ...(withPassword && { password }), ...(invite && { invite }) };
             const made = await api.post('/api/register', details);
             if (made.data.confirm_email) {
                 setSent(true);
@@ -54,7 +68,7 @@ const UserRegistration = () => {
                 setUserId(res.data.data.user_id);
                 setUserName((res.data.data.name || '').trim());
                 adoptUiMode(modeOfAccount(res.data.data));
-                navigate('/profile');
+                navigate(groupHref(made.data.invited_to) || '/profile');
             } else {
                 // Registered but couldn't auto-login — send them to log in manually.
                 navigate('/login');
@@ -93,6 +107,13 @@ const UserRegistration = () => {
         <div className="login-container">
             <form className="login-form" onSubmit={handleRegister}>
                 <h2>Join LogoSphere</h2>
+                {invited && (
+                    <p className={invited.broken ? 'auth-error' : 'auth-ok'} role="status">
+                        {invited.broken
+                            ? "That invitation doesn't work any more. You can still join."
+                            : `${invited.inviter} invited you${invited.group ? ` to ${invited.group.name}` : ''}.`}
+                    </p>
+                )}
 
                 {error && <p className="auth-error" role="alert">{error}</p>}
 
@@ -142,7 +163,8 @@ const UserRegistration = () => {
                 {mailOn && <p className="auth-alt">You choose your password from the link we email you.</p>}
 
                 <p className="auth-alt">
-                    Already have an account? <Link to="/login">Log in</Link>
+                    Already have an account?{' '}
+                    <Link to="/login" state={invite ? { from: { pathname: '/invite', hash: `#${invite}` } } : undefined}>Log in</Link>
                 </p>
             </form>
         </div>

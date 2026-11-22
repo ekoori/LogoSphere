@@ -12,7 +12,7 @@ from flask import request, jsonify
 from app.models.user import User
 from app.models.spheres import Sphere
 from app.routes.demo import invite_to_demo
-from app.utils import invites, mailer
+from app.utils import groups, invites, mailer
 
 
 def welcome(user_id):
@@ -41,7 +41,9 @@ def register():
     if not user:
         return jsonify({'message': 'Registration failed.'}), 400
     welcome(user.user_id)
+    joined = None
     if data.get('invite'):
         from app.routes.invites import arrived
-        arrived(invites.hashed(data['invite']), user.user_id)
-    return jsonify({'reg_success': True, 'message': 'User registered successfully.', 'user_id': user.user_id}), 200
+        joined = arrived(invites.hashed(data['invite']), user.user_id)
+    return jsonify({'reg_success': True, 'message': 'User registered successfully.', 'user_id': user.user_id,
+                    'invited_to': groups.summary(joined[1]) if joined else None}), 200

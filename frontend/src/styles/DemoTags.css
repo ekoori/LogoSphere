@@ -52,7 +52,7 @@
     font-size: 0.92rem;
     line-height: 1.5;
 }
-.demo-strip strong { color: #5a338a; }
+.demo-strip strong { color: var(--demo-ink); }
 
 /* "Try the demo spheres" invitation card (home). */
 .demo-invite {
@@ -68,7 +68,7 @@
     background: rgba(140, 90, 200, 0.07);
 }
 .demo-invite p { margin: 0.2em 0 0; color: var(--ink-soft); font-size: 0.92rem; }
-.demo-invite h3 { margin: 0; font-family: var(--font-display); color: #5a338a; font-size: 1.1rem; }
+.demo-invite h3 { margin: 0; font-family: var(--font-display); color: var(--demo-ink); font-size: 1.1rem; }
 .demo-invite-actions { display: flex; gap: 0.5em; }
 
 /* The demo section on the Spheres page. */
@@ -77,7 +77,7 @@
     padding-top: 1.4rem;
     border-top: 1px dashed rgba(140, 90, 200, 0.45);
 }
-.demo-section-head h2 { margin: 0 0 0.3em; color: #5a338a; }
+.demo-section-head h2 { margin: 0 0 0.3em; color: var(--demo-ink); }
 .demo-section-head p { margin: 0; color: var(--ink-soft); }
 
 /* A persona's profile page. */

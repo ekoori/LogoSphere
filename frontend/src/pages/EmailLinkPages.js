@@ -7,6 +7,7 @@ import api from '../api';
 import { useLogin } from '../App';
 import { modeOfAccount } from '../utils/modes';
 import { tokenFromHash } from '../utils/linkToken';
+import { groupHref } from '../utils/returnTo';
 import '../styles/UserLogin.css';
 
 const MIN_PASSWORD = 8;
@@ -51,7 +52,7 @@ export function JoinPage() {
             setUserName((data.data.name || '').trim());
             setIsPlatformAdmin(!!data.data.is_platform_admin);
             adoptUiMode(modeOfAccount(data.data));
-            navigate('/profile', { replace: true });
+            navigate(groupHref(made.invited_to) || '/profile', { replace: true });
         } catch (err) {
             navigate('/login', { replace: true });      // the account is made: only signing in is left
         }

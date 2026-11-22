@@ -10,7 +10,7 @@ import '../styles/EntityBanner.css';
 import { AiTag } from './AiTag';
 import AiPictureMaker from './AiPictureMaker';
 
-const GLYPH = { sphere: '✦', alliance: '◈', project: '◻', opening: '◍' };
+const GLYPH = { sphere: '✦', alliance: '◈', project: '◻', opening: '◍', event: '◷' };
 
 function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, isAi = false, aiSubject = null, children }) {
     const [uploading, setUploading] = useState(false);
@@ -86,7 +86,7 @@ function EntityBanner({ kind, image, imageUrl, onUpload, asAdmin = false, isAi =
 }
 
 EntityBanner.propTypes = {
-    kind: PropTypes.oneOf(['sphere', 'alliance', 'project', 'opening']).isRequired,
+    kind: PropTypes.oneOf(['sphere', 'alliance', 'project', 'opening', 'event']).isRequired,
     image: PropTypes.string,
     imageUrl: PropTypes.string,
     onUpload: PropTypes.func,
