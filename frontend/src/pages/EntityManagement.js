@@ -160,7 +160,7 @@ export default function EntityManagement({ kind }) {
                             <label htmlFor="ent-description">Description</label>
                             <textarea id="ent-description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
                         </div>
-                        <div className="form-group">
+                        <div className="management-place">
                             <PlaceFields editor={place} label="Where it is" />
                         </div>
                         {/* Hidden isn't cleared: saving in Simple sends these back as they were. */}

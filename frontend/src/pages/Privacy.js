@@ -5,7 +5,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
-export const PRIVACY_UPDATED = '22 November 2026';
+export const PRIVACY_UPDATED = '23 November 2026';
 
 const sections = [
     {

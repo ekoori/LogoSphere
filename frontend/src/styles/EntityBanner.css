@@ -218,3 +218,6 @@
 }
 .ep-banner-content .ep-leave-btn:hover:not(:disabled) { background: rgba(20, 24, 16, 0.35); color: #fdfaf2; }
 .ep-banner-content .ep-leave-btn.is-armed { background: rgba(177, 68, 47, 0.85); border-color: transparent; color: #fdfaf2; }
+
+/* Pills on a banner: light on dark, or a clay pill disappears into the wash. */
+.ep-banner-content .pill { background: rgba(0, 0, 0, 0.45); color: #fdfaf2; text-shadow: none; }

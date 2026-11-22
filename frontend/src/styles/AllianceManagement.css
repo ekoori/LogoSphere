@@ -157,3 +157,9 @@
     .management-section .form-group textarea,
     .management-section .form-group select { width: 100%; box-sizing: border-box; }
 }
+
+/* Fields that read downwards rather than label left, input right. */
+.management-section .management-place { margin-bottom: 1.2em; }
+.management-section .form-group.management-toggle { display: block; }
+.management-section .form-group.management-toggle label { display: inline-block; width: auto; margin-bottom: 0.2em; }
+.management-section .form-group.management-toggle .management-section-sub { margin: 0 0 0.6em; }

@@ -87,6 +87,9 @@ function PlaceSection() {
     useEffect(() => {
         if (hash === '#place' && editor.loaded) document.getElementById('place')?.scrollIntoView({ block: 'start' });
     }, [hash, editor.loaded]);
+    useEffect(() => {
+        if (editor.changed) setNote(null);      // "Saved." is no longer true
+    }, [editor.changed]);
 
     const save = async (e) => {
         e.preventDefault();
@@ -318,9 +321,10 @@ const SettingsPage = () => (
         <div className="settings-head">
             <p className="settings-eyebrow">Account</p>
             <h1>Settings</h1>
-            <p className="settings-lede">Your name, how LogoSphere looks, your password and your data. What you care about lives on your Meaning Graph.</p>
+            <p className="settings-lede">Your name, where you are, how LogoSphere looks, your password and your data. What you care about lives on your Meaning Graph.</p>
             <nav className="settings-jump" aria-label="Sections">
-                <a href="#account-settings">Name &amp; place</a>
+                <a href="#account-settings">Your name</a>
+                <a href="#place">Where you are</a>
                 <a href="#simple-or-advanced">Simple or Advanced</a>
                 <a href="#appearance">Appearance</a>
                 <a href="#password">Password</a>
@@ -329,7 +333,7 @@ const SettingsPage = () => (
             </nav>
         </div>
         <AccountSection />
-                <PlaceSection />
+        <PlaceSection />
         <ModeSection />
         <AppearanceSection />
         <PasswordSection />

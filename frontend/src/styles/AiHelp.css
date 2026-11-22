@@ -67,6 +67,7 @@
 .ai-btn--main { background: var(--moss); color: var(--on-fill); border-color: transparent; }
 .ai-btn:disabled { opacity: 0.55; cursor: default; }
 .ep-ai-panel { max-width: 720px; box-sizing: border-box; margin: 0.6rem auto 0; padding: 0 1rem; }
+.xc-page--banner > .ep-ai-panel { max-width: none; margin: 0.6rem 0 0; padding: 0; }
 
 .picture-field { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin-top: 0.3em; }
 .picture-field img { display: block; max-width: 220px; max-height: 140px; border-radius: var(--r-sm); }
