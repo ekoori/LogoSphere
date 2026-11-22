@@ -206,13 +206,15 @@ function ServiceCard({
             </div>
 
             <div className="description-container">
-                <img
-                    src={img}
-                    alt={title}
-                    className="exchange-image"
-                    onError={() => setImg('/static/gift_economy.png')}
-                    onClick={(e) => e.stopPropagation()}
-                />
+                {img && (
+                    <img
+                        src={img}
+                        alt={title}
+                        className="exchange-image"
+                        onError={() => setImg(isDemo ? '/static/gift_economy.png' : null)}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                )}
                 <p className="description">{description}</p>
             </div>
 

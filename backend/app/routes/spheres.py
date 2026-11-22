@@ -6,6 +6,7 @@ from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.utils.access import Sight, group_without_people, without_people
+from app.utils.demo import is_agent, is_demo_sphere
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -153,8 +154,12 @@ def get_public_sphere(sphere_id):
         d['alliance_list'] = [
             group_without_people(a.to_dict(include_image=False)) for a in Alliance.get_all()
             if getattr(a, 'sphere_id', None) == sid]
+        in_demo = is_demo_sphere(sid)
         d['openings'] = [
-            s.to_dict(include_image=False) for s in Service.get_all()
+            # The demo and its personas are labelled for visitors as for members.
+            {**s.to_dict(include_image=False), 'is_demo': in_demo,
+             'provider_is_agent': is_agent(getattr(s, 'acting_user_id', None) or s.provider_id)}
+            for s in Service.get_all()
             if getattr(s, 'sphere_id', None) == sid and s.is_current
             and (s.cadence == 'perpetual' or s.status not in ('In Progress', 'Completed'))]
         return jsonify(d), 200

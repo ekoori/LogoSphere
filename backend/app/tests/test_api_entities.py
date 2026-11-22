@@ -129,6 +129,17 @@ def test_public_sphere_endpoint_only_for_public_spheres(api, keep_rows):
     assert status == 200 and d['is_public'] is True and 'openings' in d
 
 
+def test_a_signed_out_visitor_is_told_what_is_demo(api, keep_rows):
+    # The site keeps stand-in pictures to the demo and labels personas: it can only do either if told.
+    keep_rows('spheres', sphere_id=RIVERSIDE)
+    assert api.post(f'/api/spheres/{RIVERSIDE}/governance', who='admin', json={'is_public': True})[0] == 200
+    status, d = api.get(f'/api/public/spheres/{RIVERSIDE}')
+    assert status == 200 and d['openings']
+    assert all(o['is_demo'] is True for o in d['openings'])
+    assert all(isinstance(o['provider_is_agent'], bool) for o in d['openings'])
+    assert any(o['provider_is_agent'] for o in d['openings'])
+
+
 def test_sandbox_flag_is_platform_admin_only(api):
     status, _ = api.post(f'/api/spheres/{RIVERSIDE}/governance', who='marie', json={'is_sandbox': True})
     assert status == 403

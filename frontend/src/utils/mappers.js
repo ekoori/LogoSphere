@@ -45,8 +45,10 @@ export function mapService(s) {
         project: s.project_name || null,
         projectId: s.project_id || null,
         // A real uploaded photo (served lazily from the opening's /image
-        // endpoint) always wins over the bundled keyword-matched fallback.
-        imageUrl: s.has_image ? `/api/openings/${s.service_id}/image` : imageForService(s.image_key, s.title),
+        // endpoint) always wins. The bundled keyword-matched illustrations are
+        // the demo's only: in a real sphere one would pass for the thing on offer.
+        imageUrl: s.has_image ? `/api/openings/${s.service_id}/image`
+            : s.is_demo ? imageForService(s.image_key, s.title) : null,
         // Whether the opening has a real uploaded banner (vs the fallback).
         hasImage: !!s.has_image,
         time: fmtDate(s.created_at) || 'recently',
@@ -224,7 +226,10 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
         description: row.exchange_long_description || '',
         project: row.project_name || null,
         projectId: row.project_id || null,
-        imageUrl: imageFor(row.exchange_description),
+        // A trail is evidence. Demo spheres may have AI-made evidence, so they keep
+        // their illustrations; a real exchange shows only its own picture.
+        imageUrl: row.has_image ? `/api/exchange/${row.exchange_id}/image`
+            : row.is_demo ? imageFor(row.exchange_description) : null,
         time: fmtDate(row.project_start_timestamp) || 'recently',
         status: row.exchange_status || 'Initiated',
         ...likeOf('exchange'),

@@ -9,7 +9,8 @@ commit. Tick the boxes as they land.
 2. **Simple and Advanced** modes. Simple shows the gift economy (value cards included) with fewer options, for
    older people and beginners.
 3. **AI help drafting value cards.**
-4. **AI pictures** wherever something is created (openings, groups, events). **Never for receipts or evidence.**
+4. **AI pictures** wherever something is created (openings, groups, events). **Never for receipts or evidence**,
+   except in demo spheres (Igor, later on 2026-11-22: "demo spheres can have AI generated content as evidence").
 5. **Real places** wherever a location is chosen, to the precision the person wants; show who is nearby.
    Free service, offline preferred.
 6. **Meaning Graph** visualisation like Obsidian's graph, a very important part of the platform, with a fair and
@@ -106,7 +107,9 @@ version history, ids, "near my values", graph tuning. Presentation only: never a
 - Card: the member's notes in, an editable draft and a reflective question out. Never auto-saved. Sends only
   what they typed, no name or id.
 - Pictures: preview, then the ordinary upload. The server keeps each generated picture's hash and fingerprint;
-  receipt photos and exchange pictures refuse those and files that declare AI generation in their metadata.
+  receipt photos and exchange pictures in real spheres (and outside any sphere) refuse those and files that declare
+  AI generation in their metadata; demo spheres accept them. A real exchange never inherits or shows an AI picture
+  or a stock stand-in.
   AI pictures are labelled wherever they show. Detection can't catch every outside AI picture: say so.
 - Per-member and platform daily caps; off cleanly without keys.
 

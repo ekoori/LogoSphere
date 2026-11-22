@@ -50,6 +50,20 @@ describe('mapExchange', () => {
         expect(x.likedByCurrentUser).toBe(true);
     });
 
+    it('keeps stand-in pictures to the demo: a real trail is evidence', () => {
+        // AI-drawn pictures picked by the title. Demo spheres may have AI evidence; real ones never.
+        ['Fence rebuild', 'GPU hours', 'Pottery class', 'Solar microgrid'].forEach((exchange_description) => {
+            expect(mapExchange(row({ exchange_description })).imageUrl).toBe(null);
+            expect(mapExchange(row({ exchange_description, is_demo: true })).imageUrl).toMatch(/^\/static\//);
+        });
+        expect(mapExchange(row({ exchange_description: 'Soup', is_demo: true })).imageUrl).toBe(null);
+    });
+
+    it("shows the exchange's own picture, demo or real", () => {
+        expect(mapExchange(row({ has_image: true })).imageUrl).toBe('/api/exchange/x1/image');
+        expect(mapExchange(row({ has_image: true, is_demo: true })).imageUrl).toBe('/api/exchange/x1/image');
+    });
+
     it('treats settled statuses as completed', () => {
         expect(mapExchange(row({ exchange_status: 'Receipted' })).type).toBe('completed');
         expect(mapExchange(row({ exchange_status: 'In Progress' })).type).toBe('offer');
@@ -66,9 +80,12 @@ describe('mapService', () => {
         expect(mapService(service()).spheres).toEqual([{ id: 'sp1', name: 'AI Commons' }]);
     });
 
-    it('prefers an uploaded banner over the bundled illustration', () => {
-        expect(mapService(service({ has_image: true })).imageUrl).toBe('/api/openings/s1/image');
-        expect(mapService(service()).imageUrl).toBe(imageForService(undefined, 'Spare GPU hours'));
+    it('prefers an uploaded banner, and only the demo has illustrations to fall back on', () => {
+        expect(mapService(service({ has_image: true, is_demo: true })).imageUrl).toBe('/api/openings/s1/image');
+        expect(mapService(service({ is_demo: true })).imageUrl).toBe(imageForService(undefined, 'Spare GPU hours'));
+        // In a real sphere it would pass for a photo of the thing on offer.
+        expect(mapService(service()).imageUrl).toBe(null);
+        expect(mapService(service({ image_key: 'garden' })).imageUrl).toBe(null);
     });
 
     it('carries the viewer-relative flags and acceptances', () => {
