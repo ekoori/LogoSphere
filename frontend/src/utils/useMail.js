@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 
-/** Whether LogoSphere can send email: undefined until known, false if asking failed. */
+/** Whether LogoSphere can send email: undefined until known. A failed look doesn't say it can't: the server answers the form. */
 export function useMailOn() {
     const { data, isError } = useQuery({
         queryKey: ['mail'],
@@ -9,5 +9,5 @@ export function useMailOn() {
         staleTime: 5 * 60_000,
         retry: 1,
     });
-    return isError ? false : data;
+    return data === undefined && isError ? true : data;
 }

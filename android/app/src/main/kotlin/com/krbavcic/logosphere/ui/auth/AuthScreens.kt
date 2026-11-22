@@ -86,13 +86,21 @@ class AuthViewModel(private val session: SessionManager, private val api: LogoSp
     val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
+        checkMail()
+    }
+
+    /**
+     * Asked again when "Forgot your password?" opens: email may have been switched on since. A failed
+     * look is no reason to say LogoSphere can't send email; the server answers when the form is sent.
+     */
+    fun checkMail() {
         viewModelScope.launch {
-            _mailOn.value = try {
-                api.mailOn()
+            try {
+                _mailOn.value = api.mailOn()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                false
+                if (_mailOn.value == null) _mailOn.value = true
             }
         }
     }
@@ -313,7 +321,7 @@ fun SignInScreen(notice: String?) {
             Text("New to LogoSphere? Create an account", textAlign = TextAlign.Center)
         }
         var forgot by rememberSaveable { mutableStateOf(false) }
-        TextButton(onClick = { forgot = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+        TextButton(onClick = { forgot = true; vm.checkMail() }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Forgot your password?", textAlign = TextAlign.Center)
         }
         if (forgot) {
@@ -331,7 +339,8 @@ fun SignInScreen(notice: String?) {
                         said ?: when (mailOn) {
                             true -> "We'll email a link to ${email.trim().ifEmpty { "the address you type on the sign-in screen" }}. " +
                                 "It works once, for 2 hours, and opens in your browser."
-                            else -> "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
+                            null -> "One moment…"
+                            false -> "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
                                 "it works once, for 24 hours. If you don't know one, write to support@logosphere.net."
                         },
                     )
