@@ -33,9 +33,10 @@ commit. Tick the boxes as they land.
 - [x] S6 Places and nearby (live 2026-11-23)
 - [x] S7 Kindista gaps (live 2026-11-23)
 - [x] S8 Privacy, Terms, How it works, app info text (live 2026-11-23)
-- [x] S9 Email, asked for 2026-11-23: built and deployed; key in place and all five flows accepted by Mailgun in test
-      mode. **Off (`MAIL=off`) until Igor chooses the sending domain**
-- [ ] See S6-S9 on the phone (none was attached when they were built)
+- [x] S9 Email, asked for 2026-11-23: **on since 2026-11-23, as no-reply@hrana.app for now** (Igor's choice); all five
+      flows accepted by Mailgun in test mode first
+- [x] App 0.2.0 installed on Igor's phone; email settings, Privacy, events, nearby and inbox opened there
+- [ ] The rest of S6-S9 used on the phone (actions, map, pickers, signed-out email forms)
 - [ ] A real email delivered
 - [ ] Signed-in screens of S6-S9 looked at on production
 
@@ -161,7 +162,7 @@ Messaging requires block and report, with an admin queue.
 
 - `backend/mail.env` on the host (chmod 600, never committed), read on each call, so no restart: `MAILGUN_API_KEY`,
   `MAILGUN_DOMAIN`, `MAILGUN_BASE`, `MAIL_FROM`, `SITE_URL`; `MAIL_TEST_MODE` for Mailgun's test mode.
-- Off without a key: joining and admin-made reset links work as before, and `GET /api/mail` says off.
+- Off without a key or with `MAIL=off`: joining and admin-made reset links work as before, and `GET /api/mail` says off.
 - On: joining starts with the address (the link finishes it), forgotten passwords get a link, a changed password is
   told, and notifications go by email only for the topics someone chose. One-press unsubscribe (RFC 8058). Opens and
   clicks untracked. Tokens in URL fragments where a person follows the link.
@@ -174,6 +175,8 @@ Messaging requires block and report, with an admin queue.
 
 - Profile, group and opening pictures are public by exact address (Privacy says so). Replaced pictures and those of
   deleted accounts stay in the bucket.
+- Nobody can change their account's email address, and the administrator's own is at example.com, so it gets no mail.
+- A LogoSphere sending domain with a sending-only key, before the production cut-off.
 - Loans have no due date or reminder. No calendar export. Invitation links open on the website only.
 - Someone who left a sphere still counts in attendance they gave.
 - The server also answers the API over plain HTTP by its IP address (nginx's catch-all block).
