@@ -3106,7 +3106,7 @@ paths:
         Only for whoever may change it; a person's is theirs alone, platform
         admins included. Everyone else gets the words (`location`) and a banded
         `distance`, plus `point` on a group's or opening's detail when its
-        people chose `exact`.
+        people chose `exact` (a private sphere's only for those inside it).
       operationId: getPlace
       responses:
         '200':
@@ -3136,12 +3136,23 @@ paths:
           application/json:
             schema:
               type: object
-              required: [place]
+              description: "`place`, or for yourself `findable` alone, which leaves the place as it is."
               properties:
                 place: { $ref: '#/components/schemas/Place' }
                 findable: { type: boolean }
       responses:
-        '200': { description: As stored. }
+        '200':
+          description: >-
+            As stored. `id` is whose it now is: an opening an exchange came from
+            keeps where that was agreed, so a new place makes a new version.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  place: { $ref: '#/components/schemas/Place' }
+                  findable: { type: boolean, description: People only }
         '400': { description: Not a place. }
         '403': { description: Not yours to change. }
         '404': { description: No such thing. }

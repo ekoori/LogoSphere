@@ -75,10 +75,24 @@ def test_you_are_found_only_if_you_chose_to_be(api, people):
     assert api.get('/api/nearby?km=3', who='david')[0] == 400
 
 
+def test_the_findable_switch_alone_leaves_the_place(api, db, people):
+    marie = api.uid('marie')
+    assert settle(api, people('marie'), 'marie', precision='5km')[0] == 200
+    before = stored_place(db, 'users', 'user_id', marie)
+    status, body = api.post(people('marie'), who='marie', json={'findable': True})
+    assert status == 200 and body['findable'] is True
+    assert stored_place(db, 'users', 'user_id', marie) == {**before, 'findable': True}
+    assert api.post(people('marie'), who='marie', json={'place': None})[0] == 200
+    assert api.post(people('marie'), who='marie', json={'findable': True})[0] == 400
+
+
 def test_no_place_no_nearby(api, db, people):
     db.execute('UPDATE users SET place = null WHERE user_id = %s', [uuid.UUID(api.uid('elon'))])
     status, body = api.get('/api/nearby', who='elon')
     assert status == 200 and body['has_place'] is False and body['people'] == []
+    country = {'lat': LAT, 'lon': LON, 'precision': 'country'}
+    db.execute('UPDATE users SET place = %s WHERE user_id = %s', [json.dumps(country), uuid.UUID(api.uid('elon'))])
+    assert api.get('/api/nearby', who='elon')[1]['has_place'] is False      # too rough to be near anything
 
 
 def test_new_words_let_go_of_the_old_point(api, db, people):
@@ -96,7 +110,7 @@ def test_new_words_let_go_of_the_old_point(api, db, people):
 
 def test_words_alone_and_none_at_all(api, db, people):
     status, body = api.post(people('marie'), who='marie', json={'place': {'label': ' The  hills '}, 'findable': True})
-    assert status == 200 and body == {'place': {'label': 'The hills'}, 'findable': False}
+    assert status == 200 and body == {'id': api.uid('marie'), 'place': {'label': 'The hills'}, 'findable': False}
     assert api.post(people('marie'), who='marie', json={'place': None})[1]['place'] is None
     assert api.get(f'/api/users/{api.uid("marie")}', who='david')[1]['location'] is None
 
@@ -153,6 +167,35 @@ def test_an_opening_without_a_place_is_as_near_as_its_sphere(api, people, openin
     assert sphere['location'] == 'Test Riverside' and sphere['point'] is None and sphere['distance']['km'] == 2
     nearby = api.get('/api/nearby', who='marie')[1]
     assert RIVERSIDE in [s['id'] for s in nearby['spheres']]
+
+
+def test_where_it_was_agreed_stays_with_that_version(api, db, opening):
+    oid, made = opening
+    path = f'/api/places/openings/{oid}'
+    assert settle(api, path, 'david', label='By the jetty')[1]['id'] == oid     # nobody took it up yet
+    db.execute("INSERT INTO opening_acceptances (service_id, accepter_id, accepter_name, status) "
+               "VALUES (%s, %s, 'Marie', 'confirmed')", [uuid.UUID(oid), uuid.UUID(api.uid('marie'))])
+    assert settle(api, path, 'david', label='By the jetty')[1]['id'] == oid     # the same place
+    status, body = settle(api, path, 'david', lat=LAT + 1, label='By the pier')
+    assert status == 200, body
+    made.append(body['id'])
+    assert body['id'] != oid and body['place']['label'] == 'By the pier'
+    old = api.get(f'/api/openings/{oid}', who='david')[1]
+    assert old['location'] == 'By the jetty' and old['point'] == {'lat': LAT, 'lon': LON}
+    assert api.get(f"/api/openings/{body['id']}", who='david')[1]['location'] == 'By the pier'
+
+
+def test_a_private_spheres_exact_spot_is_for_those_inside(api, db):
+    status, made = api.post('/api/spheres', who='admin', json={'name': 'Places test sphere (delete me)', 'description': 'x'})
+    assert status == 201, made
+    sid = made['sphere_id']
+    try:
+        assert settle(api, f'/api/places/spheres/{sid}', 'admin')[0] == 200
+        assert api.get(f'/api/spheres/{sid}', who='admin')[1]['point'] == {'lat': LAT, 'lon': LON}
+        outside = api.get(f'/api/spheres/{sid}', who='elon')[1]
+        assert outside['location'] == 'Test Island' and outside['point'] is None
+    finally:
+        db.execute('DELETE FROM spheres WHERE sphere_id = %s', [uuid.UUID(sid)])
 
 
 def test_searching_is_for_members_and_fine_without_data(app, api, monkeypatch, tmp_path):

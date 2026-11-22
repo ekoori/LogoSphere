@@ -103,8 +103,10 @@ def _can_view(entity, k, viewer):
 
 def _detail_dict(entity, k, viewer):
     d = entity.to_dict(include_image=False)
+    inside = True       # an alliance or project is shown only to who may look inside
     if k['noun'] == 'sphere':
-        if Sight(viewer).people_of(entity):
+        inside = Sight(viewer).people_of(entity)
+        if inside:
             d['members'] = entity.members_list()
             d['alliance_list'] = Alliance.list_for_sphere(entity.sphere_id)
             d['project_list'] = Project.list_for_sphere(entity.sphere_id)
@@ -113,7 +115,8 @@ def _detail_dict(entity, k, viewer):
     d['value_cards'] = [c.to_dict() for c in ValueCard.get_for_user(_entity_id(entity, k))]
     d['can_manage'] = can_manage_entity(_entity_id(entity, k), viewer)
     d['distance'] = places.how_far(places.of_person(viewer), entity.place)
-    d['point'] = places.exact_spot(entity.place)
+    # The exact spot is like who's in it: not for those outside a private sphere.
+    d['point'] = places.exact_spot(entity.place) if inside else None
     if d['can_manage']:
         # Join requests awaiting approval (only meaningful to managers).
         roles = _roles(entity, k)

@@ -230,7 +230,6 @@ def update_user(user_id=None):
             # value would go into the blob column unchecked.
             profile_picture = None
 
-        logger.debug(f"Received update data: {data}")
         if not data:
             logger.error("No data provided for update")
             response = jsonify({'message': 'No data provided'})

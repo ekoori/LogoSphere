@@ -102,6 +102,18 @@ def save(kind, owner_id, place, findable=False):
                         [json.dumps(kept) if kept else None, as_uuid(owner_id)])
 
 
+def set_findable(user_id, findable):
+    """Only the switch: the place stays as it is (one from the search has no pin to send again)."""
+    who = as_uuid(user_id)
+    row = session.execute('SELECT place FROM users WHERE user_id = %s', [who]).one()
+    place = load(row.place) if row else None
+    if not has_point(place):
+        return not findable     # with no point there's nothing to be found by
+    place['findable'] = bool(findable)
+    session.execute('UPDATE users SET place = %s WHERE user_id = %s', [json.dumps(place), who])
+    return True
+
+
 def for_editor(kind, owner_id):
     """All of it, for whoever may change it."""
     table, key, words_in_location = KINDS[kind]

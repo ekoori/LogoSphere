@@ -56,6 +56,15 @@ def _refusal(kind, owner_id, viewer):
     return None if can_manage_entity(owner, viewer) else ('Only its managers can say where it is.', 403)
 
 
+def _version_to_change(opening_id, place):
+    """Where an exchange was agreed stays with that version: a new place makes
+    a new one, as new words do (edit_opening)."""
+    opening = Service.get_by_id(as_uuid(opening_id))
+    if places.load(opening.place) == place or not Service.has_related_exchange(opening.service_id):
+        return opening_id
+    return Service.create_version(opening, {}).service_id
+
+
 @validate_session
 def search_places(user_id=None):
     if request.method == 'OPTIONS':
@@ -95,16 +104,23 @@ def set_place(kind, owner_id, user_id=None):
     if refused:
         return jsonify({'message': refused[0]}), refused[1]
     data = _body()
-    if 'place' not in data:
+    if 'place' in data:
+        try:
+            place = places.clean(data['place'])
+        except places.BadPlace as e:
+            return jsonify({'message': str(e)}), 400
+        if kind == 'openings':
+            owner_id = _version_to_change(owner_id, place)
+        places.save(kind, owner_id, place, findable=data.get('findable') is True)
+    elif kind == 'users' and isinstance(data.get('findable'), bool):
+        if not places.set_findable(owner_id, data['findable']):
+            return jsonify({'message': 'Put yourself on the map first, then others can find you.'}), 400
+    else:
         return jsonify({'message': 'Say which place, or null for none.'}), 400
-    try:
-        place = places.clean(data['place'])
-    except places.BadPlace as e:
-        return jsonify({'message': str(e)}), 400
-    places.save(kind, owner_id, place, findable=data.get('findable') is True)
     invalidate_index()          # search shows where people are, in their words
     place, findable = places.for_editor(kind, owner_id)
-    out = {'place': place}
+    # `id` is another when an agreed opening got a new version.
+    out = {'id': str(owner_id), 'place': place}
     if kind == 'users':
         out['findable'] = findable
     return jsonify(out), 200
@@ -117,7 +133,8 @@ def nearby(user_id=None):
     if km not in RADII_KM:
         return jsonify({'message': f'km is one of {", ".join(map(str, RADII_KM))}.'}), 400
     place, findable = places.for_editor('users', me)
-    out = {'has_place': places.has_point(place), 'findable': findable, 'km': km, 'people': [], 'spheres': []}
+    # A country is a point on the map too, but says nothing about nearness.
+    out = {'has_place': geo.distance(place, place) is not None, 'findable': findable, 'km': km, 'people': [], 'spheres': []}
     if not out['has_place']:
         return jsonify(out), 200
 
