@@ -9,6 +9,8 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import api from '../api';
 import ValueCardState from './ValueCardState';
+import { useSimple } from '../utils/useSimple';
+import { MoreInAdvanced } from './UiMode';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -24,6 +26,7 @@ const COLOR_CSS = {
 };
 
 function EntityValueCard({ card, idx, canDelete, onDelete, onEdit, entityId, onUpdated }) {
+    const simple = useSimple();
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -38,7 +41,7 @@ function EntityValueCard({ card, idx, canDelete, onDelete, onEdit, entityId, onU
         >
             <span className="evc-punch" aria-hidden="true" />
             <div className="evc-top">
-                <span className="evc-mode">{meta.glyph} {meta.label}</span>
+                <span className="evc-mode">{simple ? '' : `${meta.glyph} ${meta.label}`}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
                     {canDelete && !confirmDelete && (
                         <button className="vc-edit" onClick={e => { e.stopPropagation(); onEdit(card); }} title="Edit">✎</button>
@@ -113,6 +116,7 @@ const BLANK_CARD = {
 };
 
 function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }) {
+    const simple = useSimple();
     const [form, setForm] = useState(() => editingCard ? {
         title: editingCard.title || '',
         care_about: editingCard.care_about || '',
@@ -153,6 +157,7 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }
             <div className="vc-form-row"><label>Title</label><input type="text" value={form.title} onChange={set('title')} placeholder="e.g. Honest dialogue" /></div>
             <div className="vc-form-row"><label>We care about *</label><textarea rows={2} value={form.care_about} onChange={set('care_about')} placeholder={`What specifically does this ${entityNoun} care about?`} required /></div>
             <div className="vc-form-row"><label>Because</label><textarea rows={2} value={form.because} onChange={set('because')} placeholder="The reason underneath it" /></div>
+            {simple ? <MoreInAdvanced what="More can be said about a value" /> : (<>
             <div className="vc-form-row"><label>Looks like (one per line)</label><textarea rows={3} value={form.looks_like_raw} onChange={set('looks_like_raw')} placeholder="Observable behaviours that express this value" /></div>
             <div className="vc-form-two-col">
                 <div className="vc-form-row"><label>Frankl mode</label>
@@ -172,9 +177,10 @@ function EntityCardForm({ entityId, entityNoun, onSaved, onCancel, editingCard }
                     </select>
                 </div>
             </div>
+            </>)}
             <div className="vc-form-actions">
                 <button type="submit" className="btn btn-accent" disabled={saving}>
-                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Meaning Graph')}
+                    {saving ? 'Saving…' : editingCard ? 'Save changes' : simple ? 'Save this card' : 'Add to Meaning Graph'}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
             </div>

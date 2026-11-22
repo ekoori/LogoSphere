@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLogin } from '../App';
 import api from '../api';
 import { THEME_CHOICES, useTheme } from '../utils/theme';
+import { MODE_CHOICES } from '../utils/modes';
 import '../styles/Settings.css';
 
 const MIN_PASSWORD = 8;
@@ -74,6 +75,33 @@ function AccountSection() {
                     <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
                 </div>
             </form>
+        </section>
+    );
+}
+
+function ModeSection() {
+    const { uiMode, changeUiMode } = useLogin();
+    const [note, setNote] = useState(null);
+    const choose = async (mode) => {
+        setNote(null);
+        if (!(await changeUiMode(mode))) setNote({ ok: false, text: "That didn't save. Please try again." });
+    };
+    return (
+        <section id="simple-or-advanced" className="settings-card">
+            <h3>Simple or Advanced</h3>
+            <p className="settings-sub">
+                This changes only how much you&rsquo;re shown, here and in the app. Nothing of yours is lost
+                by switching, and you can switch back whenever you like.
+            </p>
+            <div className="settings-choices" role="radiogroup" aria-label="Simple or Advanced">
+                {MODE_CHOICES.map(([value, label, about]) => (
+                    <label key={value} className={`settings-choice settings-choice--mode ${uiMode === value ? 'is-on' : ''}`}>
+                        <input type="radio" name="ui-mode" value={value} checked={uiMode === value} onChange={() => choose(value)} />
+                        <span><strong>{label}</strong><small>{about}</small></span>
+                    </label>
+                ))}
+            </div>
+            <Note note={note} />
         </section>
     );
 }
@@ -252,6 +280,7 @@ const SettingsPage = () => (
             <p className="settings-lede">Your name, how LogoSphere looks, your password and your data. What you care about lives on your Meaning Graph.</p>
             <nav className="settings-jump" aria-label="Sections">
                 <a href="#account-settings">Name &amp; place</a>
+                <a href="#simple-or-advanced">Simple or Advanced</a>
                 <a href="#appearance">Appearance</a>
                 <a href="#password">Password</a>
                 <a href="#your-data">Your data</a>
@@ -259,6 +288,7 @@ const SettingsPage = () => (
             </nav>
         </div>
         <AccountSection />
+        <ModeSection />
         <AppearanceSection />
         <PasswordSection />
         <DataSection />

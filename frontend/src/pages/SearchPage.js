@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
+import { useSimple } from '../utils/useSimple';
 import Avatar from '../components/Avatar';
 import '../styles/Search.css';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
@@ -25,6 +26,7 @@ const SCOPES = ['all', 'user', 'sphere', 'alliance', 'project', 'opening', 'card
 function SearchPage() {
     const [params, setParams] = useSearchParams();
     const { userName } = useLogin();
+    const simple = useSimple();
     const mode = params.get('mode') === 'near' ? 'near' : 'text';
     const q = params.get('q') || '';
     const around = params.get('around') || '';
@@ -78,14 +80,15 @@ function SearchPage() {
         <div className="search-page">
             <header className="search-head">
                 <p className="search-eyebrow">Search</p>
-                <div className="search-modes" role="tablist">
+                {/* "Near my values" is Advanced's; a link to it still works. */}
+                {(!simple || mode === 'near') && <div className="search-modes" role="tablist">
                     <button role="tab" aria-selected={mode === 'text'} className={mode === 'text' ? 'is-active' : ''} onClick={() => setQuery({ mode: '', kind: scope === 'card' ? '' : scope })}>
                         Text search
                     </button>
                     <button role="tab" aria-selected={mode === 'near'} className={mode === 'near' ? 'is-active' : ''} onClick={() => setQuery({ mode: 'near', kind: scope === 'card' ? '' : scope })}>
                         Near my values
                     </button>
-                </div>
+                </div>}
                 <form className="search-form" onSubmit={onSubmit}>
                     <input
                         type="search"
@@ -99,7 +102,9 @@ function SearchPage() {
                 <p className="search-explainer">
                     {mode === 'near'
                         ? 'Ranks by how close each Meaning Graph is to the values you describe (or to your own cards). Similarity is cosine distance between the words on the value cards — shared cards count most.'
-                        : 'Matches words in names, titles, descriptions and value cards. Sphere-scoped openings, alliances and projects only show if you are in the sphere.'}
+                        : simple
+                            ? 'Looks for your words in names, openings and value cards. What happens inside a sphere shows if you are in it.'
+                            : 'Matches words in names, titles, descriptions and value cards. Sphere-scoped openings, alliances and projects only show if you are in the sphere.'}
                 </p>
                 <div className="search-scopes">
                     {visibleScopes.map((s) => (

@@ -7,8 +7,10 @@ import '../styles/App.css';
 import { useLogin } from '../App';  // Import the useLogin hook from App.js
 import NotificationPanel from './NotificationPanel';
 import Avatar from './Avatar';
+import { ModeSwitch } from './UiMode';
 import api from '../api';
 import { useTheme } from '../utils/theme';
+import { useSimple } from '../utils/useSimple';
 
 // The search box in the top bar (and in the mobile drawer). Submitting goes to
 // the search page, which does the actual searching.
@@ -50,6 +52,7 @@ const BrandMark = () => (
 const Header = () => {
     const { isLoggedIn, userId, userName, handleLogout, isPlatformAdmin, authChecked } = useLogin();
     const { effective: effectiveTheme, setTheme } = useTheme();
+    const simple = useSimple();
     // Until the session check answers, offer neither "Log in" nor the
     // account: a signed-in member used to see "Log in" flash on every load.
     const signedOut = authChecked && !isLoggedIn;
@@ -139,8 +142,8 @@ const Header = () => {
             <nav className={`nav-menu ${menuOpen ? 'is-open' : ''}`}>
                 <ul className="nav-primary">
                     <li><Link to="/spheres" onClick={closeMenu}>Spheres</Link></li>
-                    <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>
-                    <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>
+                    {!simple && <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>}
+                    {!simple && <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>}
                     <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
                     <li><Link to="/meaning-graph" onClick={closeMenu}>Meaning Graph</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
@@ -156,6 +159,9 @@ const Header = () => {
                             {effectiveTheme === 'dark' ? '☀ Light mode' : '☾ Dark mode'}
                         </button>
                     </li>
+                    {isLoggedIn && (
+                        <li className="nav-drawer-only"><ModeSwitch className="nav-drawer-theme" onDone={closeMenu} /></li>
+                    )}
                     {signedOut && <li className="nav-drawer-only"><Link to="/login" onClick={closeMenu}>Log in</Link></li>}
                 </ul>
             </nav>
@@ -205,6 +211,7 @@ const Header = () => {
                         <div className="account-menu" role="menu">
                             <Link to="/profile" onClick={() => setAccountOpen(false)}>Profile</Link>
                             <Link to="/settings" onClick={() => setAccountOpen(false)}>Settings</Link>
+                            {isLoggedIn && <ModeSwitch onDone={() => setAccountOpen(false)} />}
                             {isPlatformAdmin && <Link to="/admin" onClick={() => setAccountOpen(false)}>Platform admin</Link>}
                             <Link to="/how-it-works" onClick={() => setAccountOpen(false)}>How it Works</Link>
                             <Link to="/about" onClick={() => setAccountOpen(false)}>About</Link>

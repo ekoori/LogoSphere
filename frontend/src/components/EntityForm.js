@@ -5,6 +5,8 @@
 // right after creation (the create endpoints take the core fields only).
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useSimple } from '../utils/useSimple';
+import { MoreInAdvanced } from './UiMode';
 import api from '../api';
 import SphereBanner from './SphereBanner';
 import { useLogin } from '../App';
@@ -20,6 +22,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
     const spheres = useEntityList('sphere', { enabled: isVisible && kind !== 'sphere' });
     const managed = useManagedEntities(userId, isPlatformAdmin);
 
+    const simple = useSimple();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [location, setLocation] = useState('');
@@ -116,7 +119,7 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
                     </>
                 )}
 
-                {kind === 'project' && allianceOptions.length > 0 && (
+                {kind === 'project' && !simple && allianceOptions.length > 0 && (
                     <>
                         <label htmlFor="entity-alliance">On behalf of an alliance (optional)</label>
                         <select id="entity-alliance" value={ownerAllianceId} onChange={(e) => setOwnerAllianceId(e.target.value)}>
@@ -126,11 +129,15 @@ export default function EntityForm({ kind, isVisible, onCreated, onCancel }) {
                     </>
                 )}
 
-                <label htmlFor="entity-join-policy">Membership join policy</label>
-                <select id="entity-join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
-                    <option value="open">Open — anyone can join directly</option>
-                    <option value="approval">Approval required — {MANAGER_WORD[kind]} must approve</option>
-                </select>
+                {simple ? <MoreInAdvanced what="Anyone can join. Asking people to wait for approval is" /> : (
+                    <>
+                        <label htmlFor="entity-join-policy">Membership join policy</label>
+                        <select id="entity-join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
+                            <option value="open">Open — anyone can join directly</option>
+                            <option value="approval">Approval required — {MANAGER_WORD[kind]} must approve</option>
+                        </select>
+                    </>
+                )}
 
                 <label htmlFor="entity-location">Geographical location</label>
                 <input type="text" id="entity-location" value={location} onChange={(e) => setLocation(e.target.value)} />

@@ -34,6 +34,7 @@ import SettingsPage from './pages/Settings';
 import ResetPassword from './pages/ResetPassword';
 import SearchPage from './pages/SearchPage';
 import MeaningGraphPage from './pages/MeaningGraphPage';
+import { SIMPLE, modeOfAccount, rememberMode, rememberedMode } from './utils/modes';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
 import Privacy from './pages/Privacy';
@@ -121,6 +122,12 @@ function AppContent() {
 }
 
 function LoginProvider({ children }) {
+  // Simple or Advanced (utils/modes.js). Account data; presentation only.
+  const [uiMode, setUiModeState] = useState(rememberedMode);
+  const adoptUiMode = useCallback((mode) => {
+    setUiModeState(mode);
+    rememberMode(mode);
+  }, []);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
   // The signed-in user's first name, for the nav account button.
@@ -143,6 +150,7 @@ function LoginProvider({ children }) {
         setUserId(null);
         setUserName('');
         setIsPlatformAdmin(false);
+        adoptUiMode(SIMPLE);
         navigate('/login', { replace: true });
       } else {
         console.error('Logout failed:', response.data.message);
@@ -156,6 +164,19 @@ function LoginProvider({ children }) {
     }
   };
 
+  // Shown at once, put back if the account didn't take it.
+  const changeUiMode = useCallback(async (mode) => {
+    const was = uiMode;
+    adoptUiMode(mode);
+    try {
+      await api.post('/api/account/preferences', { ui_mode: mode });
+      return true;
+    } catch (error) {
+      adoptUiMode(was);
+      return false;
+    }
+  }, [uiMode, adoptUiMode]);
+
   const checkSession = useCallback(async () => {
     try {
       const response = await api.get('/api/check_session', {
@@ -167,11 +188,13 @@ function LoginProvider({ children }) {
         setUserId(response.data.user_id);
         setUserName((response.data.user_data?.name || '').trim());
         setIsPlatformAdmin(!!response.data.user_data?.is_platform_admin);
+        adoptUiMode(modeOfAccount(response.data.user_data));
       } else {
         setIsLoggedIn(false);
         setUserId(null);
         setUserName('');
         setIsPlatformAdmin(false);
+        adoptUiMode(SIMPLE);
       }
     } catch (error) {
       // Only the server saying "no session" signs you out. A 503 (database
@@ -186,7 +209,7 @@ function LoginProvider({ children }) {
     } finally {
       setAuthChecked(true);
     }
-  }, []);
+  }, [adoptUiMode]);
 
   useEffect(() => {
     checkSession();
@@ -205,6 +228,9 @@ function LoginProvider({ children }) {
       isPlatformAdmin,
       setIsPlatformAdmin,
       authChecked,
+      uiMode,
+      adoptUiMode,
+      changeUiMode,
       handleLogout
     }}>
       {children}

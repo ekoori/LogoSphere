@@ -14,6 +14,7 @@ import '../styles/App.css';
 import '../styles/UserLogin.css'; 
 import { Link, useNavigate } from 'react-router-dom';
 import { useLogin } from '../App';  // Import useLogin hook
+import { modeOfAccount } from '../utils/modes';
 
 
 
@@ -23,7 +24,7 @@ const UserLogin = () => {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [forgot, setForgot] = useState(false);
-    const { setIsLoggedIn, setUserId, setUserName, setIsPlatformAdmin } = useLogin();
+    const { setIsLoggedIn, setUserId, setUserName, setIsPlatformAdmin, adoptUiMode } = useLogin();
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -43,6 +44,7 @@ const UserLogin = () => {
                 setUserId(response.data.data.user_id);
                 setUserName((response.data.data.name || '').trim());
                 setIsPlatformAdmin(!!response.data.data.is_platform_admin);
+                adoptUiMode(modeOfAccount(response.data.data));
                 navigate('/profile');
             }
         } catch (error) {

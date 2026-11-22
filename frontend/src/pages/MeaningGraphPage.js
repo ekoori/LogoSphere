@@ -11,6 +11,7 @@ import { closestTo, kindOf, percent, titleOf, visibleGraph } from '../utils/grap
 import GraphCanvas from '../components/GraphCanvas';
 import { GraphDetails, GraphLegend } from '../components/GraphDetails';
 import TabSelector from '../components/TabSelector';
+import { useSimple } from '../utils/useSimple';
 import '../styles/MeaningGraph.css';
 
 const FIELD_NAMES = {
@@ -24,16 +25,15 @@ const FIELD_NAMES = {
 };
 const GRAPH_KEY = ['meaning-graph'];
 
-function Method() {
+function Method({ folded }) {
     const { data } = useQuery({
         queryKey: ['meaning-graph-method'],
         queryFn: () => api.get('/api/meaning_graph/method').then((r) => r.data),
         staleTime: Infinity,
     });
     if (!data) return null;
-    return (
-        <section className="mg-method" id="method">
-            <h2>How closeness is worked out</h2>
+    const body = (
+        <>
             <p className="mg-method-lead">{data.idea}</p>
             <div className="mg-method-grid">
                 <div>
@@ -81,9 +81,26 @@ function Method() {
                 ))}.
                 Their moral graph links wiser values and has no measure of distance, so this measure is LogoSphere&rsquo;s own.
             </p>
+        </>
+    );
+    return (
+        <section className="mg-method" id="method">
+            {folded ? (
+                <details>
+                    <summary>How closeness is worked out</summary>
+                    {body}
+                </details>
+            ) : (
+                <>
+                    <h2>How closeness is worked out</h2>
+                    {body}
+                </>
+            )}
         </section>
     );
 }
+
+Method.propTypes = { folded: PropTypes.bool };
 
 function GraphList({ nodes, edges, byId, selected, onSelect }) {
     const rows = nodes
@@ -122,6 +139,7 @@ GraphList.propTypes = {
 export default function MeaningGraphPage() {
     const { userId, authChecked } = useLogin();
     const { effective } = useTheme();
+    const simple = useSimple();
     const client = useQueryClient();
     const [params, setParams] = useSearchParams();
     const owner = params.get('owner');
@@ -139,7 +157,8 @@ export default function MeaningGraphPage() {
         enabled: !!userId,
         staleTime: 15_000,
     });
-    const from = chosenFrom ?? graph?.shown_from ?? 0.12;
+    // Simple has no slider, so it keeps to the platform's threshold.
+    const from = (simple ? null : chosenFrom) ?? graph?.shown_from ?? 0.12;
     const shown = useMemo(
         () => (graph ? visibleGraph(graph, { scope, owner, focus, demos, query, from }) : null),
         [graph, scope, owner, focus, demos, query, from],
@@ -200,11 +219,13 @@ export default function MeaningGraphPage() {
                             <input type="checkbox" checked={demos} onChange={(e) => setDemos(e.target.checked)} />
                             Demo and AI personas
                         </label>
-                        <label className="mg-range">
-                            Connections from {percent(from)}
-                            <input type="range" min="6" max="50" step="1" value={Math.round(from * 100)}
-                                   onChange={(e) => setChosenFrom(Number(e.target.value) / 100)} />
-                        </label>
+                        {!simple && (
+                            <label className="mg-range">
+                                Connections from {percent(from)}
+                                <input type="range" min="6" max="50" step="1" value={Math.round(from * 100)}
+                                       onChange={(e) => setChosenFrom(Number(e.target.value) / 100)} />
+                            </label>
+                        )}
                         <button type="button" className="mg-text-btn" onClick={() => setView(view === 'graph' ? 'list' : 'graph')}>
                             {view === 'graph' ? 'See it as a list' : 'See it as a graph'}
                         </button>
@@ -249,7 +270,7 @@ export default function MeaningGraphPage() {
                     </div>
                 </>
             )}
-            <Method />
+            <Method folded={simple && !!userId} />
         </div>
     );
 }

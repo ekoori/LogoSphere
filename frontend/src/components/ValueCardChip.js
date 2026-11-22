@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import api from '../api';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import ValueCardState from './ValueCardState';
+import { useSimple } from '../utils/useSimple';
 import '../styles/ValueCardChip.css';
 
 const COLOR_MAP = {
@@ -22,6 +23,7 @@ const FRANKL_LABEL  = { creative: 'creative', experiential: 'experiential', atti
 
 function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = null }) {
     const [open, setOpen] = useState(false);
+    const simple = useSimple();
     const accent = COLOR_MAP[card.color_key] || 'var(--honey)';
     const glyph  = FRANKL_GLYPH[card.frankl_mode]  || '✶';
     const modeLabel = FRANKL_LABEL[card.frankl_mode] || card.frankl_mode;
@@ -30,7 +32,7 @@ function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = nul
     // in) and this isn't already their own card. `managed` is the set of
     // entities they can also clone onto (see useManagedEntities).
     const managed = useManagedEntities(currentUserId);
-    const canClone = !!currentUserId && String(card.user_id) !== String(currentUserId);
+    const canClone = !simple && !!currentUserId && String(card.user_id) !== String(currentUserId);
     const [cloneTarget, setCloneTarget] = useState('');
     const [cloning, setCloning] = useState(false);
     const [cloneMsg, setCloneMsg] = useState(null);
@@ -82,12 +84,14 @@ function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = nul
                             aria-label="Close"
                         >✕</button>
 
-                        <div className="vc-top">
-                            <span className="vc-mode-badge">
-                                <span className="vc-mode-glyph">{glyph}</span>
-                                {modeLabel}
-                            </span>
-                        </div>
+                        {!simple && (
+                            <div className="vc-top">
+                                <span className="vc-mode-badge">
+                                    <span className="vc-mode-glyph">{glyph}</span>
+                                    {modeLabel}
+                                </span>
+                            </div>
+                        )}
 
                         <h3 className="vc-title">{card.title}</h3>
                         {('endorsed' in card) && <ValueCardState card={card} />}

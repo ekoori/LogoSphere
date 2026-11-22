@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
+import { modeOfAccount } from '../utils/modes';
 import '../styles/App.css';
 import '../styles/UserLogin.css';
 
@@ -17,7 +18,7 @@ const UserRegistration = () => {
     const [confirm, setConfirm] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const { setIsLoggedIn, setUserId } = useLogin();
+    const { setIsLoggedIn, setUserId, setUserName, adoptUiMode } = useLogin();
     const navigate = useNavigate();
 
     const handleRegister = async (e) => {
@@ -39,6 +40,8 @@ const UserRegistration = () => {
             if (res.status === 200 && res.data.data) {
                 setIsLoggedIn(true);
                 setUserId(res.data.data.user_id);
+                setUserName((res.data.data.name || '').trim());
+                adoptUiMode(modeOfAccount(res.data.data));
                 navigate('/profile');
             } else {
                 // Registered but couldn't auto-login — send them to log in manually.

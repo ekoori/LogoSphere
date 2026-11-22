@@ -912,3 +912,18 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
     .nav-drawer-search .nav-search { width: 100%; }
     .nav-drawer-search .nav-search input { width: 100%; flex: 1 1 auto; }
 }
+
+/* Simple or Advanced */
+.mode-more { margin: 0.6em 0; color: var(--ink-soft); font-size: 0.88rem; }
+.mode-more .mode-more-btn {
+    padding: 0.35em 0.1em;
+    background: none;
+    color: var(--moss-deep);
+    border: 0;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.mode-problem { display: block; padding: 0.2em 0.6em; color: var(--danger); font-size: 0.8rem; }

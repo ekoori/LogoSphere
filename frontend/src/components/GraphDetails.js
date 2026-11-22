@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { useLogin } from '../App';
 import ValueCardChip from './ValueCardChip';
+import { useSimple } from '../utils/useSimple';
 import { DemoTag, PersonaTag } from './DemoTags';
 import { KINDS, closestTo, kindOf, percent, titleOf } from '../utils/graph';
 
@@ -40,6 +41,7 @@ function Part({ label, value, children }) {
 Part.propTypes = { label: PropTypes.string.isRequired, value: PropTypes.string.isRequired, children: PropTypes.node };
 
 function Why({ edge, node, other, onJudged }) {
+    const simple = useSimple();
     const [busy, setBusy] = useState(false);
     const [problem, setProblem] = useState('');
     const thisIsA = edge.a === node.id;
@@ -78,12 +80,16 @@ function Why({ edge, node, other, onJudged }) {
                         </ul>
                     )}
                 </Part>
-                <Part label="Lived together" value={edge.people ? `${edge.people} people` : 'not yet'} />
+                {(!simple || edge.people > 0) && (
+                    <Part label="Lived together" value={edge.people ? `${edge.people} people` : 'not yet'} />
+                )}
                 {edge.lineage && <Part label="One was made from the other" value="yes" />}
-                <Part label="People's judgement"
-                      value={edge.judges ? `${edge.said_close} of ${edge.judges} say close` : 'fewer than 2 so far'} />
+                {(!simple || edge.judges > 0) && (
+                    <Part label="People's judgement"
+                          value={edge.judges ? `${edge.said_close} of ${edge.judges} say close` : 'fewer than 2 so far'} />
+                )}
             </ul>
-            {mayJudge ? (
+            {simple ? null : mayJudge ? (
                 <div className="mg-judge">
                     <span>Do these two feel close to you?</span>
                     <button type="button" className={edge.my_judgement === true ? 'is-on' : ''} aria-pressed={edge.my_judgement === true}

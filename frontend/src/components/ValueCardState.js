@@ -7,10 +7,12 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import api from '../api';
+import { useSimple } from '../utils/useSimple';
 import { parseServerDate } from '../utils/dates';
 import '../styles/ValueCardChip.css';
 
 function ValueCardState({ card, endpoints = null, onUpdated }) {
+    const simple = useSimple();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState('');
 
@@ -31,6 +33,9 @@ function ValueCardState({ card, endpoints = null, onUpdated }) {
     const endorsedOn = parseServerDate(card.endorsed_at);
     const reviewedOn = parseServerDate(card.reviewed_at);
     const fmt = (d) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+
+    // Draft, endorsed and due-for-review are Advanced's.
+    if (simple) return null;
 
     return (
         <div className="vc-state-row" onClick={(e) => e.stopPropagation()}>

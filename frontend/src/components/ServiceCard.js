@@ -12,6 +12,7 @@ import Avatar from './Avatar';
 import { DemoTag, PersonaTag } from './DemoTags';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
+import { useSimple } from '../utils/useSimple';
 import '../styles/Openings.css';
 
 // Spheres may be strings or {id, name} pairs — prefer UUID link when available.
@@ -44,6 +45,7 @@ function ServiceCard({
     // standalone). Spheres themselves can't be an accepter — you act as a
     // group inside a sphere, not as the sphere.
     const managed = useManagedEntities(currentUserId);
+    const simple = useSimple();
     const acceptAsOptions = managed.filter(
         (m) => m.kind !== 'sphere' && (!sphereId || String(m.sphere_id) === String(sphereId))
     );
@@ -87,7 +89,7 @@ function ServiceCard({
         setAccepting(true);
         try {
             // Empty select value = accept as myself; otherwise as the entity.
-            await onAccept(acceptAs || null);
+            await onAccept((!simple && acceptAs) || null);
         } finally {
             setAccepting(false);
         }
@@ -286,7 +288,7 @@ function ServiceCard({
 
             {canAccept && (
                 <div className="service-accept-cta">
-                    {acceptAsOptions.length > 0 && (
+                    {!simple && acceptAsOptions.length > 0 && (
                         <label className="service-accept-as" onClick={(e) => e.stopPropagation()}>
                             <span className="service-accept-as-label">Accept as</span>
                             <select

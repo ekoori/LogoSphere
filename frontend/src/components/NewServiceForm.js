@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/App.css';
 import api from '../api';
+import { useSimple } from '../utils/useSimple';
+import { useLogin } from '../App';
 
 // `actingAs` (optional): { id, name, sphereId, sphereName, projectName } — when
 // set, the opening is posted on behalf of that sphere/alliance/project instead
 // of the logged-in human, and its own sphere/project context is preset & locked.
 function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
+    const simple = useSimple();
     const [formData, setFormData] = useState({
         type: 'offer',
         title: '',
@@ -15,6 +18,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
         project_name: actingAs?.projectName || '',
         cadence: 'single',
     });
+    const { userId, isPlatformAdmin } = useLogin();
     const [spheres, setSpheres] = useState([]);
     const [projects, setProjects] = useState([]);
     const [submitting, setSubmitting] = useState(false);
@@ -74,6 +78,9 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
     };
 
     if (!isVisible) return null;
+    // Only where it can be posted: the server refuses a sphere you aren't in.
+    const postable = spheres.filter((s) => isPlatformAdmin || s.sphere_id === actingAs?.sphereId
+        || (s.members || []).some((m) => String(m.id) === String(userId)));
 
     return (
         <div className="card" style={{ padding: '1.2em 1.4em', marginBottom: '1.2em' }}>
@@ -101,7 +108,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                     </label>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4em', cursor: 'pointer' }}>
                         <input type="radio" name="cadence" value="perpetual" checked={formData.cadence === 'perpetual'} onChange={handleChange} />
-                        Ongoing (e.g. lessons — stays open, can be accepted repeatedly)
+                        {simple ? 'Again and again (like weekly lessons)' : 'Ongoing (e.g. lessons — stays open, can be accepted repeatedly)'}
                     </label>
                 </div>
 
@@ -128,14 +135,14 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                 <div>
                     <label htmlFor="nsf-sphere">Sphere</label>
                     <select id="nsf-sphere" value={formData.sphere_id} onChange={handleSphereChange} disabled={!!actingAs?.sphereId}>
-                        <option value="">— none —</option>
-                        {spheres.map((s) => (
+                        <option value="">Everyone on LogoSphere</option>
+                        {postable.map((s) => (
                             <option key={s.sphere_id} value={s.sphere_id}>{s.name}</option>
                         ))}
                     </select>
                 </div>
 
-                <div>
+                {!simple && <div>
                     <label htmlFor="nsf-project">Project (optional)</label>
                     <select id="nsf-project" name="project_name" value={formData.project_name} onChange={handleChange} disabled={!!actingAs?.projectName}>
                         <option value="">— none —</option>
@@ -143,7 +150,7 @@ function NewServiceForm({ isVisible, onSuccess, actingAs = null }) {
                             <option key={p.project_id || p.name} value={p.name}>{p.name}</option>
                         ))}
                     </select>
-                </div>
+                </div>}
 
                 <button
                     type="submit"

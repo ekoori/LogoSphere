@@ -14,7 +14,9 @@ import { usePermissions } from '../utils/usePermissions';
 import TabSelector from '../components/TabSelector';
 import EntityValueGraph from '../components/EntityValueGraph';
 import EntityBanner from '../components/EntityBanner';
+import { MoreInAdvanced } from '../components/UiMode';
 import MembersList from '../components/MembersList';
+import { useSimple } from '../utils/useSimple';
 import '../styles/AllianceManagement.css';
 import '../styles/EntityPage.css';
 
@@ -23,6 +25,7 @@ const MANAGER_WORD = { sphere: 'an admin', alliance: 'a Lead or Board member', p
 const PEOPLE_TAB = { sphere: 'Members', alliance: 'Members', project: 'Contributors' };
 
 export default function EntityManagement({ kind }) {
+    const simple = useSimple();
     const [params] = useSearchParams();
     const id = params.get('id');
     const { userId, isPlatformAdmin } = useLogin();
@@ -112,8 +115,8 @@ export default function EntityManagement({ kind }) {
     };
 
     const tabs = [
-        { key: 'governance', label: 'Governance' },
-        { key: 'valuegraph', label: 'Meaning Graph' },
+        { key: 'governance', label: simple ? 'Settings' : 'Governance' },
+        { key: 'valuegraph', label: simple ? 'What we care about' : 'Meaning Graph' },
         { key: 'members', label: PEOPLE_TAB[kind] },
     ];
 
@@ -141,7 +144,7 @@ export default function EntityManagement({ kind }) {
                 <TabSelector tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
                 <section className={`management-section tab-content ${activeTab === 'governance' ? '' : 'hidden'}`}>
-                    <h3>Governance Settings</h3>
+                    <h3>{simple ? 'Settings' : 'Governance Settings'}</h3>
                     <form onSubmit={saveGovernance}>
                         <div className="form-group">
                             <label htmlFor="ent-name">Name</label>
@@ -151,6 +154,8 @@ export default function EntityManagement({ kind }) {
                             <label htmlFor="ent-description">Description</label>
                             <textarea id="ent-description" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
                         </div>
+                        {/* Hidden isn't cleared: saving in Simple sends these back as they were. */}
+                        {!simple && (<>
                         <div className="form-group">
                             <label htmlFor="join-policy">Membership join policy</label>
                             <select id="join-policy" value={joinPolicy} onChange={(e) => setJoinPolicy(e.target.value)}>
@@ -192,6 +197,7 @@ export default function EntityManagement({ kind }) {
                                 </div>
                             </>
                         )}
+                        </>)}
 
                         {kind === 'project' && (
                             <div className="form-group">
@@ -215,7 +221,7 @@ export default function EntityManagement({ kind }) {
                                         projects, alliances and openings.
                                     </p>
                                 </div>
-                                <div className="form-group management-toggle">
+                                {!simple && <div className="form-group management-toggle">
                                     <label style={{ opacity: isPlatformAdmin ? 1 : 0.55 }}>
                                         <input type="checkbox" checked={isSandbox} disabled={!isPlatformAdmin} onChange={(e) => setIsSandbox(e.target.checked)} />
                                         {' '}Sandbox sphere
@@ -224,19 +230,22 @@ export default function EntityManagement({ kind }) {
                                         Every new member who registers is automatically enrolled into this sphere.
                                         {!isPlatformAdmin && ' Only a platform administrator can change this.'}
                                     </p>
-                                </div>
+                                </div>}
                             </>
                         )}
 
+                        <MoreInAdvanced what="Who can join and how decisions are made are" />
                         {note && <p className={note.ok ? 'xc-edit-ok' : 'xc-edit-err'}>{note.text}</p>}
                         <button type="submit" className="btn-orange" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
                     </form>
                 </section>
 
                 <section className={`management-section tab-content ${activeTab === 'valuegraph' ? '' : 'hidden'}`}>
-                    <h3>Meaning Graph</h3>
+                    <h3>{simple ? 'What we care about' : 'Meaning Graph'}</h3>
                     <p className="management-section-sub">
-                        The values this {kind} holds itself to — what it cares about, why, and what drift looks like.
+                        {simple
+                            ? `What this ${kind} cares about, for everyone to see.`
+                            : `The values this ${kind} holds itself to — what it cares about, why, and what drift looks like.`}
                     </p>
                     <EntityValueGraph entityId={eid} canManage={perms.canManage} entityNoun={kind} />
                 </section>

@@ -14,6 +14,7 @@ import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
+import { useSimple } from '../utils/useSimple';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
 import '../styles/Exchange.css';
 import '../styles/Openings.css';
@@ -26,6 +27,7 @@ function OpeningPage() {
     const [searchParams] = useSearchParams();
     const openingId = searchParams.get('id');
     const { userId } = useLogin();
+    const simple = useSimple();
     const navigate = useNavigate();
 
     const [service, setService] = useState(null);
@@ -91,7 +93,7 @@ function OpeningPage() {
         setBusy(true);
         setActionError('');
         try {
-            await api.post(`/api/openings/${openingId}/accept`, acceptAs ? { acting_as_id: acceptAs } : {});
+            await api.post(`/api/openings/${openingId}/accept`, !simple && acceptAs ? { acting_as_id: acceptAs } : {});
             await fetchService();
         } catch (e) {
             setActionError(e.response?.data?.message || 'Could not accept this opening.');
@@ -366,7 +368,7 @@ function OpeningPage() {
                         <p className="xc-sidebar-heading">Actions</p>
                         {actionError && <p className="xc-edit-err">{actionError}</p>}
                         <LikeTimestamp likedByCurrentUser={liked} likesCount={likes} likedBy={likedBy} time="" onLike={handleLike} canLike={!isOwnOpening} />
-                        {canAccept && acceptAsOptions.length > 0 && (
+                        {canAccept && !simple && acceptAsOptions.length > 0 && (
                             <label className="service-accept-as" style={{ marginTop: '0.8em' }}>
                                 <span className="service-accept-as-label">Accept as</span>
                                 <select value={acceptAs} onChange={(e) => setAcceptAs(e.target.value)} disabled={busy}>
@@ -498,7 +500,7 @@ function OpeningPage() {
 
                     {/* Previous versions — only those a version-branching edit kept
                         because an exchange was created from them. */}
-                    {service.history && service.history.length > 0 && (
+                    {!simple && service.history && service.history.length > 0 && (
                         <div className="xc-sidebar-card">
                             <p className="xc-sidebar-heading">
                                 Previous versions ({service.history.length})

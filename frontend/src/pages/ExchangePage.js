@@ -7,6 +7,7 @@ import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
 import Avatar from '../components/Avatar';
 import PhotoInput from '../components/PhotoInput';
+import { useSimple } from '../utils/useSimple';
 import { Acknowledge, AcknowledgementRun } from '../components/Acknowledgements';
 import { forUpload } from '../utils/pictures';
 import * as rules from '../utils/exchangeRules';
@@ -68,6 +69,7 @@ const ParticipantRow = ({ kind, id, name, actingId, actingName, role, isYou, isA
 };
 
 function ExchangePage() {
+    const simple = useSimple();
     const [searchParams] = useSearchParams();
     const xcId = searchParams.get('id');
     const { userId } = useLogin();
@@ -142,8 +144,8 @@ function ExchangePage() {
             await api.post(`/api/exchange/${xcId}/comment`, {
                 type: 'gratitude', text: gratitudeText.trim(),
                 card_ids: gratitudeCardIds, cards: gratitudeCards,
-                frankl_mode: gratitudeMode || null,
-                context: gratitudeContext.trim() || null,
+                frankl_mode: (!simple && gratitudeMode) || null,
+                context: (!simple && gratitudeContext.trim()) || null,
             });
             posted = true;
             if (photos.length > 0) {
@@ -363,7 +365,7 @@ function ExchangePage() {
                     <div className="xc-page-section">
                         <div className="xc-section-label xc-section-receipt" style={{ marginBottom: '0.9em' }}>
                             <span>✓ Receipts</span>
-                            <span className="xc-section-hint">verified attestations of trust</span>
+                            <span className="xc-section-hint">{simple ? 'thanks, in their own words' : 'verified attestations of trust'}</span>
                         </div>
 
                         {xc.gratitude_comment && (
@@ -371,7 +373,7 @@ function ExchangePage() {
                                 <div className="tf-content">
                                     <p className="tf-author-line">
                                         <AuthorTag name={xc.other_user_name || 'Other party'} id={xc.other_user_id} />{' '}
-                                        {xc.gratitude_frankl_mode && (
+                                        {!simple && xc.gratitude_frankl_mode && (
                                             <span className="vc-receipt-mode" title={`${xc.gratitude_frankl_mode} meaning`}>
                                                 {{ creative: '✶', experiential: '❍', attitudinal: '△' }[xc.gratitude_frankl_mode]} {xc.gratitude_frankl_mode}
                                             </span>
@@ -448,7 +450,7 @@ function ExchangePage() {
                                     value={gratitudeText}
                                     onChange={e => setGratitudeText(e.target.value)}
                                 />
-                                <div className="vc-picker">
+                                {!simple && <div className="vc-picker">
                                     <span className="vc-picker-label">What kind of meaning was this?</span>
                                     <div className="vc-picker-chips">
                                         {[['creative', '✶', 'Creative', 'something was made or given'],
@@ -462,12 +464,13 @@ function ExchangePage() {
                                             </button>
                                         ))}
                                     </div>
-                                </div>
+                                </div>}
                                 <ValueCardPicker
                                     selectedIds={gratitudeCardIds}
                                     onChange={(ids, cards) => { setGratitudeCardIds(ids); setGratitudeCards(cards); }}
                                     counterparts={(xc.initiator_id || xc.user_id) ? [{ id: xc.initiator_id || xc.user_id, label: `${xc.initiator_name || 'Their'} values` }] : []}
                                 />
+                                {!simple && (<>
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Context (optional)</label>
                                 <textarea
                                     className="xc-comment-input xc-context-input"
@@ -476,6 +479,7 @@ function ExchangePage() {
                                     value={gratitudeContext}
                                     onChange={e => setGratitudeContext(e.target.value)}
                                 />
+                                </>)}
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Photos (up to 3)</label>
                                 <PhotoInput photos={gratitudePhotos} onChange={setGratitudePhotos} />
                                 <button
@@ -682,10 +686,12 @@ function ExchangePage() {
                                     </span>
                                 </div>
                             )}
-                            <div className="xc-detail-row">
-                                <span className="xc-detail-label">Exchange ID</span>
-                                <span className="xc-detail-mono">{xc.exchange_id}</span>
-                            </div>
+                            {!simple && (
+                                <div className="xc-detail-row">
+                                    <span className="xc-detail-label">Exchange ID</span>
+                                    <span className="xc-detail-mono">{xc.exchange_id}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

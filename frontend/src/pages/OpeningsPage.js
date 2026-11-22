@@ -92,7 +92,8 @@ function OpeningsPage() {
                 </div>
             </aside>
             <main>
-                {shown.length === 0 ? (
+                {/* With nothing listed the form still has to open: it's how the first gets posted. */}
+                {shown.length === 0 && !isFormVisible ? (
                     <p className="empty-state">
                         {q || filter !== 'all' || sphereFilter !== 'all'
                             ? 'Nothing matches these filters.'

@@ -10,6 +10,8 @@ import api from '../api';
 import ConnectionsPanel from '../components/ConnectionsPanel';
 import ValueCardState from '../components/ValueCardState';
 import { initialsOf } from '../components/Avatar';
+import { useSimple } from '../utils/useSimple';
+import { MoreInAdvanced } from '../components/UiMode';
 
 // ── Frankl mode labels & card accent mappings ─────────────────────────────
 const FRANKL_META = {
@@ -28,6 +30,7 @@ const COLOR_CSS = {
 
 // ── Inline Value Card display ─────────────────────────────────────────────
 function ValueCardDisplay({ card, onDelete, onEdit, onUpdated, canDelete, idx }) {
+    const simple = useSimple();
     const [expanded, setExpanded] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const meta = FRANKL_META[card.frankl_mode] || FRANKL_META.creative;
@@ -43,10 +46,12 @@ function ValueCardDisplay({ card, onDelete, onEdit, onUpdated, canDelete, idx })
             <span className="vc-punch" aria-hidden="true" />
 
             <div className="vc-top">
-                <span className="vc-mode-badge">
-                    <span className="vc-mode-glyph" aria-hidden="true">{meta.glyph}</span>
-                    {meta.label}
-                </span>
+                {simple ? <span /> : (
+                    <span className="vc-mode-badge">
+                        <span className="vc-mode-glyph" aria-hidden="true">{meta.glyph}</span>
+                        {meta.label}
+                    </span>
+                )}
                 {canDelete && !confirmDelete && (
                     <span className="vc-card-actions" onClick={e => e.stopPropagation()}>
                         <button
@@ -136,6 +141,7 @@ function ValueCardDisplay({ card, onDelete, onEdit, onUpdated, canDelete, idx })
 // anything that already snapshotted the old wording (e.g. a meaning-trail
 // receipt) is unaffected. `onSaved` always receives the new/current card.
 function NewValueCardForm({ onSaved, onCancel, editingCard }) {
+    const simple = useSimple();
     const [form, setForm] = useState(() => editingCard ? {
         title: editingCard.title || '',
         care_about: editingCard.care_about || '',
@@ -192,8 +198,11 @@ function NewValueCardForm({ onSaved, onCancel, editingCard }) {
             </div>
             <div className="vc-form-row">
                 <label>Because</label>
-                <textarea rows={2} value={form.because} onChange={set('because')} placeholder="The reason underneath it" />
+                <textarea rows={2} value={form.because} onChange={set('because')}
+                          placeholder={simple ? 'Why it matters to you' : 'The reason underneath it'} />
             </div>
+            {/* Hidden isn't cleared: what's already on a card is saved back as it was. */}
+            {simple ? <MoreInAdvanced what="More can be said about a value" /> : (<>
             <div className="vc-form-row">
                 <label>Looks like (one behaviour per line)</label>
                 <textarea rows={3} value={form.looks_like_raw} onChange={set('looks_like_raw')} placeholder="Observable actions that express this value" />
@@ -230,10 +239,11 @@ function NewValueCardForm({ onSaved, onCancel, editingCard }) {
                     </select>
                 </div>
             </div>
+            </>)}
 
             <div className="vc-form-actions">
                 <button type="submit" className="btn btn-accent" disabled={saving}>
-                    {saving ? 'Saving…' : (editingCard ? 'Save changes' : 'Add to Meaning Graph')}
+                    {saving ? 'Saving…' : editingCard ? 'Save changes' : simple ? 'Save this card' : 'Add to Meaning Graph'}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={onCancel}>Cancel</button>
             </div>
@@ -243,6 +253,7 @@ function NewValueCardForm({ onSaved, onCancel, editingCard }) {
 
 // ── Main ProfilePage ──────────────────────────────────────────────────────
 const ProfilePage = () => {
+    const simple = useSimple();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [profileData, setProfileData] = useState(null);
@@ -403,9 +414,11 @@ const ProfilePage = () => {
                 <div className="pf-main">
                     <div className="pf-section-head">
                         <div>
-                            <h2 className="pf-section-title">Meaning Graph</h2>
+                            <h2 className="pf-section-title">{simple ? 'What you care about' : 'Meaning Graph'}</h2>
                             <p className="pf-section-sub">
-                                Your endorsed values — what you care about and why, in a form that can't easily be optimised away.
+                                {simple
+                                    ? 'Each value card says one thing that matters to you, so neighbours can get to know you.'
+                                    : "Your endorsed values — what you care about and why, in a form that can't easily be optimised away."}
                             </p>
                             {profileData?.user_id && (
                                 <Link to={`/meaning-graph?owner=${profileData.user_id}`}>See where they sit among everyone&rsquo;s →</Link>
@@ -430,9 +443,9 @@ const ProfilePage = () => {
                         <div className="pf-empty-cards">
                             <p className="pf-empty-heading">No value cards yet.</p>
                             <p className="pf-empty-body">
-                                A Value Card captures one thing you genuinely care about — not a hashtag,
-                                but a reason, a behaviour, and a drift signal. Start with one value
-                                you'd recognise yourself by.
+                                {simple
+                                    ? 'A value card says one thing you care about, in your own words. One is plenty to start with.'
+                                    : "A Value Card captures one thing you genuinely care about — not a hashtag, but a reason, a behaviour, and a drift signal. Start with one value you'd recognise yourself by."}
                             </p>
                             <button className="btn btn-accent" onClick={() => setShowNewCard(true)}>
                                 Write your first card
@@ -455,7 +468,7 @@ const ProfilePage = () => {
                     )}
 
                     {/* ── Frankl legend ─────────────────────────────── */}
-                    {valueCards.length > 0 && (
+                    {!simple && valueCards.length > 0 && (
                         <div className="pf-frankl-legend">
                             {Object.entries(FRANKL_META).map(([k, m]) => (
                                 <span key={k} className={`pf-legend-item pf-legend--${k}`}>

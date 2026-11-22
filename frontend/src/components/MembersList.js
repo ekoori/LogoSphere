@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { useSimple } from '../utils/useSimple';
 import Avatar from './Avatar';
 import api from '../api';
 import { KIND_PATH } from '../utils/queries';
@@ -40,6 +41,7 @@ const ROLE_CONFIG = {
 const FOUNDER_ROLE = { sphere: 'admin', alliance: 'admin', project: 'manager' };
 
 export default function MembersList({ kind, entityId, members = [], pending = [], canSetRoles = false, currentUserId, onChanged }) {
+    const simple = useSimple();
     const [busyId, setBusyId] = useState(null);
     const [error, setError] = useState('');
     const cfg = ROLE_CONFIG[kind] || ROLE_CONFIG.sphere;
@@ -102,7 +104,7 @@ export default function MembersList({ kind, entityId, members = [], pending = []
                         </div>
                         {canSetRoles && !isSelf && (
                             <div className="member-actions">
-                                {cfg.assignable.filter((r) => r.when(m)).map((r) => (
+                                {!simple && cfg.assignable.filter((r) => r.when(m)).map((r) => (
                                     <button key={r.value} className="member-role-btn" disabled={busyId === m.id} onClick={() => setRole(m.id, r.value)}>
                                         {busyId === m.id ? '…' : r.action}
                                     </button>

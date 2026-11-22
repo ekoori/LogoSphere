@@ -25,6 +25,7 @@ import Avatar from '../components/Avatar';
 import { mapService } from '../utils/mappers';
 import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
+import { useSimple } from '../utils/useSimple';
 import '../styles/EntityPage.css';
 import '../styles/ValueCardChip.css';
 
@@ -62,6 +63,7 @@ function RoleTier({ label, cls, people }) {
 }
 
 export default function EntityPage({ kind }) {
+    const simple = useSimple();
     const [params] = useSearchParams();
     const id = params.get('id');
     const legacyName = params.get('name');
@@ -228,7 +230,7 @@ export default function EntityPage({ kind }) {
                     <aside className="ep-aside">
                         {TIERS[kind].length > 0 && (
                             <div className="ep-aside-section">
-                                <h4>{kind === 'alliance' ? 'Governance' : 'Contributors'}</h4>
+                                <h4>{kind !== 'alliance' ? 'Contributors' : simple ? 'Who runs it' : 'Governance'}</h4>
                                 {TIERS[kind].map(([role, label, cls]) => (
                                     <RoleTier key={role} label={label} cls={cls} people={members.filter((m) => m.role === role)} />
                                 ))}
@@ -268,7 +270,7 @@ export default function EntityPage({ kind }) {
                         )}
 
                         <div className="ep-aside-section">
-                            <h4>Charter</h4>
+                            <h4>{simple ? 'What we care about' : 'Charter'}</h4>
                             {userId && (
                                 <Link className="ep-project-link" to={`/meaning-graph?owner=${eid}`}>See it in the Meaning Graph<span className="ep-project-arrow">→</span></Link>
                             )}
@@ -288,7 +290,8 @@ export default function EntityPage({ kind }) {
                                 { key: 'offers-needs', label: 'Offers & Needs' },
                                 // Visitors get the count on the banner, not the people.
                                 ...(userId ? [{ key: 'members', label: `People (${members.length})` }] : []),
-                                ...(userId ? [{ key: 'governance', label: 'Governance' }] : []),
+                                // Simple has no Governance tab, but a link to a vote still opens it.
+                                ...(userId && (!simple || activeTab === 'governance') ? [{ key: 'governance', label: 'Governance' }] : []),
                             ]}
                             active={activeTab}
                             onChange={setActiveTab}
@@ -323,7 +326,7 @@ export default function EntityPage({ kind }) {
                                 {isClosed && (
                                     <p className="ep-empty">This project is closed — it takes no new openings.</p>
                                 )}
-                                {perms.canManage && !isClosed && (
+                                {perms.canManage && !simple && !isClosed && (
                                     <div className="ep-manage-form-toggle">
                                         <button className="btn btn-accent" onClick={() => setShowNewOpening((v) => !v)}>
                                             {showNewOpening ? 'Cancel' : `+ Post an Opening as ${entity.name}`}
@@ -335,10 +338,10 @@ export default function EntityPage({ kind }) {
                                 ) : (
                                     <Openings
                                         services={myOpenings}
-                                        newServiceVisible={showNewOpening}
+                                        newServiceVisible={showNewOpening && !simple}
                                         onServiceAdded={refresh}
                                         currentUserId={userId}
-                                        actingAs={perms.canManage ? actingAs : null}
+                                        actingAs={perms.canManage && !simple ? actingAs : null}
                                     />
                                 )}
                             </>
