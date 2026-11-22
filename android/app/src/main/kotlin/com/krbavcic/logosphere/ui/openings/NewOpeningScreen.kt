@@ -62,6 +62,9 @@ import com.krbavcic.logosphere.ui.common.rememberPhotoTaker
 import com.krbavcic.logosphere.ui.common.rememberPicturePicker
 import com.krbavcic.logosphere.core.logic.PlaceDraft
 import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.core.logic.Sharing
+import com.krbavcic.logosphere.ui.common.CheckRow
+import com.krbavcic.logosphere.ui.common.SharePicker
 import com.krbavcic.logosphere.ui.common.PlaceDraftSaver
 import com.krbavcic.logosphere.ui.common.PlacePicker
 
@@ -174,6 +177,9 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var projectName by rememberSaveable { mutableStateOf<String?>(null) }
     var where by rememberSaveable(stateSaver = PlaceDraftSaver) { mutableStateOf(PlaceDraft()) }
+    var borrow by rememberSaveable { mutableStateOf(false) }
+    var alsoIn by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val simple = LocalSimple.current
 
     Scaffold(
         topBar = { BackTopBar("New opening", navigator::back) },
@@ -187,6 +193,8 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
             val sphere = places.spheres.firstOrNull { it.id == sphereId }
             // Projects of the chosen sphere; all open projects when none is chosen.
             val projects = places.projects.filter { sphereId == null || it.parentSphereId == sphereId }
+            val shareable = if (simple || sphere == null) emptyList()
+                else Sharing.choices(places.spheres, sphere.id, sphere.isDemo, app.session.user?.id)
             Column(
                 Modifier
                     .padding(padding)
@@ -228,6 +236,7 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                         .fillMaxWidth()
                         .heightIn(min = 120.dp),
                 )
+                CheckRow(Sharing.loanQuestion(type == 0), borrow, { borrow = it })
                 SegmentedTabs(listOf("One-time", "Ongoing"), cadence, { cadence = it })
                 MetaText(
                     if (cadence == 0) "Closes once you confirm someone." else "Stays open and can be accepted again and again — like lessons.",
@@ -240,14 +249,16 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                     enabled = places.fixedSphereId == null,
                     onSelect = {
                         sphereId = it
+                        alsoIn = emptyList() // what it could be shared with follows from its own sphere
                         // A project from another sphere no longer fits.
                         if (projectName != null && places.projects.none { p -> p.name == projectName && (it == null || p.parentSphereId == it) }) {
                             projectName = null
                         }
                     },
                 )
+                if (shareable.isNotEmpty()) SharePicker(shareable, alsoIn, { alsoIn = it })
                 PlacePicker(where.place, { where = where.copy(place = it) }, "Where (optional)")
-                if (!LocalSimple.current || places.fixedProjectName != null) Picker(
+                if (!simple || places.fixedProjectName != null) Picker(
                     label = "Project (optional)",
                     choices = listOf(Choice(null, "None")) + projects.map { Choice(it.name, it.name) },
                     selected = projectName,
@@ -271,6 +282,8 @@ fun NewOpeningScreen(actingAsKind: CommunityKind? = null, actingAsId: String? = 
                                 sphereName = sphere?.name,
                                 projectName = projectName,
                                 actingAsId = places.actingAs?.id,
+                                borrow = borrow,
+                                alsoSphereIds = alsoIn.filter { id -> shareable.any { it.id == id } },
                             ),
                             picture,
                             where,

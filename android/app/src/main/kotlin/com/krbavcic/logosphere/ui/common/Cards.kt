@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +31,7 @@ import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.ExchangeRules
 import com.krbavcic.logosphere.core.logic.OpeningRules
 import com.krbavcic.logosphere.core.logic.Parties
+import com.krbavcic.logosphere.core.logic.Sharing
 import com.krbavcic.logosphere.core.logic.Party
 import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.Exchange
@@ -153,6 +156,7 @@ fun ExchangeCard(
 }
 
 /** One offer or need. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OpeningCard(
     opening: Opening,
@@ -164,10 +168,16 @@ fun OpeningCard(
     BrandCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                OpeningTypePill(opening.isOffer)
-                if (opening.isPerpetual) QuietPill("↻ Ongoing")
-                if (opening.isDemo) DemoTag()
-                Spacer(Modifier.weight(1f))
+                FlowRow(
+                    Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    OpeningTypePill(opening.isOffer)
+                    if (opening.borrow) QuietPill(Sharing.loanLabel(opening.isOffer))
+                    if (opening.isPerpetual) QuietPill("↻ Ongoing")
+                    if (opening.isDemo) DemoTag()
+                }
                 // Your own opening isn't yours to appreciate (an old self-like can come off).
                 if (!OpeningRules.isOwn(opening, viewerId) || opening.likedByMe) {
                     LikeButton(opening.likedByMe, opening.likes, onLike)
@@ -188,6 +198,9 @@ fun OpeningCard(
                     listOfNotNull(by, opening.sphereName, opening.projectName).joinToString("  ·  "),
                     modifier = Modifier.weight(1f),
                 )
+            }
+            if (opening.sharedWith.isNotEmpty()) {
+                MetaText("Also in " + opening.sharedWith.joinToString(", ") { it.name }, maxLines = 2)
             }
             WhereLine(opening.location, opening.distance)
             opening.description?.takeIf { it.isNotBlank() }?.let {

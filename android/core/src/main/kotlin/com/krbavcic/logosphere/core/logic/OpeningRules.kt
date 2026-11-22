@@ -41,7 +41,7 @@ object OpeningRules {
     fun acceptAsOptions(opening: Opening, managed: List<Community>): List<Community> =
         managed.filter {
             it.kind != CommunityKind.Sphere && it.id != opening.providerId &&
-                (opening.sphereId == null || it.parentSphereId == opening.sphereId)
+                (opening.sphereId == null || Sharing.isIn(opening, it.parentSphereId))
         }
 
     /**

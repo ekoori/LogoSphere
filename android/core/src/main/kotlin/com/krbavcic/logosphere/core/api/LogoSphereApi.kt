@@ -87,7 +87,11 @@ import com.krbavcic.logosphere.core.model.SentMessage
 import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.core.logic.EventAnswer
 import com.krbavcic.logosphere.core.logic.EventDraft
+import com.krbavcic.logosphere.core.model.ActivityItem
+import com.krbavcic.logosphere.core.model.ActivityPage
 import com.krbavcic.logosphere.core.model.Announcements
+import com.krbavcic.logosphere.core.model.Correspondent
+import com.krbavcic.logosphere.core.model.KnownPeople
 import com.krbavcic.logosphere.core.model.CommunityEvent
 import com.krbavcic.logosphere.core.model.EventsPage
 import com.krbavcic.logosphere.core.model.Invite
@@ -349,6 +353,12 @@ class LogoSphereApi(
 
     suspend fun following(): List<PersonRef> = get("/api/following")
 
+    /** What the people you follow did lately: only what you could open anyway. */
+    suspend fun activity(): List<ActivityItem> = get<ActivityPage>("/api/activity").activity
+
+    /** Whom you and [personId] both know, from exchanges you can see. */
+    suspend fun known(personId: String): List<Correspondent> = get<KnownPeople>("/api/users/$personId/known").people
+
     /** The value cards on a person's, sphere's, alliance's or project's Meaning Graph. */
     suspend fun valueCards(ownerId: String): List<ValueCard> = get("/api/value_cards/$ownerId")
 
@@ -560,18 +570,29 @@ class LogoSphereApi(
             put("sphere_name", opening.sphereName)
             put("project_name", opening.projectName)
             put("status", "Posted")
+            put("borrow", opening.borrow)
+            if (opening.alsoSphereIds.isNotEmpty()) {
+                put("also_sphere_ids", buildJsonArray { opening.alsoSphereIds.forEach { add(JsonPrimitive(it)) } })
+            }
             opening.actingAsId?.let { put("acting_as_id", it) }
         }
         return post<JsonObject>("/api/openings", body)["service_id"]?.jsonPrimitive?.content.orEmpty()
     }
 
-    /** Title and description. Once an exchange links to the opening, this makes a new version. */
-    suspend fun editOpening(id: String, title: String, description: String): OpeningEditResult = patch(
+    /** Title, description, whether it's a loan. Once an exchange links to the opening, this makes a new version. */
+    suspend fun editOpening(id: String, title: String, description: String, borrow: Boolean? = null): OpeningEditResult = patch(
         "/api/openings/$id",
         buildJsonObject {
             put("title", title.trim())
             put("description", description)
+            if (borrow != null) put("borrow", borrow)
         },
+    )
+
+    /** [sphereIds]: all the spheres it's shared with beside its own; none unshares it. */
+    suspend fun shareOpening(id: String, sphereIds: List<String>): Opening = post(
+        "/api/openings/$id/spheres",
+        buildJsonObject { put("sphere_ids", buildJsonArray { sphereIds.forEach { add(JsonPrimitive(it)) } }) },
     )
 
     suspend fun setOpeningImage(id: String, picture: Upload) {

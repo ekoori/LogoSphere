@@ -58,6 +58,7 @@ import kotlinx.coroutines.coroutineScope
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.NearMe
 import com.krbavcic.logosphere.core.logic.Places
+import com.krbavcic.logosphere.core.logic.Sharing
 import com.krbavcic.logosphere.ui.common.LinkText
 
 /** [canMeasure]: whether the member's own place gives distances; null when that didn't load. */
@@ -97,7 +98,7 @@ fun OpeningsScreen() {
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
-    var type by rememberSaveable { mutableIntStateOf(0) } // all, offers, needs
+    var type by rememberSaveable { mutableIntStateOf(0) } // all, offers, needs, loans
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var near by rememberSaveable { mutableStateOf<String?>(null) } // km from your place
     val snackbar = remember { SnackbarHostState() }
@@ -139,13 +140,13 @@ fun OpeningsScreen() {
             val within = near?.toIntOrNull()
             val noPlace = within != null && data.canMeasure == false
             val shown = data.openings
-                .filter { when (type) { 1 -> it.isOffer; 2 -> !it.isOffer; else -> true } }
+                .filter { when (type) { 1 -> it.isOffer; 2 -> !it.isOffer; 3 -> it.borrow; else -> true } }
                 .filter {
                     when (sphereId) {
                         null -> true
                         REAL_SPHERES -> !it.isDemo
                         DEMO_SPHERES -> it.isDemo
-                        else -> it.sphereId == sphereId
+                        else -> Sharing.isIn(it, sphereId)
                     }
                 }
                 .filter { within == null || (it.distance?.km ?: Int.MAX_VALUE) <= within }
@@ -164,7 +165,7 @@ fun OpeningsScreen() {
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            SegmentedTabs(listOf("All", "Offers", "Needs"), type, { type = it })
+                            SegmentedTabs(listOf("All", "Offers", "Needs", "To lend or borrow"), type, { type = it })
                             if (data.spheres.isNotEmpty()) {
                                 FilterMenuChip(
                                     choices = listOf(

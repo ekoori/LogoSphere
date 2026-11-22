@@ -219,6 +219,10 @@ data class Opening(
     val point: GeoPoint? = null,
     /** Detail only: who to write to about it (a group's opening: its poster). */
     @SerialName("contact_id") val contactId: String? = null,
+    /** A loan: an offer to lend, or a need to borrow. */
+    val borrow: Boolean = false,
+    /** Spheres it's shared with beside its own: those the viewer is in (all, for who runs it). */
+    @SerialName("shared_with") val sharedWith: List<GroupSummary> = emptyList(),
 ) {
     val isOffer: Boolean get() = type != "need"
     val isPerpetual: Boolean get() = cadence == "perpetual"
@@ -242,6 +246,9 @@ data class NewOpening(
     val projectName: String?,
     /** Posted on behalf of a sphere, alliance or project the member manages. */
     val actingAsId: String? = null,
+    val borrow: Boolean = false,
+    /** Spheres to share it with beside its own. */
+    val alsoSphereIds: List<String> = emptyList(),
 )
 
 /** `PATCH /api/openings/<id>`: once an exchange links to an opening, an edit makes a new version. */
@@ -328,6 +335,8 @@ data class Exchange(
     @SerialName("is_demo") val isDemo: Boolean = false,
     @SerialName("initiator_is_agent") val initiatorIsAgent: Boolean = false,
     @SerialName("other_is_agent") val otherIsAgent: Boolean = false,
+    /** A loan. Only a single exchange's own page says. */
+    val borrow: Boolean = false,
 ) {
     fun likesFor(target: LikeTarget): LikeInfo = likes[target.key] ?: LikeInfo()
 }

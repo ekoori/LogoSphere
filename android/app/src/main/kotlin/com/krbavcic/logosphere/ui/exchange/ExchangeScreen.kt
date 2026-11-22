@@ -107,6 +107,7 @@ import androidx.compose.foundation.layout.Box
 import com.krbavcic.logosphere.core.api.userMessage
 import kotlin.coroutines.cancellation.CancellationException
 import com.krbavcic.logosphere.core.logic.Messaging
+import com.krbavcic.logosphere.core.logic.Sharing
 
 data class ExchangeData(
     val detail: ExchangeDetail,
@@ -280,6 +281,9 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                 // Only what the people wrote - no generated stand-in.
                 x.longDescription?.takeIf { it.isNotBlank() }?.let {
                     Text(it, style = MaterialTheme.typography.bodyLarge)
+                }
+                Sharing.loanNote(x)?.let {
+                    Text(it, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 }
                 if (x.isFinished) MetaText("✓ This exchange is finished — its details are locked.", maxLines = 2)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

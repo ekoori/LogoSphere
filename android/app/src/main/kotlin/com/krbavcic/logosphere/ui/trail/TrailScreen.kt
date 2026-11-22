@@ -63,11 +63,16 @@ import com.krbavcic.logosphere.ui.common.Wordmark
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.core.model.MeaningTrail
+import com.krbavcic.logosphere.core.model.ActivityItem
+import com.krbavcic.logosphere.ui.common.SectionHeading
+import androidx.compose.foundation.lazy.itemsIndexed
 
 data class TrailData(
     val trail: MeaningTrail,
     val myOpenings: List<Opening>,
     val following: List<PersonRef>,
+    /** What they did lately; null when that didn't load. */
+    val activity: List<ActivityItem>?,
     /** Demo spheres, when the member is in none of them yet: the invitation. */
     val demoInvite: DemoStatus? = null,
 )
@@ -87,11 +92,14 @@ class TrailViewModel(private val app: AppContainer) : LoadViewModel<TrailData>()
         val following = async { app.api.following() }
         val demo = async { runCatching { app.api.demo() }.getOrNull() }
         val me = viewerId
+        val followed = following.await()
+        val activity = if (followed.isEmpty()) emptyList() else runCatching { app.api.activity() }.getOrNull()
         TrailData(
             trail = trail.await(),
             // Your own postings, including those you posted for a group.
             myOpenings = openings.await().filter { it.providerId == me || it.actingUserId == me },
-            following = following.await(),
+            following = followed,
+            activity = activity,
             demoInvite = demo.await()?.takeIf { it.spheres.isNotEmpty() && !it.joinedAny },
         )
     }
@@ -208,6 +216,14 @@ fun TrailScreen() {
                         else -> if (data.following.isEmpty()) {
                             item { EmptyNote("You're not following anyone yet. Open a member's profile and tap Follow to see them here.") }
                         } else {
+                            item(key = "lately") { SectionHeading("Lately") }
+                            val lately = data.activity
+                            when {
+                                lately == null -> item { EmptyNote("That didn't load. Pull down to try again.") }
+                                lately.isEmpty() -> item { EmptyNote("Nothing lately that you can see.") }
+                                else -> itemsIndexed(lately, key = { index, _ -> "a-$index" }) { _, done -> ActivityRow(done) }
+                            }
+                            item(key = "people") { SectionHeading("People you follow", Modifier.padding(top = 12.dp)) }
                             items(data.following, key = { "p-" + it.id }) { person ->
                                 ListItem(
                                     headlineContent = { Text(person.name ?: "Member", style = MaterialTheme.typography.titleSmall) },

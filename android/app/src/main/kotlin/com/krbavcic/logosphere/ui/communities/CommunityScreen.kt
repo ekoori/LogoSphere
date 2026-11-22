@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.krbavcic.logosphere.AppContainer
 import com.krbavcic.logosphere.core.logic.Membership
+import com.krbavcic.logosphere.core.logic.Sharing
 import com.krbavcic.logosphere.core.logic.Tabs
 import com.krbavcic.logosphere.core.model.Community
 import com.krbavcic.logosphere.core.model.CommunityKind
@@ -145,7 +146,7 @@ class CommunityViewModel(
 
         val projectNames = projects.map { it.name }.toSet()
         val related = openings.await().filter {
-            (kind == CommunityKind.Sphere && it.sphereId == id) ||
+            (kind == CommunityKind.Sphere && Sharing.isIn(it, id)) ||
                 it.providerId == id ||
                 (kind != CommunityKind.Sphere && it.projectName != null && it.projectName in projectNames) ||
                 (kind == CommunityKind.Project && it.projectName == community.name)

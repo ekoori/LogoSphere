@@ -63,12 +63,19 @@ import com.krbavcic.logosphere.core.model.ReportOf
 import com.krbavcic.logosphere.ui.common.BlockDialog
 import androidx.compose.runtime.mutableStateOf
 import com.krbavcic.logosphere.ui.common.ReportLink
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.semantics.Role
+import com.krbavcic.logosphere.core.model.Correspondent
 
 data class PersonData(
     val user: PublicUser,
     val cards: List<ValueCard>,
     val trail: MeaningTrail,
     val openings: List<Opening>,
+    /** Whom the viewer and they both know. */
+    val known: List<Correspondent> = emptyList(),
 )
 
 class PersonViewModel(private val app: AppContainer, private val id: String) : LoadViewModel<PersonData>() {
@@ -86,11 +93,13 @@ class PersonViewModel(private val app: AppContainer, private val id: String) : L
         val cards = async { runCatching { app.api.valueCards(id) }.getOrDefault(emptyList()) }
         val trail = async { runCatching { app.api.trail(id) }.getOrDefault(MeaningTrail(id = id)) }
         val openings = async { runCatching { app.openings.list(force) }.getOrDefault(emptyList()) }
+        val known = async { if (isSelf) emptyList() else runCatching { app.api.known(id) }.getOrDefault(emptyList()) }
         PersonData(
             user = user.await(),
             cards = cards.await(),
             trail = trail.await(),
             openings = openings.await().filter { it.providerId == id || it.actingUserId == id },
+            known = known.await(),
         )
     }
 
@@ -193,6 +202,9 @@ fun PersonScreen(id: String, initialTab: String? = null) {
                             }
                         }
                     }
+                    if (data.known.isNotEmpty()) {
+                        item(key = "known") { BothKnow(data.known) }
+                    }
                     item(key = "tabs") {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                             SegmentedTabs(listOf("Meaning Trail", "Offers & Needs"), tab, { tab = it })
@@ -217,5 +229,30 @@ fun PersonScreen(id: String, initialTab: String? = null) {
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BothKnow(people: List<Correspondent>) {
+    val navigator = LocalNavigator.current
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        SectionHeading("You both know")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            people.forEach { person ->
+                Row(
+                    Modifier
+                        .clickable(role = Role.Button) { navigator.person(person.id) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Avatar(person.id, person.name, size = 28.dp)
+                    Text(person.name, style = MaterialTheme.typography.bodyMedium)
+                    if (person.isAgent) PersonaTag(compact = true)
+                }
+            }
+        }
+        MetaText("People you follow or had an exchange with, who had one with them. Only exchanges you can see count.", maxLines = 3)
     }
 }

@@ -91,6 +91,10 @@ import kotlin.coroutines.cancellation.CancellationException
 import com.krbavcic.logosphere.core.logic.Messaging
 import com.krbavcic.logosphere.core.model.ReportOf
 import com.krbavcic.logosphere.ui.common.ReportLink
+import com.krbavcic.logosphere.core.logic.Sharing
+import com.krbavcic.logosphere.core.model.GroupSummary
+import com.krbavcic.logosphere.ui.common.CheckRow
+import com.krbavcic.logosphere.ui.common.ShareDialog
 
 data class OpeningData(
     val opening: Opening,
@@ -98,6 +102,8 @@ data class OpeningData(
     val acceptAs: List<Community>,
     /** The opening names its project only by name; this is its id when known. */
     val projectId: String?,
+    /** The spheres the viewer could share it with, or take it out of. */
+    val shareChoices: List<GroupSummary> = emptyList(),
 )
 
 class OpeningViewModel(private val app: AppContainer, private val id: String) : LoadViewModel<OpeningData>() {
@@ -118,7 +124,17 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
         val projectId = opening.projectId ?: opening.projectName?.let { name ->
             all.firstOrNull { it.kind == CommunityKind.Project && it.name == name }?.id
         }
-        return OpeningData(opening, OpeningRules.acceptAsOptions(opening, managed), projectId)
+        val mayShare = OpeningRules.mayManage(opening, viewerId) && opening.isCurrent && opening.status != "Cancelled"
+        val shareChoices = if (!mayShare) emptyList() else Sharing.choices(
+            spheres = all.filter { it.kind == CommunityKind.Sphere },
+            homeId = opening.sphereId,
+            isDemo = opening.isDemo,
+            viewerId = viewerId,
+            already = opening.sharedWith,
+            // An administrator only takes out: where someone's opening appears is theirs to choose.
+            mayAdd = OpeningRules.isOwn(opening, viewerId),
+        )
+        return OpeningData(opening, OpeningRules.acceptAsOptions(opening, managed), projectId, shareChoices)
     }
 
     private suspend fun changed(vararg what: Change) {
@@ -177,7 +193,7 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
      * Once an exchange links to the opening, the server keeps it as it was and saves the edit as a
      * new version, whether the words changed or only the place: follow to whichever is current.
      */
-    fun edit(title: String, description: String, place: PlaceDraft?, onDone: () -> Unit) {
+    fun edit(title: String, description: String, borrow: Boolean, place: PlaceDraft?, onDone: () -> Unit) {
         if (title.isBlank()) {
             say("The title can't be empty.")
             return
@@ -187,8 +203,8 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
         act {
             var latest = id
             try {
-                if (title.trim() != was.title || description != was.description.orEmpty()) {
-                    val result = app.api.editOpening(id, title, description)
+                if (title.trim() != was.title || description != was.description.orEmpty() || borrow != was.borrow) {
+                    val result = app.api.editOpening(id, title, description, borrow)
                     if (result.versioned) result.service?.id?.let { latest = it }
                 }
                 if (place?.changed == true) app.api.savePlace(Places.OPENINGS, latest, place).id?.let { latest = it }
@@ -204,6 +220,11 @@ class OpeningViewModel(private val app: AppContainer, private val id: String) : 
             }
         }
     }
+
+    fun share(sphereIds: List<String>, onDone: () -> Unit) = act(onSuccess = {
+        onDone()
+        changed(Change.Openings)
+    }) { app.api.shareOpening(id, sphereIds) }
 
     fun setPicture(uri: Uri) = act(onSuccess = {
         app.openings.invalidate()
@@ -254,6 +275,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
     val me = vm.viewerId
     var confirmWithdraw by rememberSaveable { mutableStateOf(false) }
     var editing by rememberSaveable { mutableStateOf(false) }
+    var sharing by rememberSaveable { mutableStateOf(false) }
     val canManage = OpeningRules.mayManage(opening, me)
     val isOwn = OpeningRules.isOwn(opening, me)
     val cancelled = opening.status == "Cancelled"
@@ -274,8 +296,9 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         .padding(ScreenPadding),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         OpeningTypePill(opening.isOffer)
+                        if (opening.borrow) QuietPill(Sharing.loanLabel(opening.isOffer))
                         if (opening.isPerpetual) QuietPill("↻ Ongoing")
                         if (opening.version > 1) QuietPill("Version ${opening.version}")
                         if (opening.isDemo) DemoTag()
@@ -323,6 +346,12 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                             label = { Text("✦ ${opening.sphereName ?: "Sphere"}") },
                         )
                     }
+                    opening.sharedWith.forEach { sphere ->
+                        AssistChip(
+                            onClick = { navigator.community(CommunityKind.Sphere, sphere.id) },
+                            label = { Text("Also in ${sphere.name}") },
+                        )
+                    }
                     if (opening.projectName != null) {
                         AssistChip(
                             onClick = { data.projectId?.let { navigator.community(CommunityKind.Project, it) } },
@@ -331,11 +360,16 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                         )
                     }
                 }
+                if (data.shareChoices.isNotEmpty() && !editing) {
+                    TextButton(onClick = { sharing = true }, contentPadding = PaddingValues(0.dp)) {
+                        Text(if (opening.sharedWith.isEmpty()) "Share with more spheres" else "Change sharing")
+                    }
+                }
                 if (editing) {
                     EditOpeningForm(
                         opening,
                         busy,
-                        onSave = { title, description, place -> vm.edit(title, description, place) { editing = false } },
+                        onSave = { title, description, borrow, place -> vm.edit(title, description, borrow, place) { editing = false } },
                         onCancel = { editing = false },
                     )
                 } else {
@@ -442,6 +476,15 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
         }
     }
 
+    if (sharing) {
+        ShareDialog(
+            choices = data.shareChoices,
+            already = opening.sharedWith,
+            busy = busy,
+            onSave = { ids -> vm.share(ids) { sharing = false } },
+            onClose = { sharing = false },
+        )
+    }
     if (confirmWithdraw) {
         AlertDialog(
             onDismissRequest = { confirmWithdraw = false },
@@ -526,7 +569,12 @@ private fun ActionsCard(data: OpeningData, vm: OpeningViewModel, busy: Boolean, 
 
 /** Title, description and where, edited in place (the web's inline form). */
 @Composable
-private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, String, PlaceDraft?) -> Unit, onCancel: () -> Unit) {
+private fun EditOpeningForm(
+    opening: Opening,
+    busy: Boolean,
+    onSave: (String, String, Boolean, PlaceDraft?) -> Unit,
+    onCancel: () -> Unit,
+) {
     val api = LocalAppContainer.current.api
     var place by rememberSaveable(opening.id, stateSaver = PlaceDraftSaver) { mutableStateOf(PlaceDraft()) }
     var placeLoaded by rememberSaveable(opening.id) { mutableStateOf(false) }
@@ -544,6 +592,7 @@ private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, St
     }
     var title by rememberSaveable(opening.id) { mutableStateOf(opening.title) }
     var description by rememberSaveable(opening.id) { mutableStateOf(opening.description.orEmpty()) }
+    var borrow by rememberSaveable(opening.id) { mutableStateOf(opening.borrow) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = title,
@@ -560,13 +609,14 @@ private fun EditOpeningForm(opening: Opening, busy: Boolean, onSave: (String, St
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
         )
+        CheckRow(Sharing.loanQuestion(opening.isOffer), borrow, { borrow = it })
         if (placeLoaded || placeFailed) PlaceFields(place.takeIf { placeLoaded }, { place = it }, "Where")
         MetaText(
             "Once an exchange has come from this opening, saving keeps this version as it was and makes a new one.",
             maxLines = 3,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { onSave(title, description, place.takeIf { placeLoaded }) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
+            Button(onClick = { onSave(title, description, borrow, place.takeIf { placeLoaded }) }, enabled = title.isNotBlank() && !busy) { Text("Save changes") }
             TextButton(onClick = onCancel, enabled = !busy) { Text("Cancel") }
         }
     }
