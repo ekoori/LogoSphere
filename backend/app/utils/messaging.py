@@ -115,7 +115,7 @@ def linked(opening, sender, other):
     """Whether these two have a part in this opening, so may write about it."""
     a, b = as_uuid(sender), as_uuid(other)
     poster = contact(opening)
-    if b == poster and Sight(a).sphere(opening.sphere_id):
+    if b == poster and Sight(a).opening(opening):
         return True
     took_part = respondents(opening)
     if b in took_part and (a == poster or runs(opening, a)):

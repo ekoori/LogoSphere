@@ -113,7 +113,8 @@ def export_data(user_id=None):
             if uid in _members(entity, k) or uid in roles:
                 memberships.append({'kind': kind, 'id': str(_entity_id(entity, k)), 'name': entity.name,
                                     'role': roles.get(uid) or 'member'})
-    openings = [s.to_dict(include_image=False) for s in Service.get_all()
+    openings = [{**s.to_dict(include_image=False), 'shared_with': sorted(str(i) for i in s.shared_with)}
+                for s in Service.get_all()
                 if s.provider_id == uid or getattr(s, 'acting_user_id', None) == uid]
     exchanges = MeaningTrail.get_meaning_trail(uid, viewer_id=uid) or []
     following = [str(r.followee_id) for r in session.execute('SELECT followee_id FROM follows WHERE follower_id = %s', [uid])]

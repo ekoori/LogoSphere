@@ -20,7 +20,8 @@ from app.utils.pictures import picture_response
 from app.middleware.session_middleware import validate_session
 from app.models.spheres import Sphere
 from app.utils.permissions import is_platform_admin
-from app.utils.access import Sight, exchange_sphere, resolve_cards
+from app.utils.access import Sight, as_uuid, exchange_sphere, resolve_cards
+from app.models.openings import Service
 from app.utils import evidence
 
 logger = logging.getLogger(__name__)
@@ -232,6 +233,8 @@ def get_exchange(exchange_id, user_id=None):
             return jsonify({'message': 'Exchange not found'}), 404
         tx_dict['receipt_photo_count'] = MeaningTrail.receipt_photo_count(exchange_id)
         tx_dict['is_finished'] = MeaningTrail.is_finished(exchange_id)
+        source = as_uuid(tx_dict.get('source_service_id'))
+        tx_dict['borrow'] = bool(source) and Service.is_loan(source)
         from app.utils.trails import Trail
         as_trail = Trail(tx_dict['exchange_id'], 'exchange', '', tx_dict, exchange_sphere(tx_dict))
         return jsonify({

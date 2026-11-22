@@ -186,6 +186,7 @@ class ValueGraphIndex:
                 'sphere_id': str(s.sphere_id) if s.sphere_id else None, 'sphere_name': s.sphere_name,
                 'provider_id': str(s.provider_id) if s.provider_id else None, 'provider': s.provider_name,
                 'type': s.type, 'summary': s.description or '', 'values': list(s.values or []),
+                'shared_with': {str(i) for i in s.shared_with},
             }
 
         # Corpus = one document per owner-with-cards + one per opening.

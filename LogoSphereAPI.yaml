@@ -1535,6 +1535,13 @@ paths:
                 project_name: { type: string }
                 image_key: { type: string }
                 cadence: { type: string, enum: [single, perpetual] }
+                borrow: { type: boolean, description: "A loan: an offer to lend, or a need to borrow" }
+                also_sphere_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+                  description: >-
+                    Spheres to share it with beside its own. The caller must be in them, and demo spheres
+                    and real ones don't mix.
                 acting_as_id:
                   type: string
                   format: uuid
@@ -1563,7 +1570,10 @@ paths:
       description: >-
         Newest first. Filters out non-perpetual openings that are already in
         progress or completed, and openings scoped to a sphere the caller
-        isn't a member of.
+        isn't a member of, unless shared with one they are in. `borrow` marks a
+        loan. `shared_with` names the spheres it's shared with that the caller
+        is in (all, for who runs it). To someone outside its own sphere it
+        doesn't name that sphere's people: who liked or took it up, history.
       operationId: listOpenings
       responses:
         '200':
@@ -3797,6 +3807,57 @@ paths:
         '200': { description: Done. }
         '404': { description: "Not one of yours." }
       tags: [Invitations]
+
+  /api/openings/{service_id}/spheres:
+    parameters:
+      - { name: service_id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Share an opening with more spheres
+      operationId: shareOpening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sphere_ids]
+              properties:
+                sphere_ids:
+                  type: array
+                  maxItems: 10
+                  items: { type: string, format: uuid }
+                  description: All of them, replacing what was. Empty shares it with none.
+      responses:
+        '200': { description: The opening. }
+        '400': { description: "Not spheres, already for everyone, or demo mixed with real." }
+        '403': { description: "Not yours to share, or a sphere you aren't in." }
+        '404': { description: Not there. }
+        '409': { description: A past version. }
+      tags: [Openings]
+
+  /api/activity:
+    get:
+      summary: What the people you follow did lately
+      operationId: getActivity
+      responses:
+        '200':
+          description: >-
+            `activity`, newest first: kind (opening, exchange, acknowledgement, event), at, who, says, title,
+            link and is_demo. Only what the caller may open anyway; a block either way hides it.
+      tags: [User Management]
+
+  /api/users/{target_id}/known:
+    parameters:
+      - { name: target_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Whom you both know
+      operationId: getKnown
+      responses:
+        '200':
+          description: >-
+            `people` the caller follows or had an exchange with, who had an exchange with this person. Only
+            exchanges the caller can see count, and nobody learns whom someone else follows.
+      tags: [User Management]
 
 components:
   securitySchemes:

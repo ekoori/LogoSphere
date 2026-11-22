@@ -80,7 +80,7 @@ def _reported(me, data):
     if kind == 'opening':
         key = as_uuid(item)
         opening = Service.get_by_id(key) if key else None
-        if not opening or not Sight(me).sphere(opening.sphere_id):
+        if not opening or not Sight(me).opening(opening):
             return None
         words = f"{opening.title or ''}: {opening.description or ''}"
         return messaging.contact(opening), opening.service_id, None, words

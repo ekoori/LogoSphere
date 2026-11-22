@@ -20,7 +20,10 @@ class Service:
                  accepted_at=None, in_progress_at=None, completed_at=None, image=None,
                  acting_user_id=None, acting_user_name=None,
                  version=1, is_current=True, replaces_service_id=None,
-                 image_ref_service_id=None, has_image=None, image_object=None, place=None):
+                 image_ref_service_id=None, has_image=None, image_object=None, place=None,
+                 borrow=None, shared_with=None):
+        self.borrow = bool(borrow)                      # a loan: it comes back
+        self.shared_with = set(shared_with or ())       # spheres beside its own
         self.place = place          # JSON (app/utils/places.py); to_dict tells only its words
         self.service_id = service_id
         self.type = type
@@ -105,6 +108,7 @@ class Service:
             'version': self.version,
             'is_current': self.is_current,
             'replaces_service_id': str(self.replaces_service_id) if self.replaces_service_id else None,
+            'borrow': self.borrow,
         }
 
     @classmethod
@@ -131,6 +135,7 @@ class Service:
         elif not isinstance(acting_user_id, uuid.UUID):
             acting_user_id = None
         acting_user_name = data.get('acting_user_name')
+        borrow, shared_with = bool(data.get('borrow')), set(data.get('shared_with') or ())
 
         # Look up provider name from users table if not supplied by the client.
         if not provider_name:
@@ -148,17 +153,18 @@ class Service:
         query = """
         INSERT INTO services (service_id, type, title, description, provider_id, provider_name,
                               sphere_id, sphere_name, status, created_at, values, likes, project_name,
-                              image_key, cadence, acting_user_id, acting_user_name)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                              image_key, cadence, acting_user_id, acting_user_name, borrow, shared_with)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (
             service_id, type_, title, description, provider_id, provider_name,
             sphere_id, sphere_name, status, created_at, values, 0, project_name, image_key, cadence,
-            acting_user_id, acting_user_name
+            acting_user_id, acting_user_name, borrow, shared_with or None
         ))
         return cls(service_id, type_, title, description, provider_id, provider_name,
                    sphere_id, sphere_name, status, values, 0, project_name, image_key, cadence,
-                   created_at=created_at, acting_user_id=acting_user_id, acting_user_name=acting_user_name)
+                   created_at=created_at, acting_user_id=acting_user_id, acting_user_name=acting_user_name,
+                   borrow=borrow, shared_with=shared_with)
 
     @classmethod
     def _from_row(cls, r):
@@ -179,6 +185,8 @@ class Service:
             has_image=getattr(r, 'has_image', None),
             image_object=getattr(r, 'image_object', None),
             place=getattr(r, 'place', None),
+            borrow=getattr(r, 'borrow', None),
+            shared_with=getattr(r, 'shared_with', None),
         )
 
     # Every column except the banner blob - the marketplace list never needs it.
@@ -186,7 +194,35 @@ class Service:
                   "sphere_name, status, values, likes, project_name, image_key, cadence, accepted_by, "
                   "accepted_by_name, created_at, accepted_at, in_progress_at, completed_at, "
                   "acting_user_id, acting_user_name, version, is_current, replaces_service_id, "
-                  "image_ref_service_id, has_image, image_object, place")
+                  "image_ref_service_id, has_image, image_object, place, borrow, shared_with")
+
+    DDL = ('ALTER TABLE services ADD IF NOT EXISTS borrow boolean',
+           'ALTER TABLE services ADD IF NOT EXISTS shared_with set<uuid>')
+
+    @classmethod
+    def ensure_columns(cls):
+        for statement in cls.DDL:
+            cassandra_session.execute(statement)
+
+    @classmethod
+    def share(cls, service_id, sphere_ids):
+        cassandra_session.execute('UPDATE services SET shared_with = %s WHERE service_id = %s',
+                                  [set(sphere_ids) or None, service_id])
+
+    @classmethod
+    def unshare(cls, sphere_id, person=None):
+        """Out of that sphere: all that was shared into it, or what that person posted."""
+        changed = False
+        for s in cls.get_all():
+            if sphere_id in s.shared_with and (person is None or person in (s.provider_id, s.acting_user_id)):
+                cls.share(s.service_id, s.shared_with - {sphere_id})
+                changed = True
+        return changed
+
+    @classmethod
+    def is_loan(cls, service_id):
+        row = cassandra_session.execute('SELECT borrow FROM services WHERE service_id = %s', [service_id]).one()
+        return bool(row and row.borrow)
 
     @classmethod
     def get_all(cls):
@@ -271,7 +307,7 @@ class Service:
             )
 
     # ── Versioning (edit history for openings tied to an exchange) ─────────────
-    _EDITABLE = ('title', 'description', 'values')
+    _EDITABLE = ('title', 'description', 'values', 'borrow')
 
     @classmethod
     def has_related_exchange(cls, service_id):
@@ -313,12 +349,13 @@ class Service:
             """INSERT INTO services (service_id, type, title, description, provider_id,
                provider_name, sphere_id, sphere_name, status, created_at, values, likes,
                project_name, image_key, cadence, acting_user_id, acting_user_name,
-               version, is_current, replaces_service_id, image_ref_service_id, place)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+               version, is_current, replaces_service_id, image_ref_service_id, place, borrow, shared_with)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             [new_id, old.type, title, description, old.provider_id, old.provider_name,
              old.sphere_id, old.sphere_name, 'Posted', created_at, values or [], 0,
              old.project_name, old.image_key, old.cadence, old.acting_user_id,
-             old.acting_user_name, (old.version or 1) + 1, True, old.service_id, image_ref, old.place])
+             old.acting_user_name, (old.version or 1) + 1, True, old.service_id, image_ref, old.place,
+             edits.get('borrow', old.borrow), old.shared_with or None])
         # Freeze the previous version so it no longer appears as the live opening.
         cassandra_session.execute(
             "UPDATE services SET is_current = false WHERE service_id = %s", [old.service_id])

@@ -1,6 +1,7 @@
 import logging
 import uuid
 from flask import request, jsonify, current_app as app
+from app.db import session
 from app.models.openings import Service
 from app.models.user import User
 from app.models.meaning_trail import MeaningTrail
@@ -10,8 +11,9 @@ from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
-from app.utils.access import Sight
+from app.utils.access import Sight, as_uuid
 from app.utils import evidence, messaging, places, safety
+from app.utils.search_vectors import invalidate_index
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,32 @@ def _project_is_closed(name=None, project_id=None):
 
 OPENING_TYPES = ('offer', 'need')
 # Said by the server, never taken from the request.
-SERVER_SET = ('status', 'provider_name', 'acting_user_id', 'acting_user_name', 'sphere_name')
+SERVER_SET = ('status', 'provider_name', 'acting_user_id', 'acting_user_name', 'sphere_name', 'shared_with',
+              'also_sphere_ids')
+SHARES_MOST = 10
+
+
+def _shared_spheres(sight, home, wanted, already=frozenset()):
+    """(the spheres to share it with, None), or (None, (message, status))."""
+    if not isinstance(wanted, list):
+        return None, ('Say which spheres.', 400)
+    ids = {as_uuid(raw) for raw in wanted}
+    if None in ids:
+        return None, ("That isn't a sphere.", 400)
+    ids.discard(home)
+    if not ids:
+        return ids, None
+    if not home:
+        return None, ("It's for everyone already.", 400)
+    if len(ids) > SHARES_MOST:
+        return None, (f'An opening can be shared with up to {SHARES_MOST} more spheres.', 400)
+    for key in ids - already:
+        if not sight.member_of(key):        # the admin override doesn't post for others
+            return None, ('You can share it only into spheres you are in.', 403)
+        # A demo sphere's personas act on what's there, and evidence goes by the opening's own sphere.
+        if is_demo_sphere(key) != is_demo_sphere(home):
+            return None, ("Demo spheres and real ones don't mix: share it within one or the other.", 400)
+    return ids, None
 
 
 def _clean_new_opening(data, user_id):
@@ -82,6 +109,9 @@ def _clean_new_opening(data, user_id):
     out['type'] = data.get('type') or 'offer'
     if out['type'] not in OPENING_TYPES:
         return None, ('An opening is an offer or a need', 400)
+    if data.get('borrow') is not None and not isinstance(data['borrow'], bool):
+        return None, ('Is it a loan or not?', 400)
+    out['borrow'] = data.get('borrow') is True
     sight = Sight(user_id)
     if data.get('sphere_id'):
         sphere = Sphere.get_by_id(data['sphere_id'])
@@ -90,6 +120,11 @@ def _clean_new_opening(data, user_id):
         if not sight.sphere(sphere.sphere_id):
             return None, ('Join the sphere first', 403)
         out['sphere_id'], out['sphere_name'] = str(sphere.sphere_id), sphere.name
+    if data.get('also_sphere_ids'):
+        shared, refused = _shared_spheres(sight, as_uuid(out.get('sphere_id')), data['also_sphere_ids'])
+        if refused:
+            return None, refused
+        out['shared_with'] = shared
     name = data.get('project_name')
     if name:
         # A project shows openings that carry its name: only those who can see it add to it.
@@ -107,7 +142,9 @@ class _ListContext:
     def __init__(self, viewer):
         from app.utils.names import resolve_user_names
         self.viewer = viewer
-        self.admin = viewer is not None and is_platform_admin(viewer)
+        self.sight = Sight(viewer)
+        self.admin = self.sight.admin
+        self._sphere_names = None
         self.likes = Service.all_likes()
         self.acceptances = Service.all_acceptances()
         self.names = resolve_user_names({u for ids in self.likes.values() for u in ids})
@@ -122,8 +159,36 @@ class _ListContext:
             self._party[key] = self.viewer is not None and _is_party(s, self.viewer)
         return self._party[key]
 
+    def sphere_names(self):
+        if self._sphere_names is None:
+            self._sphere_names = _sphere_names()
+        return self._sphere_names
+
     def likers(self, sid):
         return [{'id': str(u), 'name': self.names.get(u, 'Member')} for u in self.likes.get(sid, [])[:50]]
+
+
+def _sphere_names():
+    return {r.sphere_id: r.name for r in session.execute('SELECT sphere_id, name FROM spheres')}
+
+
+def _is_outsider(s, sight, is_party):
+    """Sees it because it was shared with them, or they took it up: not from inside its sphere."""
+    return not is_party and not sight.sphere(s.sphere_id)
+
+
+def _without_its_spheres_people(d, viewer):
+    """An opening as an outsider sees it: its sphere's people stay its own."""
+    me = str(viewer)
+    own = lambda a: me in (a.get('accepter_id'), a.get('acting_user_id'))
+    d['liked_by'] = [p for p in d['liked_by'] if p['id'] == me]
+    d['project_name'] = None
+    if d.get('accepted_by') != me:
+        d['accepted_by'] = d['accepted_by_name'] = None
+    if 'exchanges' in d:
+        d['exchanges'] = [a for a in d['exchanges'] if own(a)]
+        d['history'] = []
+        d['replaces_service_id'] = None
 
 
 def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
@@ -195,6 +260,17 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
             hd['exchanges'] = Service.acceptances(hv.service_id, status='confirmed')
             history.append(hd)
         d['history'] = history
+    sight = ctx.sight if ctx is not None else Sight(viewer)
+    if s.shared_with:
+        names = ctx.sphere_names() if ctx is not None else _sphere_names()
+        # Who runs it sees them all; others only their own, or they'd learn which spheres the poster is in.
+        told = s.shared_with if can_manage else s.shared_with & sight.spheres
+        d['shared_with'] = sorted(({'id': str(i), 'name': names[i]} for i in told if i in names),
+                                  key=lambda x: (x['name'] or '').lower())
+    else:
+        d['shared_with'] = []
+    if _is_outsider(s, sight, is_party):
+        _without_its_spheres_people(d, viewer)
     return d
 
 
@@ -277,6 +353,10 @@ def edit_opening(service_id, user_id=None):
             edits['description'] = data.get('description') or ''
         if 'values' in data and isinstance(data['values'], list):
             edits['values'] = data['values']
+        if 'borrow' in data:
+            if not isinstance(data['borrow'], bool):
+                return jsonify({'message': 'Is it a loan or not?'}), 400
+            edits['borrow'] = data['borrow']
         if not edits:
             return jsonify({'message': 'No editable fields provided'}), 400
 
@@ -305,8 +385,6 @@ def get_services(user_id=None):
         return app.make_default_options_response(), 200
     try:
         viewer = uuid.UUID(str(user_id)) if user_id else None
-        joined_spheres = Sphere.member_sphere_ids(viewer)
-        see_all = is_platform_admin(viewer)
         ctx = _ListContext(viewer)
         services = []
         for s in Service.get_all():
@@ -327,9 +405,10 @@ def get_services(user_id=None):
                 continue
 
             # Sphere-scoped openings are only visible to that sphere's members
-            # (a member sees their own opening regardless). Standalone openings
-            # (no sphere_id) remain visible to everyone. Platform admins see all.
-            if not see_all and s.sphere_id and s.sphere_id not in joined_spheres and not is_provider:
+            # and those of the spheres it was shared with (a member sees their
+            # own opening regardless). Standalone openings (no sphere_id) remain
+            # visible to everyone. Platform admins see all.
+            if not is_provider and not ctx.sight.opening(s):
                 continue
 
             services.append(_enrich_service(s, viewer, ctx=ctx))
@@ -357,11 +436,9 @@ def get_service(service_id, user_id=None):
             return jsonify({'message': 'Opening not found'}), 404
 
         viewer = uuid.UUID(str(user_id))
-        is_provider = _is_party(service, viewer)
-        if service.sphere_id and not is_provider and not is_platform_admin(viewer):
-            joined_spheres = Sphere.member_sphere_ids(viewer)
-            if service.sphere_id not in joined_spheres:
-                return jsonify({'message': 'Not authorized to view this opening'}), 403
+        if not Sight(viewer).opening(service) and not _is_party(service, viewer) \
+                and not Service.acceptance_for_actor(service_uuid, viewer):     # whoever took it up still reaches it
+            return jsonify({'message': 'Not authorized to view this opening'}), 403
 
         return jsonify(_enrich_service(service, viewer, include_exchanges=True)), 200
     except ValueError:
@@ -390,7 +467,7 @@ def accept_service(service_id, user_id=None):
             return jsonify({'message': 'Opening not found'}), 404
         if _is_party(service, user_id):
             return jsonify({'message': 'You cannot accept your own opening'}), 400
-        if not Sight(user_id).sphere(service.sphere_id):
+        if not Sight(user_id).opening(service):
             return jsonify({'message': "Join this opening's sphere first"}), 403
         # A single opening stays open to everyone until the provider confirms one
         # acceptance (which moves it to 'In Progress' and out of the marketplace);
@@ -414,8 +491,9 @@ def accept_service(service_id, user_id=None):
                 return jsonify({'message': 'This entity posted the opening — it can\'t accept it'}), 400
             if not can_manage_entity(acting_as_id, user_id):
                 return jsonify({'message': 'Not authorized to accept on behalf of this entity'}), 403
-            # The entity must be within the opening's sphere (if it has one).
-            if service.sphere_id and str(service.sphere_id) not in entity_sphere_ids(acting_as_id):
+            # The entity must be within the opening's sphere (if it has one), or one it was shared with.
+            if service.sphere_id and not ({str(service.sphere_id), *(str(i) for i in service.shared_with)}
+                                          & entity_sphere_ids(acting_as_id)):
                 return jsonify({'message': f"This {info['kind']} isn't part of the opening's sphere"}), 400
             accepter_uuid = uuid.UUID(str(acting_as_id))
             accepter_name = info['name']
@@ -691,18 +769,49 @@ def like_service(service_id, user_id=None):
         # self-like can still be taken off).
         if adding and _is_party(service, user_id):
             return jsonify({'message': "You can't appreciate your own opening"}), 403
-        if adding and not Sight(user_id).sphere(service.sphere_id):
+        sight = Sight(user_id)
+        if adding and not sight.opening(service):
             return jsonify({'message': "Join this opening's sphere first"}), 403
         if isinstance(data.get('liked'), bool):
             liked, count = Service.set_like(service_uuid, uuid.UUID(str(user_id)), data['liked'])
         else:
             liked, count = Service.toggle_like(service_uuid, uuid.UUID(str(user_id)))
-        return jsonify({'liked': liked, 'likes': count, 'liked_by': Service.likers(service_uuid)}), 200
+        by = Service.likers(service_uuid)
+        if _is_outsider(service, sight, _is_party(service, user_id)):
+            by = [p for p in by if p['id'] == str(user_id)]
+        return jsonify({'liked': liked, 'likes': count, 'liked_by': by}), 200
     except ValueError:
         return jsonify({'message': 'Invalid opening id'}), 400
     except Exception as e:
         logger.error(f"Error in like_service: {e}")
         return jsonify({'message': 'Internal server error'}), 500
+
+
+@validate_session
+def share_service(service_id, user_id=None):
+    """{sphere_ids}: every sphere it is shared with, beside its own."""
+    if request.method == 'OPTIONS':
+        return app.make_default_options_response(), 200
+    key = as_uuid(service_id)
+    service = Service.get_by_id(key) if key else None
+    if not service:
+        return jsonify({'message': 'Opening not found'}), 404
+    if not _can_manage(service, user_id):
+        return jsonify({'message': 'Only whoever runs this opening can share it.'}), 403
+    if not service.is_current:
+        return jsonify({'message': "This is a past version and can't be shared."}), 409
+    data = request.get_json(silent=True)
+    shared, refused = _shared_spheres(Sight(user_id), service.sphere_id,
+                                      data.get('sphere_ids') if isinstance(data, dict) else None,
+                                      already=service.shared_with)
+    if refused:
+        return jsonify({'message': refused[0]}), refused[1]
+    if shared - service.shared_with and not _is_party(service, user_id):
+        # An administrator takes things out; where someone's opening appears is theirs to choose.
+        return jsonify({'message': 'Only whoever runs this opening can share it further.'}), 403
+    Service.share(key, shared)
+    invalidate_index()
+    return jsonify(_enrich_service(Service.get_by_id(key), as_uuid(user_id), include_exchanges=True)), 200
 
 
 def get_service_image(service_id):

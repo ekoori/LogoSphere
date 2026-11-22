@@ -59,7 +59,8 @@ class _Viewer:
         if kind == 'opening':
             if item.get('provider_id') == self.id:
                 return True
-            return not item.get('sphere_id') or item['sphere_id'] in self.spheres
+            return not item.get('sphere_id') or item['sphere_id'] in self.spheres \
+                or bool(item.get('shared_with', set()) & self.spheres)
         # alliances / projects: members, or inside one of my spheres
         if self.id in item.get('members', set()):
             return True

@@ -22,11 +22,13 @@ from app.models.spheres import Sphere
 from app.models.alliance import Alliance
 from app.models.project import Project
 from app.models.user import User
+from app.models.openings import Service
 from app.models.value_card import ValueCard
 from app.utils.permissions import can_manage_entity, is_platform_admin
 from app.utils.validation import is_supported_image, entity_image_response
 from app.middleware.session_middleware import validate_session
 from app.utils.access import Sight, without_people
+from app.utils.search_vectors import invalidate_index
 from app.utils import places
 
 logger = logging.getLogger(__name__)
@@ -205,6 +207,8 @@ def _remove_member(entity, k, uid):
         f"UPDATE {k['table']} SET {k['members_col']} = {k['members_col']} - %s, "
         f"{k['roles_col']} = {k['roles_col']} - %s WHERE {k['id_col']} = %s",
         [[uid], {uid}, eid])
+    if k['noun'] == 'sphere' and Service.unshare(eid, uid):     # what they shared into it leaves with them
+        invalidate_index()
 
 
 @validate_session

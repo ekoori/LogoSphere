@@ -280,6 +280,7 @@ def delete_entity(kind, entity_id, user_id=None):
             return jsonify({'message': 'Delete or move its alliances and projects first: ' + ', '.join(inside[:5])
                             + ('…' if len(inside) > 5 else '')}), 409
         _cancel_openings(lambda s: s.provider_id == eid or s.sphere_id == eid)
+        Service.unshare(eid)
     elif kind == 'alliance':
         owned = [p.name for p in Project.get_all() if getattr(p, 'owner_alliance', None) == entity.name]
         if owned:

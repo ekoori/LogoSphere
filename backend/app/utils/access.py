@@ -2,7 +2,9 @@
 #
 # The promise (Privacy page): a sphere's openings, exchanges, receipts and
 # people are for its members. The exceptions, all deliberate: the two sides of
-# an exchange always see it, platform admins see everything, a public sphere
+# an exchange always see it, an opening also shows in the spheres its poster
+# shared it with (the opening, not its sphere's people), platform admins see
+# everything, a public sphere
 # shows its activity (signed-out visitors get counts, not people), and demo
 # spheres list their members (they are AI personas).
 #
@@ -60,6 +62,12 @@ class Sight:
         if self.id is None:
             return False
         return not sphere_id or self.admin or self.member_of(sphere_id)
+
+    def opening(self, opening):
+        """May see this opening: inside its sphere, or one it was shared with."""
+        if self.sphere(opening.sphere_id):
+            return True
+        return self.id is not None and bool(set(opening.shared_with or ()) & self.spheres)
 
     def on_side(self, side_id, acting_id=None):
         """This person is that side of an exchange: the person, whoever acted

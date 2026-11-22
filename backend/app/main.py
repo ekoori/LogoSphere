@@ -55,6 +55,9 @@ from app.routes import email as email_routes
 from app.routes import messages as message_routes
 from app.routes import safety as safety_routes
 from app.routes import events as event_routes
+from app.routes import activity as activity_routes
+from app.routes.openings import share_service
+from app.models.openings import Service
 from app.routes import announcements as announcement_routes
 from app.routes import invites as invite_routes
 from app.routes.search import search, search_vicinity
@@ -156,7 +159,9 @@ ensure_governance_tables()
 ensure_push_tables()
 app.add_url_rule('/api/push/devices', view_func=register_device, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/push/devices/forget', view_func=forget_device, methods=['POST', 'OPTIONS'])
+Service.ensure_columns()
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
+app.add_url_rule('/api/openings/<service_id>/spheres', view_func=share_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>', view_func=get_service, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>', view_func=edit_opening, methods=['PATCH'])
@@ -181,6 +186,7 @@ message_routes.register(app)
 event_routes.register(app)
 announcement_routes.register(app)
 invite_routes.register(app)
+activity_routes.register(app)
 app.add_url_rule('/api/search', view_func=search, methods=['GET', 'OPTIONS'])
 app.add_url_rule('/api/search/vicinity', view_func=search_vicinity, methods=['GET', 'OPTIONS'])
 # The demonstration's spheres (AI personas live there; new members are invited).
