@@ -3,7 +3,7 @@
 // openings offers/needs, mirroring the Home feed layout.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import '../styles/App.css';
 import '../styles/User.css';
 import '../styles/MeaningTrail.css';
@@ -113,6 +113,7 @@ function UserPage() {
                     {valueCards.length > 0 && (
                         <div className="user-value-chips">
                             <span className="user-value-chips-label">Values</span>
+                            <Link to={`/meaning-graph?owner=${id}`}>See them in the Meaning Graph →</Link>
                             <div className="vc-chips-row">
                                 {valueCards.map((card, i) => (
                                     <ValueCardChip key={card.card_id || i} card={card} subjectLabel="Cares about" currentUserId={viewerId} />

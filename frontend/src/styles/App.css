@@ -847,7 +847,24 @@ body.nav-menu-open, body.notification-panel-open { overflow: hidden; }
 .nav-search input:focus { outline: none; }
 .nav-search input::placeholder { color: var(--ink-faint); }
 .nav-search--compact input { width: 12.5rem; }
-@media (max-width: 1100px) { .nav-search--compact input { width: 8.5rem; } }
+/* Five destinations need room: tighter up to 1420px; below 1200px they take a
+   row of their own until the drawer takes over at 900px. */
+@media (min-width: 900.02px) {
+    .nav-primary a { white-space: nowrap; }
+    .account-label { max-width: 8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+@media (min-width: 900.02px) and (max-width: 1420px) {
+    header.site-header { gap: 0.8rem; padding-left: 1.2rem; padding-right: 1.2rem; }
+    .nav-primary a { padding: 0.5em 0.6em; font-size: 0.9rem; }
+    .nav-primary a::after { left: 0.6em; right: 0.6em; }
+    .nav-search--compact input { width: 8.5rem; }
+}
+@media (min-width: 900.02px) and (max-width: 1200px) {
+    header.site-header { flex-wrap: wrap; row-gap: 0.1rem; padding-top: 0.5em; padding-bottom: 0.25em; }
+    .site-header .nav-menu { order: 1; flex-basis: 100%; justify-content: center; }
+    /* Whatever sticks below the bar sticks below both rows. */
+    .app-container aside, .app-container .ep-aside, .app-container .dp-contents { top: 124px; }
+}
 .nav-drawer-search { padding: 0.4em 0 0.6em; }
 .nav-drawer-search .nav-search { width: 100%; box-sizing: border-box; }
 .nav-drawer-search .nav-search input { width: 100%; }

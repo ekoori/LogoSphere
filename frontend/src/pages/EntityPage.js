@@ -269,6 +269,9 @@ export default function EntityPage({ kind }) {
 
                         <div className="ep-aside-section">
                             <h4>Charter</h4>
+                            {userId && (
+                                <Link className="ep-project-link" to={`/meaning-graph?owner=${eid}`}>See it in the Meaning Graph<span className="ep-project-arrow">→</span></Link>
+                            )}
                             <CompactValueGraph
                                 entityId={eid}
                                 cards={entity.value_cards}

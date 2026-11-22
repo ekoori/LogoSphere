@@ -142,6 +142,7 @@ const Header = () => {
                     <li><Link to="/alliances" onClick={closeMenu}>Alliances</Link></li>
                     <li><Link to="/projects" onClick={closeMenu}>Projects</Link></li>
                     <li><Link to="/openings" onClick={closeMenu}>Openings</Link></li>
+                    <li><Link to="/meaning-graph" onClick={closeMenu}>Meaning Graph</Link></li>
                     {/* Items that live in the top bar on desktop but belong in the
                         drawer on mobile. */}
                     {isLoggedIn && <li className="nav-drawer-only nav-drawer-search"><SearchForm onSubmitted={closeMenu} /></li>}

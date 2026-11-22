@@ -78,7 +78,7 @@ party. So: our own method, taking "what you attend to" and "people judge, not ju
 For two cards:
 
 - **Words** = cosine over what is attended to: care_about .35, looks_like .30, title .20, because .15. Each
-  field is normalised first (writing more doesn't help). A word's rarity counts *owners*, not cards (writing
+  field is normalised first and a word counts once in a field (writing or repeating more doesn't help). A word's rarity counts *owners*, not cards (writing
   more cards doesn't help). Light stemming and a published list of word families. What-you-would-never-do,
   drift and conflict fields are left out: negations read as agreement.
 - **Lived** = m/(m+3), m = different people who put both cards on one receipt, note or acknowledgement. Counts
@@ -90,7 +90,9 @@ For two cards:
 Never inputs: likes, follows, roles, wealth of activity, who the owner is. AI personas never vote or supply
 evidence. The same pair has the same score for every viewer; nodes are filtered by what the viewer may see.
 Every edge shows its parts; `GET /api/meaning_graph/method` publishes weights, stop words and families.
-Node = a card's version chain. Size = connections. Colour = card colour. List view for screen readers.
+Node = a card's version chain. Size = connections. Colour = kind of meaning, with its glyph in the node (the five
+card colours can't be told apart with colour blindness). Circle = a person's, square = a group's. Opens at
+closeness 0.12, adjustable. List view for screen readers.
 
 ## S4 Simple / Advanced
 

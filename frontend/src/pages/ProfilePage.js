@@ -4,7 +4,7 @@
 // Value Cards are fetched from GET /api/value_cards/<user_id>.
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/Profile.css';
 import api from '../api';
 import ConnectionsPanel from '../components/ConnectionsPanel';
@@ -407,6 +407,9 @@ const ProfilePage = () => {
                             <p className="pf-section-sub">
                                 Your endorsed values — what you care about and why, in a form that can't easily be optimised away.
                             </p>
+                            {profileData?.user_id && (
+                                <Link to={`/meaning-graph?owner=${profileData.user_id}`}>See where they sit among everyone&rsquo;s →</Link>
+                            )}
                         </div>
                         {!showNewCard && !editingCard && (
                             <button className="btn btn-accent pf-add-card-btn" onClick={() => setShowNewCard(true)}>

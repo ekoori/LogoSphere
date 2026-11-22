@@ -33,6 +33,7 @@ import ExchangePage from './pages/ExchangePage';
 import SettingsPage from './pages/Settings';
 import ResetPassword from './pages/ResetPassword';
 import SearchPage from './pages/SearchPage';
+import MeaningGraphPage from './pages/MeaningGraphPage';
 import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
 import Privacy from './pages/Privacy';
@@ -81,6 +82,8 @@ function AppContent() {
         <Route path="/register" element={<div className='container'><UserRegistration/></div>}/>
         <Route path="/login" element={<div className='container'><UserLogin/></div>}/>
         <Route path="/reset-password" element={<div className='container'><ResetPassword/></div>}/>
+        {/* The method is public; the page itself gates the graph. */}
+        <Route path="/meaning-graph" element={<ErrorBoundary><MeaningGraphPage/></ErrorBoundary>}/>
         <Route path="/privacy" element={<Privacy/>}/>
         <Route path="/tos" element={<TOS/>}/>
         
