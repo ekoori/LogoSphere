@@ -335,6 +335,8 @@ def delete_opening(service_id, user_id=None):
     session.execute("DELETE FROM opening_acceptances WHERE service_id = %s", [sid])
     session.execute("DELETE FROM opening_likes WHERE service_id = %s", [sid])
     session.execute("DELETE FROM services WHERE service_id = %s", [sid])
+    from app.utils import openings_feed
+    openings_feed.drop(sid)
     invalidate_index()
     logger.info(f"Admin {user_id} deleted opening {sid} ({s.title})")
     return jsonify({'message': 'Opening deleted'}), 200

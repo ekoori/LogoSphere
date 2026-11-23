@@ -13,6 +13,15 @@ from app.db import session as cassandra_session
 from app.utils import ai_pictures, image_store, places
 
 
+def _feed(service_or_id):
+    """Keep the openings list in step (app/utils/openings_feed.py). Never fails a write: start-up repairs."""
+    try:
+        from app.utils import openings_feed
+        openings_feed.sync(service_or_id)
+    except Exception as e:  # noqa: BLE001
+        logging.error(f'Openings feed not kept for {getattr(service_or_id, "service_id", service_or_id)}: {e}')
+
+
 class Service:
     def __init__(self, service_id, type, title, description, provider_id, provider_name,
                  sphere_id, sphere_name, status, values, likes=0, project_name=None, image_key=None,
@@ -161,10 +170,12 @@ class Service:
             sphere_id, sphere_name, status, created_at, values, 0, project_name, image_key, cadence,
             acting_user_id, acting_user_name, borrow, shared_with or None
         ))
-        return cls(service_id, type_, title, description, provider_id, provider_name,
+        made = cls(service_id, type_, title, description, provider_id, provider_name,
                    sphere_id, sphere_name, status, values, 0, project_name, image_key, cadence,
                    created_at=created_at, acting_user_id=acting_user_id, acting_user_name=acting_user_name,
-                   borrow=borrow, shared_with=shared_with)
+                   borrow=borrow, shared_with=shared_with, is_current=True)
+        _feed(made)
+        return made
 
     @classmethod
     def _from_row(cls, r):
@@ -208,6 +219,7 @@ class Service:
     def share(cls, service_id, sphere_ids):
         cassandra_session.execute('UPDATE services SET shared_with = %s WHERE service_id = %s',
                                   [set(sphere_ids) or None, service_id])
+        _feed(service_id)
 
     @classmethod
     def unshare(cls, sphere_id, person=None):
@@ -290,6 +302,7 @@ class Service:
             "accepted_at = %s WHERE service_id = %s",
             ['Accepted', accepter_id, accepter_name, datetime.utcnow(), service_id]
         )
+        _feed(service_id)
 
     @classmethod
     def set_status(cls, service_id, status):
@@ -305,6 +318,7 @@ class Service:
             cassandra_session.execute(
                 "UPDATE services SET status = %s WHERE service_id = %s", [status, service_id]
             )
+        _feed(service_id)
 
     # ── Versioning (edit history for openings tied to an exchange) ─────────────
     _EDITABLE = ('title', 'description', 'values', 'borrow')
@@ -371,7 +385,10 @@ class Service:
             cassandra_session.execute(
                 "DELETE FROM opening_acceptances WHERE service_id = %s AND accepter_id = %s",
                 [old.service_id, uuid.UUID(a['accepter_id'])])
-        return cls.get_by_id(new_id)
+        _feed(old.service_id)
+        made = cls.get_by_id(new_id)
+        _feed(made)
+        return made
 
     @classmethod
     def get_history(cls, service_id):
@@ -548,6 +565,7 @@ class Service:
             "WHERE service_id = %s IF status IN ('Posted', 'Open', 'Accepted')",
             [datetime.utcnow(), service_id]
         ).one()
+        _feed(service_id)
         return bool(row and row.applied)
 
     @classmethod
@@ -560,6 +578,7 @@ class Service:
             "WHERE service_id = %s IF status IN ('Posted', 'Open', 'Accepted', 'In Progress')",
             [service_id]
         ).one()
+        _feed(service_id)
         return bool(row and row.applied)
 
     @classmethod
@@ -576,6 +595,7 @@ class Service:
             "UPDATE services SET status = 'Posted', accepted_by = null, accepted_by_name = null "
             "WHERE service_id = %s", [service_id]
         )
+        _feed(service_id)
 
     # ── Likes ────────────────────────────────────────────────────────────────
     # Per-user rows in opening_likes; count = COUNT(*) per service_id partition.
@@ -593,6 +613,12 @@ class Service:
         for r in cassandra_session.execute("SELECT service_id, user_id FROM opening_likes"):
             out.setdefault(r.service_id, []).append(r.user_id)
         return out
+
+    @classmethod
+    def liker_ids(cls, service_id, limit=50):
+        rows = cassandra_session.execute(
+            f"SELECT user_id FROM opening_likes WHERE service_id = %s LIMIT {int(limit)}", [service_id])
+        return [r.user_id for r in rows]
 
     @classmethod
     def likers(cls, service_id, limit=50):

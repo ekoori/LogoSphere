@@ -162,6 +162,12 @@ app.add_url_rule('/api/push/devices/forget', view_func=forget_device, methods=['
 Service.ensure_columns()
 from app.models.meaning_trail import MeaningTrail  # noqa: E402
 MeaningTrail.ensure_columns()
+from app.utils import openings_feed  # noqa: E402
+openings_feed.ensure_tables()
+try:
+    openings_feed.repair()      # the feed checked against services, at every start
+except Exception as e:  # noqa: BLE001
+    logging.error(f'Openings feed not repaired at start: {e}')
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/spheres', view_func=share_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])

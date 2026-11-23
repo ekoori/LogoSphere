@@ -90,6 +90,9 @@ def test_admin(request):
     _pause_personas(db, datetime.utcnow() + timedelta(minutes=30))
     yield uid
     _pause_personas(db, None)
+    # Feed rows of openings the tests made and removed go too (app/utils/openings_feed.py).
+    from app.utils import openings_feed
+    openings_feed.repair()
     USERS.pop('admin', None)
     # Out of every sphere it ended up in (sandboxes at registration, the demo
     # spheres a test joined it to).

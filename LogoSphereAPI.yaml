@@ -1582,7 +1582,19 @@ paths:
         loan. `shared_with` names the spheres it's shared with that the caller
         is in (all, for who runs it). To someone outside its own sphere it
         doesn't name that sphere's people: who liked or took it up, history.
+        With `limit`, a page from the openings feed instead: `{openings, next}`,
+        where `next` is the cursor for `before` (null at the end). Filters then
+        apply on the server. Without `limit`, the whole list, as before.
       operationId: listOpenings
+      parameters:
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 60 } }
+        - { name: before, in: query, schema: { type: string }, description: "The cursor a page gave as next" }
+        - { name: type, in: query, schema: { type: string, enum: [offer, need] } }
+        - { name: loans, in: query, schema: { type: boolean } }
+        - { name: demo, in: query, schema: { type: string, enum: [real, demo] } }
+        - { name: sphere, in: query, schema: { type: string, format: uuid } }
+        - { name: km, in: query, schema: { type: integer }, description: "Within this many km of the caller's place" }
+        - { name: q, in: query, schema: { type: string }, description: "Words in the title, description, poster, project or place" }
       responses:
         '200':
           description: OK

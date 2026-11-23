@@ -12,7 +12,7 @@ from app.middleware.session_middleware import validate_session
 from app.models.notification import Notification
 from app.utils.demo import is_agent, is_demo_sphere
 from app.utils.access import Sight, as_uuid
-from app.utils import evidence, messaging, places, safety
+from app.utils import evidence, messaging, openings_feed, places, safety
 from app.utils.search_vectors import invalidate_index
 
 logger = logging.getLogger(__name__)
@@ -139,14 +139,19 @@ class _ListContext:
     """What the marketplace list needs, read once per request. Built opening
     by opening it took ~5 queries each - over a second for the demo's ~130."""
 
-    def __init__(self, viewer):
+    def __init__(self, viewer, ids=None, sight=None):
+        """`ids`: only these openings (a page), read one partition each instead of whole tables."""
         from app.utils.names import resolve_user_names
         self.viewer = viewer
-        self.sight = Sight(viewer)
+        self.sight = sight or Sight(viewer)
         self.admin = self.sight.admin
         self._sphere_names = None
-        self.likes = Service.all_likes()
-        self.acceptances = Service.all_acceptances()
+        if ids is None:
+            self.likes = Service.all_likes()
+            self.acceptances = Service.all_acceptances()
+        else:
+            self.likes = {sid: Service.liker_ids(sid) for sid in ids}
+            self.acceptances = {sid: Service.acceptances(sid) for sid in ids}
         self.names = resolve_user_names({u for ids in self.likes.values() for u in ids})
         self.origin = places.of_person(viewer)
         self.sphere_places = places.sphere_places() if self.origin else {}
@@ -384,12 +389,59 @@ def edit_opening(service_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
+def _page_of_openings(viewer):
+    """GET /api/openings?limit=…: a page from the openings feed, filtered on the way (app/utils/openings_feed.py)."""
+    args = request.args
+    try:
+        limit = int(args.get('limit'))
+        before = openings_feed.parse_cursor(args.get('before'))
+        near = int(args['km']) if args.get('km') else None
+    except (TypeError, ValueError):
+        return jsonify({'message': 'That page is not there.'}), 400
+    only = None
+    if args.get('sphere'):
+        only = as_uuid(args['sphere'])
+        if not only:
+            return jsonify({'message': 'That sphere is not there.'}), 400
+    sight = Sight(viewer)
+    kind, words = args.get('type'), (args.get('q') or '').strip().lower()
+    loans, demo = args.get('loans') in ('1', 'true', 'yes'), args.get('demo')
+    origin = places.of_person(viewer) if near else None
+    if near and not origin:
+        return jsonify({'openings': [], 'next': None, 'no_place': True}), 200
+    spheres_at = places.sphere_places() if near else {}
+
+    def keep(s):
+        if kind in ('offer', 'need') and s.type != kind:
+            return False
+        if loans and not s.borrow:
+            return False
+        if demo in ('real', 'demo') and bool(is_demo_sphere(s.sphere_id)) != (demo == 'demo'):
+            return False
+        if near:
+            far = places.how_far(origin, s.place, spheres_at.get(s.sphere_id))
+            if not far or far['km'] > near:
+                return False
+        if words:
+            said = (s.title, s.description, s.provider_name, getattr(s, 'acting_user_name', None), s.project_name,
+                    places.label_of(s.place))
+            if not any(words in (f or '').lower() for f in said):
+                return False
+        return True
+
+    found, carry_on = openings_feed.page(sight, limit, before, keep, only)
+    ctx = _ListContext(viewer, ids=[s.service_id for s in found], sight=sight)
+    return jsonify({'openings': [_enrich_service(s, viewer, ctx=ctx) for s in found], 'next': carry_on}), 200
+
+
 @validate_session
 def get_services(user_id=None):
     if request.method == 'OPTIONS':
         return app.make_default_options_response(), 200
     try:
         viewer = uuid.UUID(str(user_id)) if user_id else None
+        if request.args.get('limit'):
+            return _page_of_openings(viewer)
         ctx = _ListContext(viewer)
         services = []
         for s in Service.get_all():
