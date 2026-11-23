@@ -9,7 +9,7 @@ import Avatar from '../components/Avatar';
 import { BlockButton, ReportButton } from '../components/Safety';
 import { PersonaTag } from '../components/DemoTags';
 import { timeAgo } from '../utils/dates';
-import { lastOfTheirs, mergeMessages, messagesHref } from '../utils/thread';
+import { lastOfTheirs, mergeMessages, messagesHref, subjectOf } from '../utils/thread';
 import '../styles/Messages.css';
 
 const TEXT_MAX = 2000;
@@ -53,20 +53,21 @@ function Conversations({ selected }) {
 
 Conversations.propTypes = { selected: PropTypes.string };
 
-function Thread({ personId, openingId }) {
+function Thread({ personId, openingId, about }) {
     const client = useQueryClient();
     const base = `/api/messages/${personId}`;
-    const key = ['thread', personId, openingId];
+    const key = ['thread', personId, about || openingId];
+    const asked = about ? { about } : openingId ? { opening: openingId } : {};
     const { data, error, refetch } = useQuery({
         queryKey: key,
-        queryFn: () => api.get(base, { params: openingId ? { opening: openingId } : {} }).then((r) => r.data),
+        queryFn: () => api.get(base, { params: asked }).then((r) => r.data),
         refetchInterval: 15_000,
         retry: false,
     });
     const [messages, setMessages] = useState([]);
     const [more, setMore] = useState(null);         // null until an older page was asked for
     const [text, setText] = useState('');
-    const [named, setNamed] = useState(false);      // the opening goes with the first message only
+    const [named, setNamed] = useState(false);      // what it's about goes with the first message only
     const [busy, setBusy] = useState(false);
     const [problem, setProblem] = useState('');
     const log = useRef(null);
@@ -105,7 +106,7 @@ function Thread({ personId, openingId }) {
         setBusy(true);
         setProblem('');
         try {
-            const body = { text: words, ...(data?.about && !named && { opening_id: data.about.id }) };
+            const body = { text: words, ...(data?.about && !named && { about: { kind: data.about.kind || 'opening', id: data.about.id } }) };
             const r = await api.post(base, body);
             setMessages((kept) => mergeMessages(kept, [r.data.sent]));
             setText('');
@@ -138,7 +139,7 @@ function Thread({ personId, openingId }) {
                 </div>
             </div>
             {data.about && !named && (
-                <p className="msg-about">About <Link to={`/opening?id=${data.about.id}`}>{data.about.title}</Link></p>
+                <p className="msg-about">About <Link to={data.about.link || `/opening?id=${data.about.id}`}>{data.about.title}</Link></p>
             )}
             <div className="msg-log" ref={log} role="log" aria-label={`Conversation with ${data.person.name}`}>
                 {(more ?? data.more) && messages.length > 0 && (
@@ -147,7 +148,7 @@ function Thread({ personId, openingId }) {
                 {messages.length === 0 && <p className="msg-note">Only the two of you can read what you write here.</p>}
                 {messages.map((m) => (
                     <div key={m.id} className={`msg-item ${m.mine ? 'is-mine' : ''}`}>
-                        {m.opening && <Link className="msg-subject" to={`/opening?id=${m.opening.id}`}>{m.opening.title}</Link>}
+                        {subjectOf(m) && <Link className="msg-subject" to={subjectOf(m).link}>{subjectOf(m).title}</Link>}
                         <p className="msg-bubble">{m.text}</p>
                         <span className="msg-meta">
                             {timeAgo(m.at)}
@@ -171,17 +172,18 @@ function Thread({ personId, openingId }) {
     );
 }
 
-Thread.propTypes = { personId: PropTypes.string.isRequired, openingId: PropTypes.string };
+Thread.propTypes = { personId: PropTypes.string.isRequired, openingId: PropTypes.string, about: PropTypes.string };
 
 export default function MessagesPage() {
     const [params] = useSearchParams();
     const personId = params.get('with');
     const openingId = params.get('opening');
+    const about = params.get('about');
     return (
         <div className={`msg-page ${personId ? 'has-thread' : ''}`}>
             <Conversations selected={personId} />
             {personId
-                ? <Thread key={`${personId}:${openingId}`} personId={personId} openingId={openingId} />
+                ? <Thread key={`${personId}:${about || openingId}`} personId={personId} openingId={openingId} about={about} />
                 : <div className="msg-thread msg-thread--none"><p className="msg-note">Choose a conversation.</p></div>}
         </div>
     );

@@ -16,6 +16,7 @@ import { buildOpeningProgress } from '../utils/openingProgress';
 import { useManagedEntities } from '../utils/useManagedEntities';
 import { useSimple } from '../utils/useSimple';
 import { inSphere, loanLabel } from '../utils/sharing';
+import { messagesHref } from '../utils/thread';
 import '../styles/Openings.css';
 import '../styles/Sharing.css';
 
@@ -34,7 +35,7 @@ function ServiceCard({
     postedAt, acceptedAt, inProgressAt, completedAt, activity,
     pendingAcceptances = [], myAcceptance = null,
     isProvider = false, canManage = false, actionError = null, isDemo = false, providerIsAgent = false,
-    location = null, distance = null, borrow = false, sharedWith = [],
+    location = null, distance = null, borrow = false, sharedWith = [], contactId = null,
     currentUserId, onAccept, onConfirm, onReject,
 }) {
     const navigate = useNavigate();
@@ -79,6 +80,13 @@ function ServiceCard({
     // "Mine": the API says so (provider, the human who posted for an entity,
     // or a manager of the providing entity), or the provider id is simply me.
     const isOwnOpening = isProvider || !!(currentUserId && providerId && currentUserId === providerId);
+    // Whoever may see it may write to the human who posted it, about it.
+    const writeTo = currentUserId && contactId && contactId !== currentUserId && !providerIsAgent && !isOwnOpening
+        ? messagesHref(contactId, id) : null;
+    const messageLink = writeTo && (
+        <Link className="card-msg" to={writeTo} onClick={(e) => e.stopPropagation()}
+              aria-label={`Message ${actingUser || provider} about this`} title="Message about this">✉</Link>
+    );
     // Who sees the confirm/decline controls: the party, or a platform admin.
     const mayManage = canManage || isOwnOpening;
     const isCancelled = status === 'Cancelled';
@@ -193,6 +201,7 @@ function ServiceCard({
                                     {actingUser}
                                 </Link>
                                 {providerIsAgent && <PersonaTag compact />}
+                                {messageLink}
                                 <span className="on-behalf-of"> on behalf of </span>
                                 <strong>{provider}</strong>
                             </span>
@@ -206,6 +215,7 @@ function ServiceCard({
                                     {provider}
                                 </Link>
                                 {providerIsAgent && <PersonaTag compact />}
+                                {messageLink}
                             </span>
                         )}
                     </div>
@@ -380,6 +390,7 @@ ServiceCard.propTypes = {
     isProvider: PropTypes.bool,
     isDemo: PropTypes.bool,
     borrow: PropTypes.bool,
+    contactId: PropTypes.string,
     sharedWith: PropTypes.array,
     providerIsAgent: PropTypes.bool,
     canManage: PropTypes.bool,

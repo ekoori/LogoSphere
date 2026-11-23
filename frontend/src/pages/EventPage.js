@@ -13,6 +13,7 @@ import { ReportButton } from '../components/Safety';
 import { ExactSpot } from '../components/WhereLine';
 import { ANSWERS, comingText, hasEnded, repeatText, whenText } from '../utils/events';
 import { groupHref } from '../utils/returnTo';
+import { messagesHref } from '../utils/thread';
 import '../styles/EntityPage.css';
 import '../styles/Events.css';
 
@@ -184,7 +185,12 @@ export default function EventPage() {
                     </>
                 )}
                 {event.creator && String(event.creator.id) !== String(userId) && (
-                    <ReportButton report={{ kind: 'event', id: event.id }} label="Report this event" />
+                    <>
+                        <Link className="evt-btn" to={messagesHref(event.creator.id, { kind: 'event', id: event.id })}>
+                            Message {event.creator.name}
+                        </Link>
+                        <ReportButton report={{ kind: 'event', id: event.id }} label="Report this event" />
+                    </>
                 )}
             </div>
         </div>

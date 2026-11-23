@@ -15,7 +15,16 @@ export function lastOfTheirs(messages) {
     return null;
 }
 
-/** Where to write to someone, about an opening or not. */
-export function messagesHref(personId, openingId = null) {
-    return `/messages?with=${personId}${openingId ? `&opening=${openingId}` : ''}`;
+/** Where to write to someone: about nothing, an opening (its id) or anything ({kind, id}). */
+export function messagesHref(personId, about = null) {
+    if (!about) return `/messages?with=${personId}`;
+    if (typeof about === 'string') return `/messages?with=${personId}&opening=${about}`;
+    return `/messages?with=${personId}&about=${about.kind}:${about.id}`;
+}
+
+/** What a message is about, as {title, link}: older ones name only an opening. */
+export function subjectOf(message) {
+    if (message?.about) return message.about;
+    if (message?.opening) return { ...message.opening, kind: 'opening', link: `/opening?id=${message.opening.id}` };
+    return null;
 }

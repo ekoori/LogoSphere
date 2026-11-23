@@ -27,6 +27,7 @@ import { DemoTag, PersonaTag } from '../components/DemoTags';
 import { OPENINGS_TAB, TRAIL_TAB, tabFrom } from '../utils/tabs';
 import { useSimple } from '../utils/useSimple';
 import { ExactSpot } from '../components/WhereLine';
+import { messagesHref } from '../utils/thread';
 import Announcements from '../components/Announcements';
 import EventList from '../components/EventList';
 import { InviteLink } from '../components/Invitations';
@@ -213,6 +214,11 @@ export default function EntityPage({ kind }) {
                             onBlur={() => setLeaveArmed(false)}>
                         {joining ? 'Leaving…' : leaveArmed ? `Really leave ${entity.name}?` : `Leave this ${NOUN[kind].toLowerCase()}`}
                     </button>
+                )}
+                {userId && entity.contact && String(entity.contact.id) !== String(userId) && (
+                    <Link className="msg-link ep-msg-link" to={messagesHref(entity.contact.id, { kind, id })}>
+                        Message {entity.contact.name}
+                    </Link>
                 )}
                 {joinNote && <p className={joinNote.ok ? 'ep-empty' : 'ep-not-found'} style={{ marginTop: '0.4rem' }}>{joinNote.text}</p>}
             </EntityBanner>
