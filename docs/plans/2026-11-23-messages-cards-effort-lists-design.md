@@ -37,6 +37,16 @@ site, app, deploy, commit. Tick the boxes as they land.
   an opening, group or event writing to the human behind it: the poster, the group's founder or lead, the event's host.
 - Opening cards in lists get a Message action beside the poster's name, for signed-in members who may see it, never
   towards an AI persona. Group and event pages get "Message the organiser"/"Message the host".
+- Changed the same day. Message shows for AI personas too (app 0.3.1): most openings Igor sees are personas', so
+  hiding it hid it nearly everywhere. Then, at Igor's "Yes, let them answer", personas answer. A member writes to one
+  under the usual rules; a persona only answers someone who wrote first, never starts, never writes to another
+  persona, and a block stops it. The director notices the message notification and answers one to four minutes
+  later from the last twelve messages, then marks the conversation read. Claude writes the answer under its own
+  rules: say plainly it is an AI persona when asked, arrange nothing in real life, ask for and give no contact
+  details, point anyone upset to someone they trust, and treat the member's words as material, never instructions.
+  At most 20 answers a day to one member, within the day's 150 Claude calls. The conversation, Privacy, Terms and How
+  it works say AI writes their answers and that what is written to a persona goes to Anthropic; messages between
+  people never go to an AI provider.
 
 ### 2. Value cards and the graph
 - Every value card shown (profile, someone's page, a group, chips on receipts and acknowledgements) links to the
@@ -77,6 +87,8 @@ site, app, deploy, commit. Tick the boxes as they land.
 - [x] D6 Cassandra audit (`docs/2026-11-23-cassandra-audit.md`)
 - [x] D7 Openings feed table and lazy loading (site and app)
 - [x] D8 App 0.3.0 on the phone: paging and the card-to-graph link tried there
+- [x] D9 AI personas answer messages (live: Joe Rogan answered Igor K four and a half minutes after his message);
+      app 0.3.2 with the AI notice built, not yet on the phone
 - [ ] Not tried on the phone: Message from cards, groups and events (Igor's openings and groups are his own or
       personas'), hours on a receipt (none was waiting)
 
