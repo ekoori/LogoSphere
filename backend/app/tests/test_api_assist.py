@@ -324,3 +324,14 @@ def test_claude_is_asked_as_configured(app, monkeypatch):
     answer.stop_reason, answer.parsed_output = 'refusal', None
     with pytest.raises(assist.Declined):
         assist.ask_claude('k', {'notes': 'x'})
+
+
+def test_a_whole_card_comes_back_with_every_field(api, asked):
+    from app.utils import assist
+    status, body = api.post('/api/ai/value_card', who='marie', json={'notes': 'I fix bikes so nobody buys new'})
+    assert status == 200, body
+    assert set(body['draft']) == {'title', 'care_about', 'because', 'looks_like', 'drift_looks_like', 'in_conflict',
+                                  'never_do', 'frankl_mode'}
+    assert all(body['draft'].values())
+    # Asked to suggest every field, not to leave blanks for people to fill.
+    assert 'fill in every field' in assist.CARD_SYSTEM and 'empty rather than guess' not in assist.CARD_SYSTEM
