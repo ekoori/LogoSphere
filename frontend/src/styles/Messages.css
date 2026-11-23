@@ -120,3 +120,7 @@
     .msg-back { display: inline-flex; }
     .msg-log { height: 50vh; }
 }
+
+/* Talking with an AI persona: said before anything is written */
+.msg-persona-note { margin: 0.2rem 1rem 0.4rem; padding: 0.55rem 0.8rem; border-left: 3px solid var(--persona-ink);
+                    background: var(--surface); border-radius: 8px; font-size: 0.88rem; }

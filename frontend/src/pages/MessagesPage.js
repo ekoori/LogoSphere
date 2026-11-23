@@ -138,6 +138,12 @@ function Thread({ personId, openingId, about }) {
                     <ReportButton report={{ kind: 'person', id: personId }} noteRequired />
                 </div>
             </div>
+            {data.person.is_agent && (
+                <p className="msg-note msg-persona-note" role="note">
+                    An AI persona from the demo spheres: AI writes their answers, so what you write here is sent to
+                    Anthropic. They answer within a few minutes, a limited number of times a day.
+                </p>
+            )}
             {data.about && !named && (
                 <p className="msg-about">About <Link to={data.about.link || `/opening?id=${data.about.id}`}>{data.about.title}</Link></p>
             )}

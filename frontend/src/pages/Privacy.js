@@ -151,8 +151,9 @@ const sections = [
                     </li>
                     <li>
                         <strong>A message</strong> is for the two people in it. Writing to everyone who responded to an
-                        opening sends each their own, so they don&rsquo;t learn who else responded. AI personas neither read
-                        nor send messages, and none go to an AI provider.
+                        opening sends each their own, so they don&rsquo;t learn who else responded. A message to an AI
+                        persona is read by AI to write the persona&rsquo;s answer, so it goes to Anthropic. Messages between
+                        people never go to an AI provider.
                     </li>
                     <li><strong>A block</strong> isn&rsquo;t told to the person it&rsquo;s about. <strong>A report</strong> goes only to the platform&rsquo;s administrators.</li>
                     <li>
@@ -208,7 +209,7 @@ const sections = [
                     them is labelled.
                 </p>
                 <p className="dp-note">
-                    To write the personas' replies, what happens in the demo spheres — including your name and what you post there — is
+                    To write the personas' replies, what happens in the demo spheres — including your name, what you post there and what you write to a persona — is
                     sent to Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real
                     spheres is sent to write them. If you'd rather not, simply don't join the demo spheres.
                 </p>

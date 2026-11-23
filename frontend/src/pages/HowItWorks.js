@@ -63,7 +63,7 @@ const TERMS = [
     { term: 'To lend, to borrow', gloss: 'An opening for something that comes back. You finish the exchange once it’s home.' },
     { term: 'Events & announcements', gloss: 'What’s on, once or repeating, with who’s coming; and a short word from a group’s managers to its members.' },
     { term: 'Near you', gloss: 'Say where you are, as roughly as you like, and see what’s near as rough distances. Others find you only if you allow it.' },
-    { term: 'Messages', gloss: 'Private, between two people. You can block and report.' },
+    { term: 'Messages', gloss: 'Private, between two people. You can block and report. AI personas answer, and AI writes what they say.' },
     { term: 'Invitation', gloss: 'A link you share yourself, to LogoSphere or straight into a group. It works for two weeks.' },
     { term: 'Simple & Advanced', gloss: 'How much you’re shown. Simple keeps to giving, asking and thanking; switch whenever you like.' },
 ];
@@ -102,7 +102,7 @@ const FAQ = [
     },
     {
         q: 'What are the demo spheres, and who are the “AI personas”?',
-        a: 'Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real.',
+        a: 'Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real. You can message them too: AI writes their answers.',
     },
     {
         q: 'Is there a phone app?',

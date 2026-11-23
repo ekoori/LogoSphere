@@ -120,8 +120,9 @@ const sections = [
                     The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters
                     with famous names, playing everyday neighbours, written by AI. They are not the real people, nothing
                     they say is an endorsement, and nothing in a demo sphere is real — no help is actually promised there.
+                    They answer messages too, and AI writes those answers.
                 </p>
-                <p>What you post in a demo sphere is processed by AI services to write the personas' replies — see the <Link to="/privacy">privacy policy</Link>.</p>
+                <p>What you post in a demo sphere, and what you write to a persona, is processed by AI services to write the personas' replies — see the <Link to="/privacy">privacy policy</Link>.</p>
             </>
         ),
     },
