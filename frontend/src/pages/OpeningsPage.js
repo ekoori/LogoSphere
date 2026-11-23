@@ -1,7 +1,9 @@
-// OpeningsPage — the full openings of offers & needs, fetched live.
-import React, { useState, useEffect, useCallback } from 'react';
+// OpeningsPage — offers & needs, a page at a time: the server filters and pages
+// (GET /api/openings?limit=…, app/utils/openings_feed.py), and the next page comes
+// as the list nears its end.
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import '../styles/App.css';
 import '../styles/Openings.css';
 
@@ -10,14 +12,23 @@ import api from '../api';
 import { mapService } from '../utils/mappers';
 import { useLogin } from '../App';
 import { NEAR_KM, canMeasure } from '../utils/places';
-import { inSphere } from '../utils/sharing';
+import { openingsOf, openingsQuery } from '../utils/openingsQuery';
 import '../styles/Places.css';
+
+/** `value`, once it has stopped changing for `ms`. */
+function useSettled(value, ms = 300) {
+    const [settled, setSettled] = useState(value);
+    useEffect(() => {
+        const t = setTimeout(() => setSettled(value), ms);
+        return () => clearTimeout(t);
+    }, [value, ms]);
+    return settled;
+}
 
 function OpeningsPage() {
     const { userId } = useLogin();
     const [searchParams] = useSearchParams();
     const [isFormVisible, setIsFormVisible] = useState(searchParams.get('new') === '1');
-    const [services, setServices] = useState([]);
     const [spheres, setSpheres] = useState([]);
     const [filter, setFilter] = useState('all');
     const [sphereFilter, setSphereFilter] = useState('all');
@@ -33,40 +44,39 @@ function OpeningsPage() {
     });
     const noPlace = near > 0 && !!mine.data && !canMeasure(mine.data.place);
 
-    const toggleFormVisibility = () => setIsFormVisible((v) => !v);
+    const words = useSettled(query);
+    const params = useMemo(() => openingsQuery({ filter, sphereFilter, near, q: words }),
+        [filter, sphereFilter, near, words]);
+    const list = useInfiniteQuery({
+        queryKey: ['openings', 'page', params],
+        queryFn: ({ pageParam }) => api.get('/api/openings', { params: { ...params, ...(pageParam && { before: pageParam }) } })
+            .then((r) => r.data),
+        initialPageParam: null,
+        getNextPageParam: (last) => last.next || undefined,
+        enabled: !!userId,
+        staleTime: 15_000,
+    });
+    const services = useMemo(() => openingsOf(list.data?.pages).map(mapService), [list.data]);
 
-    const fetchServices = useCallback(async () => {
-        try {
-            const res = await api.get('/api/openings');
-            setServices((res.data || []).map(mapService));
-        } catch (e) {
-            console.error('Error fetching openings:', e);
-        }
-    }, []);
+    // The next page, as the end of the list comes into view.
+    const end = useRef(null);
+    const { hasNextPage, isFetchingNextPage, fetchNextPage } = list;
+    useEffect(() => {
+        const node = end.current;
+        if (!node || !hasNextPage) return undefined;
+        const watch = new IntersectionObserver((seen) => {
+            if (seen.some((e) => e.isIntersecting) && !isFetchingNextPage) fetchNextPage();
+        }, { rootMargin: '600px 0px' });
+        watch.observe(node);
+        return () => watch.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage, services.length]);
 
     useEffect(() => {
-        fetchServices();
         api.get('/api/spheres').then((r) => setSpheres(r.data || [])).catch(() => {});
-    }, [fetchServices]);
+    }, []);
 
-    const q = query.trim().toLowerCase();
-    const bySphere = (s) => {
-        if (sphereFilter === 'all') return true;
-        if (sphereFilter === 'real') return !s.isDemo;
-        if (sphereFilter === 'demo') return s.isDemo;
-        return inSphere(s, sphereFilter);
-    };
-    const shown = services
-        .filter((s) => {
-            if (filter === 'loans') return s.borrow;
-            return filter === 'all' || (filter === 'offers' ? s.type === 'offer' : s.type === 'need');
-        })
-        .filter(bySphere)
-        .filter((s) => !near || (!!s.distance && s.distance.km <= near))
-        .filter((s) => !q || [s.title, s.description, s.provider, s.actingUser, s.project, s.location]
-            .some((f) => (f || '').toLowerCase().includes(q)));
-    // Nearest band first, each still in the order it came.
-    if (near) shown.sort((a, b) => a.distance.km - b.distance.km);
+    const toggleFormVisibility = () => setIsFormVisible((v) => !v);
+    const filtered = !!words.trim() || filter !== 'all' || sphereFilter !== 'all' || near > 0;
 
     return (
         <div className="container">
@@ -119,22 +129,32 @@ function OpeningsPage() {
                     </select>
                 </div>
                 {near > 0 && !noPlace && (
-                    <p className="place-note">Nearest first. Openings that haven&rsquo;t said where they are, and whose sphere hasn&rsquo;t, are left out.</p>
+                    <p className="place-note">Newest first. Openings that haven&rsquo;t said where they are, and whose sphere hasn&rsquo;t, are left out.</p>
                 )}
                 <Link className="near-link" to="/nearby">Who and what is near you &rarr;</Link>
             </aside>
             <main>
                 {/* With nothing listed the form still has to open: it's how the first gets posted. */}
-                {shown.length === 0 && !isFormVisible ? (
+                {services.length === 0 && !isFormVisible ? (
                     <p className="empty-state">
-                        {noPlace
-                            ? <>To see what&rsquo;s near you, first <Link to="/settings#place">say where you are</Link>, as roughly as a town.</>
-                            : q || filter !== 'all' || sphereFilter !== 'all' || near
-                                ? 'Nothing matches these filters.'
-                                : 'No offers or needs yet. Share something with your community.'}
+                        {list.isPending
+                            ? 'Loading…'
+                            : list.isError
+                                ? 'The openings didn’t load. Please try again.'
+                                : noPlace || list.data?.pages?.[0]?.no_place
+                                    ? <>To see what&rsquo;s near you, first <Link to="/settings#place">say where you are</Link>, as roughly as a town.</>
+                                    : filtered
+                                        ? 'Nothing matches these filters.'
+                                        : 'No offers or needs yet. Share something with your community.'}
                     </p>
                 ) : (
-                    <Openings services={shown} newServiceVisible={isFormVisible} onServiceAdded={fetchServices} currentUserId={userId} />
+                    <Openings services={services} newServiceVisible={isFormVisible} onServiceAdded={() => list.refetch()} currentUserId={userId} />
+                )}
+                <div ref={end} aria-hidden="true" />
+                {hasNextPage && (
+                    <button type="button" className="openings-more" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                        {isFetchingNextPage ? 'Loading more…' : 'Show more'}
+                    </button>
                 )}
             </main>
         </div>
