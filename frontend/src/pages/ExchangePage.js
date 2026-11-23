@@ -5,6 +5,7 @@ import api from '../api';
 import StatusProgression from '../components/StatusProgression';
 import ValueCardChip from '../components/ValueCardChip';
 import ValueCardPicker from '../components/ValueCardPicker';
+import { hoursGiven } from '../utils/effort';
 import Avatar from '../components/Avatar';
 import PhotoInput from '../components/PhotoInput';
 import { useSimple } from '../utils/useSimple';
@@ -108,6 +109,7 @@ function ExchangePage() {
 
     // Receipt context (Time/Effort/Care/...) + up to 3 photos.
     const [gratitudeContext, setGratitudeContext] = useState('');
+    const [gratitudeHours, setGratitudeHours] = useState('');
     const [gratitudePhotos, setGratitudePhotos] = useState([]);
     const [receiptError, setReceiptError] = useState('');
     const [canAcknowledge, setCanAcknowledge] = useState(false);
@@ -162,6 +164,7 @@ function ExchangePage() {
                 card_ids: gratitudeCardIds, cards: gratitudeCards,
                 frankl_mode: (!simple && gratitudeMode) || null,
                 context: (!simple && gratitudeContext.trim()) || null,
+                hours: gratitudeHours === '' ? null : Number(gratitudeHours),
             });
             posted = true;
             if (photos.length > 0) {
@@ -169,7 +172,7 @@ function ExchangePage() {
                 photos.forEach((p) => fd.append('photos', p));
                 await api.post(`/api/exchange/${xcId}/receipt_photos`, fd);
             }
-            setGratitudeText(''); setGratitudeContext(''); setGratitudePhotos([]);
+            setGratitudeText(''); setGratitudeContext(''); setGratitudeHours(''); setGratitudePhotos([]);
             setGratitudeCardIds([]); setGratitudeCards([]); setGratitudeMode('');
             await fetchXc();
         } catch (err) {
@@ -412,6 +415,7 @@ function ExchangePage() {
                                             ))}
                                         </div>
                                     )}
+                                    {xc.effort_hours > 0 && <p className="xc-hours-given">{hoursGiven(xc.effort_hours)}</p>}
                                     {xc.gratitude_comment_context && (
                                         <div className="xc-context-block">
                                             <span className="xc-context-label">Context</span>
@@ -494,11 +498,17 @@ function ExchangePage() {
                                     onChange={(ids, cards) => { setGratitudeCardIds(ids); setGratitudeCards(cards); }}
                                     counterparts={(xc.initiator_id || xc.user_id) ? [{ id: xc.initiator_id || xc.user_id, label: `${xc.initiator_name || 'Their'} values` }] : []}
                                 />
+                                <label className="xc-comment-label xc-hours" style={{ marginTop: '0.6em' }}>
+                                    <span>About how many hours did it take? <span className="xc-optional">Optional</span></span>
+                                    <input type="number" inputMode="decimal" min="0.25" max="100" step="0.25"
+                                           className="xc-hours-input" value={gratitudeHours}
+                                           onChange={(e) => setGratitudeHours(e.target.value)} />
+                                </label>
                                 {!simple && (<>
                                 <label className="xc-comment-label" style={{ marginTop: '0.6em' }}>Context (optional)</label>
                                 <textarea
                                     className="xc-comment-input xc-context-input"
-                                    placeholder={'Time: 2 hours\nEffort: moderate physical effort\nCare: high\nSkill: everyday\nConstraint: weekend morning'}
+                                    placeholder={'Effort: moderate physical effort\nCare: high\nSkill: everyday\nConstraint: weekend morning'}
                                     rows={5}
                                     value={gratitudeContext}
                                     onChange={e => setGratitudeContext(e.target.value)}
