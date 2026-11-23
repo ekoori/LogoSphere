@@ -54,6 +54,18 @@ import com.krbavcic.logosphere.ui.common.ScreenPadding
 import com.krbavcic.logosphere.ui.common.SegmentedTabs
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.viewModelScope
+import com.krbavcic.logosphere.core.api.userMessage
+import com.krbavcic.logosphere.core.logic.OpeningsQuery
 import kotlinx.coroutines.coroutineScope
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.NearMe
@@ -61,15 +73,31 @@ import com.krbavcic.logosphere.core.logic.Places
 import com.krbavcic.logosphere.core.logic.Sharing
 import com.krbavcic.logosphere.ui.common.LinkText
 
-/** [canMeasure]: whether the member's own place gives distances; null when that didn't load. */
-data class OpeningsData(val openings: List<Opening>, val spheres: List<Community>, val canMeasure: Boolean? = null)
+/**
+ * The openings loaded so far, and [next], where the server carries on from (null at the end).
+ * [canMeasure]: whether the member's own place gives distances; null when that didn't load.
+ */
+data class OpeningsData(
+    val openings: List<Opening>,
+    val spheres: List<Community>,
+    val canMeasure: Boolean? = null,
+    val next: String? = null,
+    val noPlace: Boolean = false,
+)
 
 // Sphere filter choices that aren't a single sphere.
-private const val REAL_SPHERES = "real-spheres"
-private const val DEMO_SPHERES = "demo-spheres"
+private const val REAL_SPHERES = OpeningsQuery.REAL
+private const val DEMO_SPHERES = OpeningsQuery.DEMO
 
 class OpeningsViewModel(private val app: AppContainer) : LoadViewModel<OpeningsData>() {
     val viewerId: String? get() = app.session.user?.id
+
+    /** What the list is filtered by; the server applies it. */
+    var query = OpeningsQuery()
+        private set
+
+    private val _loadingMore = MutableStateFlow(false)
+    val loadingMore: StateFlow<Boolean> = _loadingMore.asStateFlow()
 
     init {
         load()
@@ -77,12 +105,42 @@ class OpeningsViewModel(private val app: AppContainer) : LoadViewModel<OpeningsD
     }
 
     override suspend fun fetch(force: Boolean): OpeningsData = coroutineScope {
-        val openings = async { app.openings.list(force) }
+        val first = async { app.api.openingsPage(query) }
         val spheres = async { runCatching { app.communities.list(CommunityKind.Sphere, force) }.getOrDefault(emptyList()) }
         val mine = async {
             viewerId?.let { me -> runCatching { Places.canMeasure(app.api.place(Places.PEOPLE, me).place) }.getOrNull() }
         }
-        OpeningsData(openings.await(), spheres.await(), mine.await())
+        val page = first.await()
+        OpeningsData(page.openings, spheres.await(), mine.await(), page.next, page.noPlace)
+    }
+
+    fun choose(asked: OpeningsQuery) {
+        if (asked == query) return
+        query = asked
+        load()
+    }
+
+    /** The next page, once; a page for filters since changed is dropped. */
+    fun loadMore() {
+        val next = current?.next ?: return
+        if (_loadingMore.value) return
+        _loadingMore.value = true
+        val asked = query
+        viewModelScope.launch {
+            try {
+                val page = app.api.openingsPage(asked, next)
+                if (asked == query) {
+                    update { it.copy(openings = (it.openings + page.openings).distinctBy { o -> o.id }, next = page.next) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logFailure("more", e)
+                say(e.userMessage())
+            } finally {
+                _loadingMore.value = false
+            }
+        }
     }
 
     fun like(opening: Opening) = toggleOpeningLike(app.api, opening) { data, f ->
@@ -101,6 +159,9 @@ fun OpeningsScreen() {
     var type by rememberSaveable { mutableIntStateOf(0) } // all, offers, needs, loans
     var sphereId by rememberSaveable { mutableStateOf<String?>(null) }
     var near by rememberSaveable { mutableStateOf<String?>(null) } // km from your place
+    LaunchedEffect(type, sphereId, near) { vm.choose(OpeningsQuery(type, sphereId, near?.toIntOrNull())) }
+    val loadingMore by vm.loadingMore.collectAsStateWithLifecycle()
+    val list = rememberLazyListState()
     val snackbar = remember { SnackbarHostState() }
     SnackbarMessages(vm.messages, snackbar)
 
@@ -138,22 +199,18 @@ fun OpeningsScreen() {
     ) { padding ->
         LoadContent(state, onRetry = vm::load, modifier = Modifier.padding(padding)) { data ->
             val within = near?.toIntOrNull()
-            val noPlace = within != null && data.canMeasure == false
+            val noPlace = within != null && (data.canMeasure == false || data.noPlace)
+            // The server filtered them, newest first.
             val shown = data.openings
-                .filter { when (type) { 1 -> it.isOffer; 2 -> !it.isOffer; 3 -> it.borrow; else -> true } }
-                .filter {
-                    when (sphereId) {
-                        null -> true
-                        REAL_SPHERES -> !it.isDemo
-                        DEMO_SPHERES -> it.isDemo
-                        else -> Sharing.isIn(it, sphereId)
-                    }
-                }
-                .filter { within == null || (it.distance?.km ?: Int.MAX_VALUE) <= within }
-                // Nearest band first, each still in the order it came.
-                .let { list -> if (within == null) list else list.sortedBy { it.distance?.km } }
+            // The next page, as the end of the list comes near.
+            LaunchedEffect(list, data.next) {
+                if (data.next == null) return@LaunchedEffect
+                snapshotFlow { list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
+                    .collect { last -> if (last >= list.layoutInfo.totalItemsCount - 6) vm.loadMore() }
+            }
             Refreshable(refreshing, vm::refresh, Modifier.padding(padding)) {
                 LazyColumn(
+                    state = list,
                     contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -205,6 +262,13 @@ fun OpeningsScreen() {
                             onClick = { navigator.opening(opening.id) },
                             onLike = { vm.like(opening) },
                         )
+                    }
+                    if (data.next != null) {
+                        item(key = "more") {
+                            TextButton(onClick = vm::loadMore, enabled = !loadingMore, modifier = Modifier.fillMaxWidth()) {
+                                Text(if (loadingMore) "Loading more…" else "Show more")
+                            }
+                        }
                     }
                 }
             }

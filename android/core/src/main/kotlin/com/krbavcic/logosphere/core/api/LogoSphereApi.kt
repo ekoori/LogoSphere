@@ -98,7 +98,9 @@ import com.krbavcic.logosphere.core.model.Invite
 import com.krbavcic.logosphere.core.model.NewInvite
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
+import com.krbavcic.logosphere.core.logic.OpeningsQuery
 import com.krbavcic.logosphere.core.model.CardSuggestion
+import com.krbavcic.logosphere.core.model.OpeningsPage
 import com.krbavcic.logosphere.core.model.GraphNodeRef
 import com.krbavcic.logosphere.core.model.MessageAbout
 import java.util.concurrent.TimeUnit
@@ -568,6 +570,13 @@ class LogoSphereApi(
     // ── Openings ────────────────────────────────────────────────────────────
 
     suspend fun openings(): List<Opening> = get("/api/openings")
+
+    /** A page of openings, newest first, filtered by the server; [before] is the last page's `next`. */
+    suspend fun openingsPage(query: OpeningsQuery, before: String? = null): OpeningsPage =
+        get(url("/api/openings") {
+            query.params().forEach { (name, value) -> addQueryParameter(name, value) }
+            before?.let { addQueryParameter("before", it) }
+        })
 
     suspend fun opening(id: String): Opening = get("/api/openings/$id")
 
