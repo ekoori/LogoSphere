@@ -69,14 +69,19 @@ site, app, deploy, commit. Tick the boxes as they land.
 
 ## Stages
 
-- [ ] D1 Messages about groups and events; Message on opening cards and group/event pages
-- [ ] D2 Help me word it fills every field
-- [ ] D3 Value cards link to the Meaning Graph
-- [ ] D4 Optional hours on receipts
-- [ ] D5 Compact trail cards on the web
-- [ ] D6 Cassandra audit
-- [ ] D7 Openings feed table and lazy loading (site and app)
-- [ ] D8 Tried on the phone
+- [x] D1 Messages about groups and events; Message on opening cards and group/event pages
+- [x] D2 Help me word it fills every field (one real request with invented notes filled all nine)
+- [x] D3 Value cards link to the Meaning Graph
+- [x] D4 Optional hours on receipts
+- [x] D5 Compact trail cards on the web (the cause: a shared `.exchange` class; now `.xc-card`)
+- [x] D6 Cassandra audit (`docs/2026-11-23-cassandra-audit.md`)
+- [x] D7 Openings feed table and lazy loading (site and app)
+- [x] D8 App 0.3.0 on the phone: paging and the card-to-graph link tried there
+- [ ] Not tried on the phone: Message from cards, groups and events (Igor's openings and groups are his own or
+      personas'), hours on a receipt (none was waiting)
+
+Also found and fixed on the way: a route that lost its session check while being edited (caught by tests before it
+shipped); a test now tries every write route signed out.
 
 ## Rules that hold throughout
 
