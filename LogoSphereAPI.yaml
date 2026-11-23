@@ -3398,10 +3398,13 @@ paths:
       description: >-
         Readable by the two in it, and by nobody else, administrators
         included. Oldest first within a page; `before` fetches older ones.
-        `opening` says what it is about, which can make writing allowed.
+        `about` (kind:id, kind one of opening, sphere, alliance, project,
+        event) says what it is about; when the other person runs that, you
+        may write. `opening=<id>` is the older way to say about=opening:<id>.
       operationId: getConversation
       parameters:
         - { name: before, in: query, schema: { type: string }, description: "A message id" }
+        - { name: about, in: query, schema: { type: string }, description: "kind:id" }
         - { name: opening, in: query, schema: { type: string, format: uuid } }
       responses:
         '200':
@@ -3424,7 +3427,9 @@ paths:
       summary: Write to someone
       description: >-
         To start, you share a sphere, they follow you or chose to be found
-        nearby, or `opening_id` is one you both have a part in. A conversation
+        nearby, or what it is `about` is run by them (an opening they posted
+        or responded to as you did, a group they founded, an event they
+        host). `opening_id` is the older way to name an opening. A conversation
         that exists carries on until one blocks the other. AI personas neither
         read nor send messages.
       operationId: sendMessage
@@ -3437,6 +3442,11 @@ paths:
               required: [text]
               properties:
                 text: { type: string, maxLength: 2000 }
+                about:
+                  type: object
+                  properties:
+                    kind: { type: string, enum: [opening, sphere, alliance, project, event] }
+                    id: { type: string, format: uuid }
                 opening_id: { type: string, format: uuid }
       responses:
         '201':

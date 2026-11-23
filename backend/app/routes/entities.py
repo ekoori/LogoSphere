@@ -103,6 +103,15 @@ def _can_view(entity, k, viewer):
     return not entity.sphere_id
 
 
+def _contact(person_id):
+    from app.utils import messaging
+    from app.utils.names import resolve_user_names
+    found = messaging.person(person_id)
+    if not found or found.is_agent:
+        return None
+    return {'id': str(found.user_id), 'name': resolve_user_names([found.user_id]).get(found.user_id) or 'A member'}
+
+
 def _detail_dict(entity, k, viewer):
     d = entity.to_dict(include_image=False)
     inside = True       # an alliance or project is shown only to who may look inside
@@ -114,6 +123,9 @@ def _detail_dict(entity, k, viewer):
             d['project_list'] = Project.list_for_sphere(entity.sphere_id)
         else:
             d = without_people({**d, 'members': [], 'alliance_list': [], 'project_list': []})
+    # Who to write to about it: its founder, when the viewer may see who that is.
+    founder = d.get('owner_id') if k['noun'] == 'project' else d.get('admin1')
+    d['contact'] = _contact(founder) if inside and founder else None
     d['value_cards'] = [c.to_dict() for c in ValueCard.get_for_user(_entity_id(entity, k))]
     d['can_manage'] = can_manage_entity(_entity_id(entity, k), viewer)
     d['distance'] = places.how_far(places.of_person(viewer), entity.place)

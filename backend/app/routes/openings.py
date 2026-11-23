@@ -191,6 +191,11 @@ def _without_its_spheres_people(d, viewer):
         d['replaces_service_id'] = None
 
 
+def _is_person(user_id):
+    from app.utils.names import resolve_user_names
+    return bool(resolve_user_names([user_id]).get(as_uuid(user_id)))
+
+
 def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     """Build the full dict for one service, including viewer-relative fields.
     Shared by the list and single-item endpoints. `include_exchanges` adds the
@@ -214,6 +219,9 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     d['can_manage'] = can_manage
     d['is_demo'] = is_demo_sphere(s.sphere_id)
     d['provider_is_agent'] = is_agent(getattr(s, 'acting_user_id', None) or s.provider_id)
+    # Who to write to about it, also in lists: the human who posted it (a group has no inbox).
+    who = getattr(s, 'acting_user_id', None) or s.provider_id
+    d['contact_id'] = str(who) if viewer and who and not d['provider_is_agent'] and _is_person(who) else None
     d['liked_by'] = ctx.likers(sid) if ctx is not None else Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False
@@ -248,9 +256,6 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
         d['distance'] = None
     if include_exchanges:
         d['point'] = places.exact_spot(s.place)
-        who = messaging.contact(s) if viewer else None
-        # Who to write to about it: a group's opening is its poster's.
-        d['contact_id'] = str(who) if who else None
         d['exchanges'] = Service.acceptances(sid, status='confirmed')
         # Previous versions of this opening (each frozen because it had a
         # related exchange), with the exchange(s) that linked to them.

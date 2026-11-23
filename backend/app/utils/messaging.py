@@ -12,6 +12,7 @@ A conversation's id comes from the pair, so it can only be reached as one of
 the two. No administrator reads it: only what is reported (app/utils/safety).
 """
 import uuid
+from collections import namedtuple
 from datetime import datetime
 
 from cassandra.util import unix_time_from_uuid1, uuid_from_time
@@ -31,6 +32,9 @@ DDL = (
     'CREATE TABLE IF NOT EXISTS direct_messages ('
     'conversation_id uuid, message_id timeuuid, sender_id uuid, body text, opening_id uuid, '
     'PRIMARY KEY (conversation_id, message_id)) WITH CLUSTERING ORDER BY (message_id DESC)',
+    # What a message is about. Older ones have only opening_id.
+    'ALTER TABLE direct_messages ADD IF NOT EXISTS about_kind text',
+    'ALTER TABLE direct_messages ADD IF NOT EXISTS about_id uuid',
 )
 PAIRS = uuid.UUID('6f0b7f52-3c1e-4d4a-9a7e-2f6c8d1b5e30')     # the namespace of conversation ids
 TEXT_MAX, PREVIEW_MAX, PAGE = 2000, 140, 50
@@ -123,16 +127,86 @@ def linked(opening, sender, other):
     return a in took_part and (b == poster or runs(opening, b))
 
 
-def about(opening_id, sender, other):
-    """The opening a message is about, if they may name it."""
-    key = as_uuid(opening_id)
-    opening = Service.get_by_id(key) if key else None
-    return opening if opening and linked(opening, sender, other) else None
+# -- What a conversation is about ---------------------------------------------------
+KINDS = ('opening', 'sphere', 'alliance', 'project', 'event')
+# `opens`: naming it lets the sender start the conversation, because the other person runs it.
+# Otherwise it is only what two people who may talk anyway are talking about.
+Subject = namedtuple('Subject', 'kind id title link opens')
+
+
+def opening_subject(opening, opens=True):
+    return Subject('opening', opening.service_id, opening.title or 'An opening', f'/opening?id={opening.service_id}', opens)
+
+
+def _sees_group(group, user_id):
+    """May see who is in it, and so may name it to them."""
+    if user_id in group.members:
+        return True
+    sight = Sight(user_id)
+    if group.kind != 'sphere':
+        return sight.sphere(group.sphere_id)
+    row = session.execute('SELECT sphere_id, is_public, is_demo FROM spheres WHERE sphere_id = %s', [group.id]).one()
+    return bool(row) and sight.people_of(row)
+
+
+def subject(kind, ident, sender, other):
+    """What a message is about, if both may see it; None when they may not name it."""
+    key, a, b = as_uuid(ident), as_uuid(sender), as_uuid(other)
+    if kind not in KINDS or not key or not a or not b:
+        return None
+    if kind == 'opening':
+        found = Service.get_by_id(key)
+        if not found or not Sight(a).opening(found):
+            return None
+        if linked(found, a, b):
+            return opening_subject(found)
+        return opening_subject(found, opens=False) if Sight(b).opening(found) else None
+    if kind == 'event':
+        from app.utils import events
+        found = events.get(key)
+        if not found or not found.visible(Sight(a)):
+            return None
+        hosts = b == found.creator_id or bool(
+            found.host_id and can_manage_entity(found.host_id, b, include_platform_admin=False))
+        if not hosts and not found.visible(Sight(b)):
+            return None
+        return Subject('event', key, found.title or 'An event', f'/event?id={key}', hosts)
+    from app.utils import groups
+    found = groups.find(key)
+    if not found or found.kind != kind or not _sees_group(found, a):
+        return None
+    runs_it = can_manage_entity(found.id, b, include_platform_admin=False)
+    if not runs_it and not _sees_group(found, b):
+        return None
+    return Subject(kind, key, found.name or 'A group', groups.link(found), bool(runs_it))
+
+
+def described(kind, key):
+    """A subject's name and link as it reads now, for a conversation's history."""
+    if kind == 'opening':
+        found = Service.get_by_id(key)
+        return {'kind': kind, 'id': str(key), 'title': found.title, 'link': f'/opening?id={key}'} if found else None
+    if kind == 'event':
+        from app.utils import events
+        found = events.get(key)
+        return {'kind': kind, 'id': str(key), 'title': found.title, 'link': f'/event?id={key}'} if found else None
+    from app.utils import groups
+    found = groups.find(key)
+    if not found or found.kind != kind:
+        return None
+    return {'kind': kind, 'id': str(key), 'title': found.name, 'link': groups.link(found)}
+
+
+def subject_of(row):
+    """(kind, id) of what a stored message is about, or None."""
+    if getattr(row, 'about_kind', None) and getattr(row, 'about_id', None):
+        return row.about_kind, row.about_id
+    return ('opening', row.opening_id) if getattr(row, 'opening_id', None) else None
 
 
 # -- Who may write -----------------------------------------------------------------
-def why_not(sender, other, opening=None):
-    """Why `sender` can't write to `other`, or None. `opening`: what about() found."""
+def why_not(sender, other, about=None):
+    """Why `sender` can't write to `other`, or None. `about`: what subject() found."""
     a, b = as_uuid(sender), as_uuid(other)
     me, them = person(a), person(b)
     if not me or not them:
@@ -145,7 +219,7 @@ def why_not(sender, other, opening=None):
         return YOU_BLOCKED
     if safety.blocked(b, a):
         return NOT_ALLOWED
-    if opening or thread(a, b) or is_platform_admin(a):
+    if (about is not None and about.opens) or thread(a, b) or is_platform_admin(a):
         return None
     if Sphere.member_sphere_ids(a) & Sphere.member_sphere_ids(b):
         return None
@@ -155,15 +229,16 @@ def why_not(sender, other, opening=None):
 
 
 # -- Reading and writing ---------------------------------------------------------
-def write(sender, other, body, opening=None):
+def write(sender, other, body, about=None):
     """(message id, when, whether to notify: not again while they haven't read)."""
     a, b = as_uuid(sender), as_uuid(other)
     notify = not is_unread(thread(b, a))
     at = now()
     message_id = uuid_from_time(at)         # a random node: uuid1() would carry the machine's address
-    session.execute('INSERT INTO direct_messages (conversation_id, message_id, sender_id, body, opening_id) '
-                    'VALUES (%s, %s, %s, %s, %s)',
-                    [conversation(a, b), message_id, a, body, opening.service_id if opening else None])
+    session.execute('INSERT INTO direct_messages (conversation_id, message_id, sender_id, body, opening_id, about_kind, about_id) '
+                    'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                    [conversation(a, b), message_id, a, body, about.id if about and about.kind == 'opening' else None,
+                     about.kind if about else None, about.id if about else None])
     preview = ' '.join(body.split())[:PREVIEW_MAX]
     session.execute('UPDATE message_inbox SET last_at = %s, last_from = %s, last_body = %s, read_at = %s '
                     'WHERE user_id = %s AND other_id = %s', [at, a, preview, at, a, b])
@@ -174,7 +249,7 @@ def write(sender, other, body, opening=None):
 
 def history(user_id, other_id, before=None):
     """(a page, oldest first; whether there are older ones)."""
-    cql = 'SELECT message_id, sender_id, body, opening_id FROM direct_messages WHERE conversation_id = %s'
+    cql = 'SELECT message_id, sender_id, body, opening_id, about_kind, about_id FROM direct_messages WHERE conversation_id = %s'
     values = [conversation(user_id, other_id)]
     if before:
         cql += ' AND message_id < %s'
@@ -216,10 +291,11 @@ def remove(conversation_id, message_id, one, other):
 def export(user_id):
     out = []
     for row in conversations(user_id):
-        rows = session.execute('SELECT message_id, sender_id, body FROM direct_messages WHERE conversation_id = %s',
-                               [conversation(row.user_id, row.other_id)])
+        rows = session.execute('SELECT message_id, sender_id, body, opening_id, about_kind, about_id FROM direct_messages '
+                               'WHERE conversation_id = %s', [conversation(row.user_id, row.other_id)])
         out.append({'with': str(row.other_id),
-                    'messages': [{'from_you': m.sender_id == row.user_id, 'text': m.body, 'at': sent_at(m.message_id)}
+                    'messages': [{'from_you': m.sender_id == row.user_id, 'text': m.body, 'at': sent_at(m.message_id),
+                                  'about': {'kind': s[0], 'id': str(s[1])} if (s := subject_of(m)) else None}
                                  for m in reversed(list(rows))]})
     return out
 

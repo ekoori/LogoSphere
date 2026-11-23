@@ -1,6 +1,7 @@
 # Private messages, blocking and reporting. The named demo accounts are AI
 # personas now, so these people are made for the test and removed after it.
 import re
+from datetime import datetime, timedelta
 import uuid
 from pathlib import Path
 
@@ -230,3 +231,48 @@ def test_an_email_address_never_stands_in_for_a_name(db, people):
     # ...and no route falls back on one.
     for source in (APP / 'routes').glob('*.py'):
         assert not re.search(r'\bor \w+\.email\b', source.read_text(encoding='utf-8')), source.name
+
+
+# -- About a group, an event, or something both can see --------------------------------
+def test_about_a_group_reaches_its_founder(db, people):
+    ada, ben, cy = people['ada'], people['ben'], people['cy']
+    sphere = str(people['sphere'])          # Ada's; Ben is in it, Cy isn't
+    assert ben.get(f'/api/spheres/{sphere}')[1]['contact']['id'] == str(ada.id)
+    assert cy.get(f'/api/spheres/{sphere}')[1]['contact'] is None       # outside a private sphere: not who runs it
+    assert say(cy, ada, about={'kind': 'sphere', 'id': sphere})[0] == 403
+    db.execute('UPDATE spheres SET is_public = true WHERE sphere_id = %s', [people['sphere']])
+    assert cy.get(f'/api/messages/{ada.id}?about=sphere:{sphere}')[1]['can_send'] is True
+    status, body = say(cy, ada, 'May I join?', about={'kind': 'sphere', 'id': sphere})
+    assert status == 201, body
+    assert body['sent']['about'] == {'kind': 'sphere', 'id': sphere, 'title': 'Messages test sphere (delete me)',
+                                     'link': f'/sphere?id={sphere}'}
+    assert body['sent']['opening'] is None
+    got, = ada.get(f'/api/messages/{cy.id}')[1]['messages']
+    assert got['about']['link'] == f'/sphere?id={sphere}' and got['opening'] is None
+    assert say(cy, ada, about={'kind': 'project', 'id': sphere})[0] == 201      # the wrong kind names nothing,
+    assert ada.get(f'/api/messages/{cy.id}')[1]['messages'][-1]['about'] is None    # but they talk already
+
+
+def test_about_an_event_reaches_its_host(people):
+    ada, cy = people['ada'], people['cy']
+    starts = (datetime.utcnow() + timedelta(days=9)).strftime('%Y-%m-%dT19:00')
+    status, event = ada.post('/api/events', {'title': 'Messages test supper', 'starts': starts, 'tz': 'UTC'})
+    assert status == 201, event
+    assert cy.get(f"/api/messages/{ada.id}?about=event:{event['id']}")[1]['can_send'] is True
+    assert say(cy, ada, 'Can I bring a friend?', about={'kind': 'event', 'id': event['id']})[0] == 201
+    got, = ada.get(f'/api/messages/{cy.id}')[1]['messages']
+    assert got['about'] == {'kind': 'event', 'id': event['id'], 'title': 'Messages test supper',
+                            'link': f"/event?id={event['id']}"}
+
+
+def test_naming_what_both_see_opens_nothing_new(people):
+    ada, ben, cy = people['ada'], people['ben'], people['cy']
+    oid = cy.post('/api/openings', {'type': 'offer', 'title': 'Messages test kettle', 'description': 'x'})[1]['service_id']
+    listed = next(o for o in ada.get('/api/openings')[1] if o['id'] == oid)
+    assert listed['contact_id'] == str(cy.id)           # cards in a list know whom to write to
+    status, body = say(ada, ben, 'Shall we ask for it?', about={'kind': 'opening', 'id': oid})
+    assert status == 201 and body['sent']['about']['title'] == 'Messages test kettle'
+    assert body['sent']['opening'] == {'id': oid, 'title': 'Messages test kettle'}
+    # Ada and Ben may talk anyway. Naming Cy's opening to Ben gives Ada nothing she lacked,
+    # and naming it to Cy, who posted it, lets her start.
+    assert say(ada, cy, 'Is it still there?', about={'kind': 'opening', 'id': oid})[0] == 201
