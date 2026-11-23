@@ -100,6 +100,16 @@ def test_a_reworded_card_is_the_same_node(people):
     assert node['card']['card_id'] == edited['card_id'] and node['mine'] is True and node['can_judge'] is False
 
 
+def test_any_version_of_a_card_finds_its_dot(people):
+    a = people[0]
+    card = new_card(a, 'Graph test wombats', 'Wombats and teapots')
+    _, edited = call(a, 'PATCH', f"/api/value_cards/{card['card_id']}", {'title': 'Graph test wombats, reworded'})
+    for asked in (card['card_id'], edited['card_id']):
+        assert call(a, 'GET', f'/api/meaning_graph/card/{asked}') == (200, {'id': card['card_id']})
+    assert call(a, 'GET', f'/api/meaning_graph/card/{uuid.uuid4()}')[0] == 404
+    assert call(a, 'GET', '/api/meaning_graph/card/not-an-id')[0] == 404
+
+
 def test_a_copy_remembers_where_it_came_from(people):
     a, b, _ = people
     source = new_card(a, 'Graph test lineage', 'Lanterns along the towpath')

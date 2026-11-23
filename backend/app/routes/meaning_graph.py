@@ -2,13 +2,14 @@
 
   GET  /api/meaning_graph            the cards you may see, and how close they are
   GET  /api/meaning_graph/method     the method in full; no session needed
+  GET  /api/meaning_graph/card/<id>  which dot a card is (any version of it), if you may see it
   POST /api/meaning_graph/judgement  {a, b, close: true|false|null}
 """
 from flask import current_app as app, jsonify, request
 
 from app.middleware.session_middleware import validate_session
 from app.utils import closeness, meaning_graph
-from app.utils.access import Sight
+from app.utils.access import Sight, as_uuid
 from app.utils.permissions import can_manage_entity
 
 
@@ -21,6 +22,21 @@ def get_meaning_graph(user_id=None):
     if request.method == 'OPTIONS':
         return _options()
     return jsonify(meaning_graph.get_graph().for_viewer(Sight(user_id))), 200
+
+
+@validate_session
+def get_card_node(card_id, user_id=None):
+    """The dot on the graph that a card is: the first version of it, as the graph names nodes."""
+    key = as_uuid(card_id)
+    for fresh in (False, True):         # a card made a moment ago may not be in the graph yet
+        graph = meaning_graph.get_graph(fresh=fresh)
+        root = graph.root(key) if key else None
+        card = graph.cards.get(root) if root else None
+        if card:
+            break
+    if not card or not graph.owners.visible(card.user_id, Sight(user_id)):
+        return jsonify({'message': "That card isn't on the graph you can see."}), 404
+    return jsonify({'id': root}), 200
 
 
 def get_method():
@@ -63,4 +79,5 @@ def register(app_):
     meaning_graph.ensure_tables()
     app_.add_url_rule('/api/meaning_graph', view_func=get_meaning_graph, methods=['GET', 'OPTIONS'])
     app_.add_url_rule('/api/meaning_graph/method', view_func=get_method, methods=['GET', 'OPTIONS'])
+    app_.add_url_rule('/api/meaning_graph/card/<card_id>', view_func=get_card_node, methods=['GET'])
     app_.add_url_rule('/api/meaning_graph/judgement', view_func=post_judgement, methods=['POST', 'OPTIONS'])

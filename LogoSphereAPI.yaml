@@ -3366,6 +3366,24 @@ paths:
         '400': { description: Not a link of ours. }
       tags: [Email]
 
+  /api/meaning_graph/card/{card_id}:
+    get:
+      summary: The dot a value card is on the Meaning Graph
+      description: >-
+        Nodes are named by a card's first version; any version finds it.
+        404 when the viewer can't see that card on the graph.
+      operationId: getCardNode
+      parameters:
+        - { name: card_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: The node's id.
+          content:
+            application/json:
+              schema: { type: object, properties: { id: { type: string } } }
+        '404': { description: Not on the graph the viewer can see. }
+      tags: [Meaning Graph]
+
   /api/messages:
     get:
       summary: Your conversations
