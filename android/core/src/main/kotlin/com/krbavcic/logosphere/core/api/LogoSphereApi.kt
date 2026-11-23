@@ -539,6 +539,7 @@ class LogoSphereApi(
             put("cards", LogoSphereJson.encodeToJsonElement(comment.cards))
             comment.franklMode?.let { put("frankl_mode", it.key) }
             comment.context?.trim()?.takeIf { it.isNotEmpty() }?.let { put("context", it) }
+            comment.hours?.let { put("hours", it) }
         }
         post<JsonElement>("/api/exchange/$exchangeId/comment", body)
     }

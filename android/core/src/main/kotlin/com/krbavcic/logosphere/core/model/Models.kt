@@ -308,6 +308,8 @@ data class Exchange(
     @SerialName("gratitude_comment_cards") val receiptCards: List<ValueCard> = emptyList(),
     @SerialName("gratitude_comment_context") val receiptContext: String? = null,
     @SerialName("gratitude_frankl_mode") val receiptFranklMode: String? = null,
+    /** About how long it took, as the receipt said. Optional, and never totalled. */
+    @SerialName("effort_hours") val effortHours: Double? = null,
     // The initiator's personal note.
     @SerialName("user_comment") val initiatorNote: String? = null,
     @SerialName("user_comment_timestamp") val initiatorNoteAt: String? = null,
@@ -387,6 +389,8 @@ data class NewComment(
     val cards: List<ValueCard> = emptyList(),
     val franklMode: FranklMode? = null,
     val context: String? = null,
+    /** A receipt's: about how long it took. */
+    val hours: Double? = null,
 )
 
 // ── Communities: spheres, alliances, projects ───────────────────────────────

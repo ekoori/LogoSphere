@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.krbavcic.logosphere.core.logic.Dates
+import com.krbavcic.logosphere.core.logic.Effort
 import com.krbavcic.logosphere.core.logic.ExchangeRules
 import com.krbavcic.logosphere.core.logic.Messaging
 import com.krbavcic.logosphere.core.logic.OpeningRules
@@ -114,7 +115,8 @@ fun ExchangeCard(
                 ExchangeStatusPill(exchange)
                 if (exchange.isDemo) DemoTag()
                 Spacer(Modifier.weight(1f))
-                MetaText(Dates.day(exchange.startedAt))
+                MetaText(listOfNotNull(Dates.day(exchange.startedAt).ifBlank { null }, Effort.text(exchange.effortHours, short = true))
+                    .joinToString("  ·  "))
             }
             Text(
                 exchange.title ?: "An exchange of trust",

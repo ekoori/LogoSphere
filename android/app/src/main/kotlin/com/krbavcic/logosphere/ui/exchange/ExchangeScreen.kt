@@ -46,12 +46,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.krbavcic.logosphere.AppContainer
 import com.krbavcic.logosphere.core.logic.Dates
+import com.krbavcic.logosphere.core.logic.Effort
 import com.krbavcic.logosphere.core.logic.ExchangeRules
 import com.krbavcic.logosphere.core.logic.Parties
 import com.krbavcic.logosphere.core.logic.Party
@@ -355,6 +357,7 @@ private fun ExchangeContent(data: ExchangeData, vm: ExchangeViewModel, busy: Boo
                             cards = x.receiptCards,
                             context = x.receiptContext,
                             at = x.receiptAt,
+                            hours = x.effortHours,
                             accent = Brand.colors.receiptAccent,
                             likes = x.likesFor(LikeTarget.Receipt),
                             onLike = { vm.like(LikeTarget.Receipt) },
@@ -541,6 +544,7 @@ private fun Written(
     context: String?,
     at: String?,
     accent: androidx.compose.ui.graphics.Color,
+    hours: Double? = null,
     likes: LikeInfo,
     onLike: () -> Unit,
 ) {
@@ -566,6 +570,7 @@ private fun Written(
         }
         QuoteLine(author = Dates.day(at), text = text, accent = accent, maxLines = 20)
         if (cards.isNotEmpty()) ValueChips(cards)
+        Effort.text(hours)?.let { MetaText(it) }
         context?.takeIf { it.isNotBlank() }?.let {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text("CONTEXT", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -598,6 +603,7 @@ private fun Composer(
     var expanded by rememberSaveable { mutableStateOf(false) }
     var text by rememberSaveable { mutableStateOf("") }
     var context by rememberSaveable { mutableStateOf("") }
+    var hours by rememberSaveable { mutableStateOf("") }
     var mode by rememberSaveable { mutableStateOf<String?>(null) }
     // Saved, as all of the form is: the camera can push the app out of memory.
     val selected = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) {
@@ -669,11 +675,25 @@ private fun Composer(
             }
         }
         if (type == CommentType.Receipt) {
+            OutlinedTextField(
+                value = hours,
+                onValueChange = { typed -> hours = typed.filter { it.isDigit() || it == '.' || it == ',' }.take(6) },
+                label = { Text("About how many hours did it take? (optional)") },
+                singleLine = true,
+                isError = hours.isNotBlank() && Effort.parse(hours) == null,
+                supportingText = if (hours.isNotBlank() && Effort.parse(hours) == null) {
+                    { Text("From a quarter of an hour to 100 hours.") }
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+            )
             if (!simple) OutlinedTextField(
                 value = context,
                 onValueChange = { context = it },
                 label = { Text("Context (optional)") },
-                placeholder = { Text("Time: 2 hours\nEffort: moderate\nCare: high") },
+                placeholder = { Text("Effort: moderate\nCare: high") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
@@ -710,18 +730,20 @@ private fun Composer(
                             cards = all,
                             franklMode = FranklMode.of(mode).takeUnless { simple },
                             context = context.takeIf { type == CommentType.Receipt && !simple },
+                            hours = Effort.parse(hours).takeIf { type == CommentType.Receipt },
                         ),
                         if (type == CommentType.Receipt) photos.toList() else emptyList(),
                     ) {
                         text = ""
                         context = ""
+                        hours = ""
                         mode = null
                         selected.clear()
                         photos.clear()
                         expanded = false
                     }
                 },
-                enabled = text.isNotBlank() && !busy,
+                enabled = text.isNotBlank() && !busy && (hours.isBlank() || Effort.parse(hours) != null),
             ) { Text(if (type == CommentType.Acknowledgement) "Post acknowledgement" else "Add") }
             TextButton(onClick = { expanded = false }) { Text("Cancel") }
         }
