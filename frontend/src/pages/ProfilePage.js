@@ -81,6 +81,11 @@ function ValueCardDisplay({ card, onDelete, onEdit, onUpdated, canDelete, idx })
             </div>
 
             <h3 className="vc-title">{card.title}</h3>
+            {card.card_id && (
+                <Link className="vc-graph-link" to={`/meaning-graph?card=${card.card_id}`} onClick={(e) => e.stopPropagation()}>
+                    See it on the Meaning Graph &rarr;
+                </Link>
+            )}
 
             <div className="vc-field">
                 <span className="vc-label">I care about</span>

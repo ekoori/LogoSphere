@@ -1,6 +1,6 @@
 // The Meaning Graph: every value card you may see, drawn by closeness, with
 // the whole method underneath. The method is public; the graph is for members.
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -143,6 +143,7 @@ export default function MeaningGraphPage() {
     const client = useQueryClient();
     const [params, setParams] = useSearchParams();
     const owner = params.get('owner');
+    const askedCard = params.get('card');
     const [scope, setScope] = useState('all');
     const [view, setView] = useState('graph');
     const [query, setQuery] = useState('');
@@ -164,6 +165,20 @@ export default function MeaningGraphPage() {
         [graph, scope, owner, focus, demos, query, from],
     );
     const byId = useMemo(() => new Map((graph?.nodes || []).map((n) => [n.id, n])), [graph]);
+    // ?card=<any version of a card>: open on its dot, with what is close to it.
+    const { data: cardNode, isError: cardMissing } = useQuery({
+        queryKey: ['graph-card', askedCard],
+        queryFn: () => api.get(`/api/meaning_graph/card/${askedCard}`).then((r) => r.data.id),
+        enabled: !!userId && !!askedCard,
+        retry: false,
+        staleTime: 60_000,
+    });
+    useEffect(() => {
+        if (cardNode) {
+            setSelected(cardNode);
+            setFocus(cardNode);
+        }
+    }, [cardNode]);
 
     const judged = (edge) => client.setQueryData(GRAPH_KEY, (was) => was && ({
         ...was, edges: was.edges.map((e) => (e.a === edge.a && e.b === edge.b ? edge : e)),
@@ -195,6 +210,9 @@ export default function MeaningGraphPage() {
                 <p className="mg-note mg-signed-out">
                     <Link to="/login">Log in</Link> to see the graph. How it works is below, for anyone to read and check.
                 </p>
+            )}
+            {userId && askedCard && cardMissing && (
+                <p className="mg-note" role="status">That card isn&rsquo;t on the graph you can see.</p>
             )}
             {userId && !graph && (
                 <p className="mg-note">

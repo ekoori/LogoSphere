@@ -313,6 +313,13 @@
     background: color-mix(in srgb, var(--honey) 10%, transparent);
 }
 
+/* From a card to its dot on the Meaning Graph */
+.vc-graph-link {
+    display: inline-flex; align-items: center; min-height: 40px;
+    margin: -0.2rem 0 0.6rem; color: var(--moss-deep); font-weight: 600; font-size: 0.92rem; text-decoration: none;
+}
+.vc-graph-link:hover, .vc-graph-link:focus-visible { text-decoration: underline; }
+
 /* Chips inside a comment are slightly more compact */
 .comment-value-chips .vc-chip {
     font-size: 0.73rem;

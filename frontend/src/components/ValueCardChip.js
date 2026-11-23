@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import api from '../api';
 import { useManagedEntities } from '../utils/useManagedEntities';
@@ -95,6 +96,11 @@ function ValueCardChip({ card, subjectLabel = 'Cares about', currentUserId = nul
 
                         <h3 className="vc-title">{card.title}</h3>
                         {('endorsed' in card) && <ValueCardState card={card} />}
+                        {card.card_id && (
+                            <Link className="vc-graph-link" to={`/meaning-graph?card=${card.card_id}`} onClick={() => setOpen(false)}>
+                                See it on the Meaning Graph &rarr;
+                            </Link>
+                        )}
 
                         {card.care_about && (
                             <div className="vc-field">
