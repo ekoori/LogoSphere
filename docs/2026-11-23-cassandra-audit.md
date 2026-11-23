@@ -31,8 +31,8 @@ One node, keyspace `logosphere` with `SimpleStrategy`, replication factor 1, 1.1
 | # | Problem | Where | Runs | Effect as it grows | Fix |
 |---|---|---|---|---|---|
 | 1 | **The openings list reads every opening, every acceptance and every like**, then filters and sorts in Python, and sends all of it | `GET /api/openings` (`Service.get_all`, `all_acceptances`, `all_likes`) | every visit to Openings, every 15 s on some screens | grows with all openings ever posted; the page can't be lazy | **Fixed now**: `openings_feed` (below) and pages of 30 |
-| 2 | **An exchange is found by scanning every partition** (`exchange_id` is a clustering column; cqlengine `allow_filtering()`) | `MeaningTrail.get_for_view`, status, comments, likes (8 call sites) | every exchange page, receipt, like | a full-cluster scan per click | `exchanges_by_id ((exchange_id))` lookup table, or make the exchange its own partition |
-| 3 | **Who is in which sphere is found by reading every sphere**, on every request (`Sight()` → `member_sphere_ids`) | `app/utils/access.py`, `models/spheres.py` | every signed-in request | grows with spheres × members | `memberships_by_member ((user_id), sphere_id)`, written on join/leave |
+| 2 | **Fixed 2026-11-23.** **An exchange is found by scanning every partition** (`exchange_id` is a clustering column; cqlengine `allow_filtering()`) | `MeaningTrail.get_for_view`, status, comments, likes (8 call sites) | every exchange page, receipt, like | a full-cluster scan per click | `exchanges_by_id ((exchange_id))` lookup table, or make the exchange its own partition |
+| 3 | **Fixed 2026-11-23.** **Who is in which sphere is found by reading every sphere**, on every request (`Sight()` → `member_sphere_ids`) | `app/utils/access.py`, `models/spheres.py` | every signed-in request | grows with spheres × members | `memberships_by_member ((user_id), sphere_id)`, written on join/leave |
 | 4 | **The other side's trail uses a secondary index** (`meaning_trail.other_user_id`), and `exchange_status` has a low-cardinality index | `get_meaning_trail`, `MeaningTrail` | every trail | indexes on non-unique, low-cardinality columns touch every node | `trail_by_member ((user_id), started_at, exchange_id)` written for both sides; drop the status index |
 | 5 | **Whole-table reads on hot paths** besides those: blocks (`safety.hidden_from`), follows (followers), events (`everything()`), invitations (`made_by`), acknowledgements (`everything()`), AI pictures (fingerprint match) | various | per request, or per upload | each grows unbounded | a query table per question: `blocks_by_member`, `followers ((followee_id))`, `events_by_group ((group_id), starts)`, `invites_by_maker`, `ai_pictures_by_fingerprint` |
 | 6 | **Sessions never leave the table**: rows have an `expire_at` but no TTL | `sessions` | every sign-in | the table only grows (July's are still there) | write with `USING TTL` 30 days and refresh it when the expiry slides |
@@ -59,8 +59,17 @@ single partition.
 - Without `limit`, the old whole list is still served for the AI personas' director and older apps.
 - The site and the app load the next page as the list nears its end.
 
+## Items 2 and 3 (done 2026-11-23)
+
+- `exchanges_by_id (exchange_id PRIMARY KEY, user_id)`: which partition an exchange's row is in. Written when an
+  exchange is made, repaired against `meaning_trail` at start-up; the six reads by id are now a lookup and a point read.
+- `memberships_by_member ((user_id), sphere_id)`: a member's spheres. Written on creating and joining a sphere; each
+  row is confirmed against the sphere's own `participants` when read, so leaving counts at once and a missing row shuts
+  out rather than lets in; repaired at start-up. `participants` itself is still a collection on the sphere row, which
+  is wrong for big spheres: it should become `members_by_sphere ((sphere_id), user_id, role)` in time.
+
 ## Order for the rest
 
-2 and 3 next (they run on almost every request), then 4 and 6, then 5 one table at a time when its screen gets paged.
+4 and 6 next, then 5 one table at a time when its screen gets paged.
 7 at the latest when sign-up opens widely; 9 at the production cut-off. Each is the same pattern as the openings fix:
 a query table, written in the model's own write path, backfilled once, and checked by a test against the old query.
