@@ -167,7 +167,10 @@ class MeaningTrail(Model):
     __table_name__ = 'meaning_trail'
 
     # Columns added after the table was made, before anything reads the model.
-    DDL = ('ALTER TABLE meaning_trail ADD IF NOT EXISTS effort_hours float',)
+    DDL = ('ALTER TABLE meaning_trail ADD IF NOT EXISTS effort_hours float',
+           # Which partition an exchange is in: rows are keyed (initiator, exchange), so by id alone
+           # they could only be found by reading every partition.
+           'CREATE TABLE IF NOT EXISTS exchanges_by_id (exchange_id uuid PRIMARY KEY, user_id uuid)')
 
     @classmethod
     def ensure_columns(cls):
@@ -270,6 +273,7 @@ class MeaningTrail(Model):
                 recipient_acting_user_name=recipient_acting_user_name,
                 source_service_id=UUID(str(source_service_id)) if source_service_id else None,
             )
+            cls.remember(exchange_id, initiator_id)
             return exchange_id
         except Exception as e:
             import logging as _logging
@@ -437,10 +441,40 @@ class MeaningTrail(Model):
         return d
 
     @classmethod
-    def row_of(cls, exchange_id):
-        """One exchange's row, or None."""
-        rows = list(cls.objects.filter(exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
+    def initiator_of(cls, exchange_id):
+        """The partition an exchange's row is in (exchanges_by_id); None when there is no such exchange."""
+        try:
+            key = UUID(str(exchange_id))
+        except (ValueError, TypeError, AttributeError):
+            return None
+        found = _raw_session.execute('SELECT user_id FROM exchanges_by_id WHERE exchange_id = %s', [key]).one()
+        return found.user_id if found else None
+
+    @classmethod
+    def row_of(cls, exchange_id, with_image=False):
+        """One exchange's row, or None: a lookup and a point read, never a scan."""
+        initiator = cls.initiator_of(exchange_id)
+        if initiator is None:
+            return None
+        found = cls.objects(user_id=initiator, exchange_id=UUID(str(exchange_id)))
+        rows = list(found if with_image else found.defer(_NO_BLOB))
         return rows[0] if rows else None
+
+    @classmethod
+    def remember(cls, exchange_id, initiator_id):
+        _raw_session.execute('INSERT INTO exchanges_by_id (exchange_id, user_id) VALUES (%s, %s)',
+                             [UUID(str(exchange_id)), UUID(str(initiator_id))])
+
+    @classmethod
+    def repair_lookup(cls):
+        """exchanges_by_id checked against meaning_trail: what start-up does."""
+        present = {r.exchange_id: r.user_id for r in _raw_session.execute('SELECT user_id, exchange_id FROM meaning_trail')}
+        known = {r.exchange_id: r.user_id for r in _raw_session.execute('SELECT exchange_id, user_id FROM exchanges_by_id')}
+        for exchange_id, initiator in present.items():
+            if known.get(exchange_id) != initiator:
+                cls.remember(exchange_id, initiator)
+        for exchange_id in set(known) - set(present):
+            _raw_session.execute('DELETE FROM exchanges_by_id WHERE exchange_id = %s', [exchange_id])
 
     @classmethod
     def every_row(cls):
@@ -530,10 +564,9 @@ class MeaningTrail(Model):
         Returns (None, False, False) if the exchange doesn't exist."""
         try:
             tx = UUID(str(exchange_id))
-            rows = list(cls.objects.filter(exchange_id=tx).limit(1).allow_filtering().defer(_NO_BLOB))
-            if not rows:
+            row = cls.row_of(tx)
+            if row is None:
                 return None, False, False
-            row = rows[0]
             names = cls._name_map()
             d = cls._enrich(row, viewer_id, viewer_id, names, cls._kind_map())
             is_initiator = cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, viewer_id)
@@ -607,9 +640,9 @@ class MeaningTrail(Model):
             if rows:
                 return cls._enrich(rows[0], user_uuid, user_uuid, names, kinds), True
 
-            # Fallback: current user is (or acts for / manages) either side.
-            # exchange_id is a clustering key so we need allow_filtering to query without partition key.
-            all_rows = list(cls.objects.filter(exchange_id=tx_uuid).allow_filtering().defer(_NO_BLOB))
+            # Otherwise: whoever is (or acts for / manages) either side.
+            found = cls.row_of(tx_uuid)
+            all_rows = [found] if found else []
             for row in all_rows:
                 if cls._viewer_on_side(row.user_id, row.initiator_acting_user_id, user_uuid):
                     return cls._enrich(row, user_uuid, user_uuid, names, kinds), True
@@ -624,12 +657,9 @@ class MeaningTrail(Model):
 
     @classmethod
     def exists(cls, exchange_id):
-        """True if any row carries this exchange_id. exchange_id is a clustering
-        key, so this needs allow_filtering — acceptable for low-frequency actions."""
+        """True if this exchange exists: a lookup and a point read."""
         try:
-            rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
-            return len(rows) > 0
+            return cls.row_of(exchange_id) is not None
         except Exception as e:
             print(f"Error checking exchange existence: {e}")
             return False
@@ -667,11 +697,9 @@ class MeaningTrail(Model):
         """Finished = both sides have receipted (recipient's gratitude + the
         initiator's note). After this the exchange is immutable."""
         try:
-            rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering().defer(_NO_BLOB))
-            if not rows:
+            r = cls.row_of(exchange_id)
+            if r is None:
                 return False
-            r = rows[0]
             return bool(r.gratitude_comment and r.user_comment)
         except Exception as e:
             print(f"Error checking finished: {e}")
@@ -708,11 +736,10 @@ class MeaningTrail(Model):
     def get_image(cls, exchange_id):
         """Raw banner-image bytes for an exchange (served via an endpoint)."""
         try:
-            rows = list(cls.objects.filter(
-                exchange_id=UUID(str(exchange_id))).limit(1).allow_filtering())
-            if not rows:
+            row = cls.row_of(exchange_id, with_image=True)
+            if row is None:
                 return None
-            return image_store.fetch(rows[0].exchange_image_object, rows[0].exchange_image)
+            return image_store.fetch(row.exchange_image_object, row.exchange_image)
         except Exception as e:
             print(f"Error getting exchange image: {e}")
             return None

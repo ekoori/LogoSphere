@@ -100,6 +100,7 @@ class Sphere:
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         cassandra_session.execute(query, (sphere_id, name, description, meaning_graph, location, None, admin1, participants, alliances, projects, values, datetime.utcnow()))
+        cls.remember_member(sphere_id, admin1)
         if image:
             cls.set_image(sphere_id, image)     # the bucket (or the blob column), and has_image
 
@@ -152,11 +153,14 @@ class Sphere:
             "SELECT participants FROM spheres WHERE sphere_id = %s", [sphere_id]
         ).one()
         if result and result.participants and user_uuid in result.participants:
+            cls.remember_member(sphere_id, user_uuid)
             return True
         cassandra_session.execute(
             "UPDATE spheres SET participants = participants + %s WHERE sphere_id = %s",
             [[user_uuid], sphere_id]
         )
+        # After the sphere's own list: a lookup row is only ever trusted once that says so.
+        cls.remember_member(sphere_id, user_uuid)
         return False
 
     @classmethod
@@ -240,5 +244,36 @@ class Sphere:
             uid = user_id if isinstance(user_id, uuid.UUID) else uuid.UUID(str(user_id))
         except (ValueError, TypeError):
             return set()
-        rows = cassandra_session.execute("SELECT sphere_id, participants FROM spheres")
-        return {r.sphere_id for r in rows if r.participants and uid in r.participants}
+        # memberships_by_member names the candidates; each is confirmed against the sphere's own list, so someone
+        # who left (or a sphere that's gone) never counts. A missing row shuts out rather than lets in, and
+        # start-up's repair puts it back.
+        out = set()
+        for r in cassandra_session.execute('SELECT sphere_id FROM memberships_by_member WHERE user_id = %s', [uid]):
+            row = cassandra_session.execute('SELECT participants FROM spheres WHERE sphere_id = %s', [r.sphere_id]).one()
+            if row and row.participants and uid in row.participants:
+                out.add(r.sphere_id)
+        return out
+
+    MEMBERS_DDL = ('CREATE TABLE IF NOT EXISTS memberships_by_member ('
+                   'user_id uuid, sphere_id uuid, PRIMARY KEY ((user_id), sphere_id))')
+
+    @classmethod
+    def ensure_lookup(cls):
+        cassandra_session.execute(cls.MEMBERS_DDL)
+
+    @classmethod
+    def remember_member(cls, sphere_id, user_id):
+        if sphere_id and user_id:
+            cassandra_session.execute('INSERT INTO memberships_by_member (user_id, sphere_id) VALUES (%s, %s)',
+                                      [user_id, sphere_id])
+
+    @classmethod
+    def repair_memberships(cls):
+        """memberships_by_member checked against every sphere's own list: what start-up does."""
+        want = {(uid, r.sphere_id) for r in cassandra_session.execute('SELECT sphere_id, participants FROM spheres')
+                for uid in (r.participants or [])}
+        have = {(r.user_id, r.sphere_id) for r in cassandra_session.execute('SELECT user_id, sphere_id FROM memberships_by_member')}
+        for uid, sid in want - have:
+            cls.remember_member(sid, uid)
+        for uid, sid in have - want:
+            cassandra_session.execute('DELETE FROM memberships_by_member WHERE user_id = %s AND sphere_id = %s', [uid, sid])

@@ -93,6 +93,10 @@ def test_admin(request):
     # Feed rows of openings the tests made and removed go too (app/utils/openings_feed.py).
     from app.utils import openings_feed
     openings_feed.repair()
+    from app.models.meaning_trail import MeaningTrail
+    from app.models.spheres import Sphere
+    Sphere.repair_memberships()
+    MeaningTrail.repair_lookup()
     USERS.pop('admin', None)
     # Out of every sphere it ended up in (sandboxes at registration, the demo
     # spheres a test joined it to).
