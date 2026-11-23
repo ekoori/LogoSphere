@@ -451,7 +451,7 @@ function OpeningPage() {
                                 → View your exchange
                             </button>
                         )}
-                        {userId && service.contactId && service.contactId !== userId && !service.providerIsAgent && (
+                        {userId && service.contactId && service.contactId !== userId && (
                             <Link className="msg-link" to={messagesHref(service.contactId, openingId)}>
                                 {service.type === 'need' ? 'Message who needs it' : 'Message who offers it'}
                             </Link>

@@ -81,7 +81,8 @@ function ServiceCard({
     // or a manager of the providing entity), or the provider id is simply me.
     const isOwnOpening = isProvider || !!(currentUserId && providerId && currentUserId === providerId);
     // Whoever may see it may write to the human who posted it, about it.
-    const writeTo = currentUserId && contactId && contactId !== currentUserId && !providerIsAgent && !isOwnOpening
+    // An AI persona's too: the conversation then says that personas don't read messages.
+    const writeTo = currentUserId && contactId && contactId !== currentUserId && !isOwnOpening
         ? messagesHref(contactId, id) : null;
     const messageLink = writeTo && (
         <Link className="card-msg" to={writeTo} onClick={(e) => e.stopPropagation()}

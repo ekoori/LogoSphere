@@ -53,7 +53,7 @@ function MessageOtherSide({ xc, isInitiator, isOther, userId }) {
     const other = isInitiator
         ? { id: xc.recipient_acting_user_id || (xc.other_kind === 'user' ? xc.other_user_id : null), agent: xc.other_is_agent }
         : { id: xc.initiator_acting_user_id || (xc.initiator_kind === 'user' ? xc.user_id : null), agent: xc.initiator_is_agent };
-    if (!other.id || other.agent || String(other.id) === String(userId)) return null;
+    if (!other.id || String(other.id) === String(userId)) return null;
     return <Link className="msg-link" to={messagesHref(other.id, xc.source_service_id)}>Send a message</Link>;
 }
 

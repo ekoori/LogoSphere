@@ -61,7 +61,8 @@ class MessagingTest {
         val opening = Opening(id = "o", contactId = "ada")
         assertEquals("ada", Messaging.openingContact(opening, "ben"))
         assertNull(Messaging.openingContact(opening, "ada"))
-        assertNull(Messaging.openingContact(opening.copy(providerIsAgent = true), "ben")) // personas don't read messages
+        // A persona's too: the conversation then says that personas don't read messages.
+        assertEquals("ada", Messaging.openingContact(opening.copy(providerIsAgent = true), "ben"))
     }
 
     @Test
@@ -72,7 +73,7 @@ class MessagingTest {
         assertEquals("ben", Messaging.otherSide(x, "ada", isInitiator = true, isOther = false))
         assertEquals("ada", Messaging.otherSide(x, "ben", isInitiator = false, isOther = true))
         assertNull(Messaging.otherSide(x, "cy", isInitiator = false, isOther = false))
-        assertNull(Messaging.otherSide(x.copy(otherIsAgent = true), "ada", isInitiator = true, isOther = false))
+        assertEquals("ben", Messaging.otherSide(x.copy(otherIsAgent = true), "ada", isInitiator = true, isOther = false))
         assertNull(Messaging.otherSide(x.copy(recipientActingUserId = null), "ada", isInitiator = true, isOther = false))
     }
 

@@ -107,7 +107,7 @@ def _contact(person_id):
     from app.utils import messaging
     from app.utils.names import resolve_user_names
     found = messaging.person(person_id)
-    if not found or found.is_agent:
+    if not found:
         return None
     return {'id': str(found.user_id), 'name': resolve_user_names([found.user_id]).get(found.user_id) or 'A member'}
 

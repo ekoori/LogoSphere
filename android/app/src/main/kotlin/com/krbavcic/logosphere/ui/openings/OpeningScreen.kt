@@ -429,7 +429,7 @@ private fun OpeningContent(data: OpeningData, vm: OpeningViewModel, busy: Boolea
                                 busy,
                                 onConfirm = { vm.confirm(acceptance) },
                                 onDecline = { vm.decline(acceptance) },
-                                onMessage = if ((isOwn || opening.isProvider) && !acceptance.isAgent) {
+                                onMessage = if (isOwn || opening.isProvider) {
                                     { navigator.conversation(acceptance.actingUserId ?: acceptance.accepterId, opening.id) }
                                 } else {
                                     null

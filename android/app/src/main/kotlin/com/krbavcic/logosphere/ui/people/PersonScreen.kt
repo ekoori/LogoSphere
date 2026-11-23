@@ -175,7 +175,8 @@ fun PersonScreen(id: String, initialTab: String? = null) {
                     if (!vm.isSelf) {
                         item(key = "contact") {
                             Column {
-                                if (data.user.canMessage) {
+                                // An AI persona's too: the conversation then says they don't read messages.
+                                if (data.user.canMessage || data.user.isAgent) {
                                     OutlinedButton(onClick = { navigator.conversation(id) }, modifier = Modifier.fillMaxWidth()) {
                                         Text("Message")
                                     }

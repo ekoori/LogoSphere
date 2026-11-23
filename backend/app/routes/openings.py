@@ -226,7 +226,7 @@ def _enrich_service(s, viewer, include_exchanges=False, ctx=None):
     d['provider_is_agent'] = is_agent(getattr(s, 'acting_user_id', None) or s.provider_id)
     # Who to write to about it, also in lists: the human who posted it (a group has no inbox).
     who = getattr(s, 'acting_user_id', None) or s.provider_id
-    d['contact_id'] = str(who) if viewer and who and not d['provider_is_agent'] and _is_person(who) else None
+    d['contact_id'] = str(who) if viewer and who and _is_person(who) else None
     d['liked_by'] = ctx.likers(sid) if ctx is not None else Service.likers(sid)
     d['likes'] = len(d['liked_by'])
     d['liked_by_current_user'] = any(l['id'] == str(viewer) for l in d['liked_by']) if viewer else False

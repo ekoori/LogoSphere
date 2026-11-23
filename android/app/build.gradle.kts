@@ -19,7 +19,7 @@ fun releaseSigning(property: String, variable: String): String? =
 val releaseKeystore = releaseSigning("logosphereKeystore", "LOGOSPHERE_KEYSTORE")
 
 // The version, and a version code derived from it so it always rises: 1.2.3 is 10203.
-val appVersion = "0.3.0"
+val appVersion = "0.3.1"
 val appVersionCode = appVersion.split(".").map(String::toInt)
     .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 

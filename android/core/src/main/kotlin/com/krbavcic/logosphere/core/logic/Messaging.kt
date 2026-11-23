@@ -22,7 +22,7 @@ object Messaging {
 
     /** Who to write to about an opening, if that's someone else who reads messages. */
     fun openingContact(opening: Opening, viewerId: String?): String? =
-        opening.contactId?.takeIf { viewerId != null && it != viewerId && !opening.providerIsAgent }
+        opening.contactId?.takeIf { viewerId != null && it != viewerId }
 
     /** The human on the other side of an exchange, for a side of it; null when that's an AI persona. */
     fun otherSide(exchange: Exchange, viewerId: String?, isInitiator: Boolean, isOther: Boolean): String? {
@@ -31,7 +31,6 @@ object Messaging {
             isOther -> Parties.initiator(exchange, viewerId)
             else -> null
         } ?: return null
-        if (party.isAgent) return null
         val person = party.actingUserId ?: party.id.takeIf { party.group == null }
         return person?.takeIf { it != viewerId }
     }

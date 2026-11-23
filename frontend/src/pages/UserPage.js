@@ -110,7 +110,7 @@ function UserPage() {
                             {following ? '✓ Following' : '+ Follow'}
                         </button>
                     )}
-                    {viewerId && !isOwnPage && user.can_message && (
+                    {viewerId && !isOwnPage && (user.can_message || user.is_agent) && (
                         <Link className="msg-link" to={messagesHref(id)}>Message</Link>
                     )}
                     {viewerId && !isOwnPage && (
