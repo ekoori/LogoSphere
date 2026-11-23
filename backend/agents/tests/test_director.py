@@ -165,6 +165,37 @@ def test_the_first_inbox_pass_answers_nothing_old(world):
     assert any(c[2] == '/api/notifications/read' for c in w.calls)     # cleared, not answered
 
 
+def test_a_message_is_answered_and_read(world):
+    w = world
+    w.routes[('GET', '/api/notifications')] = lambda who: {'notifications': [{
+        'notification_id': 'm1', 'created_at': '2026-11-20T09:59:00', 'type': 'message', 'actor_id': REAL,
+        'actor_is_agent': False, 'link': f'/messages?with={REAL}', 'is_read': False}]} if who == MARIE else {'notifications': []}
+    w.routes[('GET', f'/api/messages/{REAL}')] = {'can_send': True, 'person': {'id': REAL, 'name': 'Ada'}, 'messages': [
+        {'id': 'a1', 'text': 'Is your shed still a mess?', 'mine': False, 'about': None},
+        {'id': 'a2', 'text': 'Are you a real person?', 'mine': False, 'about': {'title': 'Shed sorting'}}]}
+    asked = []
+    w.d._writer = SimpleNamespace(answer=lambda *a: asked.append(a) or SimpleNamespace(text='I am an AI persona here.'))
+    w.store.settings['baseline:inbox'] = '2026-11-19T00:00:00'
+    w.d.plan_round(w.d.observe_inbox())
+    assert [t['action'] for t in w.store.queue] == ['answer_message']
+    w.clock['now'] = NOW + timedelta(minutes=5)
+    for task in w.store.due(w.clock['now']):
+        w.d.run_task(task)
+    persona, name, history, about = asked[0]
+    assert name == 'Ada' and history[-1] == (False, 'Are you a real person?') and about == 'Shed sorting'
+    assert (MARIE, 'POST', f'/api/messages/{REAL}', {'text': 'I am an AI persona here.'}) in w.calls
+    assert (MARIE, 'POST', f'/api/messages/{REAL}/read', {'up_to': 'a2'}) in w.calls
+
+
+def test_nothing_is_answered_twice(world):
+    w = world
+    w.routes[('GET', f'/api/messages/{REAL}')] = {'can_send': True, 'person': {'id': REAL, 'name': 'Ada'}, 'messages': [
+        {'id': 'a1', 'text': 'Hello', 'mine': False}, {'id': 'm1', 'text': 'Hello Ada', 'mine': True}]}
+    w.d._writer = SimpleNamespace(answer=lambda *a: pytest.fail('nothing should be written'))
+    assert w.d.do_answer_message(w.d.personas[MARIE], {'person_id': REAL}) == 'nothing to answer'
+    assert not [c for c in w.calls if c[1] == 'POST']
+
+
 def test_a_post_can_ask_for_its_banner(world):
     w = world
     w.routes[('POST', '/api/openings')] = {'service_id': 'o-new'}

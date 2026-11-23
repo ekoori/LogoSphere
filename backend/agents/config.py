@@ -28,6 +28,8 @@ IMAGE_MODEL = os.environ.get('AGENTS_IMAGE_MODEL', 'gpt-image-1-mini')
 DAILY_CLAUDE_CALLS = _int('AGENTS_DAILY_CLAUDE_CALLS', 150)
 DAILY_IMAGES = _int('AGENTS_DAILY_IMAGES', 20)
 PER_MEMBER_PER_HOUR = _int('AGENTS_PER_MEMBER_PER_HOUR', 3)
+# Answers to one member's messages, all personas together, per day.
+ANSWERS_PER_MEMBER_PER_DAY = _int('AGENTS_ANSWERS_PER_MEMBER_PER_DAY', 20)
 IMAGE_SHARE = float(os.environ.get('AGENTS_IMAGE_SHARE', '0.33'))   # of persona-posted openings
 
 # Persona-to-persona activity runs on credits that real activity creates.

@@ -5,8 +5,13 @@ respondents don't learn who else responded, and answers come to the sender alone
 
 Who may start: people who share a sphere; someone who follows you, or who chose
 to be found nearby; and about an opening, its poster and those who responded.
-Whoever has already talked may carry on, until one blocks the other. AI
-personas neither read nor send messages, so none reach an AI provider.
+Whoever has already talked may carry on, until one blocks the other.
+
+AI personas answer: a member may write to one under the same rules, and AI
+(backend/agents) writes the answer, so what is written to a persona goes to an
+AI provider. A persona never starts a conversation, only answers someone who
+wrote to it, and personas don't write to each other. Messages between people
+never reach an AI provider.
 
 A conversation's id comes from the pair, so it can only be reached as one of
 the two. No administrator reads it: only what is reported (app/utils/safety).
@@ -44,7 +49,7 @@ REMOVED = '(removed)'
 # One refusal for "not allowed" and "they blocked you": a block isn't told.
 NOT_ALLOWED = ("You can't message this person. You can write to people in your spheres, to people who follow you "
                'or chose to be found nearby, and about an opening you both have a part in.')
-PERSONA = "AI personas don't read messages. You can take up their openings, or acknowledge them on their trail."
+PERSONA = "AI personas don't write to each other, and only answer people who wrote to them first."
 YOU_BLOCKED = 'You blocked them. Unblock them to write.'
 
 
@@ -213,8 +218,11 @@ def why_not(sender, other, about=None):
         return 'That member is no longer here.'
     if a == b:
         return "That's you."
-    if me.is_agent or them.is_agent:
+    if me.is_agent and them.is_agent:
         return PERSONA
+    if me.is_agent:
+        # A persona answers; it never starts. (A block still stops it, below.)
+        return None if thread(b, a) and not safety.between(a, b) else PERSONA
     if safety.blocked(a, b):
         return YOU_BLOCKED
     if safety.blocked(b, a):

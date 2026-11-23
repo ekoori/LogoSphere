@@ -1,9 +1,12 @@
 # Private messages, blocking and reporting. The named demo accounts are AI
 # personas now, so these people are made for the test and removed after it.
 import re
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from conftest import PERSON_PASSWORD
 from app.models.notification import Notification
@@ -97,11 +100,43 @@ def test_everyone_who_responded_each_privately(people):
         assert str(other.id) not in str(person.get('/api/messages')[1])     # nobody learns who else responded
 
 
-def test_personas_neither_read_nor_write(api, people):
-    marie = api.uid('marie')
-    status, body = people['ada'].post(f'/api/messages/{marie}', {'text': 'Hello'})
+@pytest.fixture
+def with_marie(api, db, people, keep_rows):
+    """Ada joins Marie's demo spheres, to write to her. Their talk and Marie's notifications go afterwards."""
+    from app.models.spheres import Sphere
+    for sid in [s.sphere_id for s in Sphere.get_all() if s.is_demo]:
+        keep_rows('spheres', sphere_id=sid)
+    marie = uuid.UUID(api.uid('marie'))
+    before = {r.notification_id for r in db.execute('SELECT notification_id FROM notifications WHERE user_id = %s', [marie])}
+    yield marie
+    db.execute('DELETE FROM direct_messages WHERE conversation_id = %s', [messaging.conversation(people['ada'].id, marie)])
+    for who, other in ((marie, people['ada'].id), (people['ada'].id, marie)):
+        db.execute('DELETE FROM message_inbox WHERE user_id = %s AND other_id = %s', [who, other])
+    for r in list(db.execute('SELECT created_at, notification_id FROM notifications WHERE user_id = %s', [marie])):
+        if r.notification_id not in before:
+            db.execute('DELETE FROM notifications WHERE user_id = %s AND created_at = %s AND notification_id = %s',
+                       [marie, r.created_at, r.notification_id])
+
+
+def test_personas_answer_but_never_start(api, people, with_marie):
+    ada, ben, marie = people['ada'], people['ben'], with_marie
+    joe = api.uid('joe')
+    # Without anything in common there is still nothing to write about.
+    assert say(ada, SimpleNamespace(id=marie), 'Hello')[0] == 403
+    assert ada.post('/api/demo/join')[0] == 200
+    assert ada.get(f'/api/messages/{marie}')[1]['can_send'] is True
+    assert say(ada, SimpleNamespace(id=marie), 'Hello Marie, is the shed still a mess?')[0] == 201
+    assert [n['type'] for n in api.get('/api/notifications', who='marie')[1]['notifications']][:1] == ['message']
+    # Marie answers Ada, who wrote; she can't start with Ben, nor write to another persona.
+    assert api.post(f'/api/messages/{ada.id}', who='marie', json={'text': 'Still a mess, come and help.'})[0] == 201
+    assert api.post(f'/api/messages/{ben.id}', who='marie', json={'text': 'Hello'})[0] == 403
+    status, body = api.post(f'/api/messages/{joe}', who='marie', json={'text': 'Hello'})
     assert status == 403 and body['message'] == messaging.PERSONA
-    assert api.post(f"/api/messages/{people['ada'].id}", who='marie', json={'text': 'Hello'})[0] == 403
+    assert [m['text'] for m in ada.get(f'/api/messages/{marie}')[1]['messages']][-1] == 'Still a mess, come and help.'
+    # A block stops the answers too.
+    assert ada.post(f'/api/blocks/{marie}', {'blocked': True})[0] == 200
+    assert api.post(f'/api/messages/{ada.id}', who='marie', json={'text': 'Hello again'})[0] == 403
+    assert ada.post(f'/api/blocks/{marie}', {'blocked': False})[0] == 200
 
 
 def test_refuses_what_isnt_a_message(people):

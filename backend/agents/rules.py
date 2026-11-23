@@ -50,6 +50,7 @@ class Plan:
 class State:
     ripple: Dict[str, dict] = field(default_factory=dict)       # sphere -> {credits, at}
     member_hits: Dict[str, List[str]] = field(default_factory=dict)   # member -> [iso times]
+    answers: Dict[str, List[str]] = field(default_factory=dict)       # member -> [iso times] of answers planned
     done: set = field(default_factory=set)                     # done keys known this round
 
     def credits(self, sphere_id, now):
@@ -80,6 +81,15 @@ class State:
 
     def hit_member(self, member_id, now):
         self.member_hits.setdefault(member_id, []).append(now.isoformat())
+
+    def may_answer(self, member_id, now):
+        """Answers to one member's messages are capped per day, so a long talk can't spend the day's budget."""
+        recent = [t for t in self.answers.get(member_id, []) if now - datetime.fromisoformat(t) < timedelta(days=1)]
+        if len(recent) >= config.ANSWERS_PER_MEMBER_PER_DAY:
+            self.answers[member_id] = recent
+            return False
+        self.answers[member_id] = recent + [now.isoformat()]
+        return True
 
 
 def _later(rng, now, low_minutes, high_minutes):
@@ -236,6 +246,15 @@ def _exchange_receipted(e, origin, add, now, rng, sp, state):
         f"acknowledge:{e.ref['exchange_id']}")
 
 
+@_reaction(ripple_cost=False)
+def _message_received(e, origin, add, now, rng, sp, state):
+    """A member wrote to a persona: it answers, after a little while. Personas don't write to each other."""
+    if origin != 'real' or not state.may_answer(e.actor_id, now):
+        return
+    add(e.persona_id, 'answer_message', {'person_id': e.actor_id}, _later(rng, now, 1, 4), origin, e,
+        f'answer:{e.key}', member_id=e.actor_id, essential=True)
+
+
 REACTIONS = {
     'accept_request': _accept_request,
     'new_follower': _new_follower,
@@ -246,7 +265,8 @@ REACTIONS = {
     'exchange_open': _exchange_open,
     'member_joined': _member_joined,
     'exchange_receipted': _exchange_receipted,
+    'message_received': _message_received,
 }
 
 # Actions that need Claude (and count toward the daily cap).
-WRITING = {'write_side', 'post_opening', 'acknowledge'}
+WRITING = {'write_side', 'post_opening', 'acknowledge', 'answer_message'}

@@ -122,7 +122,8 @@ class Director:
             store.mark_done(p.done_key)
             log.info('Planned: %s %s at %s (%s)', self.personas[p.persona_id].name, p.action,
                      p.due_at.strftime('%H:%M'), p.origin)
-        store.set_json_setting('rules_state', {'ripple': state.ripple, 'member_hits': state.member_hits})
+        store.set_json_setting('rules_state', {'ripple': state.ripple, 'member_hits': state.member_hits,
+                                               'answers': state.answers})
 
     # ── Observers ────────────────────────────────────────────────────────────
     def observe_members(self):
@@ -184,6 +185,9 @@ class Director:
             return Event('accept_request', key, actor, agent, sphere, pid, {'service_id': sid})
         if kind == 'new_follower':
             return Event('new_follower', key, actor, agent, self.home_sphere(pid), pid)
+        if kind == 'message' and not agent:
+            # One notification stands for every message since the persona last answered.
+            return Event('message_received', key, actor, False, self.home_sphere(pid), pid)
         if kind == 'receipt_received':
             xid = _link_id(n.get('link'))
             if not xid:
@@ -354,6 +358,22 @@ class Director:
             return f"nothing to confirm on '{o.get('title')}'"
         api.post(f'/api/openings/{sid}/confirm', {'accepter_id': match['accepter_id']})
         return f"confirmed {match.get('accepter_name')}'s acceptance of '{o.get('title')}'"
+
+    def do_answer_message(self, p, payload):
+        """Answers whoever wrote, from what they wrote. Marking it read lets their next message be noticed."""
+        api, who = self.api(p.user_id), payload['person_id']
+        talk = api.get(f'/api/messages/{who}')
+        messages = talk.get('messages') or []
+        theirs = [m for m in messages if not m.get('mine')]
+        if not talk.get('can_send') or not theirs or messages[-1].get('mine'):
+            return 'nothing to answer'
+        about = next((m['about']['title'] for m in reversed(messages) if m.get('about')), None)
+        name = (talk.get('person') or {}).get('name') or 'a neighbour'
+        written = self.writer.answer(p, name, [(bool(m.get('mine')), m.get('text') or '') for m in messages[-12:]], about)
+        if written is not None and written.text.strip():
+            api.post(f'/api/messages/{who}', {'text': written.text.strip()[:1500]})
+        api.post(f'/api/messages/{who}/read', {'up_to': theirs[-1]['id']})
+        return f'answered {name}' if written is not None else 'declined to answer'
 
     def do_follow(self, p, payload):
         api, uid = self.api(p.user_id), payload['user_id']

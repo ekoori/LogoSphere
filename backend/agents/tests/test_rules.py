@@ -112,6 +112,21 @@ def test_with_a_real_member_the_persona_does_not_finish_the_exchange():
     assert plans == []
 
 
+def test_a_message_is_answered_and_answers_are_capped_per_member(monkeypatch):
+    from agents import config as cfg
+    monkeypatch.setattr(cfg, 'ANSWERS_PER_MEMBER_PER_DAY', 2)
+    state = State()
+    first = [Event('message_received', f'm:{n}', 'real-1', False, 'sph', 'p-marie') for n in range(3)]
+    plans = plan(first, state, now=NOW, rng=random.Random(1))
+    assert [p.action for p in plans] == ['answer_message', 'answer_message']     # the third waits a day
+    assert all(NOW < p.due_at <= NOW + timedelta(minutes=4) for p in plans)
+    later = plan([Event('message_received', 'm:9', 'real-1', False, 'sph', 'p-marie')], state,
+                 now=NOW + timedelta(days=1, minutes=1), rng=random.Random(1))
+    assert [p.action for p in later] == ['answer_message']
+    # Personas don't answer personas.
+    assert plan([Event('message_received', 'm:p', 'p-joe', True, 'sph', 'p-marie')], State(), now=NOW) == []
+
+
 def test_a_new_member_is_welcomed():
     plans, _ = run([Event('member_joined', 'j:1', REAL, False, SPHERE)])
     assert [p.action for p in plans] == ['follow'] and plans[0].payload == {'user_id': REAL}
