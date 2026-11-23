@@ -252,7 +252,7 @@ object InfoContent {
                 "To lend, to borrow" to "An opening for something that comes back. You finish the exchange once it’s home.",
                 "Events & announcements" to "What’s on, once or repeating, with who’s coming; and a short word from a group’s managers to its members.",
                 "Near you" to "Say where you are, as roughly as you like, and see what’s near as rough distances. Others find you only if you allow it.",
-                "Messages" to "Private, between two people. You can block and report.",
+                "Messages" to "Private, between two people. You can block and report. AI personas answer, and AI writes what they say.",
                 "Invitation" to "A link you share yourself, to LogoSphere or straight into a group. It works for two weeks.",
                 "Simple & Advanced" to "How much you’re shown. Simple keeps to giving, asking and thanking; switch whenever you like.",
             ),
@@ -312,7 +312,7 @@ object InfoContent {
                 "Is AI used here?" to "Only where it says so. It can help you word a value card or draw a picture, when you press its button, and it plays the labelled personas in demo spheres. Outside the demo spheres, pictures made with AI aren’t evidence: not receipt photos, not exchange pictures.",
                 "Will it email me?" to "Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on. For now our email comes from no-reply@hrana.app.",
                 "What if I just want to watch for now?" to "That’s completely fine. You can see what’s being offered and needed before you ever post anything yourself.",
-                "What are the demo spheres, and who are the “AI personas”?" to "Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real.",
+                "What are the demo spheres, and who are the “AI personas”?" to "Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real. You can message them too: AI writes their answers.",
                 "Is there a phone app?" to "Yes — this Android app does nearly everything the website does (invitation links open on the website). On other phones, the website works in your browser.",
                 "Can I leave a group, or delete my account?" to "Any time. Leave a group from its page; download your data or delete your account on the Me tab, under Password, email, data & account.",
                 "Isn’t this just one more app to manage?" to "It’s meant to replace the digging-through-the-group-chat step, not add to it — one place where who-needs-what and who’s-already-helping actually lives.",
@@ -444,7 +444,7 @@ object InfoContent {
                 "An event, with who is coming, is seen by the members of its sphere, or by every signed-in member when it is for everyone.",
                 "An announcement is read by the group’s members, and for an alliance or project by the rest of its sphere. Its notification never has the words.",
                 "An invitation link shows your name, and the group’s, to whoever holds it. You’re told who joined with it.",
-                "A message is for the two people in it. Writing to everyone who responded to an opening sends each their own, so they don’t learn who else responded. AI personas neither read nor send messages, and none go to an AI provider.",
+                "A message is for the two people in it. Writing to everyone who responded to an opening sends each their own, so they don’t learn who else responded. A message to an AI persona is read by AI to write the persona’s answer, so it goes to Anthropic. Messages between people never go to an AI provider.",
                 "A block isn’t told to the person it’s about. A report goes only to the platform’s administrators.",
                 "Platform administrators — the few people who run LogoSphere — can see email addresses and what happens in every group, so they can keep the platform working and safe, and use that access only for that. They don’t see your point on the map, and of private messages they see only what was reported. Like all that is stored, both can be reached by whoever runs the server: messages aren’t end-to-end encrypted.",
             ),
@@ -467,7 +467,7 @@ object InfoContent {
                 "pictures by OpenAI. They are not the real people, and every one of them is labelled.",
         ),
         Block.Note(
-            "To write the personas’ replies, what happens in the demo spheres — including your name and what you post there — is sent to " +
+            "To write the personas’ replies, what happens in the demo spheres — including your name, what you post there and what you write to a persona — is sent to " +
                 "Anthropic and OpenAI. The personas act only in the demo spheres, and nothing from the real spheres is sent to " +
                 "write them. If you’d rather not, simply don’t join the demo spheres.",
         ),
@@ -608,9 +608,10 @@ object InfoContent {
         Block.Para(
             "The demo spheres are clearly labelled practice spaces. Most of their members are AI personas: characters with famous " +
                 "names, playing everyday neighbours, written by AI. They are not the real people, nothing they say is an " +
-                "endorsement, and nothing in a demo sphere is real — no help is actually promised there.",
+                "endorsement, and nothing in a demo sphere is real — no help is actually promised there. They answer " +
+                "messages too, and AI writes those answers.",
         ),
-        Block.Para("What you post in a demo sphere is processed by AI services to write the personas’ replies — see the privacy policy."),
+        Block.Para("What you post in a demo sphere, and what you write to a persona, is processed by AI services to write the personas’ replies — see the privacy policy."),
         Block.Heading("Leaving", "08"),
         Block.Para(
             "You can leave any group from its page, and delete your account yourself, any time. We may close an account that " +

@@ -223,6 +223,9 @@ fun ConversationScreen(personId: String, openingId: String? = null, about: Strin
                 if (newest != null) list.scrollToItem(0)
             }
             Column(Modifier.padding(padding).fillMaxSize().imePadding()) {
+                if (data.person.isAgent) {
+                    MetaText("An AI persona from the demo spheres: AI writes their answers, so what you write here is sent to Anthropic. They answer within a few minutes, a limited number of times a day.", Modifier.padding(horizontal = ScreenPadding, vertical = 4.dp), maxLines = 5)
+                }
                 data.about?.let { about ->
                     LinkText(
                         "About: ${about.title}",
