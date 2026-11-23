@@ -28,7 +28,7 @@ sealed interface AppLink {
     data class Person(val id: String, val tab: String? = null) : AppLink
 
     /** [owner]: opened on that person's or group's cards. */
-    data class MeaningGraph(val owner: String? = null) : AppLink
+    data class MeaningGraph(val owner: String? = null, val card: String? = null) : AppLink
     data object Me : AppLink
     data object EditProfile : AppLink
     data object Account : AppLink
@@ -77,7 +77,10 @@ object Links {
                 about = params["about"]?.takeIf { it.contains(':') },
             )
             path == "/admin" -> AppLink.Admin
-            path == "/meaning-graph" -> AppLink.MeaningGraph(params["owner"]?.takeIf { it.isNotBlank() })
+            path == "/meaning-graph" -> AppLink.MeaningGraph(
+                params["owner"]?.takeIf { it.isNotBlank() },
+                params["card"]?.takeIf { it.isNotBlank() },
+            )
             path == "/opening" -> id?.let { AppLink.Opening(it) }
             path == "/exchange" -> id?.let { AppLink.Exchange(it) }
             path == "/user" -> id?.let { AppLink.Person(it, tab) }

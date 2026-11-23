@@ -40,7 +40,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class ConversationRoute(val personId: String, val openingId: String? = null, val about: String? = null)
 
 /** The Meaning Graph; [owner] opens it on one person's or group's cards. */
-@Serializable data class GraphRoute(val owner: String? = null)
+@Serializable data class GraphRoute(val owner: String? = null, val card: String? = null)
 @Serializable data object EditProfileRoute
 @Serializable data object AccountRoute
 
@@ -108,7 +108,8 @@ class Navigator(
     fun conversation(personId: String, openingId: String? = null, about: String? = null) =
         controller.navigate(ConversationRoute(personId, openingId, about))
 
-    fun meaningGraph(owner: String? = null) = controller.navigate(GraphRoute(owner))
+    /** [card]: open on that value card's dot. */
+    fun meaningGraph(owner: String? = null, card: String? = null) = controller.navigate(GraphRoute(owner, card))
 
     fun register() = controller.navigate(RegisterRoute)
 
@@ -138,7 +139,7 @@ class Navigator(
         is AppLink.Community -> community(link.kind, link.id, link.tab)
         is AppLink.Manage -> manageCommunity(link.kind, link.id)
         is AppLink.Person -> personTab(link.id, link.tab)
-        is AppLink.MeaningGraph -> meaningGraph(link.owner)
+        is AppLink.MeaningGraph -> meaningGraph(link.owner, link.card)
         AppLink.Me -> tab(Tab.Me)
         AppLink.EditProfile -> editProfile()
         AppLink.Account -> account()

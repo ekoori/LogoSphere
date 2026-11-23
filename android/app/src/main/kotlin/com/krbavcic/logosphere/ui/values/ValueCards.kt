@@ -41,6 +41,8 @@ import com.krbavcic.logosphere.ui.common.BrandCard
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.Pill
 import com.krbavcic.logosphere.ui.common.QuietPill
+import com.krbavcic.logosphere.ui.LocalNavigator
+import com.krbavcic.logosphere.ui.common.LinkText
 import com.krbavcic.logosphere.ui.theme.Brand
 import com.krbavcic.logosphere.ui.theme.Palette
 import com.krbavcic.logosphere.ui.theme.valueCardAccent
@@ -111,6 +113,12 @@ fun ValueCardItem(
                 Field("Never", card.neverDo, MaterialTheme.colorScheme.error)
             }
             ValueCardStateRow(card, actions, busy)
+            if (expanded) {
+                card.id?.let { id ->
+                    val navigator = LocalNavigator.current
+                    LinkText("See it on the Meaning Graph", { navigator.meaningGraph(card = id) })
+                }
+            }
             MetaText(if (expanded) "▲ Less" else "▼ More")
         }
     }

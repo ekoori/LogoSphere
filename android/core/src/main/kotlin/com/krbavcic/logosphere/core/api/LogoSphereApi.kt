@@ -99,6 +99,7 @@ import com.krbavcic.logosphere.core.model.NewInvite
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
 import com.krbavcic.logosphere.core.model.CardSuggestion
+import com.krbavcic.logosphere.core.model.GraphNodeRef
 import com.krbavcic.logosphere.core.model.MessageAbout
 import java.util.concurrent.TimeUnit
 
@@ -407,6 +408,13 @@ class LogoSphereApi(
 
     /** How closeness is worked out, in full. */
     suspend fun meaningGraphMethod(): ClosenessMethod = get("/api/meaning_graph/method")
+
+    /** Which dot [cardId] is on the graph (any version of it); null when the viewer can't see it there. */
+    suspend fun meaningGraphNode(cardId: String): String? = try {
+        get<GraphNodeRef>("/api/meaning_graph/card/$cardId").id
+    } catch (e: ApiException) {
+        if (e.status == 404) null else throw e
+    }
 
     /** The member's judgement of a pair; null takes it back. */
     suspend fun judgeCloseness(a: String, b: String, close: Boolean?): GraphEdge = post<JudgementResult>(

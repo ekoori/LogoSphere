@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -65,6 +66,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.theme.FrauncesDisplay
 import com.krbavcic.logosphere.ui.theme.Palette
 import com.krbavcic.logosphere.ui.theme.kindGradient
@@ -235,7 +237,7 @@ fun ValueChips(cards: List<ValueCard>, modifier: Modifier = Modifier, subjectLab
 /** The full value card — its CLEAR fields — in a bottom sheet. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String = "Cares about") {
+fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String = "Cares about", showOnGraph: Boolean = true) {
     val accent = valueCardAccent(card.colorKey)
     val mode = FranklMode.of(card.franklMode).takeUnless { LocalSimple.current }
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
@@ -267,6 +269,14 @@ fun ValueCardSheet(card: ValueCard, onDismiss: () -> Unit, subjectLabel: String 
             CardField("Drift looks like", card.driftLooksLike, tint = Palette.HoneyDeep)
             CardField("When in conflict, choose", card.inConflict)
             CardField("Never do", card.neverDo, tint = MaterialTheme.colorScheme.error)
+            if (showOnGraph) {
+                card.id?.let { id ->
+                    val navigator = LocalNavigator.current
+                    OutlinedButton(onClick = { onDismiss(); navigator.meaningGraph(card = id) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("See it on the Meaning Graph")
+                    }
+                }
+            }
             CloneSection(card)
         }
     }

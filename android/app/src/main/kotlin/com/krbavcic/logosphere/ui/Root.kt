@@ -269,7 +269,7 @@ fun LogoSphereRoot() {
                         val route = it.toRoute<ConversationRoute>()
                         ConversationScreen(route.personId, route.openingId, route.about)
                     }
-                    composable<GraphRoute> { GraphScreen(it.toRoute<GraphRoute>().owner) }
+                    composable<GraphRoute> { it.toRoute<GraphRoute>().let { route -> GraphScreen(route.owner, route.card) } }
                     composable<EditProfileRoute> { EditProfileScreen() }
                     composable<AccountRoute> { AccountScreen() }
                     composable<ValueCardEditorRoute> {

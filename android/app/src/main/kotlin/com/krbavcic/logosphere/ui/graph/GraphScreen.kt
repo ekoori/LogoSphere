@@ -37,6 +37,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -120,7 +121,7 @@ private const val MOST_PERCENT = 50f
 
 /** The Meaning Graph: every value card the member may read, drawn by closeness. [startOwner] starts on one owner's. */
 @Composable
-fun GraphScreen(startOwner: String?) {
+fun GraphScreen(startOwner: String?, startCard: String? = null) {
     val app = LocalAppContainer.current
     val vm: GraphViewModel = viewModel { GraphViewModel(app) }
     val navigator = LocalNavigator.current
@@ -145,6 +146,18 @@ fun GraphScreen(startOwner: String?) {
     var reading by remember { mutableStateOf<ValueCard?>(null) }
     val drawing = remember { GraphDrawing() }
     val simple = LocalSimple.current
+
+    // Opened from a value card: on its dot, with what is close to it.
+    LaunchedEffect(startCard) {
+        val card = startCard ?: return@LaunchedEffect
+        val root = runCatching { app.api.meaningGraphNode(card) }.getOrNull()
+        if (root != null) {
+            selected = root
+            focus = root
+        } else {
+            snackbar.showSnackbar("That card isn't on the graph you can see.")
+        }
+    }
 
     fun showEverything() {
         scope = 0
@@ -332,7 +345,7 @@ fun GraphScreen(startOwner: String?) {
         }
     }
 
-    reading?.let { ValueCardSheet(it, onDismiss = { reading = null }) }
+    reading?.let { ValueCardSheet(it, onDismiss = { reading = null }, showOnGraph = false) }
     if (showMethod) MethodSheet(method, onRetry = vm::loadMethod, onDismiss = { showMethod = false })
 }
 

@@ -111,3 +111,7 @@ data class ClosenessMethod(
     val families: Map<String, List<String>> = emptyMap(),
     val sources: List<MethodSource> = emptyList(),
 )
+
+/** `GET /api/meaning_graph/card/<id>`: which dot a value card is. */
+@Serializable
+data class GraphNodeRef(val id: String)
