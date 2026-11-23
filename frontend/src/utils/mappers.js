@@ -235,6 +235,7 @@ export function mapExchange(row, { ownerLabel = 'You', ownerId = null } = {}) {
                 { name: ownerLabel, id: ownerLinkId, kind: ownerKind, isAgent: !!row.other_is_agent },
             ],
         isDemo: !!row.is_demo,
+        effortHours: row.effort_hours ?? null,
         // Only what the people wrote - no generated stand-in.
         description: row.exchange_long_description || '',
         project: row.project_name || null,

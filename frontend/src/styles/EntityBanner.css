@@ -225,3 +225,16 @@
 
 /* Pills on a banner: light on dark, or a clay pill disappears into the wash. */
 .ep-banner-content .pill { background: rgba(0, 0, 0, 0.45); color: #fdfaf2; text-shadow: none; }
+
+/* Writing to whoever runs it, from the banner: light on the wash, like Leave. */
+.ep-banner-content .ep-msg-link {
+    margin: 0.6rem 0 0 0.4rem;
+    min-height: 0;
+    padding: 0.4em 1em;
+    background: rgba(247, 244, 232, 0.14);
+    color: #fdfaf2;
+    border: 1px solid rgba(247, 244, 232, 0.55);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+.ep-banner-content .ep-msg-link:hover { background: rgba(20, 24, 16, 0.35); }

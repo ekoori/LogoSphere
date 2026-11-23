@@ -18,6 +18,7 @@ import ValueCardChip from './ValueCardChip';
 import Avatar from './Avatar';
 import { useEntityIndex } from '../utils/useEntityIndex';
 import { showsPersonaTag } from '../utils/exchangeRules';
+import { hoursGiven } from '../utils/effort';
 import '../styles/MeaningTrail.css';
 import '../styles/ValueCardChip.css';
 
@@ -78,7 +79,7 @@ function ExchangeCard({
     initiatedTime, inProgressTime, finishedTime, receiptedTime, additionalCommentsTime,
     hasFollowupComment,
     receipts, acknowledgements,
-    ownSide = null, hasNote = false, hasReceipt = false, onChanged, isDemo = false,
+    ownSide = null, hasNote = false, hasReceipt = false, onChanged, isDemo = false, effortHours = null,
 }) {
     const navigate = useNavigate();
     const { entityHref } = useEntityIndex();
@@ -163,11 +164,12 @@ function ExchangeCard({
 
     const hasReceipts = localReceipts.length > 0;
     const pillClass = TYPE_PILL[type] || 'pill-clay';
-    const typeLabel = TYPE_LABELS[type] || type;
+    // Where it has got to, in the words of its progress strip.
+    const typeLabel = cancelled ? 'Cancelled' : (xcStepLabels[stepIdx] || TYPE_LABELS[type] || type);
 
     return (
         <div
-            className={`exchange ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
+            className={`xc-card ${type} ${isExpanded ? 'expanded' : 'collapsed'}`}
             onClick={() => !isExpanded && setIsExpanded(true)}
         >
             {/* ── Summary row — always visible ────────────────────────────── */}
@@ -187,16 +189,18 @@ function ExchangeCard({
                     ) : (
                         <span className="xc-title">{title}</span>
                     )}
-                    {isDemo && <DemoTag />}
-                    {!isExpanded && participants.length > 0 && (
-                        <span className="xc-participants-inline">
+                    {isExpanded && isDemo && <DemoTag />}
+                    {!isExpanded && (
+                        <span className="xc-meta-inline">
                             {participants.map((p, i) => (
                                 <React.Fragment key={i}>
                                     <Link to={pHref(p)} onClick={(e) => e.stopPropagation()}>{pName(p)}</Link>
                                     {showsPersonaTag(p) && <PersonaTag compact />}
-                                    {i < participants.length - 1 ? ' · ' : ''}
+                                    {i < participants.length - 1 && <span className="xc-dot" aria-hidden="true">·</span>}
                                 </React.Fragment>
                             ))}
+                            {effortHours > 0 && <span>· {hoursGiven(effortHours, { short: true })}</span>}
+                            {isDemo && <DemoTag />}
                         </span>
                     )}
                 </div>
@@ -352,6 +356,7 @@ function ExchangeCard({
 ExchangeCard.propTypes = {
     id: PropTypes.string,
     isDemo: PropTypes.bool,
+    effortHours: PropTypes.number,
     type: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     spheres: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.object])).isRequired,

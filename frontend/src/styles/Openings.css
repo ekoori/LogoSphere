@@ -325,9 +325,10 @@
 .provider-line { display: inline-flex; align-items: center; gap: 0.4em; flex-wrap: wrap; }
 /* Message whoever posted it, from the card */
 .card-msg {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 32px; min-height: 32px; margin: -6px 0; border-radius: var(--r-pill);
-    color: var(--moss-deep); text-decoration: none; font-size: 1.05em; line-height: 1;
+    display: inline-flex; align-items: center; gap: 0.3em;
+    min-height: 32px; margin: -4px 0 -4px 0.2em; padding: 0 0.7em; border: 1px solid var(--border-soft);
+    border-radius: var(--r-pill); color: var(--moss-deep); text-decoration: none;
+    font-size: 0.8rem; font-weight: 600; line-height: 1;
 }
 .card-msg:hover, .card-msg:focus-visible { background: var(--paper-deep); }
 

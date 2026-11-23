@@ -85,7 +85,7 @@ function ServiceCard({
         ? messagesHref(contactId, id) : null;
     const messageLink = writeTo && (
         <Link className="card-msg" to={writeTo} onClick={(e) => e.stopPropagation()}
-              aria-label={`Message ${actingUser || provider} about this`} title="Message about this">✉</Link>
+              aria-label={`Message ${actingUser || provider} about this`} title="Message about this"><span aria-hidden="true">✉</span> Message</Link>
     );
     // Who sees the confirm/decline controls: the party, or a platform admin.
     const mayManage = canManage || isOwnOpening;
