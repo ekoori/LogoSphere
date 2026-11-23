@@ -118,6 +118,9 @@ def get_exchange_image(exchange_id, user_id=None):
         return ('', 404)
 
 
+# A receipt may say about how long it took: a quarter of an hour to 100 hours.
+HOURS_MIN, HOURS_MAX = 0.25, 100
+
 # Photos are sent just after the receipt that may itself finish the exchange.
 PHOTOS_FOLLOW_RECEIPT = timedelta(hours=1)
 
@@ -292,6 +295,21 @@ def update_xc_status(exchange_id, user_id=None):
         return jsonify({'message': 'Internal server error'}), 500
 
 
+def _hours(given):
+    """(hours to the nearest quarter, None) or (None, what's wrong). Nothing given is fine."""
+    if given is None or given == '':
+        return None, None
+    if isinstance(given, bool):
+        return None, 'Say the hours as a number, or leave them out.'
+    try:
+        hours = float(given)
+    except (TypeError, ValueError):
+        return None, 'Say the hours as a number, or leave them out.'
+    if not HOURS_MIN <= hours <= HOURS_MAX:
+        return None, f'Hours go from a quarter of an hour to {HOURS_MAX:g}.'
+    return round(hours * 4) / 4, None
+
+
 @validate_session
 def add_xc_comment(exchange_id, user_id=None):
     if request.method == 'OPTIONS':
@@ -365,6 +383,9 @@ def add_xc_comment(exchange_id, user_id=None):
         frankl_mode = data.get('frankl_mode')
         if frankl_mode not in ('creative', 'experiential', 'attitudinal'):
             frankl_mode = None
+        hours, wrong = _hours(data.get('hours')) if comment_type == 'gratitude' else (None, None)
+        if wrong:
+            return jsonify({'message': wrong}), 400
         ok = MeaningTrail.add_comment_for(
             tx_dict['user_id'], exchange_id, comment_type, text,
             author_id=str(user_id), author_name=author_name,
@@ -372,6 +393,7 @@ def add_xc_comment(exchange_id, user_id=None):
             context=(data.get('context') or None),
             card_ids=card_ids if comment_type == 'gratitude' else None,
             frankl_mode=frankl_mode if comment_type == 'gratitude' else None,
+            hours=hours,
         )
         if ok:
             if comment_type == 'gratitude':

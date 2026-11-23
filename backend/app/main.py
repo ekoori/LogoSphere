@@ -160,6 +160,8 @@ ensure_push_tables()
 app.add_url_rule('/api/push/devices', view_func=register_device, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/push/devices/forget', view_func=forget_device, methods=['POST', 'OPTIONS'])
 Service.ensure_columns()
+from app.models.meaning_trail import MeaningTrail  # noqa: E402
+MeaningTrail.ensure_columns()
 app.add_url_rule('/api/openings', view_func=create_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings/<service_id>/spheres', view_func=share_service, methods=['POST', 'OPTIONS'])
 app.add_url_rule('/api/openings', view_func=get_services, methods=['GET', 'OPTIONS'])

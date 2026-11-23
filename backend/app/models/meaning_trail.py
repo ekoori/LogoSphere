@@ -162,8 +162,18 @@ def _started(row):
 
 
 class MeaningTrail(Model):
+    """One exchange, in its initiator's partition."""
     __keyspace__ = 'logosphere'
     __table_name__ = 'meaning_trail'
+
+    # Columns added after the table was made, before anything reads the model.
+    DDL = ('ALTER TABLE meaning_trail ADD IF NOT EXISTS effort_hours float',)
+
+    @classmethod
+    def ensure_columns(cls):
+        from app.db import session
+        for statement in cls.DDL:
+            session.execute(statement)
 
     user_id = columns.UUID(primary_key=True)
     exchange_id = columns.UUID(primary_key=True, clustering_order='DESC')
@@ -223,6 +233,8 @@ class MeaningTrail(Model):
     # meaning it was. gratitude_comment_cards keeps the display snapshot.
     gratitude_card_ids = columns.List(columns.UUID)
     gratitude_frankl_mode = columns.Text()
+    # About how long the help took, in hours, as the receipt's writer put it. Optional; never totalled.
+    effort_hours = columns.Float()
 
     @classmethod
     def create_for_opening(cls, initiator_id, other_user_id, other_user_name, description,
@@ -295,6 +307,7 @@ class MeaningTrail(Model):
             'gratitude_comment_cards': _cards(self.gratitude_comment_cards),
             'gratitude_card_ids': [str(c) for c in (self.gratitude_card_ids or [])],
             'gratitude_frankl_mode': self.gratitude_frankl_mode,
+            'effort_hours': self.effort_hours,
             'user_comment': self.user_comment,
             'user_comment_id': _uuid(self.user_comment_id),
             'user_comment_timestamp': _dt(self.user_comment_timestamp),
@@ -802,7 +815,7 @@ class MeaningTrail(Model):
     @classmethod
     def add_comment_for(cls, initiator_user_id, exchange_id, comment_type, text,
                         author_id=None, author_name=None, cards=None, context=None,
-                        card_ids=None, frankl_mode=None):
+                        card_ids=None, frankl_mode=None, hours=None):
         """comment_type: 'gratitude' | 'user' (acknowledgements are their own
         table: app/models/acknowledgement.py). `context` (the Time/Effort/Care/...
         note) is only stored on a gratitude receipt."""
@@ -825,6 +838,7 @@ class MeaningTrail(Model):
                     gratitude_comment_context=(context or None),
                     gratitude_card_ids=[UUID(str(c)) for c in (card_ids or [])] or None,
                     gratitude_frankl_mode=(frankl_mode or None),
+                    effort_hours=hours,
                 )
             elif comment_type == 'user':
                 row.update(

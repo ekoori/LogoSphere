@@ -760,6 +760,13 @@ paths:
                 context:
                   type: string
                   description: Structured context text, gratitude comments only.
+                hours:
+                  type: number
+                  minimum: 0.25
+                  maximum: 100
+                  description: >-
+                    Gratitude only, optional: about how long it took. Kept to
+                    the nearest quarter hour; never totalled or ranked.
       responses:
         '200':
           description: Comment added.

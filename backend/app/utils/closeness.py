@@ -217,7 +217,8 @@ def method():
         ],
         'fields': [{'field': f, 'weight': w} for f, w in FIELDS],
         'not_counted': ['never_do', 'drift_looks_like', 'in_conflict'],
-        'never_inputs': ['likes', 'follows', 'roles', 'how active someone is', 'who someone is', 'money'],
+        'never_inputs': ['likes', 'follows', 'roles', 'how active someone is', 'who someone is', 'money',
+                         'hours given'],
         'rules': [
             'The same two cards have the same closeness whoever looks.',
             'Writing longer, or writing more cards, buys nothing.',
