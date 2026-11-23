@@ -468,6 +468,8 @@ data class Community(
     @SerialName("owner_alliance") val ownerAlliance: String? = null,
     @SerialName("owner_id") val ownerId: String? = null,
     @SerialName("owner_name") val ownerName: String? = null,
+    /** Detail endpoint only: who to write to about it, when the viewer may see who runs it. */
+    val contact: PersonRef? = null,
     /** Detail endpoint only: whether the viewer may manage it (server-side rule). */
     @SerialName("can_manage") val canManage: Boolean = false,
     @Transient val kind: CommunityKind = CommunityKind.Sphere,

@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.ExchangeRules
+import com.krbavcic.logosphere.core.logic.Messaging
 import com.krbavcic.logosphere.core.logic.OpeningRules
 import com.krbavcic.logosphere.core.logic.Parties
 import com.krbavcic.logosphere.core.logic.Sharing
@@ -37,6 +41,7 @@ import com.krbavcic.logosphere.core.model.CommunityKind
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.LikeTarget
 import com.krbavcic.logosphere.core.model.Opening
+import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.theme.Brand
 
 /** A person or group, small: avatar and name. */
@@ -198,6 +203,17 @@ fun OpeningCard(
                     listOfNotNull(by, opening.sphereName, opening.projectName).joinToString("  ·  "),
                     modifier = Modifier.weight(1f),
                 )
+                // Whoever may see it may write to whoever posted it, about it.
+                Messaging.openingContact(opening, viewerId)?.let { who ->
+                    val navigator = LocalNavigator.current
+                    IconButton(onClick = { navigator.conversation(who, opening.id) }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.Outlined.Email,
+                            contentDescription = "Message ${opening.actingUser ?: opening.provider ?: "them"} about this",
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             }
             if (opening.sharedWith.isNotEmpty()) {
                 MetaText("Also in " + opening.sharedWith.joinToString(", ") { it.name }, maxLines = 2)

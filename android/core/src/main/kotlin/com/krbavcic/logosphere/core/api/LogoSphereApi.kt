@@ -99,6 +99,7 @@ import com.krbavcic.logosphere.core.model.NewInvite
 import com.krbavcic.logosphere.core.model.AiHelpStatus
 import com.krbavcic.logosphere.core.model.AiPicture
 import com.krbavcic.logosphere.core.model.CardSuggestion
+import com.krbavcic.logosphere.core.model.MessageAbout
 import java.util.concurrent.TimeUnit
 
 /** Lenient on input: unknown fields are ignored and a null where a default exists takes the default. */
@@ -192,18 +193,20 @@ class LogoSphereApi(
 
     suspend fun conversations(): Conversations = get("/api/messages")
 
-    /** A page, oldest first; [before] (a message's id) for older ones. [openingId]: what it's about. */
-    suspend fun conversation(personId: String, openingId: String? = null, before: String? = null): Conversation =
+    /** A page, oldest first; [before] (a message's id) for older ones. [about]: what it's about, as "kind:id". */
+    suspend fun conversation(personId: String, about: String? = null, before: String? = null): Conversation =
         get(url("/api/messages/$personId") {
-            openingId?.let { addQueryParameter("opening", it) }
+            about?.let { addQueryParameter("about", it) }
             before?.let { addQueryParameter("before", it) }
         })
 
-    suspend fun sendMessage(personId: String, text: String, openingId: String?): DirectMessage = post<SentMessage>(
+    suspend fun sendMessage(personId: String, text: String, about: MessageAbout?): DirectMessage = post<SentMessage>(
         "/api/messages/$personId",
         buildJsonObject {
             put("text", text.trim())
-            openingId?.let { put("opening_id", it) }
+            about?.let {
+                put("about", buildJsonObject { put("kind", it.kind); put("id", it.id) })
+            }
         },
     ).sent
 

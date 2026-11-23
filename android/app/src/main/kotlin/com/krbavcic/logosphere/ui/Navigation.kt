@@ -37,7 +37,7 @@ import kotlinx.serialization.Serializable
 /** Changes an event ([id]), or puts one on, for [groupKind]/[groupId] when it began there. */
 @Serializable data class EditEventRoute(val id: String? = null, val groupKind: String? = null, val groupId: String? = null)
 @Serializable data object MessagesRoute
-@Serializable data class ConversationRoute(val personId: String, val openingId: String? = null)
+@Serializable data class ConversationRoute(val personId: String, val openingId: String? = null, val about: String? = null)
 
 /** The Meaning Graph; [owner] opens it on one person's or group's cards. */
 @Serializable data class GraphRoute(val owner: String? = null)
@@ -104,7 +104,9 @@ class Navigator(
     fun messages() = controller.navigate(MessagesRoute)
 
     /** [openingId]: what it's about, which can make writing allowed. */
-    fun conversation(personId: String, openingId: String? = null) = controller.navigate(ConversationRoute(personId, openingId))
+    /** [about]: "kind:id", for a group or an event; [openingId] for an opening. */
+    fun conversation(personId: String, openingId: String? = null, about: String? = null) =
+        controller.navigate(ConversationRoute(personId, openingId, about))
 
     fun meaningGraph(owner: String? = null) = controller.navigate(GraphRoute(owner))
 
@@ -143,7 +145,7 @@ class Navigator(
         AppLink.Nearby -> nearby()
         AppLink.Events -> events()
         is AppLink.Event -> event(link.id)
-        is AppLink.Messages -> link.with?.let { conversation(it, link.opening) } ?: messages()
+        is AppLink.Messages -> link.with?.let { conversation(it, link.opening, link.about) } ?: messages()
         AppLink.Admin -> admin()
         is AppLink.Info -> info(link.page)
         is AppLink.Web -> web(link.path)

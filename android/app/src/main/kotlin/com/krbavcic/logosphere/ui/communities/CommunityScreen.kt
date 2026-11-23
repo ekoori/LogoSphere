@@ -319,6 +319,12 @@ private fun CommunityContent(data: CommunityData, vm: CommunityViewModel, busy: 
                         busy = busy,
                     )
                 }
+                c.contact?.takeIf { it.id != me }?.let { who ->
+                    OutlinedButton(
+                        onClick = { navigator.conversation(who.id, about = "${c.kind.name.lowercase()}:${c.id}") },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Message ${who.name ?: "who runs it"}") }
+                }
                 if (canManage) {
                     OutlinedButton(onClick = { navigator.manageCommunity(c.kind, c.id) }, modifier = Modifier.fillMaxWidth()) {
                         Text("⚙ Manage ${c.kind.noun.lowercase()}" + if (isAdmin && !Membership.managesItself(c, me)) " (platform admin)" else "")

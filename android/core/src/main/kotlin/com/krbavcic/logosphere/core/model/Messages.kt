@@ -7,7 +7,19 @@ import kotlinx.serialization.Serializable
 // (backend/app/utils/messaging.py and safety.py).
 
 @Serializable
-data class MessageAbout(val id: String, val title: String = "")
+data class MessageAbout(
+    val id: String,
+    val title: String = "",
+    /** opening, sphere, alliance, project or event. */
+    val kind: String = "opening",
+    val link: String? = null,
+) {
+    /** Where it opens: older messages name only an opening. */
+    val target: String get() = link ?: "/opening?id=$id"
+
+    /** As the API names it: "kind:id". */
+    val key: String get() = "$kind:$id"
+}
 
 @Serializable
 data class DirectMessage(
@@ -15,9 +27,13 @@ data class DirectMessage(
     val text: String = "",
     val at: String = "",
     val mine: Boolean = false,
-    /** The opening it was written about. */
+    /** What it was written about. */
+    val about: MessageAbout? = null,
+    /** The same, as apps before 0.3 read it: openings only. */
     val opening: MessageAbout? = null,
-)
+) {
+    val subject: MessageAbout? get() = about ?: opening
+}
 
 @Serializable
 data class Correspondent(

@@ -51,7 +51,9 @@ import com.krbavcic.logosphere.AppContainer
 import com.krbavcic.logosphere.core.logic.Dates
 import com.krbavcic.logosphere.core.logic.Messaging
 import com.krbavcic.logosphere.core.model.Conversation
+import com.krbavcic.logosphere.core.logic.Links
 import com.krbavcic.logosphere.core.model.DirectMessage
+import com.krbavcic.logosphere.core.model.MessageAbout
 import com.krbavcic.logosphere.core.model.ReportOf
 import com.krbavcic.logosphere.data.Change
 import com.krbavcic.logosphere.ui.Load
@@ -77,7 +79,8 @@ private const val POLL_MS = 15_000L
 class ConversationViewModel(
     private val app: AppContainer,
     private val personId: String,
-    private val openingId: String?,
+    /** What it's about, as "kind:id". */
+    private val about: String?,
 ) : LoadViewModel<Conversation>() {
     private var lastRead: String? = null
     private var pagedBack = false
@@ -89,7 +92,7 @@ class ConversationViewModel(
 
     /** The newest page, over whatever older ones were loaded. */
     override suspend fun fetch(force: Boolean): Conversation {
-        val page = app.api.conversation(personId, openingId)
+        val page = app.api.conversation(personId, about)
         val before = current
         return page.copy(
             messages = Messaging.merge(before?.messages.orEmpty(), page.messages),
@@ -102,7 +105,7 @@ class ConversationViewModel(
         if (state.value !is Load.Ready) return
         viewModelScope.launch {
             try {
-                val page = app.api.conversation(personId, openingId)
+                val page = app.api.conversation(personId, about)
                 update {
                     it.copy(
                         messages = Messaging.merge(it.messages, page.messages),
@@ -148,8 +151,8 @@ class ConversationViewModel(
     fun send(text: String, onSent: () -> Unit) {
         val about = current?.about
         act {
-            val sent = app.api.sendMessage(personId, text, about?.id)
-            named = true // the opening goes with the first message only
+            val sent = app.api.sendMessage(personId, text, about)
+            named = true // what it's about goes with the first message only
             update { it.copy(messages = Messaging.merge(it.messages, listOf(sent)), about = null) }
             onSent()
         }
@@ -163,10 +166,11 @@ class ConversationViewModel(
 
 /** One conversation: between the two of them, and read by nobody else. */
 @Composable
-fun ConversationScreen(personId: String, openingId: String? = null) {
+fun ConversationScreen(personId: String, openingId: String? = null, about: String? = null) {
     val app = LocalAppContainer.current
-    val vm: ConversationViewModel = viewModel(key = "conversation-$personId-$openingId") {
-        ConversationViewModel(app, personId, openingId)
+    val subject = about ?: openingId?.let { "opening:$it" }
+    val vm: ConversationViewModel = viewModel(key = "conversation-$personId-$subject") {
+        ConversationViewModel(app, personId, subject)
     }
     val navigator = LocalNavigator.current
     val state by vm.state.collectAsStateWithLifecycle()
@@ -222,7 +226,7 @@ fun ConversationScreen(personId: String, openingId: String? = null) {
                 data.about?.let { about ->
                     LinkText(
                         "About: ${about.title}",
-                        onClick = { navigator.opening(about.id) },
+                        onClick = { Links.parse(about.target)?.let(navigator::link) },
                         modifier = Modifier.padding(horizontal = ScreenPadding),
                     )
                 }
@@ -240,7 +244,7 @@ fun ConversationScreen(personId: String, openingId: String? = null) {
                         verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.Bottom),
                     ) {
                         items(data.messages.asReversed(), key = { it.id }) { message ->
-                            MessageRow(message, personId) { navigator.opening(it) }
+                            MessageRow(message, personId) { Links.parse(it.target)?.let(navigator::link) }
                         }
                         if (data.more) {
                             item(key = "earlier") {
@@ -265,16 +269,16 @@ fun ConversationScreen(personId: String, openingId: String? = null) {
 }
 
 @Composable
-private fun MessageRow(message: DirectMessage, personId: String, onOpening: (String) -> Unit) {
+private fun MessageRow(message: DirectMessage, personId: String, onOpen: (MessageAbout) -> Unit) {
     val colors = MaterialTheme.colorScheme
     Box(Modifier.fillMaxWidth(), contentAlignment = if (message.mine) Alignment.CenterEnd else Alignment.CenterStart) {
         Column(Modifier.widthIn(max = 300.dp), horizontalAlignment = if (message.mine) Alignment.End else Alignment.Start) {
-            message.opening?.let { about ->
+            message.subject?.let { about ->
                 Text(
                     about.title,
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.primary,
-                    modifier = Modifier.clickable { onOpening(about.id) }.padding(vertical = 4.dp),
+                    modifier = Modifier.clickable { onOpen(about) }.padding(vertical = 4.dp),
                 )
             }
             Surface(

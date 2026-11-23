@@ -7,6 +7,7 @@ import com.krbavcic.logosphere.core.logic.AppLink
 import com.krbavcic.logosphere.core.logic.Links
 import com.krbavcic.logosphere.core.logic.Messaging
 import com.krbavcic.logosphere.core.model.DirectMessage
+import com.krbavcic.logosphere.core.model.MessageAbout
 import com.krbavcic.logosphere.core.model.Exchange
 import com.krbavcic.logosphere.core.model.Opening
 import com.krbavcic.logosphere.core.model.ReportOf
@@ -79,19 +80,30 @@ class MessagingTest {
     fun notificationLinksOpenTheConversation() {
         assertEquals(AppLink.Messages("p1"), Links.parse("/messages?with=p1"))
         assertEquals(AppLink.Messages("p1", "o1"), Links.parse("/messages?with=p1&opening=o1"))
+        assertEquals(AppLink.Messages("p1", about = "sphere:s1"), Links.parse("/messages?with=p1&about=sphere:s1"))
         assertEquals(AppLink.Messages(), Links.parse("/messages"))
     }
 
     @Test
-    fun sendingNamesTheOpeningOnlyWhenGiven() = runTest {
-        respond("""{"sent":{"id":"m1","text":"Hi","at":"2026-11-23T10:00:00","mine":true}}""")
+    fun sendingNamesWhatItsAboutOnlyWhenGiven() = runTest {
+        respond("""{"sent":{"id":"m1","text":"Hi","at":"2026-11-23T10:00:00","mine":true,""" +
+            """"about":{"kind":"sphere","id":"s1","title":"Creekside","link":"/sphere?id=s1"},"opening":null}}""")
         respond("""{"sent":{"id":"m2","text":"Again","at":"2026-11-23T10:00:01","mine":true}}""")
-        assertEquals("m1", api.sendMessage("p", " Hi ", "o1").id)
+        val sent = api.sendMessage("p", " Hi ", MessageAbout("s1", "Creekside", kind = "sphere"))
+        assertEquals("/sphere?id=s1", sent.subject?.target)
         api.sendMessage("p", "Again", null)
         val first = LogoSphereJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
         assertEquals("Hi", first["text"]!!.jsonPrimitive.content)
-        assertEquals("o1", first["opening_id"]!!.jsonPrimitive.content)
+        assertEquals("sphere", first["about"]!!.jsonObject["kind"]!!.jsonPrimitive.content)
+        assertEquals("s1", first["about"]!!.jsonObject["id"]!!.jsonPrimitive.content)
         assertEquals(setOf("text"), LogoSphereJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.keys)
+    }
+
+    @Test
+    fun olderMessagesNameAnOpening() {
+        val old = LogoSphereJson.decodeFromString<DirectMessage>("""{"id":"m","opening":{"id":"o1","title":"Ladder"}}""")
+        assertEquals("/opening?id=o1", old.subject?.target)
+        assertEquals("opening:o1", old.subject?.key)
     }
 
     @Test

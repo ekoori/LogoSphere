@@ -37,7 +37,7 @@ sealed interface AppLink {
     data class Event(val id: String) : AppLink
 
     /** [with]: that conversation, about [opening] if given. */
-    data class Messages(val with: String? = null, val opening: String? = null) : AppLink
+    data class Messages(val with: String? = null, val opening: String? = null, val about: String? = null) : AppLink
     data object Admin : AppLink
     data class Info(val page: InfoPage) : AppLink
 
@@ -74,6 +74,7 @@ object Links {
             path == "/messages" -> AppLink.Messages(
                 with = params["with"]?.takeIf { it.isNotBlank() },
                 opening = params["opening"]?.takeIf { it.isNotBlank() },
+                about = params["about"]?.takeIf { it.contains(':') },
             )
             path == "/admin" -> AppLink.Admin
             path == "/meaning-graph" -> AppLink.MeaningGraph(params["owner"]?.takeIf { it.isNotBlank() })

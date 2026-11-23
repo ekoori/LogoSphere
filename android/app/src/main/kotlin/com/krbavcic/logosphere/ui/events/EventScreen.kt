@@ -177,6 +177,12 @@ private fun EventContent(event: CommunityEvent, vm: EventViewModel, busy: Boolea
                     )
                 }
                 event.creator?.let { who -> LinkText("Put on by ${who.name ?: "a member"}", { navigator.person(who.id) }) }
+                event.creator?.takeIf { it.id != vm.viewerId }?.let { who ->
+                    OutlinedButton(
+                        onClick = { navigator.conversation(who.id, about = "event:${event.id}") },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Message ${who.name ?: "who puts it on"}") }
+                }
                 if (event.canManage && !event.cancelled) {
                     OutlinedButton(onClick = { navigator.editEvent(event.id) }, modifier = Modifier.fillMaxWidth()) { Text("Change it") }
                     OutlinedButton(onClick = { cancelAll = true }, enabled = !busy, modifier = Modifier.fillMaxWidth()) {
