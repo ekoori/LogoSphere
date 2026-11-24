@@ -18,6 +18,12 @@ fun releaseSigning(property: String, variable: String): String? =
 
 val releaseKeystore = releaseSigning("logosphereKeystore", "LOGOSPHERE_KEYSTORE")
 
+// The upload key (~/.android/logosphere-upload.jks, alias logosphere; docs/play/README.md). Without it a
+// release build falls back to the debug key, which Google Play rejects: say so when one is asked for.
+if (releaseKeystore == null && gradle.startParameter.taskNames.any { "release" in it.lowercase() }) {
+    logger.warn("LogoSphere: no logosphereKeystore property, so this release is signed with the DEBUG key; Google Play will refuse it.")
+}
+
 // The version, and a version code derived from it so it always rises: 1.2.3 is 10203.
 val appVersion = "0.4.0"
 val appVersionCode = appVersion.split(".").map(String::toInt)
