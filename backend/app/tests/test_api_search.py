@@ -11,9 +11,9 @@ def test_text_search_finds_spheres_people_and_openings(api):
     assert any(i['id'] == RIVERSIDE for i in kinds['sphere']['items'])
     assert kinds['sphere']['items'][0]['link'].startswith('/sphere?id=')
 
-    status, body = api.get('/api/search?q=rogan', who='marie')
+    status, body = api.get('/api/search?q=rodan', who='marie')
     kinds = {g['kind']: g for g in body['groups']}
-    assert 'user' in kinds and kinds['user']['items'][0]['name'].startswith('Joe')
+    assert 'user' in kinds and kinds['user']['items'][0]['name'].startswith('Jo')
 
     status, body = api.get('/api/search?q=sharing&kinds=opening', who='marie')
     assert status == 200

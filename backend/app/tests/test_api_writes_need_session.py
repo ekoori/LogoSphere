@@ -9,6 +9,7 @@ PUBLIC = {
     '/api/login', '/api/logout', '/api/register', '/api/register/confirm', '/api/password/forgot', '/api/password/reset',
     '/api/email/confirm', '/api/email/unsubscribe/<token>', '/api/invites/look',
     '/api/check_session',       # answers "inactive" to anyone, and changes nothing
+    '/api/problems',            # the problem flag: on the sign-in pages too, so signed out
 }
 
 
