@@ -157,11 +157,17 @@ from the Openings tab, and put its email and password in *App access* with these
 |---|---|---|
 | App icon | 512×512 PNG, 32-bit | `icon-512.png` |
 | Feature graphic | 1024×500 PNG (no alpha) or JPG | `feature-graphic.png` |
-| Phone screenshots | 2–8, PNG or JPG, 320–3840 px, 16:9 or 9:16; at least 4 at 1080×1920 for Play's recommendations | `screenshots/*.png` (1080×1920) |
+| Phone screenshots | 2–8, PNG or JPG, 320–3840 px, the long side at most twice the short | `screenshots/*.png` (1080×2031, six) |
 
 The icon and feature graphic are drawn from the launcher icon's own geometry and the app's fonts
-(Fraunces, Hanken Grotesk) in the site's colours. The screenshots come from the test phone (a
-Galaxy Note 9, 1080×2220), cut to 9:16 by removing the status and navigation bars.
+(Fraunces, Hanken Grotesk) in the site's colours. The screenshots (2026-11-25, signed in as the
+persona Jo Rodan, so only demo content shows) come from the test phone, a Galaxy Note 9
+(1080×2220), with its status and navigation bars cut off and nothing scaled: the Openings feed, a
+need, the demo spheres, Riverside Commons, the Meaning Graph and the problem flag. They are not
+9:16, which Play wants only for its recommendation slots; padding them to 9:16 smeared the
+full-width pictures, so a 9:16 set needs a 16:9-screen phone or emulator. The Trail and Me screens
+were left out because they show personas' likeness pictures. The README's `docs/demo.gif` is the
+same six at 320 px, two seconds each.
 
 ## Policy notes
 

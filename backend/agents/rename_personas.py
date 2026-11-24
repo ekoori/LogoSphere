@@ -10,6 +10,7 @@ old one deleted. Dry run unless --apply. Pause the personas first and back the k
 """
 import sys
 from collections import Counter
+from collections.abc import Mapping, Set
 
 import reactor  # noqa: F401 - picks the driver's event loop before it loads
 
@@ -29,10 +30,10 @@ def changed(value):
         new = [renamed(v) for v in value]
         new = new if new != list(value) else None
         return new
-    elif isinstance(value, (set, frozenset)):
+    elif isinstance(value, (set, frozenset, Set)):
         new = {renamed(v) for v in value}
         return new if new != set(value) else None
-    elif isinstance(value, dict):
+    elif isinstance(value, Mapping):  # the driver's maps aren't dicts (OrderedMapSerializedKey)
         new = {renamed(k): renamed(v) for k, v in value.items()}
         return new if new != dict(value) else None
     else:

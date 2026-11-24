@@ -2,6 +2,10 @@
 
 > An economy that remembers *why*.
 
+<p align="center">
+  <img src="docs/demo.gif" width="320" alt="LogoSphere on Android: the Openings feed, a neighbour's need, the demo spheres, Riverside Commons, the Meaning Graph, and the flag for reporting a problem">
+</p>
+
 Every system that scales human cooperation must compress what people care about into something it can move around. Money does it with price. Platforms do it with clicks. Each translation is lossy — and what leaks away is the meaning. **LogoSphere is an attempt to keep it.**
 
 ## The problem: value collapses under measurement
