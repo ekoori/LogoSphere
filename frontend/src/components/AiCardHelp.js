@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import api from '../api';
 import { useAiHelp } from '../utils/useAiHelp';
 import { cardForHelp, withSuggestion } from '../utils/aiHelp';
+import { ReportButton } from './Safety';
 import '../styles/AiHelp.css';
 
 const SHOWN = [
@@ -16,6 +17,16 @@ const SHOWN = [
     ['in_conflict', 'In conflict'],
     ['never_do', 'Never'],
 ];
+
+const AI_ABOUT = "Only the platform's administrators see it, with what the AI gave you.";
+// AI help's words for a report: never saved, so they go with it.
+const aiWords = (suggested, question) => [
+    ...SHOWN.map(([key, label]) => {
+        const value = [].concat(suggested[key] || []).join('; ');
+        return value ? `${label}: ${value}` : '';
+    }),
+    question,
+].filter(Boolean).join('\n').slice(0, 2000);
 
 export default function AiCardHelp({ form, onChange, brief = false, group = false }) {
     const { on, left, setLeft } = useAiHelp('value_cards');
@@ -89,6 +100,10 @@ export default function AiCardHelp({ form, onChange, brief = false, group = fals
                 </button>
                 <button type="button" className="ai-btn" onClick={() => setOpen(false)} disabled={busy}>Close</button>
             </div>
+            {suggested && (
+                <ReportButton report={{ kind: 'ai', id: 'value_card', excerpt: aiWords(suggested, question) }}
+                              label="Report this wording" about={AI_ABOUT} />
+            )}
         </div>
     );
 }

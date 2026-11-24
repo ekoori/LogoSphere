@@ -6,7 +6,10 @@ import api from '../api';
 import { useAiHelp } from '../utils/useAiHelp';
 import { pictureFile } from '../utils/aiHelp';
 import { Picture } from './AiTag';
+import { ReportButton } from './Safety';
 import '../styles/AiHelp.css';
+
+const AI_ABOUT = "Only the platform's administrators see it, with what the AI gave you.";
 
 export default function AiPictureMaker({ purpose, title, description = '', onUse }) {
     const { on, left, setLeft } = useAiHelp('pictures');
@@ -87,6 +90,12 @@ export default function AiPictureMaker({ purpose, title, description = '', onUse
                 </button>
                 <button type="button" className="ai-btn" onClick={() => { setOpen(false); setMade(null); }} disabled={busy}>Close</button>
             </div>
+            {made && (
+                // The picture itself is never kept, so the report says what it was asked to show.
+                <ReportButton report={{ kind: 'ai', id: 'picture', excerpt: [`Title: ${title}`, description && `Description: ${description}`,
+                                        hint && `Asked to show: ${hint}`].filter(Boolean).join('\n') }}
+                              label="Report this picture" about={AI_ABOUT} />
+            )}
         </div>
     );
 }

@@ -109,7 +109,7 @@ internal fun ReportsTab(snackbar: SnackbarHostState) {
                                 report.what + (report.subject?.name?.let { " by $it" } ?: ""),
                                 style = MaterialTheme.typography.titleSmall,
                             )
-                            MetaText("Reported by ${report.reporter?.name ?: "a member"} on ${Dates.day(report.madeAt)}", maxLines = 2)
+                            MetaText("Reported by ${report.reporter?.name ?: "someone signed out"} on ${Dates.day(report.madeAt)}", maxLines = 2)
                             if (report.excerpt.isNotBlank()) Text("“${report.excerpt}”", style = MaterialTheme.typography.bodyLarge)
                             if (report.note.isNotBlank()) Text(report.note, style = MaterialTheme.typography.bodyMedium)
                             if (report.status != "open") {

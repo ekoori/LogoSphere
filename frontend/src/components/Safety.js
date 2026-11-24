@@ -9,7 +9,7 @@ import '../styles/Messages.css';
 const said = (err, fallback) => err.response?.data?.message || fallback;
 
 /** "Report": opens a few lines to send to the administrators. */
-export function ReportButton({ report, label = 'Report', noteRequired = false }) {
+export function ReportButton({ report, label = 'Report', noteRequired = false, about = '' }) {
     const [open, setOpen] = useState(false);
     const [note, setNote] = useState('');
     const [busy, setBusy] = useState(false);
@@ -37,7 +37,7 @@ export function ReportButton({ report, label = 'Report', noteRequired = false })
             <textarea rows={2} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} autoFocus
                       aria-label="What is wrong"
                       placeholder={noteRequired ? 'What happened?' : 'What is wrong? (optional)'} />
-            <p className="safe-about">Only the platform&rsquo;s administrators see it. The person isn&rsquo;t told.</p>
+            <p className="safe-about">{about || <>Only the platform&rsquo;s administrators see it. The person isn&rsquo;t told.</>}</p>
             {error && <p className="safe-error" role="alert">{error}</p>}
             <div className="safe-buttons">
                 <button type="button" className="safe-btn" onClick={send} disabled={busy || (noteRequired && !note.trim())}>
@@ -49,7 +49,9 @@ export function ReportButton({ report, label = 'Report', noteRequired = false })
     );
 }
 
-ReportButton.propTypes = { report: PropTypes.object.isRequired, label: PropTypes.string, noteRequired: PropTypes.bool };
+ReportButton.propTypes = {
+    report: PropTypes.object.isRequired, label: PropTypes.string, noteRequired: PropTypes.bool, about: PropTypes.string,
+};
 
 /** Block (asks twice) or unblock. */
 export function BlockButton({ personId, blocked, onChanged }) {

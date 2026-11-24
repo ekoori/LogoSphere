@@ -48,6 +48,7 @@ import com.krbavcic.logosphere.ui.common.LoadContent
 import com.krbavcic.logosphere.ui.common.MetaText
 import com.krbavcic.logosphere.ui.common.Refreshable
 import com.krbavcic.logosphere.ui.common.SnackbarMessages
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Chat
@@ -99,6 +100,7 @@ fun InboxScreen() {
             TopAppBar(
                 title = { Text("Inbox", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    ProblemFlag()
                     if (unread > 0) TextButton(onClick = vm::markAllRead) { Text("Mark all read") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),

@@ -81,7 +81,7 @@ data class RespondentsResult(val sent: Int = 0, val skipped: Int = 0)
 @Serializable
 data class BlockedPerson(val id: String, val name: String = "")
 
-/** What is being reported. The server reads its words itself. */
+/** What is being reported. The server reads its words itself, except AI help's ([excerpt]). */
 data class ReportOf(
     val kind: String,
     val id: String,
@@ -91,6 +91,8 @@ data class ReportOf(
     val trailId: String? = null,
     /** An announcement: whose group's. */
     val groupId: String? = null,
+    /** AI help: what it gave, which was never saved, so only the one reporting has it. */
+    val excerpt: String? = null,
 ) {
     /** A person needs a word on what happened. */
     val needsNote: Boolean get() = kind == PERSON
@@ -109,6 +111,11 @@ data class ReportOf(
         fun event(id: String) = ReportOf("event", id)
 
         fun announcement(id: String, groupId: String) = ReportOf("announcement", id, groupId = groupId)
+
+        /** What AI help made: [what] is "value_card" or "picture"; [excerpt] its words, or what it was asked to draw. */
+        fun ai(what: String, excerpt: String) = ReportOf("ai", what, excerpt = excerpt.take(AI_EXCERPT_MAX))
+
+        const val AI_EXCERPT_MAX = 2000
     }
 }
 
@@ -135,6 +142,8 @@ data class Report(
             "opening" -> "An opening"
             "event" -> "An event"
             "announcement" -> "An announcement"
+            "ai" -> "Something AI help made"
+            "problem" -> "A problem with the app"
             else -> kind
         }
 }

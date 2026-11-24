@@ -1,7 +1,7 @@
 # LogoSphere for Android
 
 A native Android client for LogoSphere — Kotlin, Jetpack Compose and Material 3 — that talks to the
-same API as the web app (`https://ts.krbavcic.com` by default). Design notes:
+same API as the web app (`https://logosphere.earth` by default). Design notes:
 [`docs/plans/2026-11-18-android-client-design.md`](../docs/plans/2026-11-18-android-client-design.md)
 (the first version) and
 [`docs/plans/2026-11-20-android-parity.md`](../docs/plans/2026-11-20-android-parity.md) (everything

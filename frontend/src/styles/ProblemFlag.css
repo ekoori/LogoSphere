@@ -1,0 +1,163 @@
+/* The problem flag in the header (components/ProblemFlag.js). */
+.problem-flag {
+    position: relative;
+    display: inline-flex;
+}
+
+.problem-flag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+}
+
+.problem-flag-btn:hover,
+.problem-flag-btn[aria-expanded="true"] {
+    color: var(--ink);
+    border-color: var(--border-soft);
+    background: var(--surface-2);
+}
+
+.problem-flag-btn:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+.problem-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    width: min(360px, calc(100vw - 32px));
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--shadow-lg);
+    text-align: left;
+}
+
+.problem-panel h3 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+}
+
+.problem-panel p {
+    margin: 0 0 10px;
+    font-size: var(--fs-sm);
+}
+
+.problem-kinds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.problem-kind {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--ink);
+    font-size: var(--fs-xs);
+    cursor: pointer;
+}
+
+.problem-kind.is-on {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+}
+
+.problem-panel textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--fs-sm);
+    resize: vertical;
+}
+
+.problem-about {
+    color: var(--ink-soft);
+}
+
+.problem-attached {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-radius: var(--r-sm);
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    font-size: var(--fs-xs);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.problem-error {
+    color: var(--danger);
+}
+
+.problem-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.problem-btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.problem-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.problem-link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-size: var(--fs-sm);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* In the phone drawer: the panel opens in place, under its menu item. */
+.problem-flag--menu {
+    display: block;
+}
+
+.problem-flag--menu .problem-panel {
+    position: static;
+    width: auto;
+    margin-top: 8px;
+    box-shadow: none;
+}
+
+/* The header's flag gives way to the drawer's at the header's phone breakpoint (App.css). */
+@media (max-width: 900px) {
+    .problem-flag.nav-bar-only {
+        display: none;
+    }
+}

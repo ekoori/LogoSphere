@@ -1,10 +1,10 @@
 {
- "email": "steve.wozniak@example.com",
+ "email": "steve.wozniac@example.com",
  "following_count": 0,
  "is_following": false,
  "is_platform_admin": false,
  "location": "USA",
- "name": "Steve Wozniak",
+ "name": "Steve Wozniac",
  "profile_picture": null,
  "session_id": null,
  "surname": null,

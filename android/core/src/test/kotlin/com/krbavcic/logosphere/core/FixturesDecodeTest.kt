@@ -25,7 +25,7 @@ class FixturesDecodeTest {
     fun login() {
         val login = Fixtures.decode<LoginResponse>("login.json")
         assertEquals("00000000-0000-4000-8000-000000000000", login.sessionId)
-        assertEquals("Joe Rogan", login.data.displayName)
+        assertEquals("Jo Rodan", login.data.displayName)
         assertTrue(login.data.isPlatformAdmin)
     }
 
@@ -69,7 +69,7 @@ class FixturesDecodeTest {
         assertEquals("Initiated", detail.exchange.status)
         assertEquals(0, detail.exchange.receiptPhotoCount)
         assertFalse(detail.exchange.isFinished)
-        assertEquals("Steve Wozniak", detail.exchange.otherUserName)
+        assertEquals("Steve Wozniac", detail.exchange.otherUserName)
     }
 
     @Test
@@ -80,7 +80,7 @@ class FixturesDecodeTest {
         assertTrue(openings.any { !it.isOffer })
         val gpu = openings.first { it.id == "05b5666a-b78f-5af7-ae5c-718922e0deba" }
         assertEquals("Earthsong Gardens", gpu.sphereName)
-        assertEquals("Morgan Freeman", gpu.provider)
+        assertEquals("Morgan Treeman", gpu.provider)
     }
 
     @Test
@@ -111,7 +111,7 @@ class FixturesDecodeTest {
 
         val solar = projects.first { it.name == "Neighbourhood Solar Microgrid" }
         assertEquals("bbbbbbbb-0000-0000-0000-000000000002", solar.id)
-        assertEquals("manager", solar.members.first { it.name == "Joe Rogan" }.role)
+        assertEquals("manager", solar.members.first { it.name == "Jo Rodan" }.role)
         assertTrue(solar.valueCards.isNotEmpty())
     }
 
@@ -135,7 +135,7 @@ class FixturesDecodeTest {
     @Test
     fun publicUser() {
         val user = Fixtures.decode<PublicUser>("public_user.json")
-        assertEquals("Steve Wozniak", user.displayName)
+        assertEquals("Steve Wozniac", user.displayName)
         assertFalse(user.isFollowing)
     }
 

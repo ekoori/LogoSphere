@@ -65,6 +65,18 @@ class Navigator(
     private val selectTab: (Tab) -> Unit,
     private val openWeb: (String) -> Unit,
 ) {
+    /** The screen on show, as a problem report names it: its route and arguments. */
+    @Suppress("DEPRECATION") // Bundle.get: the arguments are only described, never typed
+    fun whereNow(): String {
+        val entry = controller.currentBackStackEntry ?: return "Starting"
+        val route = entry.destination.route.orEmpty().substringBefore('?').substringBefore('/').substringAfterLast('.')
+        val args = entry.arguments?.let { bundle ->
+            bundle.keySet().filterNot { it.startsWith("android-support-nav") }.sorted()
+                .joinToString(", ") { key -> "$key=${bundle.get(key)}" }
+        }.orEmpty()
+        return if (args.isEmpty()) route else "$route ($args)"
+    }
+
     fun back() {
         controller.popBackStack()
     }

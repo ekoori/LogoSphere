@@ -20,7 +20,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -51,7 +51,7 @@
   "other_comment_timestamp": null,
   "other_kind": "user",
   "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
-  "other_user_name": "Steve Wozniak",
+  "other_user_name": "Steve Wozniac",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000002",
   "project_name": "Neighbourhood Solar Microgrid",
   "project_start_timestamp": "2026-06-24T09:00:00",
@@ -89,7 +89,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -120,7 +120,7 @@
   "other_comment_timestamp": null,
   "other_kind": "user",
   "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
-  "other_user_name": "Steve Wozniak",
+  "other_user_name": "Steve Wozniac",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000001",
   "project_name": "Community Tool Library",
   "project_start_timestamp": "2026-04-18T10:00:00",
@@ -158,7 +158,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -183,13 +183,13 @@
   },
   "other_comment": "I came in knowing nothing and left having recorded my first episode. Joe gives his time so generously.",
   "other_comment_author_id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
-  "other_comment_author_name": "Emma Watson",
+  "other_comment_author_name": "Emma Wotson",
   "other_comment_cards": [],
   "other_comment_id": "30000000-0000-0000-0000-000000000003",
   "other_comment_timestamp": "2026-06-12T20:00:00",
   "other_kind": "user",
   "other_user_id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
-  "other_user_name": "Emma Watson",
+  "other_user_name": "Emma Wotson",
   "project_id": null,
   "project_name": "Skill Share",
   "project_start_timestamp": "2026-06-10T17:00:00",
@@ -227,7 +227,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -258,7 +258,7 @@
   "other_comment_timestamp": null,
   "other_kind": "user",
   "other_user_id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
-  "other_user_name": "Elon Musk",
+  "other_user_name": "Elon Mask",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000003",
   "project_name": "Open GPU Cluster",
   "project_start_timestamp": "2026-06-01T12:00:00",
@@ -296,13 +296,13 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [
      {
       "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
-      "name": "Joe Rogan"
+      "name": "Jo Rodan"
      }
     ],
     "count": 1,
@@ -317,7 +317,7 @@
     "by": [
      {
       "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
-      "name": "Joe Rogan"
+      "name": "Jo Rodan"
      }
     ],
     "count": 1,
@@ -331,13 +331,13 @@
   },
   "other_comment": "Could not have done this without Marie organising the whole crew. True community spirit.",
   "other_comment_author_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
-  "other_comment_author_name": "Marie Kondo",
+  "other_comment_author_name": "Marie Konda",
   "other_comment_cards": [],
   "other_comment_id": "30000000-0000-0000-0000-000000000001",
   "other_comment_timestamp": "2026-05-04T19:00:00",
   "other_kind": "user",
   "other_user_id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
-  "other_user_name": "Marie Kondo",
+  "other_user_name": "Marie Konda",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000001",
   "project_name": "Community Tool Library",
   "project_start_timestamp": "2026-05-02T09:00:00",

@@ -28,7 +28,7 @@ class DemoFieldsTest {
     fun exchangePartiesCarryThePersonaFlag() {
         val x = LogoSphereJson.decodeFromString<Exchange>(
             """{"exchange_id": "x1", "user_id": "me", "initiator_id": "me", "initiator_kind": "user",
-                "other_user_id": "p1", "other_user_name": "Marie Kondo", "other_kind": "user",
+                "other_user_id": "p1", "other_user_name": "Marie Konda", "other_kind": "user",
                 "is_demo": true, "initiator_is_agent": false, "other_is_agent": true}""",
         )
         assertTrue(x.isDemo)
@@ -41,7 +41,7 @@ class DemoFieldsTest {
         val x = LogoSphereJson.decodeFromString<Exchange>(
             """{"exchange_id": "x2", "user_id": "me", "initiator_id": "me", "initiator_kind": "user",
                 "other_user_id": "a1", "other_user_name": "Repair Café Collective", "other_kind": "alliance",
-                "recipient_acting_user_id": "p1", "recipient_acting_user_name": "Steve Wozniak",
+                "recipient_acting_user_id": "p1", "recipient_acting_user_name": "Steve Wozniac",
                 "is_demo": true, "initiator_is_agent": true, "other_is_agent": true}""",
         )
         val group = Parties.recipient(x, "me")!!

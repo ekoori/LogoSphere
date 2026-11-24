@@ -8,7 +8,6 @@ enum class InfoPage(val path: String, val title: String) {
     About("/about", "About LogoSphere"),
     HowItWorks("/how-it-works", "How it works"),
     Contribute("/contribute", "Contribute"),
-    Donate("/donate", "Donate"),
     Privacy("/privacy", "Privacy policy"),
     Terms("/tos", "Terms of service");
 

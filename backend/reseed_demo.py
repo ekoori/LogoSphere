@@ -3,7 +3,7 @@
 # Drops and recreates meaning_trail (interaction_* → exchange_*),
 # drops/recreates comment_likes, likes, audit_log with exchange_id,
 # applies services ALTERs idempotently, re-seeds all demo data,
-# and seeds value cards for Joe Rogan + Elon Musk.
+# and seeds value cards for Jo Rodan + Elon Mask.
 #
 # SAFE: does NOT touch users, user_credentials, or sessions.
 #
@@ -345,7 +345,7 @@ session.execute(SPHERE_Q, (SP3,'Earthsong Gardens',
   [DAVID,EMMA,MARIE,JOE],
   ['Seed Keepers Alliance'],['Pollinator Corridor'],
   ['regeneration','biodiversity','stewardship']))
-print("[NOTE] Joe Rogan is admin1 of all 3 spheres")
+print("[NOTE] Jo Rodan is admin1 of all 3 spheres")
 print("[OK] Seeded 3 spheres")
 
 # Alliances — member_roles is set explicitly so governance (and the value-graph
@@ -357,19 +357,19 @@ ALLIANCE_Q = """INSERT INTO logosphere.alliances
 session.execute(ALLIANCE_Q, (AL1,'Repair Café Collective',
   'Neighbours who fix things together every Saturday — bikes, toasters, fences, friendships. Knowledge is shared, never sold.',
   STEVE,SP1,'Riverside Commons',T('2026-01-20 10:00:00'),
-  [STEVE,JOE,MARIE],['Steve Wozniak','Joe Rogan','Marie Kondo'],
+  [STEVE,JOE,MARIE],['Steve Wozniac','Jo Rodan','Marie Konda'],
   ['Community Tool Library'],['repair culture','skill sharing'],'#repair #skillshare',
   {STEVE:'admin', MARIE:'steward', JOE:'member'}))
 session.execute(ALLIANCE_Q, (AL2,'Open Compute Guild',
   'Stewards of the shared GPU cluster. We allocate compute by need and contribution, decided by the members themselves.',
   BILL,SP2,'AI Commons',T('2026-02-10 14:00:00'),
-  [BILL,ELON,STEPHEN],['Bill Gates','Elon Musk','Stephen Hawking'],
+  [BILL,ELON,STEPHEN],['Bill Gales','Elon Mask','Stephen Hawkins'],
   ['Open GPU Cluster'],['open compute','fair allocation'],'#compute #governance',
   {BILL:'admin', ELON:'steward', STEPHEN:'member'}))
 session.execute(ALLIANCE_Q, (AL3,'Seed Keepers Alliance',
   'Guardians of heirloom seed diversity. Members save, label and swap seeds so no variety is lost.',
   EMMA,SP3,'Earthsong Gardens',T('2026-03-25 09:30:00'),
-  [EMMA,DAVID],['Emma Watson','David Attenborough'],
+  [EMMA,DAVID],['Emma Wotson','David Attenbarough'],
   ['Pollinator Corridor'],['seed sovereignty','biodiversity'],'#seeds #biodiversity',
   {EMMA:'admin', DAVID:'steward'}))
 print("[OK] Seeded 3 alliances (with member_roles)")
@@ -382,21 +382,21 @@ PROJECT_Q = """INSERT INTO logosphere.projects
  created_at,participants,participant_names,values,participant_roles) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
 session.execute(PROJECT_Q, (PR1,'Community Tool Library',
   'A free lending library of power tools, garden equipment and know-how. Borrow what you need, return it cared-for, teach the next person.',
-  'Steve Wozniak','Repair Café Collective','In Progress',SP1,'Riverside Commons',T('2026-02-01 10:00:00'),
-  [STEVE,JOE,MARIE],['Steve Wozniak','Joe Rogan','Marie Kondo'],
+  'Steve Wozniac','Repair Café Collective','In Progress',SP1,'Riverside Commons',T('2026-02-01 10:00:00'),
+  [STEVE,JOE,MARIE],['Steve Wozniac','Jo Rodan','Marie Konda'],
   ['sharing over owning','repair culture'], {STEVE:'manager'}))
 session.execute(PROJECT_Q, (PR2,'Neighbourhood Solar Microgrid',
   'Rooftop panels feeding a shared battery so the block keeps the lights on together. Surplus energy is gifted to households that need it most.',
-  'Joe Rogan','Repair Café Collective','Initiated',SP1,'Riverside Commons',T('2026-04-05 11:00:00'),
-  [JOE,STEVE],['Joe Rogan','Steve Wozniak'],['energy as commons','resilience'], {JOE:'manager'}))
+  'Jo Rodan','Repair Café Collective','Initiated',SP1,'Riverside Commons',T('2026-04-05 11:00:00'),
+  [JOE,STEVE],['Jo Rodan','Steve Wozniac'],['energy as commons','resilience'], {JOE:'manager'}))
 session.execute(PROJECT_Q, (PR3,'Open GPU Cluster',
   'A community-run cluster of donated GPUs for open AI research. Time is allocated by the Open Compute Guild through transparent, member-led voting.',
-  'Elon Musk','Open Compute Guild','In Progress',SP2,'AI Commons',T('2026-02-15 13:00:00'),
-  [ELON,BILL,JOE],['Elon Musk','Bill Gates','Joe Rogan'],['open research','compute commons'], {ELON:'manager'}))
+  'Elon Mask','Open Compute Guild','In Progress',SP2,'AI Commons',T('2026-02-15 13:00:00'),
+  [ELON,BILL,JOE],['Elon Mask','Bill Gales','Jo Rodan'],['open research','compute commons'], {ELON:'manager'}))
 session.execute(PROJECT_Q, (PR4,'Pollinator Corridor',
   'A ribbon of wildflower meadows linking gardens across the valley so bees and butterflies can travel safely. Planted and tended by volunteers.',
-  'David Attenborough','Seed Keepers Alliance','Completed',SP3,'Earthsong Gardens',T('2026-03-28 08:30:00'),
-  [DAVID,EMMA],['David Attenborough','Emma Watson'],['biodiversity','stewardship'], {DAVID:'manager'}))
+  'David Attenbarough','Seed Keepers Alliance','Completed',SP3,'Earthsong Gardens',T('2026-03-28 08:30:00'),
+  [DAVID,EMMA],['David Attenbarough','Emma Wotson'],['biodiversity','stewardship'], {DAVID:'manager'}))
 print("[OK] Seeded 4 projects")
 
 # Services / Openings  (now includes cadence)
@@ -405,23 +405,23 @@ SERVICE_Q = """INSERT INTO logosphere.services
  status,created_at,values,cadence) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
 session.execute(SERVICE_Q, (SV1,'offer','Free podcasting & audio workshop',
   'I will teach anyone who is curious how to record, edit and publish a podcast. Bring your story; the gear is provided.',
-  JOE,'Joe Rogan',SP1,'Riverside Commons','Posted',T('2026-06-20 10:00:00'),
+  JOE,'Jo Rodan',SP1,'Riverside Commons','Posted',T('2026-06-20 10:00:00'),
   ['skill sharing','storytelling'],'perpetual'))
 session.execute(SERVICE_Q, (SV2,'need','Hands needed for Saturday fence rebuild',
   'The community garden fence came down in the storm. Looking for a few neighbours to help rebuild it this Saturday — lunch is on the garden.',
-  MARIE,'Marie Kondo',SP1,'Riverside Commons','Open',T('2026-06-22 08:00:00'),
+  MARIE,'Marie Konda',SP1,'Riverside Commons','Open',T('2026-06-22 08:00:00'),
   ['mutual aid','gardens'],'single'))
 session.execute(SERVICE_Q, (SV3,'offer','7x H100 GPUs for open research',
   'Donating time on seven H100 GPUs to any open, non-commercial AI project. Allocated through the Open Compute Guild.',
-  ELON,'Elon Musk',SP2,'AI Commons','Posted',T('2026-06-18 15:00:00'),
+  ELON,'Elon Mask',SP2,'AI Commons','Posted',T('2026-06-18 15:00:00'),
   ['open compute','generosity'],'perpetual'))
 session.execute(SERVICE_Q, (SV4,'offer','Heirloom seeds to share',
   "Tomato, bean and squash seeds saved from this year's harvest. Take what you will grow; bring some back next season.",
-  EMMA,'Emma Watson',SP3,'Earthsong Gardens','Posted',T('2026-06-15 09:00:00'),
+  EMMA,'Emma Wotson',SP3,'Earthsong Gardens','Posted',T('2026-06-15 09:00:00'),
   ['seed sovereignty','generosity'],'perpetual'))
 print("[OK] Seeded 4 openings (with cadence)")
 
-# Meaning Trail — Joe Rogan's 5 exchanges
+# Meaning Trail — Jo Rodan's 5 exchanges
 XC = [U(f'10000000-0000-0000-0000-00000000000{i}') for i in range(1, 6)]
 
 session.execute("""INSERT INTO logosphere.meaning_trail
@@ -430,20 +430,20 @@ session.execute("""INSERT INTO logosphere.meaning_trail
  gratitude_comment,gratitude_comment_id,gratitude_comment_timestamp,
  other_comment,other_comment_author_id,other_comment_author_name,other_comment_id,other_comment_timestamp)
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-(JOE,XC[0],MARIE,'Marie Kondo',
+(JOE,XC[0],MARIE,'Marie Konda',
  'Rebuilt the community garden fence after the spring storm','Receipted',
  PR1,'Community Tool Library',T('2026-05-02 09:00:00'),
  'Joe showed up at dawn with his own tools and stayed until every post was solid. The garden is safe again because of him.',
  U('20000000-0000-0000-0000-000000000001'),T('2026-05-04 18:00:00'),
  'Could not have done this without Marie organising the whole crew. True community spirit.',
- MARIE,'Marie Kondo',U('30000000-0000-0000-0000-000000000001'),T('2026-05-04 19:00:00')))
+ MARIE,'Marie Konda',U('30000000-0000-0000-0000-000000000001'),T('2026-05-04 19:00:00')))
 
 session.execute("""INSERT INTO logosphere.meaning_trail
 (user_id,exchange_id,other_user_id,other_user_name,exchange_description,exchange_status,
  project_id,project_name,project_start_timestamp,
  gratitude_comment,gratitude_comment_id,gratitude_comment_timestamp)
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-(JOE,XC[1],ELON,'Elon Musk',
+(JOE,XC[1],ELON,'Elon Mask',
  'Offered 7 H100 GPUs to the Open GPU Cluster for open research','In Progress',
  PR3,'Open GPU Cluster',T('2026-06-01 12:00:00'),
  'Joe pledged serious compute to the commons, no strings attached. This unblocks three research teams.',
@@ -454,18 +454,18 @@ session.execute("""INSERT INTO logosphere.meaning_trail
  project_name,project_start_timestamp,
  other_comment,other_comment_author_id,other_comment_author_name,other_comment_id,other_comment_timestamp)
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-(JOE,XC[2],EMMA,'Emma Watson',
+(JOE,XC[2],EMMA,'Emma Wotson',
  'Ran a free podcasting & audio workshop at Riverside Commons','Finished',
  'Skill Share',T('2026-06-10 17:00:00'),
  'I came in knowing nothing and left having recorded my first episode. Joe gives his time so generously.',
- EMMA,'Emma Watson',U('30000000-0000-0000-0000-000000000003'),T('2026-06-12 20:00:00')))
+ EMMA,'Emma Wotson',U('30000000-0000-0000-0000-000000000003'),T('2026-06-12 20:00:00')))
 
 session.execute("""INSERT INTO logosphere.meaning_trail
 (user_id,exchange_id,other_user_id,other_user_name,exchange_description,exchange_status,
  project_id,project_name,project_start_timestamp,
  user_comment,user_comment_id,user_comment_timestamp)
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-(JOE,XC[3],STEVE,'Steve Wozniak',
+(JOE,XC[3],STEVE,'Steve Wozniac',
  'Learned joinery and tool restoration from Steve at the Repair Café','Finished',
  PR1,'Community Tool Library',T('2026-04-18 10:00:00'),
  'Steve is endlessly patient. He taught me to sharpen a plane and to value fixing over buying. Paying it forward next week.',
@@ -475,13 +475,13 @@ session.execute("""INSERT INTO logosphere.meaning_trail
 (user_id,exchange_id,other_user_id,other_user_name,exchange_description,exchange_status,
  project_id,project_name,project_start_timestamp)
 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-(JOE,XC[4],STEVE,'Steve Wozniak',
+(JOE,XC[4],STEVE,'Steve Wozniac',
  'Kicked off the Neighbourhood Solar Microgrid — mapping rooftops this month','Initiated',
  PR2,'Neighbourhood Solar Microgrid',T('2026-06-24 09:00:00')))
 
-print("[OK] Seeded 5 meaning trail entries for Joe Rogan")
+print("[OK] Seeded 5 meaning trail entries for Jo Rodan")
 
-# ── Step 6: Value cards for Joe Rogan ─────────────────────────────────────────
+# ── Step 6: Value cards for Jo Rodan ─────────────────────────────────────────
 VC_Q = """INSERT INTO logosphere.value_cards
 (user_id,card_id,title,care_about,because,looks_like,
  drift_looks_like,in_conflict,never_do,frankl_mode,color_key,created_at)
@@ -495,10 +495,10 @@ except Exception as e:
 
 # Clear existing cards for all users and entities
 for uid, name in [
-    (JOE, 'Joe Rogan'), (ELON, 'Elon Musk'),
-    (MARIE, 'Marie Kondo'), (STEVE, 'Steve Wozniak'),
-    (DAVID, 'David Attenborough'), (EMMA, 'Emma Watson'),
-    (BILL, 'Bill Gates'), (STEPHEN, 'Stephen Hawking'),
+    (JOE, 'Jo Rodan'), (ELON, 'Elon Mask'),
+    (MARIE, 'Marie Konda'), (STEVE, 'Steve Wozniac'),
+    (DAVID, 'David Attenbarough'), (EMMA, 'Emma Wotson'),
+    (BILL, 'Bill Gales'), (STEPHEN, 'Stephen Hawkins'),
     (SP1, 'Riverside Commons'), (SP2, 'AI Commons'), (SP3, 'Earthsong Gardens'),
     (AL1, 'Repair Café Collective'), (AL2, 'Open Compute Guild'), (AL3, 'Seed Keepers Alliance'),
     (PR1, 'Community Tool Library'), (PR2, 'Neighbourhood Solar Microgrid'),
@@ -544,7 +544,7 @@ joe_cards = [
 
 for c in joe_cards:
     session.execute(VC_Q, (JOE, uuid.uuid4()) + c + (datetime.utcnow(),))
-print(f"[OK] Seeded {len(joe_cards)} value cards for Joe Rogan")
+print(f"[OK] Seeded {len(joe_cards)} value cards for Jo Rodan")
 
 elon_cards = [
     ('Making humanity multi-planetary',
@@ -581,7 +581,7 @@ elon_cards = [
 
 for c in elon_cards:
     session.execute(VC_Q, (ELON, uuid.uuid4()) + c + (datetime.utcnow(),))
-print(f"[OK] Seeded {len(elon_cards)} value cards for Elon Musk")
+print(f"[OK] Seeded {len(elon_cards)} value cards for Elon Mask")
 
 # ── Step 7: Value cards for remaining users ────────────────────────────────────
 marie_cards = [
@@ -723,12 +723,12 @@ stephen_cards = [
 ]
 
 for name, uid, cards in [
-    ('Marie Kondo', MARIE, marie_cards),
-    ('Steve Wozniak', STEVE, steve_cards),
-    ('David Attenborough', DAVID, david_cards),
-    ('Emma Watson', EMMA, emma_cards),
-    ('Bill Gates', BILL, bill_cards),
-    ('Stephen Hawking', STEPHEN, stephen_cards),
+    ('Marie Konda', MARIE, marie_cards),
+    ('Steve Wozniac', STEVE, steve_cards),
+    ('David Attenbarough', DAVID, david_cards),
+    ('Emma Wotson', EMMA, emma_cards),
+    ('Bill Gales', BILL, bill_cards),
+    ('Stephen Hawkins', STEPHEN, stephen_cards),
 ]:
     for c in cards:
         session.execute(VC_Q, (uid, uuid.uuid4()) + c + (datetime.utcnow(),))

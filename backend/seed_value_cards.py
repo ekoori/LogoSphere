@@ -54,12 +54,12 @@ def list_users():
 print("Users in DB:")
 list_users()
 
-joe_id = find_user('Joe Rogan') or find_user('Rogan') or find_user('Joe')
+joe_id = find_user('Jo Rodan') or find_user('Rogan') or find_user('Joe')
 if not joe_id:
-    print("[SKIP] Joe Rogan not found in users table")
+    print("[SKIP] Jo Rodan not found in users table")
     sys.exit(0)
 
-print(f"[OK] Found Joe Rogan: {joe_id}")
+print(f"[OK] Found Jo Rodan: {joe_id}")
 
 # ── 3. Delete existing cards for Joe (idempotent re-seed) ────────────────────
 existing = list(session.execute("SELECT card_id FROM value_cards WHERE user_id = %s", [joe_id]))
@@ -134,14 +134,14 @@ for i, c in enumerate(cards):
     ))
     print(f"  [OK] inserted card {i+1}: {c['title']}")
 
-print(f"\n[DONE] Seeded {len(cards)} value cards for Joe Rogan ({joe_id})")
+print(f"\n[DONE] Seeded {len(cards)} value cards for Jo Rodan ({joe_id})")
 
-# ── 5. Elon Musk ─────────────────────────────────────────────────────────────
-elon_id = find_user('Elon Musk') or find_user('Musk') or find_user('Elon')
+# ── 5. Elon Mask ─────────────────────────────────────────────────────────────
+elon_id = find_user('Elon Mask') or find_user('Musk') or find_user('Elon')
 if not elon_id:
-    print("[SKIP] Elon Musk not found in users table")
+    print("[SKIP] Elon Mask not found in users table")
 else:
-    print(f"[OK] Found Elon Musk: {elon_id}")
+    print(f"[OK] Found Elon Mask: {elon_id}")
 
     existing_elon = list(session.execute("SELECT card_id FROM value_cards WHERE user_id = %s", [elon_id]))
     for row in existing_elon:
@@ -207,6 +207,6 @@ else:
         ))
         print(f"  [OK] inserted card {i+1}: {c['title']}")
 
-    print(f"\n[DONE] Seeded {len(elon_cards)} value cards for Elon Musk ({elon_id})")
+    print(f"\n[DONE] Seeded {len(elon_cards)} value cards for Elon Mask ({elon_id})")
 
 cluster.shutdown()

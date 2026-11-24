@@ -13,25 +13,25 @@
   "members": [
    {
     "id": "16f033ca-2b2c-4745-a537-82999209774c",
-    "name": "Steve Wozniak",
+    "name": "Steve Wozniac",
     "role": "admin"
    },
    {
     "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
-    "name": "Joe Rogan",
+    "name": "Jo Rodan",
     "role": "member"
    },
    {
     "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
-    "name": "Marie Kondo",
+    "name": "Marie Konda",
     "role": "steward"
    }
   ],
   "name": "Repair Café Collective",
   "participants": [
-   "Steve Wozniak",
-   "Joe Rogan",
-   "Marie Kondo"
+   "Steve Wozniac",
+   "Jo Rodan",
+   "Marie Konda"
   ],
   "pm_policy": "single-pm",
   "projects": [
@@ -108,19 +108,19 @@
   "members": [
    {
     "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
-    "name": "Emma Watson",
+    "name": "Emma Wotson",
     "role": "admin"
    },
    {
     "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
-    "name": "David Attenborough",
+    "name": "David Attenbarough",
     "role": "steward"
    }
   ],
   "name": "Seed Keepers Alliance",
   "participants": [
-   "Emma Watson",
-   "David Attenborough"
+   "Emma Wotson",
+   "David Attenbarough"
   ],
   "pm_policy": "single-pm",
   "projects": [
@@ -197,25 +197,25 @@
   "members": [
    {
     "id": "86eb2b6c-1771-4533-9bd8-fca4f83fe61a",
-    "name": "Bill Gates",
+    "name": "Bill Gales",
     "role": "admin"
    },
    {
     "id": "b4dfd93d-a9e0-4bf8-8685-735dbde17ff7",
-    "name": "Elon Musk",
+    "name": "Elon Mask",
     "role": "steward"
    },
    {
     "id": "7d6e67f2-5c64-4175-8330-a0d1b2b9c45f",
-    "name": "Stephen Hawking",
+    "name": "Stephen Hawkins",
     "role": "member"
    }
   ],
   "name": "Open Compute Guild",
   "participants": [
-   "Bill Gates",
-   "Elon Musk",
-   "Stephen Hawking"
+   "Bill Gales",
+   "Elon Mask",
+   "Stephen Hawkins"
   ],
   "pm_policy": "single-pm",
   "projects": [

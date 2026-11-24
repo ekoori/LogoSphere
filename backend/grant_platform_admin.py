@@ -1,6 +1,6 @@
 # grant_platform_admin.py — operator tool: grant or revoke platform-admin status.
 #
-#   CASSANDRA_HOST=127.0.0.1 .venv/bin/python grant_platform_admin.py joe.rogan@example.com
+#   CASSANDRA_HOST=127.0.0.1 .venv/bin/python grant_platform_admin.py jo.rodan@example.com
 #   CASSANDRA_HOST=127.0.0.1 .venv/bin/python grant_platform_admin.py --revoke someone@example.com
 #   CASSANDRA_HOST=127.0.0.1 .venv/bin/python grant_platform_admin.py --list
 #

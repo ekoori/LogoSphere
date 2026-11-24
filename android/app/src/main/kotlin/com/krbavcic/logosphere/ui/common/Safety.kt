@@ -60,7 +60,11 @@ fun ReportDialog(report: ReportOf, onClose: () -> Unit) {
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                MetaText("Only the platform's administrators see it. The person isn't told.", maxLines = 3)
+                MetaText(
+                    if (report.kind == "ai") "Only the platform's administrators see it, with what the AI gave you."
+                    else "Only the platform's administrators see it. The person isn't told.",
+                    maxLines = 3,
+                )
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             }
         },

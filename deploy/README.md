@@ -1,6 +1,6 @@
 # Production setup
 
-Copies of what runs on the production host (ts.krbavcic.com), kept here so the
+Copies of what runs on the production host (logosphere.earth), kept here so the
 setup can be rebuilt and reviewed. Edit them here and on the host together.
 
 | File | On the host |
@@ -27,6 +27,24 @@ The backend's workers are never recycled (no `--max-requests`): gunicorn's
 thread worker drops the connections it has accepted but not yet read when it
 retires, which reset the personas' requests and gave people 502s. The
 personas' API client sends a dropped read once more (`backend/agents/platform.py`).
+
+## Domains
+
+`logosphere.earth` is registered at Porkbun, which also serves its DNS: `A` records
+for `logosphere.earth` and `www.logosphere.earth` point at the host (45.79.237.252).
+Its certificate covers both names; it came from `certbot certonly --nginx` with a
+deploy hook that reloads nginx, and renews through the plain-HTTP block in
+`nginx-logosphere.conf`. `www` redirects to the bare name.
+
+`ts.krbavcic.com` was the first address. It still serves the API (and the app's
+place picker page) for apps older than 0.3.3, which call it directly; every
+other page there redirects to `logosphere.earth`. Links in emails use `SITE_URL`
+from `backend/mail.env`, else the default in `backend/app/utils/mailer.py`.
+
+Email goes out as `no-reply@logosphere.earth` through LogoSphere's own Mailgun
+account (US region; key and domain in `backend/mail.env`). Its SPF and DKIM
+records (`smtp._domainkey`) and a `p=none` DMARC record are at Porkbun; tracking
+is off, so the `email` CNAME Mailgun suggests isn't needed.
 
 ## Pictures
 

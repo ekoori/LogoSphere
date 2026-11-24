@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -50,11 +52,13 @@ import com.krbavcic.logosphere.BuildConfig
 import com.krbavcic.logosphere.core.api.LogoSphereApi
 import com.krbavcic.logosphere.core.api.userMessage
 import com.krbavcic.logosphere.data.SessionManager
+import com.krbavcic.logosphere.core.logic.InfoPage
 import com.krbavcic.logosphere.ui.LocalAppContainer
 import com.krbavcic.logosphere.ui.LocalNavigator
 import com.krbavcic.logosphere.ui.common.PrimaryAction
 import com.krbavcic.logosphere.ui.common.Wordmark
 import com.krbavcic.logosphere.ui.common.readable
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -211,6 +215,7 @@ private fun AuthFrame(content: @Composable ColumnScope.() -> Unit) {
             Spacer(Modifier.height(12.dp))
             content()
         }
+        ProblemFlag(Modifier.align(Alignment.TopEnd))
     }
 }
 
@@ -341,7 +346,7 @@ fun SignInScreen(notice: String?) {
                                 "It works once, for 2 hours, and opens in your browser."
                             null -> "One moment…"
                             false -> "LogoSphere can't send email yet. Ask a platform administrator for a password reset link — " +
-                                "it works once, for 24 hours. If you don't know one, write to support@logosphere.net."
+                                "it works once, for 24 hours. If you don't know one, write to support@logosphere.earth."
                         },
                     )
                 },
@@ -433,6 +438,7 @@ fun RegisterScreen() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        TermsNotice()
         PrimaryAction(
             if (mailOn == true) "Email me a link to join" else "Create account",
             onClick = submit,
@@ -441,6 +447,24 @@ fun RegisterScreen() {
         )
         TextButton(onClick = navigator::back, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Already have an account? Sign in")
+        }
+    }
+}
+
+/** Joining means agreeing to the terms and the privacy policy: said before the button is pressed. */
+@Composable
+private fun TermsNotice() {
+    val api = LocalAppContainer.current.api
+    val uri = LocalUriHandler.current
+    Column {
+        Text(
+            "By joining you agree to the terms of service and the privacy policy.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(onClick = { uri.openUri(api.webUrl(InfoPage.Terms.path)) }) { Text("Terms of service") }
+            TextButton(onClick = { uri.openUri(api.webUrl(InfoPage.Privacy.path)) }) { Text("Privacy policy") }
         }
     }
 }

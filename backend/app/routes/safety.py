@@ -2,16 +2,18 @@
 
   GET  /api/blocks                     whom you blocked
   POST /api/blocks/<person>            {blocked}
-  POST /api/reports                    {kind: person|message|acknowledgement|opening|event|announcement, id, note,
-                                        person_id (a message), trail_id (an acknowledgement),
-                                        group_id (an announcement)}
+  POST /api/reports                    {kind: person|message|acknowledgement|opening|event|announcement|ai, id,
+                                        note, person_id (a message), trail_id (an acknowledgement),
+                                        group_id (an announcement), excerpt (ai: what AI help gave)}
+  POST /api/problems                   {category, note, context}: the flag on every screen, signed
+                                        in or out, filed with the reports as kind "problem"
   GET  /api/admin/reports?status=      the administrators' queue
   POST /api/admin/reports/<id>         {status: handled|dismissed, note, remove}
 """
 from flask import current_app as app, jsonify, request
 
 from app.db import session
-from app.middleware.session_middleware import validate_session
+from app.middleware.session_middleware import optional_session, validate_session
 from app.models.acknowledgement import Acknowledgement
 from app.models.notification import Notification
 from app.models.openings import Service
@@ -23,6 +25,13 @@ from app.utils.trails import Trail
 
 REPORTS_A_DAY = 20
 REMOVABLE = ('message', 'acknowledgement', 'announcement')
+AI_HELP = ('value_card', 'picture')     # what an "ai" report names: AI help's words, or its picture
+AI_EXCERPT_MAX = 2000
+# The problem flag: its kinds (kept as item_id; the app and site offer the same list), and what
+# the app says about where the problem was (kept as excerpt).
+PROBLEM_KINDS = ("Doesn't work", 'Confusing', 'Wrong or missing', 'An idea', 'Other')
+PROBLEMS_A_DAY = 10              # from one network, signed out
+PROBLEM_CONTEXT_MAX = 1500
 
 
 def _options():
@@ -72,7 +81,8 @@ def set_block(person_id, user_id=None):
 
 def _reported(me, data):
     """(whom, its id, where it is, what it said), read here and never taken from
-    the client; or None when it isn't there or isn't theirs to see."""
+    the client (but for AI help's, which only the client ever had); or None when
+    it isn't there or isn't theirs to see."""
     kind, item = data.get('kind'), data.get('id')
     if kind == 'person':
         them = messaging.person(item)
@@ -110,6 +120,11 @@ def _reported(me, data):
             return None
         ack = Acknowledgement.find(trail.id, key)
         return (ack.author_id, ack.ack_id, trail.id, ack.body) if ack else None
+    if kind == 'ai':
+        # AI help's words (or what a picture was asked to show) are shown only to the one
+        # asking and never saved, so they can only come from them; and nobody is named.
+        words = _said(data.get('excerpt'))[:AI_EXCERPT_MAX]
+        return (None, item, None, words) if item in AI_HELP and words else None
     return None
 
 
@@ -118,7 +133,7 @@ def make_report(user_id=None):
     if request.method == 'OPTIONS':
         return _options()
     me, data = as_uuid(user_id), _body()
-    if data.get('kind') not in ('person', 'message', 'acknowledgement', 'opening', 'event', 'announcement'):
+    if data.get('kind') not in ('person', 'message', 'acknowledgement', 'opening', 'event', 'announcement', 'ai'):
         return jsonify({'message': 'Say what you are reporting.'}), 400
     note = _said(data.get('note'))
     if len(note) > safety.NOTE_MAX:
@@ -139,6 +154,35 @@ def make_report(user_id=None):
             Notification.create(user_id=admin, actor_id=None, actor_name='LogoSphere', type_='report',
                                 message='A report is waiting for an administrator', link='/admin?tab=reports')
     return jsonify({'message': "Thank you. The platform's administrators will look at it. Nobody else is told."}), 201
+
+
+@optional_session
+def report_problem(user_id=None):
+    """The flag on every screen: a few words about a problem, with what the app or site says about
+    where it was. Signed out too, so the sign-in pages have one; then no name goes with it."""
+    if request.method == 'OPTIONS':
+        return _options()
+    data = _body()
+    note = _said(data.get('note'))
+    if not note:
+        return jsonify({'message': 'Say in a few words what went wrong.'}), 400
+    if len(note) > safety.NOTE_MAX:
+        return jsonify({'message': f'Keep it under {safety.NOTE_MAX} characters.'}), 400
+    kind = data.get('category') if data.get('category') in PROBLEM_KINDS else 'Other'
+    context = data.get('context') if isinstance(data.get('context'), dict) else {}
+    where = '\n'.join(f'{_said(str(k))[:40]}: {_said(str(v))[:300]}' for k, v in list(context.items())[:12])
+    me = as_uuid(user_id)
+    # nginx sets X-Real-IP itself and the backend listens only locally.
+    allowance = ((f'reports:{me}', REPORTS_A_DAY) if me else
+                 (f'problems:{mailer.network(request.headers.get("X-Real-IP") or request.remote_addr)}', PROBLEMS_A_DAY))
+    if not mailer.take(*allowance):
+        return jsonify({'message': 'That is a lot of reports for one day. Try again tomorrow.'}), 429
+    safety.file_report(me, None, 'problem', kind, None, where[:PROBLEM_CONTEXT_MAX], note)
+    for admin in safety.administrators():
+        if admin != me:
+            Notification.create(user_id=admin, actor_id=None, actor_name='LogoSphere', type_='report',
+                                message='A problem report is waiting for an administrator', link='/admin?tab=reports')
+    return jsonify({'message': "Thank you. It went to LogoSphere's administrators."}), 201
 
 
 @admin_only
@@ -191,5 +235,6 @@ def register(app_):
     app_.add_url_rule('/api/blocks', view_func=list_blocks, methods=['GET'])
     app_.add_url_rule('/api/blocks/<person_id>', view_func=set_block, methods=['POST', 'OPTIONS'])
     app_.add_url_rule('/api/reports', view_func=make_report, methods=['POST', 'OPTIONS'])
+    app_.add_url_rule('/api/problems', view_func=report_problem, methods=['POST', 'OPTIONS'])
     app_.add_url_rule('/api/admin/reports', view_func=list_reports, methods=['GET', 'OPTIONS'])
     app_.add_url_rule('/api/admin/reports/<report_id>', view_func=settle_report, methods=['POST', 'OPTIONS'])

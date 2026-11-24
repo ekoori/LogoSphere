@@ -2,10 +2,10 @@
 
 
 def test_login_returns_session_and_profile(api):
-    status, body = api.post('/api/login', json={'email': 'joe.rogan@example.com', 'password': 'Joe'})
+    status, body = api.post('/api/login', json={'email': 'jo.rodan@example.com', 'password': 'Joe'})
     assert status == 200
     assert body['session_id']
-    assert body['data']['name'].startswith('Joe')
+    assert body['data']['name'].startswith('Jo')
     assert 'password' not in body['data']
     api.logout_token(body['session_id'])
 
@@ -14,7 +14,7 @@ def test_login_response_carries_only_the_new_session(api):
     """The user data in a login response must not carry a session token. It
     used to include another live session of the same user (from an earlier
     sign-in), handing out a second bearer credential."""
-    creds = {'email': 'marie.kondo@example.com', 'password': 'Marie'}
+    creds = {'email': 'marie.konda@example.com', 'password': 'Marie'}
     _, first = api.post('/api/login', json=creds)
     status, second = api.post('/api/login', json=creds)
     try:
@@ -35,13 +35,13 @@ def test_public_profile_hides_email_from_other_members(api):
     assert 'session_id' not in body
     # The person themself, and platform admins, still see it.
     _, own = api.get(f'/api/users/{marie}', who='marie')
-    assert own['email'] == 'marie.kondo@example.com'
+    assert own['email'] == 'marie.konda@example.com'
     _, admin = api.get(f'/api/users/{marie}', who='admin')
-    assert admin['email'] == 'marie.kondo@example.com'
+    assert admin['email'] == 'marie.konda@example.com'
 
 
 def test_bad_password_is_401_with_message(api):
-    status, body = api.post('/api/login', json={'email': 'joe.rogan@example.com', 'password': 'nope'})
+    status, body = api.post('/api/login', json={'email': 'jo.rodan@example.com', 'password': 'nope'})
     assert status == 401
     assert body == {'message': 'Invalid email or password'}
 
@@ -164,6 +164,6 @@ def test_a_database_outage_is_503_not_a_sign_out(app, api, monkeypatch):
 
 
 def test_sign_in_ignores_email_case_and_spaces(api):
-    status, body = api.post('/api/login', json={'email': '  Joe.Rogan@Example.COM ', 'password': 'Joe'})
+    status, body = api.post('/api/login', json={'email': '  jo.rodan@example.com ', 'password': 'Joe'})
     assert status == 200, body
     api.logout_token(body['session_id'])

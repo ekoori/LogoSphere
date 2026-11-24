@@ -6,28 +6,28 @@ const STEVE = 'steve-id';
 
 const row = (extra = {}) => ({
     exchange_id: 'x1', exchange_description: 'Fence rebuild', exchange_status: 'Initiated',
-    initiator_id: ME, initiator_name: 'Joe Rogan', initiator_kind: 'user',
-    other_user_id: STEVE, other_user_name: 'Steve Wozniak', other_kind: 'user',
+    initiator_id: ME, initiator_name: 'Jo Rodan', initiator_kind: 'user',
+    other_user_id: STEVE, other_user_name: 'Steve Wozniac', other_kind: 'user',
     viewer_is_initiator: true, likes: {}, ...extra,
 });
 
 describe('mapExchange', () => {
     it('names the trail owner "You" on their own trail', () => {
         const x = mapExchange(row(), { ownerId: ME });
-        expect(x.participants.map((p) => p.name)).toEqual(['You', 'Steve Wozniak']);
+        expect(x.participants.map((p) => p.name)).toEqual(['You', 'Steve Wozniac']);
         expect(x.participants[1].id).toBe(STEVE);
     });
 
     it('keeps the order initiator -> recipient when the owner received', () => {
-        const x = mapExchange(row({ viewer_is_initiator: false, initiator_id: STEVE, initiator_name: 'Steve Wozniak',
-            other_user_id: ME, other_user_name: 'Joe Rogan' }), { ownerId: ME });
-        expect(x.participants.map((p) => p.name)).toEqual(['Steve Wozniak', 'You']);
+        const x = mapExchange(row({ viewer_is_initiator: false, initiator_id: STEVE, initiator_name: 'Steve Wozniac',
+            other_user_id: ME, other_user_name: 'Jo Rodan' }), { ownerId: ME });
+        expect(x.participants.map((p) => p.name)).toEqual(['Steve Wozniac', 'You']);
     });
 
     it('says who acted for a group', () => {
         const x = mapExchange(row({ other_kind: 'alliance', other_user_id: 'a1', other_user_name: 'Repair Café',
-            recipient_acting_user_id: 'marie-id', recipient_acting_user_name: 'Marie Kondo' }), { ownerId: ME });
-        expect(x.participants[1]).toEqual({ name: 'Marie Kondo on behalf of Repair Café', id: 'a1', kind: 'alliance', isAgent: false });
+            recipient_acting_user_id: 'marie-id', recipient_acting_user_name: 'Marie Konda' }), { ownerId: ME });
+        expect(x.participants[1]).toEqual({ name: 'Marie Konda on behalf of Repair Café', id: 'a1', kind: 'alliance', isAgent: false });
     });
 
     it('marks AI personas and demo exchanges, and invents no description', () => {
@@ -41,7 +41,7 @@ describe('mapExchange', () => {
     it('attributes the receipt to the recipient and the note to the initiator', () => {
         const x = mapExchange(row({ gratitude_comment: 'Thank you', user_comment: 'Glad to help' }), { ownerId: ME });
         expect(x.receipts.map((r) => [r.author, r.commentType])).toEqual([
-            ['Steve Wozniak', 'gratitude'], ['You', 'user']]);
+            ['Steve Wozniac', 'gratitude'], ['You', 'user']]);
     });
 
     it('reads likes by what was liked', () => {
@@ -80,7 +80,7 @@ describe('mapExchange', () => {
 describe('mapService', () => {
     const service = (extra = {}) => ({
         service_id: 's1', title: 'Spare GPU hours', type: 'offer', status: 'Posted', cadence: 'single',
-        provider: 'Joe Rogan', provider_id: ME, sphere_id: 'sp1', spheres: ['AI Commons'], likes: 3, ...extra,
+        provider: 'Jo Rodan', provider_id: ME, sphere_id: 'sp1', spheres: ['AI Commons'], likes: 3, ...extra,
     });
 
     it('links the sphere by id', () => {

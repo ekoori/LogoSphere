@@ -38,10 +38,10 @@ CASSANDRA_UP = _cassandra_up()
 
 # Demo accounts (password = first name; see database/genpass.py).
 USERS = {
-    'joe': ('joe.rogan@example.com', 'Joe'),          # admin1 of every seeded sphere, platform admin
-    'marie': ('marie.kondo@example.com', 'Marie'),    # Riverside member; steward of Repair Cafe
-    'david': ('david.attenborough@example.com', 'David'),  # Riverside member, not in Tool Library
-    'elon': ('elon.musk@example.com', 'Elon'),        # AI Commons only - not in Riverside
+    'joe': ('jo.rodan@example.com', 'Joe'),          # Jo Rodan (renamed 2026-11-25; the password kept its old first name)
+    'marie': ('marie.konda@example.com', 'Marie'),    # Riverside member; steward of Repair Cafe
+    'david': ('david.attenbarough@example.com', 'David'),  # Riverside member, not in Tool Library
+    'elon': ('elon.mask@example.com', 'Elon'),        # AI Commons only - not in Riverside
 }
 # A 1x1 PNG, for image upload tests.
 PNG_1PX = __import__('base64').b64decode(
@@ -69,7 +69,7 @@ def db(app):
 
 @pytest.fixture(scope='session', autouse=True)
 def test_admin(request):
-    """A platform admin for this run only. Joe Rogan is an AI persona now and
+    """A platform admin for this run only. Jo Rodan is an AI persona now and
     no longer an admin, and no real person's account belongs in a test. The
     account (random password, never stored) and everything registration gave
     it are removed afterwards. While the suite runs the personas are paused,
@@ -171,7 +171,7 @@ class Api:
 def api(app, db):
     """The shared client. When the session ends it logs its test accounts out
     and removes the notifications they caused, so a run against a database
-    whose data matters (the demo data on ts.krbavcic.com) leaves no trace."""
+    whose data matters (the demo data on production, logosphere.earth) leaves no trace."""
     import datetime
     started = datetime.datetime.utcnow() - datetime.timedelta(seconds=5)
     client = Api(app.test_client())

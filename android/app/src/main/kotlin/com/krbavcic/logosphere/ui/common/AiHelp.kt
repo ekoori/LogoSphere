@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.krbavcic.logosphere.core.api.userMessage
 import com.krbavcic.logosphere.core.model.AiHelpStatus
+import com.krbavcic.logosphere.core.model.ReportOf
 import com.krbavcic.logosphere.core.model.SuggestedCard
 import com.krbavcic.logosphere.core.model.ValueCardDraft
 import com.krbavcic.logosphere.data.Captures
@@ -181,6 +182,9 @@ fun AiPictureButton(purpose: String, title: String, description: String, onUse: 
                     OutlinedButton(onClick = ::draw, enabled = !busy) { Text("Draw another") }
                 }
             }
+            if (made != null) {
+                ReportLink(ReportOf.ai("picture", askedToDraw(title, description, hint)), label = "Report this picture")
+            }
         }
     }
 }
@@ -291,6 +295,16 @@ fun AiCardButton(current: ValueCardDraft, brief: Boolean, group: Boolean, onUse:
                     Button(onClick = ::ask, enabled = !busy && !nothingYet) { Text(if (busy) "Thinking…" else "Suggest wording") }
                 }
             }
+            suggested?.let { suggestion ->
+                val words = suggestion.lines.map { (label, said) -> "$label: $said" } + question
+                ReportLink(ReportOf.ai("value_card", words.filter { it.isNotBlank() }.joinToString("\n")), label = "Report this wording")
+            }
         }
     }
 }
+
+/** What a reported AI picture was asked to show: the picture itself is never kept. */
+private fun askedToDraw(title: String, description: String, hint: String): String =
+    listOf("Title" to title, "Description" to description, "Asked to show" to hint)
+        .filter { it.second.isNotBlank() }
+        .joinToString("\n") { (label, said) -> "$label: $said" }

@@ -21,7 +21,6 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.RadioButton
 import androidx.compose.ui.semantics.Role
 import com.krbavcic.logosphere.data.ThemeChoice
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Gavel
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Info
@@ -86,6 +85,7 @@ import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.ui.common.LocalSimple
 import com.krbavcic.logosphere.core.logic.UiMode
 import com.krbavcic.logosphere.ui.common.UiModeDialog
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -155,6 +155,7 @@ fun MeScreen() {
         topBar = {
             TopAppBar(
                 title = { Text("Me", style = MaterialTheme.typography.headlineSmall) },
+                actions = { ProblemFlag() },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
@@ -257,7 +258,6 @@ fun MeScreen() {
                             LinkRow(Icons.Outlined.Language, InfoPage.About.title) { navigator.info(InfoPage.About) }
                             LinkRow(Icons.AutoMirrored.Outlined.HelpOutline, InfoPage.HowItWorks.title) { navigator.info(InfoPage.HowItWorks) }
                             LinkRow(Icons.Outlined.Handshake, InfoPage.Contribute.title) { navigator.info(InfoPage.Contribute) }
-                            LinkRow(Icons.Outlined.Favorite, InfoPage.Donate.title) { navigator.info(InfoPage.Donate) }
                             LinkRow(Icons.Outlined.PrivacyTip, InfoPage.Privacy.title) { navigator.info(InfoPage.Privacy) }
                             LinkRow(Icons.Outlined.Gavel, InfoPage.Terms.title) { navigator.info(InfoPage.Terms) }
                             LinkRow(Icons.Outlined.Info, "Fonts & licences") { showLicences = true }

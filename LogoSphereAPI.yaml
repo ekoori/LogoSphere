@@ -51,7 +51,7 @@ info:
   version: 2.0.0
 
 servers:
-  - url: "https://ts.krbavcic.com"
+  - url: "https://logosphere.earth"
     description: LogoSphere production server
 
 security:
@@ -3582,11 +3582,42 @@ paths:
         '404': { description: No such person. }
       tags: [Safety]
 
+  /api/problems:
+    post:
+      summary: Report a problem, from the flag on every screen
+      description: >-
+        Signed in or out. Filed with the reports as kind problem, for the
+        administrators: the kind of problem (item_id), the words (note), and
+        what the app or site says about where it was (excerpt). With a session
+        the member's name goes with it; without one, nobody's does.
+      operationId: reportProblem
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                category: { type: string, enum: ["Doesn't work", Confusing, Wrong or missing, An idea, Other] }
+                note: { type: string, maxLength: 1000 }
+                context:
+                  type: object
+                  additionalProperties: { type: string }
+                  description: "e.g. screen, app, android (or page, browser); at most 12 entries"
+      responses:
+        '201': { description: Filed. }
+        '400': { description: No words. }
+        '429': { description: Too many. }
+      tags: [Safety]
+
   /api/reports:
     post:
       summary: Report to the administrators
       description: >-
-        What was reported is read on the server, never taken from the client.
+        What was reported is read on the server, never taken from the client,
+        except what AI help gave (kind ai): it was never saved, so `excerpt` carries it.
         The person reported isn't told.
       operationId: makeReport
       requestBody:
@@ -3597,9 +3628,10 @@ paths:
               type: object
               required: [kind, id]
               properties:
-                kind: { type: string, enum: [person, message, acknowledgement, opening, event, announcement] }
+                kind: { type: string, enum: [person, message, acknowledgement, opening, event, announcement, ai] }
+                excerpt: { type: string, maxLength: 2000, description: "ai: AI help's words, or what its picture was asked to show" }
                 group_id: { type: string, description: "An announcement: whose" }
-                id: { type: string }
+                id: { type: string, description: "ai: value_card or picture" }
                 person_id: { type: string, description: "A message: who you were talking with" }
                 trail_id: { type: string, description: "An acknowledgement: whose trail" }
                 note: { type: string, maxLength: 1000, description: Required for a person }

@@ -72,6 +72,7 @@ import androidx.compose.material.icons.outlined.NearMe
 import com.krbavcic.logosphere.core.logic.Places
 import com.krbavcic.logosphere.core.logic.Sharing
 import com.krbavcic.logosphere.ui.common.LinkText
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 
 /**
  * The openings loaded so far, and [next], where the server carries on from (null at the end).
@@ -170,6 +171,7 @@ fun OpeningsScreen() {
             TopAppBar(
                 title = { Text("Openings", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    ProblemFlag()
                     IconButton(onClick = navigator::events) {
                         Icon(Icons.Outlined.CalendarMonth, contentDescription = "What's on: events")
                     }

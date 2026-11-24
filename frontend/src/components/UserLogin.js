@@ -125,7 +125,7 @@ const UserLogin = () => {
                     <p className="auth-forgot" role="note">
                         LogoSphere can't send email yet. Ask a platform administrator for a password reset link — it
                         works once, for 24 hours. If you don't know one, write to{' '}
-                        <a href="mailto:support@logosphere.net">support@logosphere.net</a>.
+                        <a href="mailto:support@logosphere.earth">support@logosphere.earth</a>.
                     </p>
                 )}
             </form>

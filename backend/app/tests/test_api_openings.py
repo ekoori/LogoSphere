@@ -72,11 +72,11 @@ def test_likes_are_people_not_numbers(api, exchange):
     xid = exchange['id']
     status, body = api.post(f'/api/exchange/{xid}/like', who='david', json={'comment_type': 'exchange'})
     assert status == 200
-    assert [p['name'] for p in body['by']] == ['David Attenborough']
+    assert [p['name'] for p in body['by']] == ['David Attenbarough']
     # openings: explicit target state is idempotent
     _, b1 = api.post(f'/api/openings/{OPENING}/like', who='marie', json={'liked': True})
     _, b2 = api.post(f'/api/openings/{OPENING}/like', who='marie', json={'liked': True})
-    assert b1['likes'] == b2['likes'] == 1 and b2['liked_by'][0]['name'] == 'Marie Kondo'
+    assert b1['likes'] == b2['likes'] == 1 and b2['liked_by'][0]['name'] == 'Marie Konda'
     _, b3 = api.post(f'/api/openings/{OPENING}/like', who='marie', json={'liked': False})
     assert b3['likes'] == 0
 

@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 SETTINGS = ('MAILGUN_API_KEY', 'MAILGUN_DOMAIN', 'MAILGUN_BASE', 'MAIL_FROM', 'SITE_URL', 'MAIL', 'MAIL_TEST_MODE')
 # The key goes to these and nowhere else.
 BASES = ('https://api.mailgun.net', 'https://api.eu.mailgun.net')
-DEFAULT_SITE = 'https://ts.krbavcic.com'
+DEFAULT_SITE = 'https://logosphere.earth'
 # No mailbox can be there: the personas and test accounts live at example.com.
 RESERVED = ('example.com', 'example.net', 'example.org', 'example', 'test', 'invalid', 'localhost', 'local')
 HOUR, DAY = 3600, 86400

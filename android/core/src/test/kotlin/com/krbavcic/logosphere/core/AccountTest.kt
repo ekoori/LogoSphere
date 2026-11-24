@@ -110,7 +110,7 @@ class AccountTest {
 
     @Test
     fun anAdminGetsAResetLinksPath() = runTest {
-        respond("""{"message":"A reset link for Marie Kondo, valid for 24 hours and once.","path":"/reset-password#token=abc","expires_at":"2026-11-22T10:00:00"}""")
+        respond("""{"message":"A reset link for Marie Konda, valid for 24 hours and once.","path":"/reset-password#token=abc","expires_at":"2026-11-22T10:00:00"}""")
         val link = api.adminResetLink("u2")
         assertTrue(link.path.startsWith("/reset-password#token="))
         assertEquals("/api/admin/users/u2/reset_link", server.takeRequest().path)

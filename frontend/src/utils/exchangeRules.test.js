@@ -56,8 +56,8 @@ describe('progress', () => {
 
 describe('showsPersonaTag', () => {
     it('labels a persona who is a side of the exchange', () => {
-        expect(showsPersonaTag({ name: 'Emma Watson', kind: 'user', isAgent: true })).toBe(true);
-        expect(showsPersonaTag({ name: 'Emma Watson', isAgent: true })).toBe(true);
+        expect(showsPersonaTag({ name: 'Emma Wotson', kind: 'user', isAgent: true })).toBe(true);
+        expect(showsPersonaTag({ name: 'Emma Wotson', isAgent: true })).toBe(true);
     });
 
     it('never labels a group, even when a persona acted for it, nor "You" or a real person', () => {

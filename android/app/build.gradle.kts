@@ -19,7 +19,7 @@ fun releaseSigning(property: String, variable: String): String? =
 val releaseKeystore = releaseSigning("logosphereKeystore", "LOGOSPHERE_KEYSTORE")
 
 // The version, and a version code derived from it so it always rises: 1.2.3 is 10203.
-val appVersion = "0.3.2"
+val appVersion = "0.4.0"
 val appVersionCode = appVersion.split(".").map(String::toInt)
     .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 
@@ -28,7 +28,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.krbavcic.logosphere"
+        applicationId = "earth.logosphere.app"
         minSdk = 26
         targetSdk = 36
         versionCode = appVersionCode
@@ -36,7 +36,7 @@ android {
 
         // The LogoSphere server the app talks to. Debug builds can point elsewhere from the
         // sign-in screen (e.g. a local backend); release builds always use this one.
-        buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://ts.krbavcic.com\"")
+        buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://logosphere.earth\"")
     }
 
     signingConfigs {

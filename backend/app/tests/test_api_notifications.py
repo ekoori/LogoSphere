@@ -13,7 +13,7 @@ def fresh_notification(api, db):
     before = {(r.created_at, r.notification_id): r.is_read for r in db.execute(
         'SELECT created_at, notification_id, is_read FROM notifications WHERE user_id = %s', [uuid.UUID(david)])}
     marker = f'Test notification {uuid.uuid4().hex[:8]}'
-    Notification.create(user_id=david, actor_id=marie, actor_name='Marie Kondo', type_='test',
+    Notification.create(user_id=david, actor_id=marie, actor_name='Marie Konda', type_='test',
                         message=marker, link=f'/user?id={marie}')
     yield marker
     for r in db.execute('SELECT created_at, notification_id, is_read FROM notifications WHERE user_id = %s',
@@ -35,7 +35,7 @@ def _find(api, marker):
 def test_inbox_lists_and_marks_one_read(api, fresh_notification):
     inbox, n = _find(api, fresh_notification)
     assert n['is_read'] is False and inbox['unread_count'] >= 1
-    assert n['link'].startswith('/user?id=') and n['actor_name'] == 'Marie Kondo'
+    assert n['link'].startswith('/user?id=') and n['actor_name'] == 'Marie Konda'
     status, _ = api.post('/api/notifications/read', who='david',
                          json={'created_at': n['created_at'], 'notification_id': n['notification_id']})
     assert status == 200

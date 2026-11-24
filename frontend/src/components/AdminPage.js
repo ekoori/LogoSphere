@@ -454,7 +454,8 @@ function OpeningsTab({ notify }) {
 // ── Reports ──────────────────────────────────────────────────────────────────
 const REPORTED = {
     person: 'A person', message: 'A private message', acknowledgement: 'An acknowledgement', opening: 'An opening',
-    event: 'An event', announcement: 'An announcement',
+    event: 'An event', announcement: 'An announcement', ai: 'Something AI help made',
+    problem: 'A problem with the app',
 };
 
 function ReportsTab({ notify }) {
@@ -502,7 +503,7 @@ function ReportsTab({ notify }) {
                             {r.subject && <> by <Link to={`/user?id=${r.subject.id}`}>{r.subject.name}</Link></>}
                             {r.kind === 'opening' && <> (<Link to={`/opening?id=${r.item_id}`}>open it</Link>)</>}
                             {r.kind === 'event' && <> (<Link to={`/event?id=${r.item_id}`}>open it</Link>)</>}
-                            <span className="adm-muted"> reported by {r.reporter?.name} on {fmtDate(r.made_at)}</span>
+                            <span className="adm-muted"> reported by {r.reporter?.name || 'someone signed out'} on {fmtDate(r.made_at)}</span>
                         </p>
                         {r.excerpt && <blockquote>{r.excerpt}</blockquote>}
                         {r.note && <p>{r.note}</p>}

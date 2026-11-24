@@ -69,8 +69,8 @@ def world(monkeypatch):
     fake = FakeStore()
     monkeypatch.setattr(director_mod, 'store', fake)
     monkeypatch.setattr(config, 'DRY_RUN', False)
-    personas = [Persona(MARIE, 'Marie Kondo', 'm@example.com', 'Tidy neighbour', 'Calm'),
-                Persona(JOE, 'Joe Rogan', 'j@example.com', 'Fitness in the park', 'Casual')]
+    personas = [Persona(MARIE, 'Marie Konda', 'm@example.com', 'Tidy neighbour', 'Calm'),
+                Persona(JOE, 'Jo Rodan', 'j@example.com', 'Fitness in the park', 'Casual')]
     routes, calls = {}, []
     clock = {'now': NOW}
     d = director_mod.Director(personas=personas, clock=lambda: clock['now'])
@@ -135,7 +135,7 @@ def test_a_receipt_is_written_with_the_personas_own_cards(world):
     xid = 'x1'
     w.routes[('GET', f'/api/exchange/{xid}')] = {'is_initiator': False, 'is_other': True, 'exchange': {
         'exchange_description': 'Fence rebuild', 'exchange_long_description': 'We reset the posts.',
-        'initiator_name': 'Ada', 'other_user_name': 'Marie Kondo', 'source_service_id': None}}
+        'initiator_name': 'Ada', 'other_user_name': 'Marie Konda', 'source_service_id': None}}
     w.routes[('GET', f'/api/value_cards/{MARIE}')] = [{'card_id': 'c1', 'title': 'Intentional space', 'color_key': 'sage'}]
     written = SimpleNamespace(text='It meant a lot.', frankl_mode='experiential', card_ids=['c1', 'not-mine'])
     w.d._writer = SimpleNamespace(receipt=lambda *a, **k: written)

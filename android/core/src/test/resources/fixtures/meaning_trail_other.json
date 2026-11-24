@@ -20,7 +20,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -51,7 +51,7 @@
   "other_comment_timestamp": null,
   "other_kind": "user",
   "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
-  "other_user_name": "Steve Wozniak",
+  "other_user_name": "Steve Wozniac",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000002",
   "project_name": "Neighbourhood Solar Microgrid",
   "project_start_timestamp": "2026-06-24T09:00:00",
@@ -89,7 +89,7 @@
   "initiator_comment_timestamp": null,
   "initiator_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
   "initiator_kind": "user",
-  "initiator_name": "Joe Rogan",
+  "initiator_name": "Jo Rodan",
   "likes": {
    "exchange": {
     "by": [],
@@ -120,7 +120,7 @@
   "other_comment_timestamp": null,
   "other_kind": "user",
   "other_user_id": "16f033ca-2b2c-4745-a537-82999209774c",
-  "other_user_name": "Steve Wozniak",
+  "other_user_name": "Steve Wozniac",
   "project_id": "bbbbbbbb-0000-0000-0000-000000000001",
   "project_name": "Community Tool Library",
   "project_start_timestamp": "2026-04-18T10:00:00",

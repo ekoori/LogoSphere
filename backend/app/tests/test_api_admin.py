@@ -24,7 +24,7 @@ def test_user_list_and_admin_flag_guards(api, keep_rows):
     users = {u['email']: u for u in body['users']}
     assert users[USERS['admin'][0]]['is_platform_admin'] is True
     assert users[USERS['admin'][0]]['is_you'] is True
-    assert users['david.attenborough@example.com']['is_platform_admin'] is False
+    assert users['david.attenbarough@example.com']['is_platform_admin'] is False
 
     me = api.uid('admin')
     david = api.uid('david')

@@ -241,6 +241,32 @@ def test_reporting_an_acknowledgement_or_a_person(api, people):
     assert sorted(r['kind'] for r in rows) == ['acknowledgement', 'person']
 
 
+def test_reporting_what_ai_help_gave(api, people):
+    ada = people['ada']
+    said = 'Cares about: shouting at the neighbours'
+    assert ada.post('/api/reports', {'kind': 'ai', 'id': 'value_card', 'excerpt': said, 'note': 'Unkind'})[0] == 201
+    assert ada.post('/api/reports', {'kind': 'ai', 'id': 'value_card'})[0] == 404             # nothing to look at
+    assert ada.post('/api/reports', {'kind': 'ai', 'id': 'poem', 'excerpt': said})[0] == 404  # no such AI help
+    mine = [r for r in api.get('/api/admin/reports', who='admin')[1]['reports']
+            if r['reporter']['id'] == str(ada.id) and r['kind'] == 'ai']
+    assert [(r['item_id'], r['excerpt'], r['subject'], r['removable']) for r in mine] == [('value_card', said, None, False)]
+
+
+def test_the_problem_flag_files_a_report_signed_in_or_out(api, people):
+    ada = people['ada']
+    said = {'category': 'Confusing', 'note': 'The map never loads',
+            'context': {'screen': 'NearbyRoute', 'app': 'LogoSphere 0.4.0 (400)'}}
+    assert ada.post('/api/problems', said)[0] == 201
+    assert ada.post('/api/problems', {**said, 'note': '  '})[0] == 400                 # say what went wrong
+    assert api.post('/api/problems', json={**said, 'note': 'Signed out', 'category': 'Whatever'})[0] == 201
+    rows = [r for r in api.get('/api/admin/reports', who='admin')[1]['reports'] if r['kind'] == 'problem']
+    mine = next(r for r in rows if r['note'] == 'The map never loads')
+    assert mine['reporter']['id'] == str(ada.id) and mine['item_id'] == 'Confusing' and mine['subject'] is None
+    assert 'screen: NearbyRoute' in mine['excerpt'] and mine['removable'] is False
+    anon = next(r for r in rows if r['note'] == 'Signed out')
+    assert anon['reporter'] is None and anon['item_id'] == 'Other'
+
+
 # -- Accounts -------------------------------------------------------------------
 def test_export_has_messages_and_leaving_keeps_the_others_copy(people):
     ada, ben = people['ada'], people['ben']

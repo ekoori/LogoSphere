@@ -103,7 +103,7 @@ def test_others_appreciate_it_once(api, clean_trails):
     assert api.post(like, who='david', json={'liked': True})[0] == 403
     for _ in range(2):
         status, body = api.post(like, who='marie', json={'liked': True})
-        assert status == 200 and body['count'] == 1 and body['by'][0]['name'] == 'Marie Kondo'
+        assert status == 200 and body['count'] == 1 and body['by'][0]['name'] == 'Marie Konda'
     assert api.post(like, who='marie', json={'liked': False})[1]['count'] == 0
 
 

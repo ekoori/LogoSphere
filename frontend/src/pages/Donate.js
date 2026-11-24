@@ -3,6 +3,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
+// Donations are paused (2026-11-24): the PayPal address here was at logosphere.net, a domain
+// LogoSphere doesn't own. Put the PayPal account that should receive them (its email or
+// merchant ID) in PAYPAL_BUSINESS to open them again; the header's Donate links follow.
+const PAYPAL_BUSINESS = '';
+export const DONATIONS_OPEN = PAYPAL_BUSINESS !== '';
+
 const sections = [
     {
         id: 'what-it-costs',
@@ -22,17 +28,19 @@ const sections = [
     {
         id: 'how-to-give',
         title: 'How to give',
-        body: (
+        body: DONATIONS_OPEN ? (
             <>
                 <p>Donations go through PayPal: you can pay with a PayPal account or a card. PayPal handles the payment; we receive only what PayPal shares about it.</p>
                 <form action="https://www.paypal.com/donate" method="post" target="_blank" className="dp-donate">
-                    <input type="hidden" name="business" value="donate@logosphere.net" />
+                    <input type="hidden" name="business" value={PAYPAL_BUSINESS} />
                     <input type="hidden" name="no_recurring" value="0" />
                     <input type="hidden" name="item_name" value="Support LogoSphere" />
                     <input type="hidden" name="currency_code" value="USD" />
                     <button type="submit" className="btn btn-accent">Donate with PayPal</button>
                 </form>
             </>
+        ) : (
+            <p>Donations are paused for a little while, until the account that receives them is set up. You can still help in the other ways below.</p>
         ),
     },
     {

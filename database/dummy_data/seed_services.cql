@@ -19,7 +19,7 @@ INSERT INTO services (service_id, type, title, description, provider_id, provide
 VALUES (cccccccc-0000-0000-0000-000000000005, 'offer',
   'Tool restoration & blade-sharpening workshop',
   'Bring your dull, rusty or broken hand tools and we will bring them back to life together. A hands-on Saturday at the Repair Café.',
-  16f033ca-2b2c-4745-a537-82999209774c, 'Steve Wozniak',
+  16f033ca-2b2c-4745-a537-82999209774c, 'Steve Wozniac',
   11111111-1111-1111-1111-111111111111, 'Riverside Commons', 'Completed', '2026-06-10 10:00:00',
   ['repair culture', 'skill sharing'], 9, 'Community Tool Library', 'tools');
 
@@ -27,6 +27,6 @@ INSERT INTO services (service_id, type, title, description, provider_id, provide
 VALUES (cccccccc-0000-0000-0000-000000000006, 'need',
   'Seeking open datasets for community climate models',
   'Our open research team needs well-labelled climate datasets to train shared forecasting models. Any contribution to the commons welcome.',
-  86eb2b6c-1771-4533-9bd8-fca4f83fe61a, 'Bill Gates',
+  86eb2b6c-1771-4533-9bd8-fca4f83fe61a, 'Bill Gales',
   22222222-2222-2222-2222-222222222222, 'AI Commons', 'Posted', '2026-06-23 11:00:00',
   ['open research', 'knowledge sharing'], 6, 'Open GPU Cluster', 'default');

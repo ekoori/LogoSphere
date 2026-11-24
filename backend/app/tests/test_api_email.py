@@ -180,7 +180,7 @@ def test_an_older_link_dies_with_a_new_password(joined, mail):
 
 
 def test_personas_get_no_mail(app, mail):
-    r = app.test_client().post('/api/password/forgot', json={'email': 'marie.kondo@example.com'})
+    r = app.test_client().post('/api/password/forgot', json={'email': 'marie.konda@example.com'})
     assert r.status_code == 200 and mail.sent == []
 
 
@@ -268,7 +268,7 @@ def test_export_says_what_is_emailed(joined):
 # -- The mailer itself -----------------------------------------------------------
 def test_one_address_and_no_tricks(monkeypatch):
     assert mailer.deliverable('sam.field+garden@mail.somewhere.io')
-    for bad in ('a@b.io,c@d.io', 'victim,@b.io', 'a b@c.io', '<a@b.io>', 'a@b', 'a@-b.io', 'joe.rogan@example.com',
+    for bad in ('a@b.io,c@d.io', 'victim,@b.io', 'a b@c.io', '<a@b.io>', 'a@b', 'a@-b.io', 'jo.rodan@example.com',
                 'x@sub.example.org', 'x@thing.test', 'a..b@c.io', 'a@b.io\nBcc: c@d.io', '', None, 'ä@b.io'):
         assert not mailer.deliverable(bad), bad
 

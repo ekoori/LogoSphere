@@ -9,23 +9,23 @@
  "members": [
   {
    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
-   "name": "Joe Rogan",
+   "name": "Jo Rodan",
    "role": "manager"
   },
   {
    "id": "16f033ca-2b2c-4745-a537-82999209774c",
-   "name": "Steve Wozniak",
+   "name": "Steve Wozniac",
    "role": "contributor"
   }
  ],
  "name": "Neighbourhood Solar Microgrid",
- "owner": "Joe Rogan",
+ "owner": "Jo Rodan",
  "owner_alliance": "Repair Café Collective",
  "owner_id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
- "owner_name": "Joe Rogan",
+ "owner_name": "Jo Rodan",
  "participants": [
-  "Joe Rogan",
-  "Steve Wozniak"
+  "Jo Rodan",
+  "Steve Wozniac"
  ],
  "pending_members": [],
  "phase": "ongoing",

@@ -61,6 +61,7 @@ import com.krbavcic.logosphere.ui.common.SnackbarMessages
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.ui.common.LocalSimple
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 
 class CommunitiesViewModel(private val app: AppContainer) : LoadViewModel<Map<CommunityKind, List<Community>>>() {
     val viewerId: String? get() = app.session.user?.id
@@ -105,6 +106,7 @@ fun CommunitiesScreen() {
             TopAppBar(
                 title = { Text("Spheres", style = MaterialTheme.typography.headlineSmall) },
                 actions = {
+                    ProblemFlag()
                     IconButton(onClick = navigator::search) { Icon(Icons.Filled.Search, contentDescription = "Search") }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),

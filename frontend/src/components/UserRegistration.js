@@ -155,6 +155,10 @@ const UserRegistration = () => {
                     </>
                 )}
 
+                <p className="auth-alt">
+                    By joining you agree to the <Link to="/tos">terms of service</Link> and
+                    the <Link to="/privacy">privacy policy</Link>.
+                </p>
                 <button type="submit" disabled={submitting || mailOn === undefined}>
                     {mailOn
                         ? (submitting ? 'Sending…' : 'Email me a link to join')

@@ -1,4 +1,4 @@
-# Seed governance roles for alliances/projects, update Joe Rogan's roles,
+# Seed governance roles for alliances/projects, update Jo Rodan's roles,
 # and seed entity value cards (spheres, alliances, projects all get value cards).
 
 import reactor  # noqa: F401 - picks the driver's event loop before it loads
@@ -56,7 +56,7 @@ for cql in [
 print('\n-- Alliance governance --')
 
 alliance_roles = [
-    (REPAIR_CAFE,   JOE,    # admin1 = Joe Rogan now
+    (REPAIR_CAFE,   JOE,    # admin1 = Jo Rodan now
      {JOE: 'admin', WOZNIAK: 'steward', KONDO: 'member'}),
     (COMPUTE_GUILD, GATES,
      {GATES: 'admin', ELON: 'steward', HAWKING: 'member'}),

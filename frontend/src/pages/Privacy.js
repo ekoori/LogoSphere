@@ -5,7 +5,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
-export const PRIVACY_UPDATED = '23 November 2026';
+export const PRIVACY_UPDATED = '25 November 2026';
 
 const sections = [
     {
@@ -75,7 +75,8 @@ const sections = [
                         <dt>Messages, blocks and reports</dt>
                         <dd>
                             Messages you send and get, whom you blocked, and the reports you make with a copy of what you
-                            reported.
+                            reported. A problem you report from the flag keeps the page or screen you were on, and your
+                            browser or app and Android version.
                         </dd>
                     </div>
                     <div>
@@ -253,8 +254,8 @@ const sections = [
                         <dt>Mailgun</dt>
                         <dd>
                             Delivers email: joining, password links, and the notifications you chose. It gets your
-                            address and that email. We switch off its tracking of opens and clicks. For now our email
-                            comes from no-reply@hrana.app.
+                            address and that email. We switch off its tracking of opens and clicks. Our email
+                            comes from no-reply@logosphere.earth.
                         </dd>
                     </div>
                     <div><dt>Google Firebase</dt><dd>Delivers push notifications to Android phones, once they're switched on, with only a notification's text and link.</dd></div>
@@ -291,7 +292,7 @@ const sections = [
                     <li><strong>Choose</strong> which notifications are emailed (none unless you pick some), or stop them from any of those emails.</li>
                     <li><strong>Leave</strong> any group from its page.</li>
                     <li><strong>Delete</strong> your account yourself, in Settings or the app.</li>
-                    <li><strong>Ask</strong> us anything, or for anything those don't cover, at <a href="mailto:privacy@logosphere.net">privacy@logosphere.net</a>.</li>
+                    <li><strong>Ask</strong> us anything, or for anything those don't cover, at <a href="mailto:privacy@logosphere.earth">privacy@logosphere.earth</a>.</li>
                 </ul>
                 <p>
                     LogoSphere is meant for adults and for families who use it together; it isn't designed for children on

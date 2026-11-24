@@ -47,7 +47,7 @@ class ParityTest {
         val g = Fixtures.decode<GroupGovernance>("governance.json")
         assertEquals(listOf("join_policy", "decision_policy", "is_public"), g.policies.keys.toList())
         assertNull(g.policies.getValue("join_policy").value)
-        assertEquals("Marie Kondo", g.myDelegate?.name)
+        assertEquals("Marie Konda", g.myDelegate?.name)
         assertEquals(1, g.delegatedToMe.size)
         assertEquals(1, g.open.size)
         assertEquals(1, g.decided.size)
@@ -75,7 +75,7 @@ class ParityTest {
         val users = Fixtures.decode<AdminUsers>("admin_users.json").users
         assertTrue(users[0].isYou && users[0].isPlatformAdmin)
         assertTrue(users[1].isAgent)
-        assertEquals("Marie Kondo", users[1].label)
+        assertEquals("Marie Konda", users[1].label)
 
         val sphere = Fixtures.decode<AdminGroups>("admin_spheres.json").items.single()
         assertEquals(CommunityKind.Sphere, sphere.communityKind)
@@ -87,7 +87,7 @@ class ParityTest {
         val openings = Fixtures.decode<AdminOpenings>("admin_openings.json").items
         assertTrue(openings[0].isOpen)
         assertFalse(openings[0].isOffer)
-        assertEquals("Marie Kondo for Riverside Commons", openings[1].providerLabel)
+        assertEquals("Marie Konda for Riverside Commons", openings[1].providerLabel)
     }
 
     @Test

@@ -11,7 +11,7 @@ from agents.images import Illustrator, shrink
 from agents.personas import Persona
 from agents.writer import GUARDRAILS, MESSAGE_GUARDRAILS, MessageText, OpeningText, ReceiptText, Writer, WriterError
 
-MARIE = Persona(user_id='u1', name='Marie Kondo', email='m@example.com',
+MARIE = Persona(user_id='u1', name='Marie Konda', email='m@example.com',
                 sheet='Marie keeps the Repair Café shelves in order.', voice='Calm and cheerful.')
 CARDS = [{'card_id': 'c1', 'title': 'Intentional space', 'care_about': 'Keeping only what serves'}]
 
@@ -45,7 +45,7 @@ def test_every_request_carries_the_guardrails_and_the_persona():
     assert call['model'] == 'claude-opus-5-5' and call['output_format'] is OpeningText
     assert call['output_config'] == {'effort': 'low'} and call['fallbacks'] == 'default'
     prompt = call['messages'][0]['content']
-    assert 'You are Marie Kondo' in prompt and 'Repair Café' in prompt and 'Old title' in prompt
+    assert 'You are Marie Konda' in prompt and 'Repair Café' in prompt and 'Old title' in prompt
     assert used == [(1200, 150)]
 
 

@@ -11,6 +11,8 @@ import { ModeSwitch } from './UiMode';
 import api from '../api';
 import { useTheme } from '../utils/theme';
 import { useSimple } from '../utils/useSimple';
+import { DONATIONS_OPEN } from '../pages/Donate';
+import ProblemFlag from './ProblemFlag';
 
 // The search box in the top bar (and in the mobile drawer). Submitting goes to
 // the search page, which does the actual searching.
@@ -152,10 +154,11 @@ const Header = () => {
                     {isLoggedIn && <li className="nav-drawer-only"><Link to="/messages" onClick={closeMenu}>Messages</Link></li>}
                     {isLoggedIn && <li className="nav-drawer-only"><Link to="/nearby" onClick={closeMenu}>Near you</Link></li>}
                     {isLoggedIn && <li className="nav-drawer-only nav-drawer-search"><SearchForm onSubmitted={closeMenu} /></li>}
-                    <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>
+                    {DONATIONS_OPEN && <li className="nav-drawer-only"><Link to="/donate" onClick={closeMenu}>Donate 💛</Link></li>}
                     <li className="nav-drawer-only"><Link to="/profile" onClick={closeMenu}>Profile</Link></li>
                     <li className="nav-drawer-only"><Link to="/how-it-works" onClick={closeMenu}>How it Works</Link></li>
                     <li className="nav-drawer-only"><Link to="/about" onClick={closeMenu}>About</Link></li>
+                    <li className="nav-drawer-only"><ProblemFlag signedIn={!!isLoggedIn} asMenuItem /></li>
                     <li className="nav-drawer-only">
                         <button type="button" className="nav-drawer-theme"
                                 onClick={() => setTheme(effectiveTheme === 'dark' ? 'light' : 'dark')}>
@@ -171,7 +174,7 @@ const Header = () => {
 
             <div className="nav-actions">
                 {isLoggedIn && <div className="nav-bar-only nav-search-slot"><SearchForm compact /></div>}
-                <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>
+                {DONATIONS_OPEN && <Link to="/donate" className="donate-link nav-bar-only">Donate 💛</Link>}
 
                 <button
                     className="theme-toggle nav-bar-only"
@@ -181,6 +184,7 @@ const Header = () => {
                 >
                     <span aria-hidden="true">{effectiveTheme === 'dark' ? '☀' : '☾'}</span>
                 </button>
+                <ProblemFlag signedIn={!!isLoggedIn} className="nav-bar-only" />
                 <div className="notification-icon">
                     <button id="notification-bell" onClick={toggleNotifications} aria-label="Toggle notifications">
                         🔔

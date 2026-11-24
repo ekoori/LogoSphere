@@ -31,15 +31,15 @@ sealed interface Block {
 }
 
 /**
- * The site's information pages (frontend/src/pages: About, HowItWorks, Contribute, Donate,
- * Privacy, TOS), word for word where they are words; the web's decorative graphics are left out.
+ * The site's information pages (frontend/src/pages: About, HowItWorks, Contribute, Privacy, TOS),
+ * word for word where they are words; the web's decorative graphics are left out. Donate stays on
+ * the website only: Google Play allows outside donation links just for registered charities.
  */
 object InfoContent {
     fun of(page: InfoPage): List<Block> = when (page) {
         InfoPage.About -> about
         InfoPage.HowItWorks -> howItWorks
         InfoPage.Contribute -> contribute
-        InfoPage.Donate -> donate
         InfoPage.Privacy -> privacy
         InfoPage.Terms -> terms
     }
@@ -310,7 +310,7 @@ object InfoContent {
                 "Do I have to write a receipt every single time?" to "No — but it’s the whole mechanism. It’s how the person who helped actually gets seen, and how your group’s trail grows into something worth looking at.",
                 "Is any of this visible outside our group?" to "A sphere is private to the people in it, and nothing you post is searchable by strangers on the open internet. Three exceptions, all chosen: what you post to everyone is seen by every member; an opening you share with your other spheres shows there, without this sphere’s other people; and a sphere whose admin switches on “public activity” shows its projects, alliances and openings to anyone.",
                 "Is AI used here?" to "Only where it says so. It can help you word a value card or draw a picture, when you press its button, and it plays the labelled personas in demo spheres. Outside the demo spheres, pictures made with AI aren’t evidence: not receipt photos, not exchange pictures.",
-                "Will it email me?" to "Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on. For now our email comes from no-reply@hrana.app.",
+                "Will it email me?" to "Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on. Our email comes from no-reply@logosphere.earth.",
                 "What if I just want to watch for now?" to "That’s completely fine. You can see what’s being offered and needed before you ever post anything yourself.",
                 "What are the demo spheres, and who are the “AI personas”?" to "Practice spaces where you can try everything before bringing your group. Most of their members are AI characters with famous names playing everyday neighbours — every one is labelled “AI persona”, and nothing in a demo sphere is real. You can message them too: AI writes their answers.",
                 "Is there a phone app?" to "Yes — this Android app does nearly everything the website does (invitation links open on the website). On other phones, the website works in your browser.",
@@ -364,44 +364,11 @@ object InfoContent {
         Block.Link("Visit the repository", url = "https://github.com/ekoori/LogoSphere"),
     )
 
-    private val donate = listOf(
-        Block.Eyebrow("Donate"),
-        Block.Title("Keep LogoSphere running"),
-        Block.Lead("It runs on donations and volunteers’ time, so it can stay free, ad-free and on the side of the groups that use it."),
-        Block.Heading("What it costs", "01"),
-        Block.Para("LogoSphere has no ads and sells nothing — your data least of all. What it does cost:"),
-        Block.Bullets(
-            listOf(
-                "A server, and storage for everyone’s pictures.",
-                "The AI services that write the AI personas in the demo spheres, so anyone can try LogoSphere before bringing their group.",
-                "The address, certificates and upkeep that keep it all reachable and safe.",
-            ),
-        ),
-        Block.Para("Donations pay for these, so more groups can use LogoSphere freely."),
-        Block.Heading("How to give", "02"),
-        Block.Para("Donations go through PayPal: you can pay with a PayPal account or a card. PayPal handles the payment; we receive only what PayPal shares about it."),
-        Block.Link(
-            "Donate with PayPal",
-            url = "https://www.paypal.com/donate?business=donate%40logosphere.net&no_recurring=0&item_name=Support+LogoSphere&currency_code=USD",
-        ),
-        Block.Heading("Other ways to help", "03"),
-        Block.Bullets(
-            listOf(
-                "Bring your group — LogoSphere is worth the most when it’s used.",
-                "Give your time — testing, writing, design or code (see Contribute).",
-                "Tell someone who runs a group that could use it.",
-            ),
-        ),
-        Block.Link("Contribute →", page = InfoPage.Contribute),
-        Block.Heading("Thank you", "04"),
-        Block.Para("Every gift — money, time or a word to a friend — keeps a little more help from getting lost in a chat thread. We’re grateful."),
-    )
-
     private val privacy = listOf(
         Block.Eyebrow("Privacy"),
         Block.Title("What we keep, and why"),
         Block.Lead("LogoSphere keeps what it needs to remember the help your group gives and receives — and nothing to sell, track or advertise with."),
-        Block.Updated("Last updated 23 November 2026"),
+        Block.Updated("Last updated 25 November 2026"),
         Block.Glance(
             listOf(
                 "No ads, no analytics, no tracking — and we never sell your data.",
@@ -422,7 +389,7 @@ object InfoContent {
                 "Places" to "The words you use for a place and, if you put it on the map, a point no more exact than you chose: a pin is rounded before it leaves your phone. For yourself we also keep whether members nearby may find you. That is off unless you switch it on.",
                 "Email" to "Whether you confirmed your address, and which notifications you chose to get by email. When someone starts to join, their name and address for up to a day, until the emailed link is used. To prevent misuse, we count emails and requests for up to a day, without storing the address or the connection they count.",
                 "Events, announcements and invitations" to "Events you put on, with their pictures and places, and whether you said you would come to which date. Announcements you write. For an invitation link, a one-way hash of it, who made it and who joined with it, for two weeks. If someone signs up with one, that hash waits with their name and address until they finish.",
-                "Messages, blocks and reports" to "Messages you send and get, whom you blocked, and the reports you make with a copy of what you reported.",
+                "Messages, blocks and reports" to "Messages you send and get, whom you blocked, and the reports you make with a copy of what you reported. A problem you report from the flag keeps the screen you were on and your app and Android version.",
                 "Your choices on the Meaning Graph and in Settings" to "Which pairs of value cards you judged close or not (others see only totals, from two people up), and whether you use Simple or Advanced.",
                 "AI help" to "That you used it, for two days, to keep to daily limits. Not what you typed. For each picture it draws we keep a fingerprint and a tiny thumbnail, so AI pictures can be labelled.",
                 "Notifications" to "The messages LogoSphere writes for you when something happens that concerns you.",
@@ -492,7 +459,7 @@ object InfoContent {
                 "Google Fonts" to "Serves the website’s two typefaces, so your browser contacts Google to load them. (This app carries its fonts inside.)",
                 "Anthropic and OpenAI" to "Write the AI personas in the demo spheres, and give AI help when you ask for it (see above).",
                 "OpenStreetMap" to "Draws the map, when you open one (see Places above).",
-                "Mailgun" to "Delivers email: joining, password links, and the notifications you chose. It gets your address and that email. We switch off its tracking of opens and clicks. For now our email comes from no-reply@hrana.app.",
+                "Mailgun" to "Delivers email: joining, password links, and the notifications you chose. It gets your address and that email. We switch off its tracking of opens and clicks. Our email comes from no-reply@logosphere.earth.",
                 "Google Firebase" to "Delivers push notifications to Android phones, once they’re switched on, with only a notification’s text and link.",
                 "PayPal" to "Handles donations, if you make one. We get only what PayPal shares about a payment.",
             ),
@@ -515,7 +482,7 @@ object InfoContent {
                 "Choose which notifications are emailed (none unless you pick some), in the same place, or stop them from any of those emails.",
                 "Leave any group from its page.",
                 "Delete your account yourself, in the same place.",
-                "Ask us anything, or for anything those don’t cover, at privacy@logosphere.net.",
+                "Ask us anything, or for anything those don’t cover, at privacy@logosphere.earth.",
             ),
         ),
         Block.Para("LogoSphere is meant for adults and for families who use it together; it isn’t designed for children on their own."),
@@ -554,7 +521,7 @@ object InfoContent {
             listOf(
                 "Use your own name and a real email address; one person per account.",
                 "Keep your password to yourself. You’re responsible for what’s done with your account.",
-                "If you think someone else has used it, change your password (Me → Password, email, data & account) — that signs out every other device — and tell us at support@logosphere.net.",
+                "If you think someone else has used it, change your password (Me → Password, email, data & account) — that signs out every other device — and tell us at support@logosphere.earth.",
             ),
         ),
         Block.Heading("What you post", "03"),
@@ -634,7 +601,7 @@ object InfoContent {
                 "LogoSphere before they take effect. Using LogoSphere after that means you accept the new terms.",
         ),
         Block.Heading("Questions", "11"),
-        Block.Para("Write to support@logosphere.net."),
+        Block.Para("Write to support@logosphere.earth."),
         Block.Link("Read the privacy policy →", page = InfoPage.Privacy),
     )
 }

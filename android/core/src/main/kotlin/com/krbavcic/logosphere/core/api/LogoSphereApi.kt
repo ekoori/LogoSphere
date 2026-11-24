@@ -238,9 +238,23 @@ class LogoSphereApi(
                 what.personId?.let { put("person_id", it) }
                 what.trailId?.let { put("trail_id", it) }
                 what.groupId?.let { put("group_id", it) }
+                what.excerpt?.let { put("excerpt", it) }
             },
         ),
         "Thank you. The platform's administrators will look at it.",
+    )
+
+    /** The flag on every screen: a problem for the administrators, signed in or not. Returns what to say. */
+    suspend fun reportProblem(category: String, note: String, context: Map<String, String>): String = said(
+        post(
+            "/api/problems",
+            buildJsonObject {
+                put("category", category)
+                put("note", note.trim())
+                put("context", buildJsonObject { context.forEach { (key, value) -> put(key, value) } })
+            },
+        ),
+        "Thank you. It went to LogoSphere's administrators.",
     )
 
     suspend fun adminReports(status: String): Reports = get(url("/api/admin/reports") { addQueryParameter("status", status) })

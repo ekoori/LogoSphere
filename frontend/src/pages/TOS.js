@@ -31,7 +31,7 @@ const sections = [
                 <li>Keep your password to yourself. You're responsible for what's done with your account.</li>
                 <li>
                     If you think someone else has used it, change your password in <Link to="/settings">Settings</Link> —
-                    that signs out every other device — and tell us at <a href="mailto:support@logosphere.net">support@logosphere.net</a>.
+                    that signs out every other device — and tell us at <a href="mailto:support@logosphere.earth">support@logosphere.earth</a>.
                 </li>
             </ul>
         ),
@@ -167,7 +167,7 @@ const sections = [
     {
         id: 'contact',
         title: 'Questions',
-        body: <p>Write to <a href="mailto:support@logosphere.net">support@logosphere.net</a>.</p>,
+        body: <p>Write to <a href="mailto:support@logosphere.earth">support@logosphere.earth</a>.</p>,
     },
 ];
 

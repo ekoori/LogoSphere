@@ -94,7 +94,7 @@ const FAQ = [
     },
     {
         q: 'Will it email me?',
-        a: 'Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on. For now our email comes from no-reply@hrana.app.',
+        a: 'Only what your account needs, like a password link, and the notifications you choose to get by email. Those are all off until you turn them on. Our email comes from no-reply@logosphere.earth.',
     },
     {
         q: 'What if I just want to watch for now?',

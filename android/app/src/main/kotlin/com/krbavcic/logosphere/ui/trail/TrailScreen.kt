@@ -65,6 +65,7 @@ import kotlinx.coroutines.coroutineScope
 import com.krbavcic.logosphere.core.model.MeaningTrail
 import com.krbavcic.logosphere.core.model.ActivityItem
 import com.krbavcic.logosphere.ui.common.SectionHeading
+import com.krbavcic.logosphere.ui.common.ProblemFlag
 import androidx.compose.foundation.lazy.itemsIndexed
 
 data class TrailData(
@@ -148,6 +149,7 @@ fun TrailScreen() {
             TopAppBar(
                 title = { Wordmark(fontSize = MaterialTheme.typography.titleLarge.fontSize) },
                 actions = {
+                    ProblemFlag()
                     IconButton(onClick = { navigator.meaningGraph() }) {
                         Icon(Icons.Outlined.Hub, contentDescription = "Meaning Graph")
                     }

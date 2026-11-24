@@ -23,37 +23,37 @@
  "members": [
   {
    "id": "fe878ccf-aba7-4b16-8b5f-847f7db6e0ad",
-   "name": "Joe Rogan",
+   "name": "Jo Rodan",
    "role": "admin"
   },
   {
    "id": "9c89c702-6c61-49c8-9f0c-47b8e4e84e4b",
-   "name": "Marie Kondo",
+   "name": "Marie Konda",
    "role": "member"
   },
   {
    "id": "16f033ca-2b2c-4745-a537-82999209774c",
-   "name": "Steve Wozniak",
+   "name": "Steve Wozniac",
    "role": "member"
   },
   {
    "id": "aeeb7c42-d2d5-4e4e-8ed3-af313f5d6358",
-   "name": "David Attenborough",
+   "name": "David Attenbarough",
    "role": "member"
   },
   {
    "id": "ff52c318-95e0-4f1f-89cc-62551c814a83",
-   "name": "Emma Watson",
+   "name": "Emma Wotson",
    "role": "member"
   },
   {
    "id": "39eab94a-b6f7-40e1-81d7-9be14b7c867d",
-   "name": "Neil deGrasse Tyson",
+   "name": "Neil deGrasse Tison",
    "role": "member"
   },
   {
    "id": "6c1b8973-5ebd-4407-8817-02945bcfa561",
-   "name": "Jeff Bezos",
+   "name": "Jeff Belos",
    "role": "member"
   },
   {
@@ -63,12 +63,12 @@
   },
   {
    "id": "2d10e93b-163f-40f0-9b77-1de15e2b5d0c",
-   "name": "Richard Branson",
+   "name": "Richard Bramson",
    "role": "member"
   },
   {
    "id": "20bb3797-b82c-4a7b-b3e5-c726ce2a19cd",
-   "name": "Oprah Winfrey",
+   "name": "Oprah Winfree",
    "role": "member"
   }
  ],

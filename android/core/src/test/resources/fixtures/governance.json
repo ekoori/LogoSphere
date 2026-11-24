@@ -11,10 +11,10 @@
   "is_member": true,
   "members": [
     {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Igor K"},
-    {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Kondo"},
+    {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Konda"},
     {"id": "aaaaaaaa-0000-0000-0000-000000000003", "name": "Quentin Blake"}
   ],
-  "my_delegate": {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Kondo"},
+  "my_delegate": {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Konda"},
   "delegated_to_me": [{"id": "aaaaaaaa-0000-0000-0000-000000000003", "name": "Quentin Blake"}],
   "proposals": [
     {
@@ -56,7 +56,7 @@
       "result": {"yes": 0, "no": 1, "abstain": 1, "eligible": 3, "unrepresented": 1, "direct_votes": 2},
       "tally": {"yes": 0, "no": 1, "abstain": 1, "eligible": 3, "unrepresented": 1, "direct_votes": 2},
       "my_vote": null,
-      "created_by_name": "Marie Kondo"
+      "created_by_name": "Marie Konda"
     }
   ]
 }

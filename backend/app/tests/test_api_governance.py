@@ -77,7 +77,7 @@ def test_policy_proposal_lifecycle(api, clean_alliance_governance):
         'kind': 'policy', 'policy_key': 'confirm_policy', 'policy_value': 'board'})[0] == 400
     # Joe delegates to Marie
     status, body = api.post(f'/api/alliances/{REPAIR_CAFE}/delegation', who='joe', json={'delegate_id': api.uid('marie')})
-    assert status == 200 and body['my_delegate']['name'] == 'Marie Kondo'
+    assert status == 200 and body['my_delegate']['name'] == 'Marie Konda'
     assert api.post(f'/api/alliances/{REPAIR_CAFE}/delegation', who='joe', json={'delegate_id': api.uid('joe')})[0] == 400
     # Marie votes yes (weight 2), Steve isn't logged in here - so majority stands
     status, p = api.post(f'/api/alliances/{REPAIR_CAFE}/proposals/{pid}/vote', who='marie', json={'choice': 'yes'})

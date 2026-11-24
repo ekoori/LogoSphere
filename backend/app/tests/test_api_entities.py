@@ -9,7 +9,7 @@ def test_sphere_detail_embeds_members_cards_and_children(api):
     status, d = api.get(f'/api/spheres/{RIVERSIDE}', who='marie')
     assert status == 200
     assert d['name'] == 'Riverside Commons'
-    assert any(m['name'] == 'Marie Kondo' for m in d['members'])
+    assert any(m['name'] == 'Marie Konda' for m in d['members'])
     assert isinstance(d['value_cards'], list)
     assert any(a['id'] == REPAIR_CAFE for a in d['alliance_list'])
     assert any(p['id'] == TOOL_LIBRARY for p in d['project_list'])
@@ -119,7 +119,7 @@ def test_founder_cannot_be_removed(api):
 
 def test_public_sphere_endpoint_only_for_public_spheres(api, keep_rows):
     # Whatever AI Commons' flag is on this database, it's put back afterwards
-    # (the demo data on ts.krbavcic.com has Riverside public, so no sphere's
+    # (the demo data on production has Riverside public, so no sphere's
     # flag is assumed).
     keep_rows('spheres', sphere_id=AI_COMMONS)
     assert api.post(f'/api/spheres/{AI_COMMONS}/governance', who='admin', json={'is_public': False})[0] == 200
