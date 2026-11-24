@@ -177,5 +177,6 @@ Galaxy Note 9, 1080×2220), cut to 9:16 by removing the status and navigation ba
   administrators' queue in the app and on the site.
 - AI-generated content: AI pictures are labelled; AI help's wording and pictures can be reported
   from where they appear; the demo spheres' personas are labelled AI and their names are a letter
-  off the real people they echo (2026-11-25). Their pictures are AI-made likenesses; if review
-  objects to them, replacing the pictures is the next step.
+  off the real people they echo (2026-11-25). Three of them (Jo Rodan, Emma Wotson, Elon Mask)
+  have pictures that are likenesses of those people, with quotes in them; the others show
+  initials. If review objects, replacing those three pictures is the next step.
