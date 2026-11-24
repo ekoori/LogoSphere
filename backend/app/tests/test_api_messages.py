@@ -237,7 +237,8 @@ def test_reporting_an_acknowledgement_or_a_person(api, people):
     assert ada.post('/api/reports', {'kind': 'person', 'id': str(ben.id)})[0] == 400        # say what happened
     assert ada.post('/api/reports', {'kind': 'person', 'id': str(ben.id), 'note': 'Keeps at it'})[0] == 201
     assert ada.post('/api/reports', {'kind': 'person', 'id': str(ada.id), 'note': 'Me'})[0] == 400
-    rows = [r for r in api.get('/api/admin/reports', who='admin')[1]['reports'] if r['reporter']['id'] == str(ada.id)]
+    rows = [r for r in api.get('/api/admin/reports', who='admin')[1]['reports']
+            if (r['reporter'] or {}).get('id') == str(ada.id)]     # problem reports may have no reporter
     assert sorted(r['kind'] for r in rows) == ['acknowledgement', 'person']
 
 
@@ -248,7 +249,7 @@ def test_reporting_what_ai_help_gave(api, people):
     assert ada.post('/api/reports', {'kind': 'ai', 'id': 'value_card'})[0] == 404             # nothing to look at
     assert ada.post('/api/reports', {'kind': 'ai', 'id': 'poem', 'excerpt': said})[0] == 404  # no such AI help
     mine = [r for r in api.get('/api/admin/reports', who='admin')[1]['reports']
-            if r['reporter']['id'] == str(ada.id) and r['kind'] == 'ai']
+            if (r['reporter'] or {}).get('id') == str(ada.id) and r['kind'] == 'ai']
     assert [(r['item_id'], r['excerpt'], r['subject'], r['removable']) for r in mine] == [('value_card', said, None, False)]
 
 
