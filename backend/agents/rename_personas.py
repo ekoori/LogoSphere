@@ -59,7 +59,9 @@ def main():
         keys = [c.column_name for c in cols if c.kind in ('partition_key', 'clustering')]
         partition = [c.column_name for c in cols if c.kind == 'partition_key']
         static = {c.column_name for c in cols if c.kind == 'static'}
-        regular = [c.column_name for c in cols if c.kind == 'regular']
+        # A cell's time to live, for plain columns only: TTL() of a collection gives a list per
+        # element, which this driver can't decode when they have none (the case here).
+        regular = [c.column_name for c in cols if c.kind == 'regular' and c.type in TEXT]
         for row in db.execute(f'SELECT * FROM {KEYSPACE}.{table}'):
             row = row._asdict()
             new = {c: changed(row[c]) for c in watched}
