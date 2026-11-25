@@ -6,8 +6,11 @@ listings.
 
 ## Before the first upload
 
-1. **The upload key.** It never enters the repository. Make it once, on the computer that builds
-   releases (keytool asks for one password, used for the store and the key):
+1. **The upload key.** It never enters the repository. It is `~/.android/logosphere-upload.jks`, alias
+   `logosphere` (keytool, RSA 4096, PKCS12, made 25 November 2026, valid to 2054), certificate
+   SHA-256 `A9:2D:EF:F8:0B:0E:AB:E9:81:74:B5:56:4C:AB:C3:57:29:9E:6A:D6:C5:5C:68:F1:FE:87:4A:D7:31:98:2C:1D`;
+   after the first upload, Play Console's *App integrity* page must show that as the upload key.
+   To make one again (keytool asks for one password, used for the store and the key):
 
    ```
    & "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkeypair -keystore "$env:USERPROFILE\.android\logosphere-upload.jks" -storetype PKCS12 -alias logosphere -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=LogoSphere"
@@ -27,8 +30,8 @@ listings.
    (*App integrity* → *Request upload key reset*).
 2. **The bundle.** `cd android && ./gradlew :app:bundleRelease` writes
    `app/build/outputs/bundle/release/app-release.aab`. Check it is signed with the upload key:
-   `./gradlew :app:signingReport` must show `Alias: logosphere` for the release variant, not
-   `AndroidDebugKey`.
+   `keytool -printcert -jarfile app/build/outputs/bundle/release/app-release.aab` must show
+   `CN=LogoSphere` and the SHA-256 above, not `CN=Android Debug`.
 
 ## First upload, step by step
 
