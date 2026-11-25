@@ -42,6 +42,7 @@ object InfoContent {
         InfoPage.Contribute -> contribute
         InfoPage.Privacy -> privacy
         InfoPage.Terms -> terms
+        InfoPage.ChildSafety -> childSafety
     }
 
     private val about = listOf(
@@ -494,11 +495,53 @@ object InfoContent {
         Block.Link("Read the terms →", page = InfoPage.Terms),
     )
 
+    private val childSafety = listOf(
+        Block.Eyebrow("Child safety"),
+        Block.Title("Child safety standards"),
+        Block.Lead("LogoSphere’s standards against child sexual abuse and exploitation (CSAE), for logosphere.earth and the LogoSphere app."),
+        Block.Updated("Last updated 26 November 2026"),
+        Block.Glance(
+            listOf(
+                "No child sexual abuse or exploitation, of any kind, ever.",
+                "Report it where you see it, or with the flag on every screen.",
+                "We remove it, close the accounts, and report it to the authorities.",
+                "Contact: support@logosphere.earth.",
+            ),
+        ),
+        Block.Heading("Zero tolerance", "01"),
+        Block.Para("LogoSphere does not allow child sexual abuse and exploitation (CSAE) of any kind, anywhere in it: on logosphere.earth and in the LogoSphere app, in openings, messages, pictures, receipts, groups, events and everything else members share."),
+        Block.Para("That includes child sexual abuse material (CSAM), whether photographed, drawn or made with AI; sexualising a child in any way; grooming, or trying to meet a child for sexual purposes; sextortion; and trafficking."),
+        Block.Heading("Who LogoSphere is for", "02"),
+        Block.Para("LogoSphere is meant for adults and for families who use it together; it isn’t designed for children on their own. If we learn that a child is using an account on their own, we close it."),
+        Block.Heading("How to report", "03"),
+        Block.Bullets(
+            listOf(
+                "In LogoSphere: press Report on the person, message, opening, event, announcement or acknowledgement, or use the flag at the top of every screen. Reports go only to the platform’s administrators; the person reported isn’t told.",
+                "By email: support@logosphere.earth.",
+                "If a child is in danger now, call your local emergency number first: 000 in Australia, 911 in the United States, 112 in Europe.",
+                "You can also report child sexual abuse material directly to NCMEC’s CyberTipline or, in Australia, to the Australian Centre to Counter Child Exploitation.",
+            ),
+        ),
+        Block.Link("NCMEC’s CyberTipline", url = "https://report.cybertip.org/"),
+        Block.Link("Australian Centre to Counter Child Exploitation", url = "https://www.accce.gov.au/report"),
+        Block.Heading("What we do", "04"),
+        Block.Bullets(
+            listOf(
+                "A report about a child’s safety comes before anything else, as soon as we see it.",
+                "We remove CSAE content as soon as we know of it, and close the accounts involved.",
+                "We report child sexual abuse material to NCMEC and to the Australian Centre to Counter Child Exploitation, keep what the law asks us to keep for them, and work with law enforcement.",
+                "AI pictures in LogoSphere are made by OpenAI’s image model, which refuses sexual content involving children, and any AI result can be reported like everything else.",
+            ),
+        ),
+        Block.Heading("Child safety contact", "05"),
+        Block.Para("The people who run LogoSphere are its child safety contact, and can answer for these standards and how we keep them: support@logosphere.earth."),
+    )
+
     private val terms = listOf(
         Block.Eyebrow("Terms of service"),
         Block.Title("The terms, in plain words"),
         Block.Lead("What you can expect from LogoSphere, and what LogoSphere and its members expect of you."),
-        Block.Updated("Last updated 23 November 2026"),
+        Block.Updated("Last updated 26 November 2026"),
         Block.Glance(
             listOf(
                 "Help here is a gift: nothing is bought or sold.",
@@ -550,7 +593,7 @@ object InfoContent {
                 "Don’t spam." to "Messages, invitations, events and announcements are for people who’d want them.",
                 "Respect privacy." to "Don’t share someone’s personal details, or what they told you in confidence.",
                 "Be yourself." to "Don’t pretend to be someone else — another member, a famous person, or an AI persona.",
-                "Keep it legal and safe." to "Nothing illegal, dangerous or exploitative.",
+                "Keep it legal and safe." to "Nothing illegal, dangerous or exploitative, and never anything that sexually exploits or endangers a child (see Child safety standards).",
             ),
         ),
         Block.Para(

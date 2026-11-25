@@ -25,7 +25,7 @@ if (releaseKeystore == null && gradle.startParameter.taskNames.any { "release" i
 }
 
 // The version, and a version code derived from it so it always rises: 1.2.3 is 10203.
-val appVersion = "0.4.0"
+val appVersion = "0.4.1"
 val appVersionCode = appVersion.split(".").map(String::toInt)
     .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 

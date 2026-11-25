@@ -5,7 +5,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import DocPage from '../components/DocPage';
 
-export const TERMS_UPDATED = '23 November 2026';
+export const TERMS_UPDATED = '26 November 2026';
 
 const sections = [
     {
@@ -80,7 +80,10 @@ const sections = [
                     <li><strong>Don&rsquo;t spam.</strong> Messages, invitations, events and announcements are for people who&rsquo;d want them.</li>
                     <li><strong>Respect privacy.</strong> Don't share someone's personal details, or what they told you in confidence.</li>
                     <li><strong>Be yourself.</strong> Don't pretend to be someone else — another member, a famous person, or an AI persona.</li>
-                    <li><strong>Keep it legal and safe.</strong> Nothing illegal, dangerous or exploitative.</li>
+                    <li>
+                        <strong>Keep it legal and safe.</strong> Nothing illegal, dangerous or exploitative, and never anything
+                        that sexually exploits or endangers a child (our <Link to="/child-safety">child safety standards</Link>).
+                    </li>
                 </ul>
                 <p>
                     You can block anyone, and report a person, message, opening, event, announcement or acknowledgement to

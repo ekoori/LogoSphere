@@ -47,6 +47,7 @@ import Contribute from './pages/Contribute';
 import Donate from './pages/Donate';
 import Privacy from './pages/Privacy';
 import TOS from './pages/TOS';
+import ChildSafety from './pages/ChildSafety';
 
 // Component Imports
 import UserRegistration from './components/UserRegistration';
@@ -100,6 +101,7 @@ function AppContent() {
         <Route path="/meaning-graph" element={<ErrorBoundary><MeaningGraphPage/></ErrorBoundary>}/>
         <Route path="/privacy" element={<Privacy/>}/>
         <Route path="/tos" element={<TOS/>}/>
+        <Route path="/child-safety" element={<ChildSafety/>}/>
         
         {/* Protected Routes — gated by ProtectedRoute (redirects to /login) */}
         <Route path="/profile" element={<ErrorBoundary><ProtectedRoute><ProfilePage/></ProtectedRoute></ErrorBoundary>} />

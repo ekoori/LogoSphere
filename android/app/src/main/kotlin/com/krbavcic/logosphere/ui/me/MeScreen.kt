@@ -22,6 +22,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.ui.semantics.Role
 import com.krbavcic.logosphere.data.ThemeChoice
 import androidx.compose.material.icons.outlined.Gavel
+import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Language
@@ -260,6 +261,7 @@ fun MeScreen() {
                             LinkRow(Icons.Outlined.Handshake, InfoPage.Contribute.title) { navigator.info(InfoPage.Contribute) }
                             LinkRow(Icons.Outlined.PrivacyTip, InfoPage.Privacy.title) { navigator.info(InfoPage.Privacy) }
                             LinkRow(Icons.Outlined.Gavel, InfoPage.Terms.title) { navigator.info(InfoPage.Terms) }
+                            LinkRow(Icons.Outlined.HealthAndSafety, InfoPage.ChildSafety.title) { navigator.info(InfoPage.ChildSafety) }
                             LinkRow(Icons.Outlined.Info, "Fonts & licences") { showLicences = true }
                             LinkRow(Icons.AutoMirrored.Outlined.Logout, "Sign out") { confirmSignOut = true }
                             MetaText(

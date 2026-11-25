@@ -1,7 +1,7 @@
 # Google Play listing
 
 Everything the Play Console asks for, ready to paste. Graphics are in this folder. Written
-2026-11-25 for the first Play build, 0.4.0 (version code 400), after Per Ankh's and BushLines'
+2026-11-25 for the first Play build, 0.4.1 (version code 401), after Per Ankh's and BushLines'
 listings.
 
 ## Before the first upload
@@ -49,7 +49,7 @@ not need the 12 testers for 14 days that new personal accounts need before produ
    rating, target audience, data safety, data deletion, advertising ID (not used), and the
    government, financial, health and news declarations, all from the sections below.
 5. **Internal testing.** *Test and release* → *Testing* → *Internal testing*: a testers list with
-   your own Google account, *Create new release*, upload the bundle, release name `0.4.0`. Roll it
+   your own Google account, *Create new release*, upload the bundle, release name `0.4.1`. Roll it
    out and install it from the opt-in link.
 6. **Closed or open testing, then production.** Send the changes for review; the first review of a
    new app can take several days.
@@ -143,6 +143,19 @@ Location" notices.
 - Appeals to children: **No**. Ads: **No**. In-app purchases: **No**. Donations: none in the app
   (see "Policy notes").
 - News app: No. Government app: No. Financial features: None. Health: No.
+
+## Child safety standards
+
+Google Play's Child Safety Standards policy applies to every app in the Social category.
+
+- **Safety standards URL:** https://logosphere.earth/child-safety (also in the app: Me → Child safety
+  standards). It names LogoSphere, addresses child sexual abuse and exploitation (CSAE) by name,
+  says how to report, what LogoSphere does (removal, closing accounts, reporting CSAM to NCMEC
+  and the Australian Centre to Counter Child Exploitation) and whom to contact.
+- **In-app reporting:** Report on people and everything they post, and the problem flag on every
+  screen; both reach the administrators' queue.
+- **Child safety point of contact:** a named person who can speak for LogoSphere's CSAM
+  prevention and compliance, entered in Play Console (it is not shown publicly).
 
 ## App access
 

@@ -9,7 +9,8 @@ enum class InfoPage(val path: String, val title: String) {
     HowItWorks("/how-it-works", "How it works"),
     Contribute("/contribute", "Contribute"),
     Privacy("/privacy", "Privacy policy"),
-    Terms("/tos", "Terms of service");
+    Terms("/tos", "Terms of service"),
+    ChildSafety("/child-safety", "Child safety standards");
 
     companion object {
         fun of(path: String): InfoPage? = entries.firstOrNull { it.path == path }
