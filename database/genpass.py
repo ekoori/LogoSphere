@@ -1,3 +1,5 @@
+# Local seed data only: these first-name passwords are public. On production the personas
+# have random ones nobody keeps (backend/agents/lock_persona_logins.py).
 from cassandra.cluster import Cluster
 import csv
 from werkzeug.security import generate_password_hash

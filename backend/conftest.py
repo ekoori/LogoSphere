@@ -36,12 +36,15 @@ def _cassandra_up():
 
 CASSANDRA_UP = _cassandra_up()
 
-# Demo accounts (password = first name; see database/genpass.py).
+# Demo personas the tests act as. Production gives them passwords nobody knows
+# (agents/lock_persona_logins.py), so the suite opens their sessions itself, as
+# the agents' director does, and ends them afterwards. Password sign-in is
+# tested with the run's own admin.
 USERS = {
-    'joe': ('jo.rodan@example.com', 'Joe'),          # Jo Rodan (renamed 2026-11-25; the password kept its old first name)
-    'marie': ('marie.konda@example.com', 'Marie'),    # Riverside member; steward of Repair Cafe
-    'david': ('david.attenbarough@example.com', 'David'),  # Riverside member, not in Tool Library
-    'elon': ('elon.mask@example.com', 'Elon'),        # AI Commons only - not in Riverside
+    'joe': ('jo.rodan@example.com', None),           # Jo Rodan, in every demo sphere
+    'marie': ('marie.konda@example.com', None),      # Riverside member; steward of Repair Cafe
+    'david': ('david.attenbarough@example.com', None),  # Riverside member, not in Tool Library
+    'elon': ('elon.mask@example.com', None),         # AI Commons only - not in Riverside
 }
 # A 1x1 PNG, for image upload tests.
 PNG_1PX = __import__('base64').b64decode(
@@ -121,6 +124,20 @@ def _pause_personas(db, until):
         pass    # no agents installed (no table): nothing to pause
 
 
+def _persona_session(email):
+    """A session for a persona, made the way agents/store.token_for makes the
+    director's (the suite's own: never the director's), ended by the api fixture."""
+    from datetime import datetime, timedelta
+    from app.db import session as db
+    row = db.execute('SELECT user_id FROM user_credentials WHERE email = %s', [email]).one()
+    assert row, f'no persona {email} in this database'
+    token, now = uuid.uuid4(), datetime.utcnow()
+    db.execute('INSERT INTO sessions (session_id, user_email, user_id, creation_time, last_access_time, '
+               'expire_at, data) VALUES (%s, %s, %s, %s, %s, %s, %s)',
+               [token, email, row.user_id, now, now, now + timedelta(hours=2), {'fresh': 'true'}])
+    return str(token), str(row.user_id)
+
+
 class Api:
     """Thin wrapper over the Flask test client that speaks the API's auth
     contract (`Authorization: Bearer <session_id>`) and returns (status, json)."""
@@ -133,10 +150,13 @@ class Api:
     def login(self, who):
         if who not in self.tokens:
             email, pwd = USERS[who]
-            r = self.client.post('/api/login', json={'email': email, 'password': pwd})
-            assert r.status_code == 200, f'login failed for {who}: {r.get_json()}'
-            self.tokens[who] = r.get_json()['session_id']
-            self.ids[who] = r.get_json()['data']['user_id']
+            if pwd is None:
+                self.tokens[who], self.ids[who] = _persona_session(email)
+            else:
+                r = self.client.post('/api/login', json={'email': email, 'password': pwd})
+                assert r.status_code == 200, f'login failed for {who}: {r.get_json()}'
+                self.tokens[who] = r.get_json()['session_id']
+                self.ids[who] = r.get_json()['data']['user_id']
         return self.tokens[who]
 
     def _hdr(self, who):

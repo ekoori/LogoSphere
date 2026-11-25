@@ -64,13 +64,13 @@ class ParityTest {
     @Test
     fun ownProfileAndAdminListsDecode() {
         val me = Fixtures.decode<OwnProfile>("own_profile.json")
-        assertEquals("Igor K", me.displayName)
+        assertEquals("Sam K", me.displayName)
         assertTrue(me.hasPicture)
 
         val overview = Fixtures.decode<AdminOverview>("admin_overview.json")
         assertEquals(31, overview.counts.users)
         assertEquals(22, overview.counts.openingsOpen)
-        assertEquals("Igor K", overview.platformAdmins.single().name)
+        assertEquals("Sam K", overview.platformAdmins.single().name)
 
         val users = Fixtures.decode<AdminUsers>("admin_users.json").users
         assertTrue(users[0].isYou && users[0].isPlatformAdmin)
@@ -229,7 +229,7 @@ class ParityTest {
     @Test
     fun aProfilePhotoGoesUpAsMultipart() = runTest {
         respond("""{"user_id":"me"}""")
-        api.updateProfile("Igor", "K", Upload(byteArrayOf(1, 2, 3), "me.jpg", "image/jpeg"))
+        api.updateProfile("Sam", "K", Upload(byteArrayOf(1, 2, 3), "me.jpg", "image/jpeg"))
         val request = server.takeRequest()
         assertEquals("/api/updateuser", request.path)
         assertTrue(request.getHeader("Content-Type")!!.startsWith("multipart/form-data"))

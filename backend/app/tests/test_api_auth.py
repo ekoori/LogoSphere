@@ -2,10 +2,12 @@
 
 
 def test_login_returns_session_and_profile(api):
-    status, body = api.post('/api/login', json={'email': 'jo.rodan@example.com', 'password': 'Joe'})
+    from conftest import USERS
+    email, password = USERS['admin']
+    status, body = api.post('/api/login', json={'email': email, 'password': password})
     assert status == 200
     assert body['session_id']
-    assert body['data']['name'].startswith('Jo')
+    assert body['data']['name'] == 'Test Admin'
     assert 'password' not in body['data']
     api.logout_token(body['session_id'])
 
@@ -14,7 +16,9 @@ def test_login_response_carries_only_the_new_session(api):
     """The user data in a login response must not carry a session token. It
     used to include another live session of the same user (from an earlier
     sign-in), handing out a second bearer credential."""
-    creds = {'email': 'marie.konda@example.com', 'password': 'Marie'}
+    from conftest import USERS
+    email, password = USERS['admin']
+    creds = {'email': email, 'password': password}
     _, first = api.post('/api/login', json=creds)
     status, second = api.post('/api/login', json=creds)
     try:
@@ -102,7 +106,8 @@ def test_cookie_requests_do_not_rewrite_the_session(app, db):
     from conftest import USERS
     client = app.test_client()
     https = {'base_url': 'https://localhost'}      # the cookie is Secure in production
-    r = client.post('/api/login', json={'email': USERS['marie'][0], 'password': USERS['marie'][1]}, **https)
+    email, password = USERS['admin']
+    r = client.post('/api/login', json={'email': email, 'password': password}, **https)
     token = r.get_json()['session_id']
     read = lambda: db.execute('SELECT creation_time, last_access_time FROM sessions WHERE session_id = %s',
                               [uuid.UUID(token)]).one()
@@ -164,6 +169,8 @@ def test_a_database_outage_is_503_not_a_sign_out(app, api, monkeypatch):
 
 
 def test_sign_in_ignores_email_case_and_spaces(api):
-    status, body = api.post('/api/login', json={'email': '  jo.rodan@example.com ', 'password': 'Joe'})
+    from conftest import USERS
+    email, password = USERS['admin']
+    status, body = api.post('/api/login', json={'email': f'  {email.upper()} ', 'password': password})
     assert status == 200, body
     api.logout_token(body['session_id'])

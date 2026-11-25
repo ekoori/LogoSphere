@@ -20,7 +20,7 @@ listings.
    `LOGOSPHERE_KEYSTORE_PASSWORD`):
 
    ```
-   logosphereKeystore=C:/Users/igor/.android/logosphere-upload.jks
+   logosphereKeystore=C:/Users/<you>/.android/logosphere-upload.jks
    logosphereKeystorePassword=<the password>
    ```
 

@@ -10,7 +10,7 @@
   "can_manage": true,
   "is_member": true,
   "members": [
-    {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Igor K"},
+    {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Sam K"},
     {"id": "aaaaaaaa-0000-0000-0000-000000000002", "name": "Marie Konda"},
     {"id": "aaaaaaaa-0000-0000-0000-000000000003", "name": "Quentin Blake"}
   ],
@@ -36,7 +36,7 @@
       "tally": {"yes": 2, "no": 0, "abstain": 0, "eligible": 3, "unrepresented": 1, "direct_votes": 1},
       "would_pass": true,
       "my_vote": "yes",
-      "created_by_name": "Igor K"
+      "created_by_name": "Sam K"
     },
     {
       "proposal_id": "bbbbbbbb-0000-0000-0000-000000000002",

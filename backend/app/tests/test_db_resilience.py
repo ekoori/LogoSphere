@@ -24,7 +24,9 @@ def test_session_rebuilds_after_the_cluster_dies(app, db):
 
     # and the Flask session interface (plain queries, no stale prepared statements)
     client = app.test_client()
-    r = client.post('/api/login', json={'email': 'jo.rodan@example.com', 'password': 'Joe'})
+    from conftest import USERS
+    email, password = USERS['admin']
+    r = client.post('/api/login', json={'email': email, 'password': password})
     assert r.status_code == 200
     # The session this made is ended again, so the run leaves no sessions behind.
     client.post('/api/logout', headers={'Authorization': f"Bearer {r.get_json()['session_id']}"})

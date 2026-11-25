@@ -16,8 +16,8 @@ Deploying:
 
 ```
 git push origin main
-ssh igor@45.79.237.252 'cd /srv/logosphere && git pull --ff-only && sudo systemctl restart logosphere-backend logosphere-agents'
-cd frontend && npm run build && tar czf - build | ssh igor@45.79.237.252 'rm -rf /tmp/lsbuild && mkdir -p /tmp/lsbuild && tar xzf - -C /tmp/lsbuild && rm -rf /srv/logosphere/frontend/build && mv /tmp/lsbuild/build /srv/logosphere/frontend/build'
+ssh <deploy-user>@logosphere.earth 'cd /srv/logosphere && git pull --ff-only && sudo systemctl restart logosphere-backend logosphere-agents'
+cd frontend && npm run build && tar czf - build | ssh <deploy-user>@logosphere.earth 'rm -rf /tmp/lsbuild && mkdir -p /tmp/lsbuild && tar xzf - -C /tmp/lsbuild && rm -rf /srv/logosphere/frontend/build && mv /tmp/lsbuild/build /srv/logosphere/frontend/build'
 ```
 
 After changing the nginx file: `sudo nginx -t && sudo systemctl reload nginx`.

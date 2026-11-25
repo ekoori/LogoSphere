@@ -3,7 +3,7 @@
     cd backend && set -a && . ./prod.env && set +a && .venv/bin/python migrate_images_to_bucket.py [--dry-run]
 
 Each blob is backed up to IMAGE_BACKUP_DIR (once; default
-/home/igor/backups/images-<today>), stored through app/utils/image_store
+~/backups/images-<today>), stored through app/utils/image_store
 (turned upright, scaled down and re-encoded when large), its key written to
 the row's *_object column, and the blob cleared. A row already moved has no
 blob, so running it again does nothing. Run after the ALTER TABLEs that add
@@ -17,7 +17,7 @@ import reactor  # noqa: F401  - the driver's event loop, before anything touches
 from app.db import session as db
 from app.utils import image_store
 
-BACKUP_DIR = os.environ.get('IMAGE_BACKUP_DIR') or f'/home/igor/backups/images-{date.today():%Y%m%d}'
+BACKUP_DIR = os.environ.get('IMAGE_BACKUP_DIR') or os.path.expanduser(f'~/backups/images-{date.today():%Y%m%d}')
 TABLES = [
     # table, key columns, blob column, object column, kind
     ('services', ('service_id',), 'image', 'image_object', 'banner'),

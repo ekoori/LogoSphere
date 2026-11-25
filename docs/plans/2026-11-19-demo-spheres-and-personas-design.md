@@ -4,8 +4,8 @@ Date: 2026-11-19. Status: agreed, being built.
 
 ## Why
 
-LogoSphere runs one production platform where real communities (Banyule
-Commons) and the demonstration (Riverside Commons, AI Commons, Earthsong
+LogoSphere runs one production platform where real communities (a
+neighbourhood sphere) and the demonstration (Riverside Commons, AI Commons, Earthsong
 Gardens) live side by side. The demonstration should feel alive when people
 try it, must never be mistaken for real people or real communities, and should
 cost nothing when nobody is looking. Its text should read like a real
@@ -17,7 +17,7 @@ community, not like generator output.
 |---|---|
 | How demo and real coexist | Side by side, clearly labelled. Not hidden behind a switch, not a separate site. |
 | New members | Invited to all three demo spheres (notification + a home card); not auto-enrolled. |
-| Who the personas are | The 20 famous-name demo accounts, Joe Rogan included. Joe stops being a platform admin. Igor K, Bruce (AI) and Mimi stay real. |
+| Who the personas are | The 20 famous-name demo accounts, Joe Rogan included. Joe stops being a platform admin. The owner's account, Bruce (AI) and one other member's stay real. |
 | What drives them | Real activity. A scheduled director reacts to what real members do; personas may also react to each other, within "ripple" credits that real activity creates and that fade within the hour. Quiet when nobody is around. |
 | Model for words | Claude Opus 5.5, effort `low`, structured JSON output. |
 | Model for pictures | OpenAI `gpt-image-1-mini`, low quality, resized to a ~150 KB JPEG. |

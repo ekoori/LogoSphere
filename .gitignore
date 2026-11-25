@@ -76,3 +76,7 @@ Thumbs.db
 
 # The offline place search, built on the host (backend/tools/build_places.py)
 /backend/data/
+
+# Claude Code: personal settings and worktrees stay local (launch.json is shared).
+.claude/settings.local.json
+.claude/worktrees/

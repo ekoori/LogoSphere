@@ -1,3 +1,4 @@
+import os
 # File: ./backend/app/utils/migratetabledata.py
 # Description: This script migrates user data from the old `users` table to the new `user_credentials` table by reusing the backend's session management setup.
 
@@ -41,7 +42,7 @@ class TableMigrator:
 
 if __name__ == '__main__':
     # Set up the migrator with your Cassandra cluster and keyspace
-    cluster_nodes = ['143.42.34.42']  # Replace with your actual Cassandra nodes
+    cluster_nodes = [os.environ.get('CASSANDRA_HOST', '127.0.0.1')]
     keyspace = 'logosphere'
 
     migrator = TableMigrator(cluster_nodes=cluster_nodes, keyspace=keyspace)

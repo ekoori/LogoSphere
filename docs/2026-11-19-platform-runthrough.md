@@ -34,7 +34,7 @@ an acceptance back, and the web reads API datetimes as UTC.
 | What was wrong | Fix |
 |---|---|
 | Once you accepted someone else's opening, you could not take it back. The only button a platform admin saw was "Withdraw", which withdraws the whole opening for everyone; this happened on the phone. | Added **Take back my acceptance** to the server, web and app. On someone else's opening, the admin button now reads "Withdraw … (platform admin)". |
-| The web read the API's zone-less UTC datetimes as local time. In Melbourne, a notification from a minute ago read "11h ago", and dates near midnight showed the wrong day. | Added a single parser (`frontend/src/utils/dates.js`, with tests), used everywhere the web shows a date. |
+| The web read the API's zone-less UTC datetimes as local time. In UTC+11, a notification from a minute ago read "11h ago", and dates near midnight showed the wrong day. | Added a single parser (`frontend/src/utils/dates.js`, with tests), used everywhere the web shows a date. |
 | nginx sent `index.html` without `Cache-Control`. Browsers kept running an old bundle for days after a deploy; Joe's profile showed initials instead of his photo. | `index.html` is now `no-cache`. Hashed `/assets/` are cached for a year as immutable; `/static/` images for 7 days (that rule was left over from Create React App). |
 | Openings and Meaning Trails came back in storage order, so dates jumped about. | Both are now newest first on the server (marketplace, own trail, a person's trail, a project's trail). |
 | App search showed "0 members" on people. | Member counts appear only for groups, and value-card counts appear as on the web. |
@@ -46,8 +46,8 @@ an acceptance back, and the web reads API datetimes as UTC.
 ## Demo data
 
 Every test leaves the data as it found it: rows are dumped before and after, and
-restored with `keyspace_guard.py` (`/home/igor/backups/`). The snapshots are in
-`/home/igor/backups/logosphere-20261119/`, and a full Cassandra snapshot is
+restored with `keyspace_guard.py` (`~/backups/`). The snapshots are in
+`~/backups/logosphere-20261119/`, and a full Cassandra snapshot is
 named `demo-before-android-tests-20261119`.
 
 Leftovers from my own testing were removed:
@@ -63,7 +63,7 @@ created are gone.
 **Still as made on the phone**:
 
 - Joe's note "Thanks Marie, it was my pleasure!" on the receipted fence exchange;
-- Joe following Igor K;
+- Joe following the owner's account;
 - Joe's pending acceptance of Emma Watson's opening `c13ac77d…`, plus the two notifications these created.
 
 These can be reverted the same way.

@@ -87,7 +87,7 @@ site, app, deploy, commit. Tick the boxes as they land.
 - [x] D6 Cassandra audit (`docs/2026-11-23-cassandra-audit.md`)
 - [x] D7 Openings feed table and lazy loading (site and app)
 - [x] D8 App 0.3.0 on the phone: paging and the card-to-graph link tried there
-- [x] D9 AI personas answer messages (live: Joe Rogan answered Igor K four and a half minutes after his message);
+- [x] D9 AI personas answer messages (live: Joe Rogan answered the owner's message four and a half minutes after it was sent);
       app 0.3.2 on the phone since 2026-11-24, its AI notice seen in that conversation
 - [ ] Not tried on the phone: Message from cards, groups and events (Igor's openings and groups are his own or
       personas'), hours on a receipt (none was waiting)
