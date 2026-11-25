@@ -6,28 +6,61 @@
   <img src="docs/demo.gif" width="320" alt="LogoSphere on Android: the Openings feed, a neighbour's need, the demo spheres, Riverside Commons, the Meaning Graph, and the flag for reporting a problem">
 </p>
 
-Every system that scales human cooperation must compress what people care about into something it can move around. Money does it with price. Platforms do it with clicks. Each translation is lossy — and what leaks away is the meaning. **LogoSphere is an attempt to keep it.**
+LogoSphere is a place for groups (neighbourhoods, clubs, congregations, teams) to ask for help,
+offer it, keep an honest record of what happened, and decide things together. It's a gift
+economy: no money changes hands, nothing is for sale, and nobody is turned into a score.
 
-## The problem: value collapses under measurement
+**[Use it on the web](https://logosphere.earth)** · **[Download the Android app](https://github.com/ekoori/LogoSphere/releases/latest)**
+(Android 8.0 or newer) · Google Play: coming soon · free, no ads, no tracking
 
-Tell a community its worth is a number, and it will manufacture the number. This is Goodhart's trap: *when a measure becomes a target, it stops being a good measure.* Likes, daily-active-users, reputation points — thin proxies are easy to optimise precisely because they've already discarded the reasons underneath them.
+## What you can do
 
-A meaning-centric platform inherits a sharper version of the same risk. The moment meaning can be cashed in, people optimise for *appearing* meaningful. The proxy doesn't just mislead — it crowds out the thing it was meant to stand for.
+- **Openings.** Offer what you can do or lend, ask for what you need, and see what your groups are
+  offering right now.
+- **Exchanges that remember.** When help happens, both of you confirm it, add a receipt (a photo
+  too, if you like) and thank each other. It all gathers on your **Meaning Trail**.
+- **Value cards and the Meaning Graph.** Say what you care about and why, and see how the people
+  around you connect through what they value. Closeness is explained, never a score.
+- **Spheres, alliances and projects.** Groups with their own members, values, roles,
+  announcements, events and shared decisions.
+- **Messages, events and places.** Talk one to one, plan get-togethers, and find what's near you,
+  only if you choose to share a place.
+- **Simple mode,** for anyone who wants fewer buttons, and light or dark, as you prefer.
+- **Try it first.** The demo spheres are played by AI personas, clearly labelled as such, so you
+  can try everything before bringing your group.
+- **AI help, only when you ask.** It can help you word a value card or draw a picture for an
+  opening; nothing is sent until you press its button, and AI pictures are labelled.
 
-## The idea: Thick Models of Value
+## Get the Android app
 
-A **Thick Model of Value (TMV)** is a representation rich enough to survive being optimised. Where a preference records *what* you chose, and a written rule records *what's allowed*, a TMV carries the *why* — and the texture around it:
+**From GitHub,** on the phone itself:
 
-- **Reasons** — the "because" behind a choice, not only the choice itself
-- **Endorsement** — what you'd still choose after reflection, told apart from impulse
-- **Context & roles** — the promises, boundaries, and obligations a situation carries
-- **Trade-offs** — priorities, thresholds, and the lines you will not cross
-- **Collective goods** — trust, legitimacy, the commons no single person holds
-- **Endorsed change** — growth you would affirm, distinguished from drift and capture
+1. Open **[the latest release](https://github.com/ekoori/LogoSphere/releases/latest)** in your
+   phone's browser.
+2. Under **Assets**, tap the file whose name ends in **.apk** (such as `LogoSphere-0.4.1.apk`), not
+   "Source code". The browser downloads it.
+3. Open the downloaded file, from the browser's download message or from the Files app.
+4. The first time, Android says your browser (or Files app) is not allowed to install apps. Tap
+   **Settings**, switch on **Allow from this source**, then go back.
+5. Tap **Install**. If Google Play Protect offers to scan the app first, let it.
 
-To be usable by humans, a thick value compresses into a **Value Card** — a small, honest artefact, readable in ten seconds, that you'd recognise as your own. Each card is **CLEAR**: **C**oncrete behaviours, **L**evers & limits, **E**ndorsement, **A**nti-signals (what drift looks like), **R**eview (revisited on a cadence).
+To update, install a newer release the same way, over the old one. **From Google Play:** coming
+soon. The two versions are signed differently, so switching between them means uninstalling
+first; everything in your account stays on the server, and you just sign in again.
 
-Meaning itself isn't pleasure, and it isn't status. Following Viktor Frankl, it arrives by three routes, and a healthy ledger can tell them apart:
+## Why LogoSphere
+
+Every system that scales human cooperation compresses what people care about into something it
+can move around. Money does it with price. Platforms do it with clicks. Each translation is
+lossy, and what leaks away is the meaning. **LogoSphere is an attempt to keep it.**
+
+Tell a community its worth is a number, and it will manufacture the number: *when a measure
+becomes a target, it stops being a good measure.* So LogoSphere keeps the reasons instead. A
+**value card** says what you care about and *why*, in words you'd recognise as your own, with what
+it looks like in practice and what drifting from it would look like. A **receipt** says what an
+exchange meant to the people in it. Nothing is summed into a ranking.
+
+Meaning comes by three routes, and LogoSphere tells them apart:
 
 | Mode | What it captures |
 |---|---|
@@ -35,79 +68,45 @@ Meaning itself isn't pleasure, and it isn't status. Following Viktor Frankl, it 
 | **Experiential** | what you receive and encounter |
 | **Attitudinal** | the stance you take under constraint |
 
-The whole design turns on one distinction: **endorsed meaning** is what holds up under reflection; **performed meaning** is status play wearing meaning's clothes. Every mechanism in LogoSphere — receipts over points, reasons over scores, drift clauses over leaderboards — exists to keep the first from collapsing into the second.
+The whole design turns on one distinction: **endorsed meaning** holds up when you think it over;
+**performed meaning** is status play wearing meaning's clothes. Receipts over points, reasons over
+scores, and "we're drifting if…" clauses over leaderboards keep the first from collapsing into the
+second. The full argument is on the **[About page](https://logosphere.earth/about)** and in
+**[MANIFESTO.md](MANIFESTO.md)**.
 
-Read the full argument on the app's **About** page (`frontend/src/pages/About.js`), or see **[MANIFESTO.md](MANIFESTO.md)** for the canonical vocabulary.
+## Words you'll meet
 
-## How the philosophy is woven into the platform
-
-None of this is a rewrite of how people already give — it's a structure for naming it honestly.
-
-| Primitive | Carries |
+| Word | What it is |
 |---|---|
-| **Meaning Graph** | A profile's handful of Value Cards — what it cares about, and why — instead of a tag cloud. |
-| **Receipt** (Meaning Receipt) | A record of an exchange that names the value it expressed, what it cost, and the receiver's endorsement. |
-| **Acknowledgement** | Public thanks stays lightweight — warmth, not currency. The weight-bearing work belongs to Receipts. |
-| **Sphere & Alliance** | A community or federation declares its shared values — and a "we're drifting if…" clause to catch its own slide. |
-| **Openings** | Offers and Needs carry the values they serve; matching favours overlaps that are endorsed and evidenced. |
-| **Exchange** | The real human event between people that a Receipt or Acknowledgement attests to. |
-| **Meaning Trail** | The living trace of a profile's or alliance's Receipts and Acknowledgements over time. |
-| **Governance / Decisions** | Liquid democracy: delegated, revisable decision-making, in the open. |
+| **Opening** | An offer or a need, with the values it serves. |
+| **Exchange** | The real event between people when help happens. |
+| **Receipt** | A record of an exchange: the value it expressed, what it took, and the receiver's word on it. |
+| **Acknowledgement** | A public thank-you: warmth, not currency. |
+| **Meaning Trail** | The receipts and acknowledgements of a person or group over time. |
+| **Value card** | What you care about and why, readable in ten seconds. |
+| **Meaning Graph** | Everyone's value cards, drawn close where they care about close things. |
+| **Sphere, alliance, project** | A group, a federation of groups, and a shared undertaking, each with its own values. |
 
-## Technologies Used
+## Privacy and safety
 
-- **React** — frontend
-- **Flask** — RESTful APIs
-- **Cassandra** — database
-- **Kotlin + Jetpack Compose** — native Android client ([`android/`](android/README.md))
+- **No ads, nothing sold, no tracking.** LogoSphere keeps what it needs to remember the help your
+  group gives and receives, and nothing more.
+- **Your data is yours.** Download everything LogoSphere holds about you, or delete your account,
+  yourself: Me → Password, email, data & account in the app, or Settings on the web.
+- **Report and block.** Report a person or anything they post, block anyone, and use the flag at
+  the top of every screen to tell us about a problem. Reports go only to the platform's
+  administrators.
+- **[Privacy policy](https://logosphere.earth/privacy)** · **[Terms](https://logosphere.earth/tos)** ·
+  **[Child safety standards](https://logosphere.earth/child-safety)**
 
-## Requirements
+## Help
 
-- Python 3.7+
-- Node.js 14.0+
-- Cassandra
-
-## Installation and Setup
-
-1. Clone the repository:
-
-```
-git clone https://github.com/ekoori/LogoSphere
-cd LogoSphere
-```
-
-2. Install Python dependencies:
-
-```
-pip install -r ./backend/requirements.txt
-```
-
-3. Install JavaScript dependencies:
-
-```
-cd frontend
-npm install
-```
-
-4. Run the Cassandra service and load the schema (`database/schema.cql`) and demo seed data (`database/dummy_data/`).
-5. Run the backend server:
-
-```
-cd backend
-python run_local.py
-```
-
-6. Run the frontend:
-
-```
-cd frontend
-npm start
-```
+Use the flag at the top of any screen, or write to
+[support@logosphere.earth](mailto:support@logosphere.earth) (privacy questions:
+[privacy@logosphere.earth](mailto:privacy@logosphere.earth)).
 
 ## Contributing
 
-If you'd rather your contributions be remembered for what they meant than counted for what they scored, you belong here. Fork the repository, make your changes, and submit a pull request.
-
-## License
-
-LogoSphere is open-source software licensed under the MIT license.
+LogoSphere is open source under the [MIT licence](LICENSE). If you'd rather your contributions be
+remembered for what they meant than counted for what they scored, you belong here: see
+**[DEVELOPING.md](DEVELOPING.md)** to run it on your own computer and send a change.
